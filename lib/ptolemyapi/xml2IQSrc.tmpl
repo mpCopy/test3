@@ -1,0 +1,75 @@
+#include "<NAME>.h"
+#include "HashTable.h"
+#include "StringList.h"
+#include "HPtolemyError.h"
+
+class <NAME>InstTable {
+  friend class <NAME>InstTableIter;
+public:
+  ~<NAME>InstTable();
+  <NAME>Universe* lookup(const char* nm) {return((<NAME>Universe*)table.lookup(nm));}
+  void insert(const char* nm, <NAME>Universe* inst) {table.insert(nm, (void*)inst);}
+
+private:
+  HashTable table;
+};
+
+class <NAME>InstTableIter : private HashTableIter {
+public:
+  <NAME>InstTableIter(<NAME>InstTable& l):HashTableIter(l.table) {};
+
+  HashTableIter::reset;
+
+  <NAME>Universe* next();
+
+  inline <NAME>Universe* operator++ (POSTFIX_OP) { return next();}
+};
+
+<NAME>InstTable::~<NAME>InstTable() {
+  <NAME>InstTableIter next(*this);
+  <NAME>Universe* univ;
+   while((univ=next++)) {
+     //univ->wrapup();
+     delete univ;
+   }
+}
+
+<NAME>Universe* <NAME>InstTableIter::next() {
+  HashEntry* entry =  HashTableIter::next();
+  return entry? (<NAME>Universe*) entry->value():0;
+}
+
+<NAME>InstTable <NAME>table;
+
+extern "C" int <NAME>IQSrc(double time, const char* args, void** parms, double* cmplx) {
+  <NAME>Universe* instance = <NAME>table.lookup(args);
+  if(!instance) {
+    instance = <NAME>Create();
+    <NAME>table.insert(args, instance);
+    int parm=-1;
+    /*<PARM=0>*/ <PARMTYPE> <PARM>;
+    /*<NEXTPARM>*/ <PARMTYPE> <PARM>;
+    if(parms[++parm]) <PARM=0> = ((<PARMTYPE>*)parms[parm])[0]; \
+    else return(instance->parmError(parm, " or <PARM>"));
+    if(parms[++parm]) <NEXTPARM> = ((<PARMTYPE>*)parms[parm])[0]; \
+    else return(instance->parmError(parm, " or <PARM>"));
+
+    if(parms[++parm]) 
+      Error::warn("Ignoring parameters after parameter number ", StringList(parm), " or <PARM>");
+
+    if(instance->init( <PARM=0>
+                  , <NEXTPARM>
+                  ))
+      return(1);
+    instance->createThread();
+  }
+  if(instance) {
+    if(cmplx==0) {
+      Error::initialization("Resultant data cmplx pointer is NULL: Internal Error");
+      return 1;
+    }
+    return(instance->run(1, &cmplx[0], &time, 1, &cmplx[1], &time));
+  }
+  return(1);
+}
+

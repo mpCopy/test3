@@ -1,0 +1,52 @@
+#!/bin/ksh
+# Print a shell command for setting the library path.
+
+set -e
+
+if [ ! -f "$HPEESOF_DIR/bin/hpeesofarch" ] ; then
+    echo Error: HPEESOF_DIR is not set correctly 1>&2
+    exit 1
+fi
+
+shell=u
+case "$SHELL" in *csh) shell=c ;; esac
+
+while getopts :uc arg ; do
+    case $arg in
+	u) shell=u ;;
+	c) shell=c ;;
+	*) echo Usage: $0 [-u] [-c] 1>&2 ; exit 1 ;;
+    esac
+done
+
+setvar() {
+    if [ $shell = c ] ; then
+		if [ -z "$3" ] ; then
+			echo setenv $1 \"$2\" \;
+		else
+			echo setenv $1 \"$2:\$$1\" \;
+		fi
+    else
+		echo $1=\"$2:\$$1\" \;
+		echo export $1 \;
+    fi
+}
+
+arch=$(hpeesofarch)
+arch=${arch}_64
+
+modpath=MODELDIR/lib.$arch:\$HPEESOF_DIR/lib/$arch:\$HPEESOF_DIR/adsptolemy/lib.$arch
+
+case $arch in
+    sun*)
+	setvar LD_LIBRARY_PATH "$modpath" "$LD_LIBRARY_PATH"
+	setvar PATH "/opt/SUNWspro/bin:/usr/bin" "$PATH"
+	;;
+    linux*)
+	setvar LD_LIBRARY_PATH "$modpath" "$LD_LIBRARY_PATH"
+	;;
+    *)
+	echo Error: unknown architecture $arch 1>&2
+	exit 1
+	;;
+esac

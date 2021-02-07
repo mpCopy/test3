@@ -1,0 +1,59 @@
+#include "<NAME>.h"
+#include "APIDataHelper.h"
+
+extern "C" {
+
+const char* <NAME>Error(const char* instName) {
+  <NAME>Universe * univ =
+    (<NAME>Universe*) PtolemyAPI::lookup(instName);
+  return univ->getError();
+}
+
+const char* <NAME>Warn(const char* instName) {
+  <NAME>Universe * univ =
+    (<NAME>Universe*) PtolemyAPI::lookup(instName);
+  return univ->getWarn();
+}
+
+const char* <NAME>Message(const char* instName) {
+  <NAME>Universe * univ =
+    (<NAME>Universe*) PtolemyAPI::lookup(instName);
+  return univ->getMessage();
+}
+
+int <NAME>Data(const char* instName, const char* var, double* time, long* numPoints, char* parmt, void** parms, char** indepName, double** indep, double** dep) {
+  <NAME>Universe* instance =
+    (<NAME>Universe*) PtolemyAPI::lookup(instName);
+  if(!instance) {
+    instance = <NAME>Create();
+    PtolemyAPI::insert(instName,instance);
+    if(instance) {
+      /*<PARM=0>*/ <PARMTYPE> <PARM>;
+      /*<NEXTPARM>*/ <PARMTYPE> <PARM>;
+      int parm=-1;
+      if(parms[++parm]) APIDataHelper::getData(parms[parm], parmt[parm], 0, <PARM=0>); \
+      else return(instance->parmError(parm, " or <PARM>"));
+      if(parms[++parm]) APIDataHelper::getData(parms[parm], parmt[parm], 0, <NEXTPARM>); \
+      else return(instance->parmError(parm, " or <PARM>"));
+      int inputLength=0;
+      for(inputLength=0; parms[parm+inputLength]; inputLength++);
+
+      if(*numPoints>1) {
+        instance->setTStep("SINK0", time[1]-time[0]);
+      }
+
+      if(instance->init( <PARM=0>
+                    , <NEXTPARM>
+                    )) return 0;
+      instance->setArgs("input","SINK", *numPoints, &parms[++parm], time, inputLength-1);
+
+      if(instance->run()) return 0;
+
+      instance->wrapup();
+
+    }
+  }
+  return instance->fillSimData(var, numPoints, indepName, indep, dep);
+}
+
+}

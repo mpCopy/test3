@@ -1,0 +1,79 @@
+open(XML, "<$ARGV[0]");
+while(<XML>) {
+    if(/^<PTOLEMYAPI>$/) {
+      $state=1;
+      next;
+    }
+    elsif(/<PARAMETER>/) {
+      $state=2;
+      next;
+    }
+    elsif(/<INPUT>/) {
+      $state=3;
+      next;
+    }
+    elsif(/<OUTPUT>/) {
+      $state=4;
+      next;
+    }
+    elsif(/<NAME>(.*)<\/NAME>$/) {
+      $apiname=$1 if($state==1);
+      push(@parmname, $1) if($state==2);
+      push(@inpname, $1) if($state==3);
+      push(@outpname, $1) if($state==4);
+    }
+    elsif(/<TYPE>(.*)<\/TYPE>$/) {
+      push(@parmtype, $1) if($state==2);
+      push(@inptype, $1) if($state==3);
+      push(@outptype, $1) if($state==4);
+    }
+}
+
+open(TMPL, "<$ARGV[1]");
+$line=<TMPL>;
+$line.=<TMPL> if($line=~/\\$/);
+while(1) {
+    last if(!$line);
+    $l=$line;
+    $newl=1;
+
+    $l=~s/<NAME>/$apiname/g;
+
+    if($#parmname>=0) {
+      $pn=0 if $l=~s/<PARM=0>/<PARM>/g;
+      if ($l=~/<NEXTPARM>/) {
+        $newl=($pn>=$#parmname) if $l=~s/(.*)<NEXTPARM>(.*)/$1$parmname[++$pn]$2/g;
+        $l="" if $#parmname==0;
+      }
+      $l=~s/<PARM>/$parmname[$pn]/g;
+      $l=~s/<PARMNUM>/$pn/g;
+      $l=~s/<PARMTYPE>/$parmtype[$pn]/g;
+    }
+
+    if($#inpname>=0) {
+      $in=0 if $l=~s/<INPUT=0>/<INPUT>/g;
+      if ($l=~/<NEXTINPUT>/) {
+        $newl=($in>=$#inpname) if $l=~s/(.*)<NEXTINPUT>(.*)/$1$inpname[++$in]$2/g;
+        $l="" if $#inpname==0;
+      }
+      $l=~s/<INPUT>/$inpname[$in]/g;
+      $l=~s/<INPUTNUM>/$in/g;
+      $l=~s/<INPUTTYPE>/$inptype[$in]/g;
+    }
+
+    if($#outpname>=0) {
+      $on=0 if $l=~s/<OUTPUT=0>/<OUTPUT>/;
+      if ($l=~/<NEXTOUTPUT>/) {
+        $newl=($on>=$#outpname) if $l=~s/(.*)<NEXTOUTPUT>(.*)/$1$outpname[++$on]$2/g;
+        $l="" if $#outpname==0;
+      }
+      $l=~s/<OUTPUT>/$outpname[$on]/g;
+      $l=~s/<OUTPUTNUM>/$on/g;
+      $l=~s/<OUTPUTTYPE>/$outptype[$on]/g;
+    }
+
+    print $l;
+    $line=<TMPL> if($newl);
+    $line.=<TMPL> if($newl && $line=~/\\$/);
+}
+
