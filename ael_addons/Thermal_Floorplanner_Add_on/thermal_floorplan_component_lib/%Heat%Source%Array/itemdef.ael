@@ -1,0 +1,36 @@
+// Copyright Keysight Technologies 2017 - 2017  
+
+create_constant_form("No","NO",0,"0","0");
+create_constant_form("Yes","YES",0,"1","1");
+create_form_set("sim_enum_off_on_list_form","No","Yes","StdForm");
+
+create_item ("HeatSourceArray",             // name
+             "Floorplan heat array",        // label
+             "FloorplanHeatSourceArray",    // prefix
+             NULL,             // attribute
+             -1,                        // priority
+             NULL,              // iconName
+             floorplan_dialog,           // dialogName
+             "*",                       // dialogData
+             ComponentNetlistFmt,       // netlistFormat
+             NULL,                   // netlistData
+             ComponentAnnotFmt,         // displayFormat
+             NULL,                   // symbolName
+             macro_artwork,          	// artWorkType
+             "draw_heat_array",                // artworkData
+             ITEM_PRIMITIVE_EX,         // extraAttrib
+             create_parm("name", "Name of device", PARM_NO_DISPLAY | PARM_STRING,  "StringAndReferenceFormSet", UNITLESS_UNIT,  prm("StringAndReference", "\"BJT1\"")),
+             create_parm("power",  "Power", PARM_NO_DISPLAY,  "StdFormSet", POWER_UNIT,  prm("StdForm","2")),
+             create_parm("current",  "Current", PARM_NO_DISPLAY,  "StdFormSet", CURRENT_UNIT,  prm("StdForm","1")),
+             create_parm("voltage", "Voltage", PARM_NO_DISPLAY,  "StdFormSet", VOLTAGE_UNIT,  prm("StdForm","2")),
+             create_parm("xcount", "Number of array columns", PARM_NO_DISPLAY | PARM_INT, "StdFormSet", UNITLESS_UNIT, prm("StdForm","3")),
+             create_parm("ycount", "Number of array rows", PARM_NO_DISPLAY | PARM_INT, "StdFormSet", UNITLESS_UNIT, prm("StdForm","2")),
+             create_parm("xsize", "Width", PARM_NO_DISPLAY, "StdFormSet", UNITLESS_UNIT, prm("StdForm", "10")),
+             create_parm("ysize", "Length", PARM_NO_DISPLAY, "StdFormSet", UNITLESS_UNIT, prm("StdForm","15")),
+             create_parm("xpitch", "Width pitch", PARM_NO_DISPLAY, "StdFormSet", UNITLESS_UNIT, prm("StdForm","20")),
+             create_parm("ypitch", "Length pitch", PARM_NO_DISPLAY, "StdFormSet", UNITLESS_UNIT, prm("StdForm","30")), 
+             create_parm("heatlayername", "Name of heat layer", PARM_NO_DISPLAY, "StringAndReferenceFormSet", UNITLESS_UNIT, prm("StringAndReference","\"Heat1\"")),
+             create_parm("usepower", "Use specified power", PARM_NO_DISPLAY, "sim_enum_off_on_list_form", UNITLESS_UNIT, prm("Yes","1")), 
+             create_parm("useiv", "Use current and voltage to compute power", PARM_NO_DISPLAY, "sim_enum_off_on_list_form", UNITLESS_UNIT, prm("No","0"))
+             
+            );
