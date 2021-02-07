@@ -1,0 +1,48 @@
+#!/bin/ksh
+# Remove many temporary files
+#
+
+# removing directories
+find . \( -name ".cadence" -o -name "*.raw" \
+    -o -name "idftmp" -o -name "simulation" \
+    -o -name ".DL" -o -name "mfg" \
+    -o -name "*.ahdlSimDB" -o -name "*.ahdlcmi" \
+    -o -name .tmp_${LOGNAME} \
+    -o -name logs_${LOGNAME} \
+    -o -name SimLog \
+    -o -name "*.pvadir" \
+    -o -name ".*.ams_work" \
+    \) \
+    -print -exec rm -rf {} \;
+
+# removing files 
+find . \( -name "*%" -o -name "*-" -o -name "*~" \
+    -o -name "*cdslck*" -o -name "*.bak" \
+    -o -name libManager.log -o -name adsSim.log \
+    -o -name spectre.log -o -name ".cadence" \
+    -o -name "*.ds" -o -name "*.raw" -o -name "*.atf" \
+    -o -name ".nfs*" -o -name "netlist.log" \
+    -o -name "hpeesofsim.cfg.old" -o -name "de_sim.cfg.old" \
+    -o -name "schematic.prf" -o -name "layout.prf" \
+    -o -name "saved.wrkstate" \
+    -o -name "dcs.dcs" \
+    -o -name "debug.out" \
+    -o -name "libManager.log" \
+    -o -name "search_history.log" \
+    -o -name "xdl.log" \
+    -o -name "xhcc.log" \
+    -o -name "setup.loc" \
+    -o -name "core" \
+    -o -name ".DCOP*" \
+    -o -name ".*.swp" \
+    -o -name "*.ic0" \
+    -o -name "*.mc0" \
+    -o -name "*.pa0" \
+    -o -name "*st[0-9]" -o -name "*tr[0-9]" \
+    -o -name "*sw[0-9]" -o -name "*ac[0-9]" \
+    -o -name "*mt[0-9]" -o -name "*ms[0-9]" \
+    -o -name "*ma[0-9]" \
+    -o -name "*.valog" \
+    \) \
+    -print -exec rm -f {} \;
+

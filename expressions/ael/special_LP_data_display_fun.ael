@@ -1,0 +1,289 @@
+// Copyright Keysight Technologies 2011 - 2017  
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+// fputs(stderr, " Defining function find_best_value_with_condition");
+//***********************************************************************
+/*BEGIN_DOC
+  FUN_NAME: find_best_value_with_condition()
+  FUN_DESCRIPTION: Finds the best value (minimum or maximum) of a response, while also satisfying a second condition
+  MAKE_PUBLIC: True
+  RETURNED_VALUE: Real
+  CATEGORY: Statistics
+  SYNTAX: Results=find_best_value_with_condition(interpolated_Responses, interpolated_Powers, Min_or_Max, desired_Power, tolerance)
+  EXAMPLE:
+  desired_Pdel_dBm=30
+  interpStepSize=0.05
+  interpType="spline"
+  Gain=Pdel_dBm-indep(Pdel_dBm), where Pdel_dBm is the power delivered to a load in a swept-power load pull simulation
+  Interpolated_Gain_vs_Pdel_dBm=interpolate_swept_data(vs(Gain,Pdel_dBm),desired_Pdel_dBm,interpStepSize,interpType)
+  Interpolated_Gain=vs(Interpolated_Gain_vs_Pdel_dBm,real_indexs11), where real_indexs11 is the real part of the reflection coefficient from the load pull
+  Interpolated_Pdel_dBm=indep(Interpolated_Gain_vs_Pdel_dBm)
+  Max_Gain_Data=find_best_value_with_condition(Interpolated_Gain, Interpolated_Pdel_dBm, "Max", desired_Pdel_dBm, interpStepSize)
+  ARGUMENT
+  ARG_NAME: interpolated_Responses
+  ARG_DESCRIPTION: one- or two-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: interpolated_Powers
+  ARG_DESCRIPTION: one- or two-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: Min_or_Max
+  ARG_DESCRIPTION: string variable that specifies whether the best response is a minimum or a maximum
+  ARG_DEFAULT: "Max"
+  ARG_RANGE: ("Min", "MIN", "min", "Max", "MAX", "max")
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: desired_Power
+  ARG_DESCRIPTION: desired power delivered to load, in dBm, a single real or integer number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: tolerance
+  ARG_DESCRIPTION: interpolation step size, a single real or integer number
+  ARG_DEFAULT: 0.05
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: NO
+  DEFINED_IN: $HPEESOF_DIR/expressions/ael/special_LP_data_display_fun.ael
+  SEE ALSO: None
+  NOTES: You can run a swept power load pull simulation or a constant output power load pull simulation in which the input power is optimized such that a desired power 
+  is delivered to each load.  You may calculate different responses from the load pull simulation, such as gain, gain compression, PAE, intermodulation distortion, 
+  bias current, etc.  After a constant output power load pull (or after interpolating the data from a swept input power load pull) you can find the best response 
+  (minimum or maximum value) and the corresponding load.  This works fine provided the power delivered goal was satisfied at every load.  However, for some loads, the 
+  power delivered goal may not have been satisfied.  This function finds the best value of the response but also checks the corresponding interpolated power delivered 
+  to make sure it is within the tolerance of the desired power.  The function also returns the independent value or values that correspond to the best response.
+  If the desired power was not achieved for any of the loads, then the function returns the response that corresponds to the highest power.
+  In the example above, Max_Gain_Data is a list.  Max_Gain_Data[0] is the best value.  Max_Gain_Data[1] is the corresponding independent variable.  If the response has
+  two independent variables, then Max_Gain_Data[2] will be the second corresponding independent value.
+  
+  Another way to think about this function is that it finds the minimum or maximum value of response A provided that corresponding response B is within "tolerance" of some 
+  desired value.
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies (AEH)
+  DATE: July 21, 2011
+  VERSION_CREATED: ADS 2011.05 
+  END_DOC*/
+  //***********************************************************************
+defun find_best_value_with_condition(interpolated_Responses, interpolated_Powers, Min_or_Max, desired_Power, tolerance)
+{
+    if ((interpolated_Responses == NULL) || (interpolated_Powers == NULL))
+    {
+	print_function_error( "find_best_value_with_condition", "interpolated_Responses and interpolated_Powers passed parameters are required.");
+	return;
+    }
+	if (sweep_dim(interpolated_Responses) == 1)
+	{
+		if ((sweep_dim(interpolated_Responses) != sweep_dim(interpolated_Powers)) || (sweep_size(interpolated_Responses) != sweep_size(interpolated_Powers)))
+		{
+		print_function_error( "find_best_value_with_condition", "interpolated_Responses and interpolated_Powers must have the same dimensionality");
+		return;
+		}
+	}
+    else
+    {
+		if ((sweep_dim(interpolated_Responses) != sweep_dim(interpolated_Powers)) || (sweep_size(interpolated_Responses[0]) != sweep_size(interpolated_Powers[0])) || (sweep_size(interpolated_Responses[0,::]) != sweep_size(interpolated_Powers[0,::])))
+		{
+		print_function_error( "find_best_value_with_condition", "interpolated_Responses and interpolated_Powers must have the same dimensionality");
+		return;
+		}
+	}
+    if (((sweep_dim(desired_Power) != 0) || sweep_size(desired_Power) != 1) && (desired_Power !=NULL))
+    {
+	print_function_error( "find_best_value_with_condition", "desired_Power must be a single real or integer number");
+	return;
+    }
+	if ((Min_or_Max != "Min") && (Min_or_Max !="MIN") && (Min_or_Max !="min") && (Min_or_Max !="Max") && (Min_or_Max !="MAX") && (Min_or_Max !="max") && (Min_or_Max !=NULL))
+    {
+	print_function_error( "find_best_value_with_condition", "Min_or_Max must be set to \"Min\", \"MIN\", \"min\", \"Max\", \"MAX\", or \"max\" ");
+	return;
+    }
+    decl Min_or_MaxChkd = if (Min_or_Max == NULL) then "Max" else Min_or_Max; // find the maximum response as the default if no parameter passed.
+	decl desired_PowerChkd = if (desired_Power == NULL) then max(max(interpolated_Powers)) else desired_Power;  //
+    decl toleranceChkd = if (tolerance == NULL) then 0.05 else tolerance;
+    decl sweepDim = sweep_dim(interpolated_Responses);
+    decl results = NULL; 
+ 
+    switch (sweepDim) {
+    case 0: print_function_error( "find_best_values_with_condition", " does not support single number data.");
+	return;
+	break;
+    case 1: results = find_best_value_with_condition_1d(interpolated_Responses, interpolated_Powers, Min_or_MaxChkd, desired_PowerChkd, toleranceChkd);
+	break;
+    case 2: results = find_best_value_with_condition_2d(interpolated_Responses, interpolated_Powers, Min_or_MaxChkd, desired_PowerChkd, toleranceChkd);
+	break;
+    default: print_function_error( "find_best_values_with_condition", " does not support data with dimensions greater than two.");
+	return;
+	break;
+    }
+
+    return results;
+} // fun - find_best_value_with_condition
+
+
+defun find_best_value_with_condition_2d(interpolated_Responses, interpolated_Powers, Min_or_Max, desired_Power, tolerance)
+{
+	decl outer_index;
+	decl inner_index;
+	decl numPts_outer = sweep_size(interpolated_Responses[::,0]);
+	decl numPts_inner = sweep_size(interpolated_Responses[0,::]);
+	decl best_value = interpolated_Responses[0,0];
+	decl best_outer_index = 0;
+	decl best_inner_index = 0;
+	decl desired_Power_satisfied_flag = 0;
+	
+	if ((Min_or_Max == "Min") || (Min_or_Max == "MIN") || (Min_or_Max == "min"))
+	{
+		decl min_value = min(min(interpolated_Responses));
+		best_outer_index = int(min_index(min(interpolated_Responses)));
+		best_inner_index = int(min_index(interpolated_Responses[best_outer_index,::]));
+		if (mag(interpolated_Powers[best_outer_index,best_inner_index] - desired_Power) < tolerance)
+		{
+			return list(min_value,best_outer_index,best_inner_index);
+		}
+		best_value = 1e20;        // re-initialize to a large positive number before starting more exhaustive search.
+		for (outer_index=0; outer_index<numPts_outer; outer_index++)
+		{
+			for (inner_index=0; inner_index<numPts_inner; inner_index++)
+			{
+				if ((interpolated_Responses[outer_index,inner_index] < best_value) && (mag(interpolated_Powers[outer_index,inner_index] - desired_Power) < tolerance))
+				{
+					best_value = interpolated_Responses[outer_index,inner_index];
+					best_outer_index = outer_index;
+					best_inner_index = inner_index;
+					desired_Power_satisfied_flag = 1;
+				}
+			}
+		}
+		if (!desired_Power_satisfied_flag) // if the desired power requirement is never satisfied, use the indices of the maximum power point
+		{
+			best_outer_index = max_index(max(interpolated_Powers));
+			best_inner_index = max_index(interpolated_Powers[best_outer_index,::]);
+			best_value = interpolated_Responses[best_outer_index,best_inner_index];
+		}
+		return list(best_value,best_outer_index,best_inner_index);
+	}
+    else
+	{
+		decl max_value = max(max(interpolated_Responses));
+		best_outer_index = int(max_index(max(interpolated_Responses)));
+		best_inner_index = int(max_index(interpolated_Responses[best_outer_index,::]));
+		if (mag(interpolated_Powers[best_outer_index,best_inner_index] - desired_Power) < tolerance)
+		{
+			return list(max_value,best_outer_index,best_inner_index);
+		}
+		best_value = -1e20;        // re-initialize to a large negative number before starting more exhaustive search.
+		for (outer_index=0; outer_index<numPts_outer; outer_index++)
+		{
+			for (inner_index=0; inner_index<numPts_inner; inner_index++)
+			{
+				if ((interpolated_Responses[outer_index,inner_index] > best_value) && (mag(interpolated_Powers[outer_index,inner_index] - desired_Power) < tolerance))
+				{
+					best_value = interpolated_Responses[outer_index,inner_index];
+					best_outer_index = outer_index;
+					best_inner_index = inner_index;
+					desired_Power_satisfied_flag = 1;
+				}
+			}
+		}
+		if (!desired_Power_satisfied_flag) // if the desired power requirement is never satisfied, use the indices of the maximum power point
+		{
+			best_outer_index = max_index(max(interpolated_Powers));
+			best_inner_index = max_index(interpolated_Powers[best_outer_index,::]);
+			best_value = interpolated_Responses[best_outer_index,best_inner_index];
+		}
+		return list(best_value,best_outer_index,best_inner_index);
+	}	
+}	// fun - find_best_value_with_condition_2d
+
+
+defun find_best_value_with_condition_1d(interpolated_Responses, interpolated_Powers, Min_or_Max, desired_Power, tolerance)
+{
+	decl inner_index;
+	decl numPts_inner = sweep_size(interpolated_Responses[::]);
+	decl best_value = interpolated_Responses[0];
+	decl best_inner_index = 0;
+	decl desired_Power_satisfied_flag = 0;
+	
+	if ((Min_or_Max == "Min") || (Min_or_Max == "MIN") || (Min_or_Max == "min"))
+	{
+	    // fputs(stderr,strcat("Entered Min loop"));
+		decl min_value = min(interpolated_Responses);
+		best_inner_index = int(min_index(interpolated_Responses[::]));
+		if (mag(interpolated_Powers[best_inner_index] - desired_Power) < tolerance)
+		{
+			return list(min_value,best_inner_index);
+		}
+		best_value = 1e20;        // re-initialize to a large positive number before starting more exhaustive search.
+		for (inner_index=0; inner_index<numPts_inner; inner_index++)
+		{
+			if ((interpolated_Responses[inner_index] < best_value) && (mag(interpolated_Powers[inner_index] - desired_Power) < tolerance))
+			{
+				best_value = interpolated_Responses[inner_index];
+				best_inner_index = inner_index;
+				desired_Power_satisfied_flag = 1;
+			}
+		}
+		if (!desired_Power_satisfied_flag) // if the desired power requirement is never satisfied, use the index of the maximum power point
+		{
+			best_inner_index = max_index(interpolated_Powers[::]);
+			best_value = interpolated_Responses[best_inner_index];
+		}
+		return list(best_value,best_inner_index);
+	}
+    else
+	{
+        // fputs(stderr,strcat("Entered Max loop"));
+		decl max_value = max(interpolated_Responses);
+		best_inner_index = int(max_index(interpolated_Responses[::]));
+		if (mag(interpolated_Powers[best_inner_index] - desired_Power) < tolerance)
+		{
+			return list(max_value,best_inner_index);
+		}
+		best_value = -1e20;        // re-initialize to a large negative number before starting more exhaustive search.
+		for (inner_index=0; inner_index<numPts_inner; inner_index++)
+		{
+			if ((interpolated_Responses[inner_index] > best_value) && (mag(interpolated_Powers[inner_index] - desired_Power) < tolerance))
+			{
+				best_value = interpolated_Responses[inner_index];
+				best_inner_index = inner_index;
+				desired_Power_satisfied_flag = 1;
+			}
+		}
+		if (!desired_Power_satisfied_flag) // if the desired power requirement is never satisfied, use the index of the maximum power point
+		{
+			best_inner_index = max_index(interpolated_Powers[::]);
+			best_value = interpolated_Responses[best_inner_index];
+		}
+		return list(best_value,best_inner_index);
+	}	
+}	// fun - find_best_value_with_condition_1d
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+
+
+
+// NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+//

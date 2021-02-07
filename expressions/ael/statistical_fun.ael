@@ -1,0 +1,2463 @@
+// Copyright Keysight Technologies 1998 - 2016  
+// @(#) $Source: /cvs/sr/src/genfun/source/statistical_fun.ael,v $ $Revision: 1.56 $ $Date: 2011/08/23 21:25:20 $
+defun spearman_rank_corr(A,B)
+{
+    decl Asweepdim=sweep_dim(A);
+    decl Bsweepdim=sweep_dim(B);
+    decl Asweepsize=sweep_size(A);
+    decl Bsweepsize=sweep_size(B);
+    decl Asize=size(A);
+    decl Bsize=size(B);
+    decl Achanged=0, Bchanged=0;
+    decl Asweepvector,Bsweepvector;
+    
+    if (Asweepdim > 2 || Bsweepdim > 2) {
+	print_function_error("spearman_rank_corr","the funciton won't work for dimension larger than 2");
+	return NULL;
+    }
+    
+    if (Asweepdim == 2) {
+	decl i;
+	
+	if (Asweepsize(2) != 1) {
+	    print_function_error("spearman_rank_corr","the data is not a valid data");
+	    return NULL;	    
+	}
+
+	Asweepvector={A[0][0]};
+
+	for (i=1; i < Asweepsize(1); i++) {
+	    Asweepvector = {Asweepvector, A[i][0]};
+	}
+	Achanged=1;
+    }
+    else if(Asweepdim != 0 || Asweepsize != 1 || Asize <= 1) {
+	print_function_error("spearman_rank_corr","arguments must be vectors");
+	return NULL;
+    }
+
+    if (Bsweepdim == 2) {
+	decl i;
+
+	if (Bsweepsize(2) != 1) {
+	    print_function_error("spearman_rank_corr","the data is not a valid data");
+	    return NULL;	    
+	}
+
+	Bsweepvector={B[0][0]};
+
+	for (i=1; i < Bsweepsize(1); i++) {
+	    Bsweepvector = {Bsweepvector, B[i][0]};
+	}
+	Bchanged=1;
+    }
+    else if(Bsweepdim != 0 || Bsweepsize != 1 || Bsize <= 1) {
+	print_function_error("spearman_rank_corr","arguments must be vectors");
+	return NULL;
+    }    
+
+    if (!Achanged)
+	Asweepvector=A;
+    if (!Bchanged)
+	Bsweepvector=B;
+    decl y;
+    y=spearman_rc(Asweepvector, Bsweepvector);
+
+    return real(y);
+}
+
+defun prob_spearman_rank_corr_is_zero(A,B)
+{
+    decl Asweepdim=sweep_dim(A);
+    decl Bsweepdim=sweep_dim(B);
+    decl Asweepsize=sweep_size(A);
+    decl Bsweepsize=sweep_size(B);
+    decl Asize=size(A);
+    decl Bsize=size(B);
+    decl Achanged=0, Bchanged=0;
+    decl Asweepvector,Bsweepvector;
+    
+    if (Asweepdim > 2 || Bsweepdim > 2) {
+	print_function_error("prob_spearman_rank_corr_is_zero","the funciton won't work for dimension larger than 2");
+	return NULL;
+    }
+    
+    if (Asweepdim == 2) {
+	decl i;
+	
+	if (Asweepsize(2) != 1) {
+	    print_function_error("prob_spearman_rank_corr_is_zero","the data is not a valid data");
+	    return NULL;	    
+	}
+
+	Asweepvector={A[0][0]};
+
+	for (i=1; i < Asweepsize(1); i++) {
+	    Asweepvector = {Asweepvector, A[i][0]};
+	}
+	Achanged=1;
+    }
+    else if(Asweepdim != 0 || Asweepsize != 1 || Asize <= 1) {
+	print_function_error("prob_spearman_rank_corr_is_zero","arguments must be vectors");
+	return NULL;
+    }
+
+    if (Bsweepdim == 2) {
+	decl i;
+
+	if (Bsweepsize(2) != 1) {
+	    print_function_error("prob_spearman_rank_corr_is_zero","the data is not a valid data");
+	    return NULL;	    
+	}
+
+	Bsweepvector={B[0][0]};
+
+	for (i=1; i < Bsweepsize(1); i++) {
+	    Bsweepvector = {Bsweepvector, B[i][0]};
+	}
+	Bchanged=1;
+    }
+    else if(Bsweepdim != 0 || Bsweepsize != 1 || Bsize <= 1) {
+	print_function_error("prob_spearman_rank_corr_is_zero","arguments must be vectors");
+	return NULL;
+    }    
+
+    if (!Achanged)
+	Asweepvector=A;
+    if (!Bchanged)
+	Bsweepvector=B;
+    decl y;
+    y=prob_spearman_rc_is_zero(Asweepvector, Bsweepvector);
+
+    return real(y);
+}
+
+//****************************************************************************
+// Standard deviation
+/*BEGIN_DOC
+FUN_NAME: stddev()
+FUN_DESCRIPTION: This function calculates the standard deviation of the data 
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = stddev(data, flag)
+EXAMPLE: 
+a = stddev(data) 
+a = stddev(data, 1) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: data to find the stddev
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: flag
+  ARG_DESCRIPTION: indicates how stddev normalizes
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:1] dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif When flag equals 0, the stddev normalizes by N-1, where N is the length of the data sequence. Otherwise, stddev normalizes by N.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: mean() 
+NOTES: This function can only be used by entering an equation (Eqn) in the Data Display window.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun stddev(x,normByN)
+{
+  decl sweepDim = sweep_dim(x);
+  
+  if (sweepDim == 0)
+      return 0;
+
+  decl sweepSize=inner_sweep_size(x);
+
+  if((!normByN) && sweepSize != 1)
+    sweepSize = sweepSize - 1;
+  
+  decl xMinusMean = x-expand(mean(x));
+  decl y = sqrt(sum(conj(xMinusMean)*xMinusMean)/sweepSize);
+
+  return real(y);         // chop off (+0i)
+
+} //fun - stddev
+
+//****************************************************************************
+// Standard deviation outer
+/*BEGIN_DOC
+FUN_NAME: stddev_outer()
+FUN_DESCRIPTION: Computes the stddev across the outer dimension of two-dimensional data
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = stddev_outer(x, flag)
+EXAMPLE: 
+a = stddev_outer(data) 
+
+a = stddev_outer(data, 1) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: data to find the stddev
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: flag
+  ARG_DESCRIPTION: indicates how stddev normalizes
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:1] dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif When flag equals 0, the stddev normalizes by N-1, where N is the length of the data sequence. Otherwise, stddev normalizes by N.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: fun_2d_outer(), max_outer(), mean_outer(), min_outer()
+NOTES: The stddev_outer() function operates on the inner dimension of two-dimensional data. This function just calls the fun_2d_outer function, with stddev being the applied operation. As an example, assume that a Monte Carlo simulation of an amplifier was run, with 151 random sets of parameter values, and that for each set the S-parameters were simulated over 26 different frequency points. S21 becomes a [151 Monte Carlo iteration X 26 frequency] matrix, with the inner dimension being frequency, and the outer dimension being Monte Carlo index. Now, assume that it is desired to know the stddev value of the S-parameters at each frequency. Inserting an equation stddev(S21) computes the stddev value of S21 at each Monte Carlo iteration. If S21 is simulated from 1 to 26 GHz, it computes the stddev value over this frequency range, which usually is not very useful.  Inserting an equation stddev_outer(S21) computes the stddev value of S21 at each Monte Carlo frequency. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun stddev_outer(x,normByN)
+{
+   return fun_2d_outer(x, stddev, normByN);
+} //fun - stddev_outer
+
+//****************************************************************************
+// Median
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: median()
+FUN_DESCRIPTION: Returns the median
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = median(x)
+EXAMPLE: 
+a = median([1, 2, 3, 4]) returns 2.5
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: data to find the median
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: mean(), sort() 
+NOTES: This function can only be used by entering an equation (Eqn) in the Data Display window.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+defun median(x)
+{
+  if ( sweep_dim(x) < 2 && size(x) == 1 )
+    {
+      decl numOfPts = sweep_size(x);
+      decl xSorted = sort(x,"ascending");
+
+      return if ((numOfPts%2) == 0) then 0.5*(xSorted[numOfPts/2-1] + xSorted[numOfPts/2]) else xSorted[(numOfPts/2)-1]; //TFS126348
+    }
+  
+  print_function_error("median","This function is only available for a single-sweep scalar parameter");
+  return;
+}
+
+//****************************************************************************
+// Probability density function
+/*BEGIN_DOC
+FUN_NAME: pdf()
+FUN_DESCRIPTION: Returns a probability density function (PDF)
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = pdf(data, numBins, minBin, maxBin) 
+EXAMPLE: 
+y = pdf(data) 
+
+y = pdf(data, 20) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: the signal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numBins
+  ARG_DESCRIPTION: number of subintervals or bins used to measure PDF
+  ARG_DEFAULT: log(numOfPts)/log(2.0)
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: minBin
+  ARG_DESCRIPTION: beginning of the evaluation of the PDF
+  ARG_DEFAULT: minimum value of the data
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: maxBin
+  ARG_DESCRIPTION: end of the evaluation of the PDF
+  ARG_DEFAULT: maximum value of the data
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: cdf(), histogram(), yield_sens() 
+NOTES: This function measures the probability distribution function of a signal.
+
+This function can only be used by entering an equation (Eqn) in the Data Display window. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+/*
+defun pdf(x, n_bins, min_bin, max_bin)
+{
+  decl result =  histogram(x, n_bins, min_bin, max_bin);
+  //Make sure all samples are counted to normalize
+  decl resultCount;
+  if(sweep_dim(result) > 1)
+     resultCount = expand(sum(histogram(x,n_bins))); 
+  else
+     resultCount = sum(histogram(x,n_bins));
+  result = result / resultCount;
+  set_attr(result,"TraceType","Histogram");
+  return result;
+}
+*/
+
+defun pdf(x, n_bins, min_bin, max_bin)
+{
+  decl result =  histogram(x, n_bins, min_bin, max_bin);
+  //Make sure all samples are counted to normalize
+  decl resultCount;
+  if(sweep_dim(result) > 1)
+     resultCount = expand(sum(result)); 
+  else
+     resultCount = sum(result);
+  result = result / resultCount;
+  set_attr(result,"TraceType","Histogram");
+  return result;
+} //fun - pdf
+
+//****************************************************************************
+// Cumulative density function
+/*BEGIN_DOC
+FUN_NAME: cdf()
+FUN_DESCRIPTION: Returns the cumulative distribution function (CDF)
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+EXAMPLE: 
+y = cdf(data) 
+y = cdf(data, 20) 
+SYNTAX: y = cdf(data, numBins, minBin, maxBin) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: the signal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numBins
+  ARG_DESCRIPTION: number of subintervals or bins used to measure CDF
+  ARG_DEFAULT: log(numOfPts)/log(2.0)
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: minBin
+  ARG_DESCRIPTION: beginning of the evaluation of the CDF
+  ARG_DEFAULT: minimum value of the data
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: maxBin
+  ARG_DESCRIPTION: end of the evaluation of the CDF
+  ARG_DEFAULT: maximum value of the data
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: histogram(), pdf(), yield_sens() 
+NOTES: This function measures the cumulative distribution function of a signal.
+
+This function can only be used by entering an equation (Eqn) in the Data Display window. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun cdf(x, n_bins, min_bin, max_bin)
+{
+  decl result = pdf(x, n_bins, min_bin, max_bin);
+  result =  cum_sum(result);
+  set_attr(result,"TraceType","Histogram");
+  return result;
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: max_outer()
+FUN_DESCRIPTION: Computes the maximum across the outer dimension of two-dimensional data
+RETURNED_VALUE: Real, Complex
+CATEGORY: Math
+SYNTAX: y = max_outer(data)
+EXAMPLE: y = max_outer(data) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: 2-dimensional data to find max
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: fun_2d_outer(), mean_outer(), min_outer(), stddev_outer()
+NOTES: The max function operates on the inner dimension of two-dimensional data. The max_outer function just calls the fun_2d_outer function, with max being the applied operation. As an example, assume that a Monte Carlo simulation of an amplifier was run, with 151 random sets of parameter values, and that for each set the S-parameters were simulated over 26 different frequency points. S21 becomes a [151 Monte Carlo iteration X 26 frequency] matrix, with the inner dimension being frequency, and the outer dimension being Monte Carlo index. Now, assume that it is desired to know the maximum value of the S-parameters at each frequency. Inserting an equation max(S21) computes the maximum value of S21 at each Monte Carlo iteration. If S21 is simulated from 1 to 26 GHz, it computes the maximum value over this frequency range, which usually is not very useful. Inserting an equation max_outer(S21) computes the maximum value of S21 at each Monte Carlo iteration. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+defun  max_outer(data)
+{
+    return fun_2d_outer(data, max);
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: min_outer()
+FUN_DESCRIPTION: Computes the minimum across the outer dimension of two-dimensional data
+RETURNED_VALUE: Real, Complex
+CATEGORY: Math
+SYNTAX: y = min_outer(data)
+EXAMPLE: y = min_outer(data) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: 2-dimensional data to find min
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: fun_2d_outer(), mean_outer(), max_outer(), stddev_outer()
+NOTES: The min function operates on the inner dimension of two-dimensional data. The min_outer function just calls the fun_2d_outer function, with min being the applied operation. As an example, assume that a Monte Carlo simulation of an amplifier was run, with 151 random sets of parameter values, and that for each set the S-parameters were simulated over 26 different frequency points. S21 becomes a [151 Monte Carlo iteration X 26 frequency] matrix, with the inner dimension being frequency, and the outer dimension being Monte Carlo index. Now, assume that it is desired to know the minimum value of the S-parameters at each frequency. Inserting an equation min(S21) computes the minimum value of S21 at each Monte Carlo iteration. If S21 is simulated from 1 to 26 GHz, it computes the minimum value over this frequency range, which usually is not very useful. Inserting an equation min_outer(S21) computes the minimum value of S21 at each Monte Carlo iteration. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+defun  min_outer(data)
+{
+    return fun_2d_outer(data, min);
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: mean_outer()
+FUN_DESCRIPTION: Computes the mean across the outer dimension of two-dimensional data
+RETURNED_VALUE: Real, Complex
+CATEGORY: Statistics
+SYNTAX: y = mean_outer(data)
+EXAMPLE: a = mean_outer(data) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: 2-dimensional data to find mean
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: fun_2d_outer(), max_outer(), min_outer(), stddev_outer()
+NOTES: The mean function operates on the inner dimension of two-dimensional data. The mean_outer function just calls the fun_2d_outer function, with mean being the applied operation. As an example, assume that a Monte Carlo simulation of an amplifier was run, with 151 random sets of parameter values, and that for each set the S-parameters were simulated over 26 different frequency points. S21 becomes a [151 Monte Carlo iteration X 26 frequency] matrix, with the inner dimension being frequency, and the outer dimension being Monte Carlo index. Now, assume that it is desired to know the mean value of the S-parameters at each frequency. Inserting an equation mean(S21) computes the mean value of S21 at each Monte Carlo iteration. If S21 is simulated from 1 to 26 GHz, it computes the mean value over this frequency range, which usually is not very useful.  Inserting an equation mean_outer(S21) computes the mean value of S21 at each Monte Carlo frequency. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+defun  mean_outer(data)
+{
+    return fun_2d_outer(data, mean);
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: fun_2d_outer()
+FUN_DESCRIPTION: Applies a function to the outer dimension of two-dimensional data
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = fun_2d_outer(data, fun) 
+EXAMPLE: 
+y = fun_2d_outer(data, min) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: two-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fun
+  ARG_DESCRIPTION: name of function (usually mean, max, or min) that will be applied to the outer dimension of the data
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: string
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: max_outer(), mean_outer(), min_outer() 
+NOTES: Used in max_outer(), mean_outer(), min_outer() functions. 
+
+Functions such as mean, max, and min operate on the inner dimension of two-dimensional data. The function fun_2d_outer enables these functions to be applied to the outer dimension. As an example, assume that a Monte Carlo simulation of an amplifier was run, with 151 random sets of parameter values, and that for each set the S-parameters were simulated over 26 different frequency points. S21 becomes a [151 Monte Carlo iteration X 26 frequency] matrix, with the inner dimension being frequency, and the outer dimension being Monte Carlo index. Now, assume that it is desired to know the mean value of the S-parameters at each frequency. Inserting an equation mean(S21) computes the mean value of S21 at each Monte Carlo iteration. If S21 is simulated from 1 to 26 GHz, it computes the mean value over this frequency range, which usually is not very useful. The function fun_2d_outer allows the mean to be computed over each element in the outer dimension. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun fun_2d_outer(data, fun, data2)
+{
+    decl data_dim = sweep_dim(data);
+      
+    if ( data_dim < 2 )
+	return fun(data);
+
+    if ( data_dim > 2 ) {
+      print_function_error("fun_2d_outer","Function requires 2-D data");
+      return;
+    }
+
+    decl data_size = sweep_size(data);
+    if ( data_size == NULL ) {
+      print_function_error("fun_2d_outer","Function requires that the data be regular");
+      return;
+    }
+    
+    decl inner_len = data_size(2);
+    decl result = data[0,::];  // initialize the result
+
+    decl i;
+    for(i=0; i<inner_len; i++) {
+      if (data2 != NULL)
+        result[i]=fun(data[::,i], data2);
+      else 
+        result[i]=fun(data[::,i]);
+    } //for
+    return result;
+} //fun - fun_2d_outer
+
+//****************************************************************************
+// Calculate Yield Sensitivity
+/*BEGIN_DOC
+FUN_NAME: yield_sens()
+FUN_DESCRIPTION: Returns the yield as a function of a design variable
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = yield_sens(pf_data, numBins)
+EXAMPLE: 
+ a = yield_sens(pf_data) 
+
+ a = yield_sens(pf_data, 20)
+ARGUMENT
+  ARG_NAME: pf_data
+  ARG_DESCRIPTION: binary-valued scalar data set indicating the pass/fail status of each value of a companion independent variable
+  ARG_DEFAULT: None
+  ARG_RANGE: [0-1]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numBins
+  ARG_DESCRIPTION: number of subintervals or bins used to measure yield_sens
+  ARG_DEFAULT: log(numOfPts)/log(2.0)
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: cdf(), histogram(), pdf() 
+NOTES: Used in Monte Carlo simulation. 
+
+This function measures the yield as a function of a design variable.  For more information and an example refer to "Creating a Sensitivity Histogram" in the "Tuning, Optimization and Statistical Design" documentation. 
+
+This function can only be used by entering an equation (Eqn) in the Data Display window. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//***************************************************************************
+
+defun yield_sens(tf, nbins)
+{
+  // Do some bounds checking here...
+
+  // sort
+  // The `__i' thing will be going away someday according to Patrick. -mdm.
+  // removed __i -Henock A. 19.6.2001
+  // removal of __i caused sort on data instead of the intended sort on the 
+  // indep var... -mdm Ref. Simulation7012 01/09/24
+
+
+  decl sorted_tf = sort( tf, "ascending", indep_name(tf));
+
+ // the `+0' thing is another "work around" when ..
+  decl indep_tf = indep(tf) + 0;
+  decl stop = max(indep_tf);
+  decl start = min(indep_tf);
+  stop = stop + (stop - start)*1e-6;
+  
+  decl bin_limits = histogram(indep_tf, nbins,start,stop);
+
+  decl bin_yield = bin_limits+0.0;
+  decl len = sweep_size(bin_yield);
+
+  decl i, denom;
+  decl limits = [0,cum_sum(bin_limits)-1];
+  decl cbsl = [0,cum_sum(bin_limits)];
+
+  for (i=0; i<len; i++) {
+    if ( bin_limits[i] == 0 )
+      bin_yield[i] = 0.0;
+    else
+      bin_yield[i] = 100 * sum( sorted_tf[cbsl[i]::limits[i+1]]) / bin_limits[i];
+  }
+
+  set_attr(bin_yield,"TraceType","Histogram");
+
+  return bin_yield;
+} //fun - yield_sens
+
+//***************************************************************************
+// collapses the inner independent variable
+// collapse supports parameters with dimensions of four or less
+/*BEGIN_DOC
+FUN_NAME: collapse()
+FUN_DESCRIPTION: Collapses the inner independent variable and returns one dimensional data
+RETURNED_VALUE: Integer, Real, Complex
+CATEGORY: Data Access
+SYNTAX: y = collapse(x)
+EXAMPLE: 
+Given monte carlo analysis results for the S11 of a transmission line: 
+It is two-dimensional data: the outer sweep is mcTrial; the inner sweep is the frequency from 100 MHz to 300 MHz and is given in the following format: 
+
+mcTrial   freq     S11
+1         100MHz   0.2
+          200MHz   0.4
+          300MHz   0.6
+2         100MHz   0.3
+          200MHz   0.5
+          300MHz   0.7
+
+Returns a one dimensional data with mcTrail, containing all of the previous data:
+collapsed_S11 = collapse(S11)
+
+mcTrial  S11
+1        0.2
+1        0.4
+1        0.6
+2        0.3
+2        0.5
+2        0.7
+ARGUMENT
+  ARG_NAME: x
+  ARG_DESCRIPTION: multi-dimensional data to be collapsed (dimension is larger than one and less than four)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real, complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: expand() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//***************************************************************************
+defun collapse(data)
+{
+  decl dataDim = sweep_dim(data);
+  decl indepName = indep_name_list(data);  
+  if (dataDim < 2)
+    return data;	
+  else
+    if (dataDim == 2)
+      {
+	decl i, j;
+	if(listlen(indepName) < 2 )
+	  indepName = list("indep2","indep1"); 
+	decl indep2Value = indep(data,2);
+	decl indep2Len = sweep_size(indep2Value);
+	decl indep1Value = indep(data[0,::],1);
+	decl indep1Len = sweep_size(indep1Value); 
+	decl dataType = type(data);
+	decl indep2Type = type(indep2Value);
+	decl collapsedData = create(1,dataType, {nth(0,indepName)},{indep2Type}, 1, 1);
+	decl indep2=indep(collapsedData,nth(0,indepName));
+	for(j=0; j< indep2Len; j++)
+	  {
+	  for(i=0; i< indep1Len; i++)
+	    {
+	    collapsedData[i+(j*indep1Len)]=data[j,i];
+	    indep2[i+(j*indep1Len)]=indep2Value[j];
+	    }
+	  }
+	return collapsedData;
+      }
+    else
+      if (dataDim == 3)
+	{
+	  decl i, j, k;
+	  if(listlen(indepName) < 3 )
+	    indepName = list("indep3","indep2","indep1");
+	  decl indep3Value = indep(data,3);
+	  decl indep3Len = sweep_size(indep3Value); 
+	  decl indep2Value = indep(data[0,::,::],2);
+	  decl indep2Len = sweep_size(indep2Value);
+	  decl indep1Value = indep(data[0,0,::],1);
+	  decl indep1Len = sweep_size(indep1Value); 
+	  decl dataType = type(data);
+	  decl indep3Type = type(indep3Value);
+	  decl indep2Type = type(indep2Value);
+	  decl collapsedData = create(2,dataType, {nth(0,indepName),nth(1,indepName)},{indep3Type,indep2Type}, 1, 1);
+	  decl indep3=indep(collapsedData,nth(0,indepName));
+	  decl indep2=indep(collapsedData,nth(1,indepName));
+	  for(k=0; k< indep3Len; k++)
+	    {
+	      for(j=0; j< indep2Len; j++)
+		{
+		  for(i=0; i< indep1Len; i++)
+		    {
+		      collapsedData[k,i+(j*indep1Len)]=data[k,j,i];
+		      indep2[i+(j*indep1Len)]=indep2Value[j];
+		    }
+		}
+	      indep3[k]=indep3Value[k];
+	    }
+	  return collapsedData;
+	}
+      else
+	if (dataDim == 4)
+	  {
+	    decl i, j, k, h;
+	    if(listlen(indepName) < 4)
+	      indepName = list("indep4","indep3","indep2","indep1");
+	    decl indep4Value = indep(data,4);
+	    decl indep4Len = sweep_size(indep4Value); 
+	    decl indep3Value = indep(data[0,::,::,::],3);
+	    decl indep3Len = sweep_size(indep3Value); 
+	    decl indep2Value = indep(data[0,0,::,::],2);
+	    decl indep2Len = sweep_size(indep2Value);
+	    decl indep1Value = indep(data[0,0,0,::],1);
+	    decl indep1Len = sweep_size(indep1Value); 
+	    decl dataType = type(data);
+	    decl indep4Type = type(indep4Value);
+	    decl indep3Type = type(indep3Value);
+	    decl indep2Type = type(indep2Value);
+	    decl collapsedData = create(3,dataType, {nth(0,indepName),nth(1,indepName),nth(2,indepName)},{indep4Type,indep3Type,indep2Type}, 1, 1);
+	    decl indep4=indep(collapsedData,nth(0,indepName));
+	    decl indep3=indep(collapsedData,nth(1,indepName));
+	    decl indep2=indep(collapsedData,nth(2,indepName));
+	    for(h=0; h< indep4Len; h++)
+	      {
+		for(k=0; k< indep3Len; k++)
+		  {
+		    for(j=0; j< indep2Len; j++)
+		      {
+			for(i=0; i< indep1Len; i++)
+			  {
+			    collapsedData[h,k,i+(j*indep1Len)]=data[h,k,j,i];
+			    indep2[i+(j*indep1Len)]=indep2Value[j];
+			  }
+		      }
+		    indep3[k]=indep3Value[k];
+		  }
+		indep3[h]=indep3Value[h];
+	      }
+	    return collapsedData;
+	  }
+	else
+	  print_function_error("collapse","This function does not support parameters with dimensions greater than four");     
+}
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: build_subrange()
+FUN_DESCRIPTION: Builds the subrange data according to the innermost independent range. Use with all swept data
+RETURNED_VALUE: Integer, Real, Complex
+CATEGORY: Data Access
+SYNTAX: y = build_subrange(data, innermostIndepLow, innermostIndepHigh) 
+EXAMPLE: 
+Given S-parameter data swept as a function of frequency with a range of 100 MHz to 500 MHz, find the values of S12 in the range of 200 MHz to 400 MHz. 
+
+subrange_S12 = build_subrange(S12, 200MHz, 400MHz) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: analysis results or user input.
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: innermostIndepLow
+  ARG_DESCRIPTION: lowest value of innermost independent
+  ARG_DEFAULT: minimum value of the inner most independent variable
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: innermostIndepHigh
+  ARG_DESCRIPTION: highesr value of innermost independent
+  ARG_DEFAULT: maximum value of the inner most independent variable
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: None
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//***************************************************************************
+
+// build the subrange data according to the innermost indep range
+defun build_subrange(data, innermostIndepLow, innermostIndepHigh)
+{
+  decl permutedData=permute(data);
+  decl dataDim = sweep_dim(permutedData);
+  decl indeps = indep(permutedData, dataDim);
+  decl lowIndex, highIndex;
+  decl result;
+
+  if( innermostIndepLow == NULL ) {
+	innermostIndepLow = min(indeps);
+  }
+  if( innermostIndepHigh == NULL ) {
+	innermostIndepHigh = max(indeps);
+  }
+  lowIndex = find_index(indeps, innermostIndepLow );
+  highIndex = find_index(indeps, innermostIndepHigh );
+
+  result=permute(permutedData);
+  return result[lowIndex::highIndex];
+}
+
+//***************************************************************************
+// the function will collapse the multi-dim data and finally
+// apply histogram to one-dim data. 
+// if the normalized is set to "yes", it will give the nomalized
+// histogram. see AELexpression.538
+/*BEGIN_DOC
+FUN_NAME: histogram_multiDim()
+FUN_DESCRIPTION: Collapses the multi-dimensional data down to one-dimensional data and applies the histogram to the one-dimensional data. 
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = histogram_multiDim(data, normalized, numBins, minBin, maxBin)
+EXAMPLE: 
+Given monte carlo analysis results for the S12. It is two-dimensional data: the outer sweep is mcTrial; the inner sweep is the frequency from 100 MHz to 500 MHz. 
+
+Histogram_multiDim_S12 = histogram_multiDim(S12) 
+
+See also $HPEESOF_DIR/examples/Tutorial/yldex1_wrk
+(see measurement_hist.dds and worstcase_measurement_hist.dds) 
+
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: the signal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: normalized
+  ARG_DESCRIPTION: sets normalization of data dagger.gif
+  ARG_DEFAULT: no
+  ARG_RANGE: "no", "yes"
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numBins
+  ARG_DESCRIPTION: number of subintervals or bins used to measure CDF
+  ARG_DEFAULT: log(numOfPts)/log(2.0)
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: minBin
+  ARG_DESCRIPTION: beginning of the evaluation of the CDF
+  ARG_DEFAULT: minimum value of the data
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: maxBin
+  ARG_DESCRIPTION: end of the evaluation of the CDF
+  ARG_DEFAULT: maximum value of the data
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif When normalized is set to "yes", the histogram is generated with percent on the Y-axis instead of the number of outcomes. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: collapse(), histogram()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//***************************************************************************
+defun histogram_multiDim(data,normalized, numBins, minBin, maxBin)
+{
+    decl dataDim=sweep_dim(data);
+    decl data_collapsed, data_Hist;
+
+    data_collapsed = data;
+    // to avoid the data to be damaged
+    while( dataDim > 1 ) {
+        data_collapsed = collapse(data);
+        data = data_collapsed;
+        dataDim = dataDim - 1;
+    }
+    data_Hist=histogram(data_collapsed,numBins,minBin,maxBin);
+    if( normalized == "yes" ) {
+        decl num_samples = sweep_size(data_collapsed);
+        data_Hist = 100*data_Hist/num_samples;
+    }
+    return data_Hist;
+}
+
+//***************************************************************************
+// define the histogram for the stat analysis 
+// assumption: the outmost sweep for data is mcTrial
+// constrains: 
+//              right now it only works for the 4 dim data due to 
+//              the constrains for function collapse() 
+//              the function can automatically select the subrange data, 
+//              BUT ONLY for the innermost sweep parameters
+/*BEGIN_DOC
+FUN_NAME: histogram_stat()
+FUN_DESCRIPTION: Reduces the histogram of a subrange of the multi-dimension data. It first calls build_subrange() to build the subrange of a mulit-dimension data, then calls histogram_multiDim() to produce the histogram. 
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = histogram_stat(data, normalized, innermostIndepLow, innermostIndepHigh, numBins, minBin, maxBin) 
+EXAMPLE: 
+Given monte carlo analysis results for the S12. It is two-dimensional data: the outer sweep is mcTrial; the inner sweep is the frequency from 100 MHz to 500 MHz. 
+
+Histogram_stat_S12 = histogram_stat(S12,,200MHz,400MHz) 
+
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: statistical data to be analyzed
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: normalized
+  ARG_DESCRIPTION: sets normalization of data dagger.gif
+  ARG_DEFAULT: no
+  ARG_RANGE: "no", "yes"
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: innermostIndepLow
+  ARG_DESCRIPTION: specifies the low value of the subrange of data with the inner most sweep variable
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: innermostIndepHigh
+  ARG_DESCRIPTION: specifies the high value of the subrange of data with the inner most sweep variable
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numBins
+  ARG_DESCRIPTION: number of subintervals or bins used to measure histogram
+  ARG_DEFAULT: log(numOfPts)/log(2.0)
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: minBin
+  ARG_DESCRIPTION: beginning of the evaluation of the histogram
+  ARG_DEFAULT: minimum value of the data
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: maxBin
+  ARG_DESCRIPTION: end of the evaluation of the histogram
+  ARG_DEFAULT: maximum value of the data
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif When normalized is set to "yes", the histogram is generated with percent on the Y-axis instead of the number of outcomes. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: histogram(), histogram_multiDim(), build_subrange()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//************************************************************************************
+defun histogram_stat(data, normalized, innermostIndepLow, innermostIndepHigh, numBins, minBin, maxBin) {
+  decl dataDim = sweep_dim(data);
+  decl data_subrange, data_Hist;
+
+  data_subrange=build_subrange(data, innermostIndepLow, innermostIndepHigh);
+  data_Hist = histogram_multiDim(data_subrange,normalized,numBins,minBin,maxBin);
+  return data_Hist;
+}
+
+// this function will build 1D data 
+// according to innermost sweep var (if index = 0)
+// otherwise, according to outmost sweep var
+defun build_1D_data(data, index) {
+  decl dataDim = sweep_dim(data);
+  decl result;
+
+  if( dataDim < 2 ) {
+    return data;
+  }
+  if( index == 0) {
+    data = permute(data);
+  } 
+  while( dataDim > 1 ) {
+    result = data[0];
+    data = result;
+    dataDim = dataDim - 1;
+  }
+  return result;
+}
+
+defun build_1D_extreme(data, iLimit) {
+  decl dataDim = sweep_dim(data);
+  decl result;
+
+  if( dataDim < 2) {
+    return data;
+  }
+  if( iLimit == 0 ) {
+    while( dataDim > 1) {
+        result = min(data);
+        data = result;
+        dataDim = dataDim-1;
+    }
+    return result;
+  }
+  else if( iLimit ==1 ){
+    while( dataDim > 1) {
+        result = max(data);
+        data = result;
+        dataDim = dataDim-1;
+    }
+    return result;
+  } 
+  else
+    print_function_error("build_1D_extreme","this function can only produce the min or max data");     
+}
+
+//************************************************************************************
+// assumption: the data and the sensitivityVar has the outmost sweep as mcTrail
+/*BEGIN_DOC
+FUN_NAME: histogram_sens()
+FUN_DESCRIPTION: Produces the yield sensitivity histogram displaying the sensitivity of a measurement statistical response to a selected statistical variable. The function is mainly applied to the statistical analysis (Monte Carlo/Yield/YieldOpt) results. 
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = histogram_sens(data, sensitivityVar, goalMin, goalMax, innermostIndepLow, innermostIndepHigh, numBins) 
+EXAMPLE: 
+Given monte carlo analysis results for the S11. It is two-dimensional data: the outer sweep is mcTrial; the inner sweep is the frequency from 100 MHz to 500 MHz. 
+
+The design wants the maximum of db(S11) is -18.0dB in the frequency range of 200 MHz to 400 MHz. The yield sensitivity of such performance to statistical variable "C1v" can be calculated as: 
+
+Histogram_sens_S11 = histogram_sens(dB(S11),C1v,,-18.0,200MHz,400MHz)
+
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: statistical response
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: sensitivityVar
+  ARG_DESCRIPTION: selected statistical variable
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: goalMin
+  ARG_DESCRIPTION: specifies the performance range dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: goalMax
+  ARG_DESCRIPTION: specifies the performance range dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: innermostIndepLow
+  ARG_DESCRIPTION: specifies the low value of the subrange of data with the inner most sweep variable
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: innermostIndepHigh
+  ARG_DESCRIPTION: specifies the high value of the subrange of data with the inner most sweep variable
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numBins
+  ARG_DESCRIPTION: number of sub-intervals or bins used to measure the histogram.
+  ARG_DEFAULT: log(numOfPts)/log(2.0)
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif The yield is 1 inside the range, and the yield is zero outside the range. Note that while goalMin and goalMax are optional arguments, at least one of them must be specified. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: collapse(), histogram()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//************************************************************************************
+defun histogram_sens(data,sensitivityVar,goalMin,goalMax,innermostIndepLow,innermostIndepHigh,numBins)
+{
+  decl data_subrange, data_1D_max=NULL, data_1D_min=NULL;
+  decl data_min_vs_sensVar=NULL, data_max_vs_sensVar=NULL;
+  decl pf_pass_fail_data;
+  decl yieldsens;
+  decl mytest;
+
+  if(goalMin == NULL && goalMax == NULL) {
+    print_function_error("histogram_sens","goalMin or goalMax must be specified");     
+  }
+  sensitivityVar = build_1D_data(sensitivityVar,1); 
+  data_subrange=build_subrange(data, innermostIndepLow, innermostIndepHigh);
+  if( goalMin != NULL) {
+    data_1D_min = build_1D_extreme(data_subrange,0);
+    data_min_vs_sensVar = vs(data_1D_min, sensitivityVar);
+  }
+  if( goalMax != NULL) {
+    data_1D_max = build_1D_extreme(data_subrange,1);
+    data_max_vs_sensVar = vs(data_1D_max, sensitivityVar);
+  }
+  if( goalMin != NULL && goalMax != NULL) {
+    pf_pass_fail_data = if( data_min_vs_sensVar<goalMin || data_max_vs_sensVar>goalMax ) then 0.0 else 1.0;
+  }
+  else if( goalMin != NULL) {
+    pf_pass_fail_data = if( data_min_vs_sensVar<goalMin ) then 0.0 else 1.0;
+  }
+  else if( goalMax != NULL) {
+    pf_pass_fail_data = if(  data_max_vs_sensVar>goalMax ) then 0.0 else 1.0;
+  }
+  yieldsens = yield_sens(pf_pass_fail_data,numBins); 
+  return yieldsens;
+} //fun - histogram_sens
+
+//************************************************************************************
+//standard normal distribution
+//x can be a single number, or a sweep variables 
+/*BEGIN_DOC
+FUN_NAME: norms_dist1D()
+FUN_DESCRIPTION: Returns the standard normal distribution: either its probability density function (pdf), or cumulative distribution function (cdf). 
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+EXAMPLE: 
+X = 0.5
+X_pdf= norms_dist1D(X, 0)
+X_cdf = norms_dist1D(X,1) 
+
+XX=[-3.9::0.1::3.9]
+XX_pdf = norms_dist1D(XX,0)
+XX_cdf = norms_dist1D(XX,1)
+SYNTAX: y = norms_dist1D(data, is_cdf)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: number or a one-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: is_cdf
+  ARG_DESCRIPTION: specifies cdf or pdf of  standard normal distribution
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf) dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif When is_cdf is not equal to "0", the function returns the cdf of the standard normal distribution. Otherwise, it returns the pdf of the standard normal distribution.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: norm_dist1D(), norm_dist_inv1D(), norms_dist_inv1D(), lognorm_dist_inv1D(), lognorm_dist1D(), uniform_dist_inv1D(), uniform_dist1D()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//************************************************************************************
+defun norms_dist1D(x,is_cdf)
+{
+    decl xDim, xSize, xType,xresult,result,cType;
+    decl xx,xxSize,i,cpf_true;
+
+    if( x == NULL) {
+        print_function_error("norms_dist1D","x must be given");     
+        return NULL;
+    }
+    xDim = sweep_dim(x);
+    if (xDim > 1) {
+        print_function_error("norms_dist1D","the funciton won't work for dimension larger than 1");
+        return NULL;
+    }
+    xType = type(x);
+    if( xType!="Integer" && xType!="Real" ) {
+        print_function_error("norms_dist1D","x must be integer or real number");     
+        return NULL;
+    }
+    if( is_cdf == NULL )
+        cpf_true = 0;  
+    else 
+        cpf_true = is_cdf;
+    cType = type(cpf_true);
+    if( cType!="Integer") {
+        print_function_error("norms_dist1D","is_cdf must be integer number");     
+        return NULL;
+    }
+    cpf_true = abs(cpf_true);
+    if( cpf_true != 0 ) {
+        cpf_true = 1;
+    }
+    xSize=sweep_size(x);
+    //convert vector or scaler to sweep
+    if(xDim == 0) {
+        xxSize = size(x);
+        if(xxSize > 1) {
+            xx=[x(1)];
+            for(i=2;i<=xxSize;i++) {
+                xx=[xx,x(i)];
+            }
+        }
+        else{
+            xx=[x];
+        }
+    }
+    else {
+        xx = x;
+    }
+    xxSize=sweep_size(xx);
+    xresult=norms_dist(xx[0],cpf_true);
+    result=[xresult];
+    for( i=1; i<xxSize; i++) {
+        xresult=norms_dist(xx[i],cpf_true);
+        result=[result,xresult];
+    }
+    return vs(result,xx);
+} //fun - norms_dist1D
+
+//**********************************************************************************
+//inverse norms_dist for 1D data
+/*BEGIN_DOC
+FUN_NAME: norms_dist_inv1D()
+FUN_DESCRIPTION: Returns the inverse of the cumulative distribution function (cdf) for a standard normal distribution
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = norms_dist_inv1D(data)
+EXAMPLE:
+X_cpf = 0.5
+X= norms_dist_inv1D(X_cpf) will be equal to 0.0 
+
+XX_cpf=[0.0::0.01::1.0]
+XX= norms_dist_inv1D(XX_cpf)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: number represents the cumulative probability
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: norm_dist1D(), norm_dist_inv1D(), norms_dist1D(), lognorm_dist_inv1D(), lognorm_dist1D(), uniform_dist_inv1D(), uniform_dist1D() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//************************************************************************************
+defun norms_dist_inv1D(px)
+{
+    decl pDim, pSize, pType,xresult,result;
+    decl ppx,ppxSize,i;
+
+    if( px == NULL) {
+        print_function_error("norms_dist_inv1D","px must be given");     
+        return NULL;
+    }
+    pDim = sweep_dim(px);
+    if (pDim > 1) {
+        print_function_error("norms_dist_inv1D","the function won't work for dimension larger than 1");
+        return NULL;
+    }
+    pType = type(px);
+    if( pType!="Integer" && pType!="Real" ) {
+        print_function_error("norms_dist_inv1D","px must be integer or real number");     
+        return NULL;
+    }
+    pSize=sweep_size(px);
+    //convert vector or scaler to sweep
+    if(pDim == 0) {
+        ppxSize = size(px);
+        if(ppxSize > 1) {
+            ppx=[px(1)];
+            for(i=2;i<=ppxSize;i++) {
+                ppx=[ppx,px(i)];
+            }
+        }
+        else{
+            ppx=[px];
+        }
+    }
+    else {
+        ppx = px;
+    }
+    ppxSize=sweep_size(ppx);
+    if(ppx[0] < 0.0 || ppx[0] > (1.0+1.0e-8)) {
+        print_function_error("norms_dist_inv1D","px must be in range 0.0 to 1.0");     
+        return NULL;
+    }
+    xresult=norms_dist_inv(ppx[0]);
+    result=[xresult];
+    for( i=1; i<ppxSize; i++) {
+        if(ppx[i] < 0.0 || ppx[i] > (1.0+1.0e-8)) {
+            print_function_error("norms_dist_inv1D","px must be in range 0.0 to 1.0");     
+            return NULL;
+        }
+        xresult=norms_dist_inv(ppx[i]);
+        result=[result,xresult];
+    }
+    return vs(result,ppx);
+} //fun - norms_dist_inv1D
+
+//**********************************************************************************
+/*BEGIN_DOC
+FUN_NAME: norm_dist_1D()
+FUN_DESCRIPTION: Returns a normal distribution: either its probability density function (pdf), or cumulative distribution function (cdf)
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+EXAMPLE:
+X = 0.5
+X_pdf= norm_dist1D(X, 0, 1, 1, 0)
+X_cdf = norm_dist1D(X,0, 1, 1, 1) 
+
+XX=[-3.9::0.1::3.9]
+XX_pdf = norm_dist1D(XX,5.0, 0.5,1,0)
+XX_cdf = norm_dist1D(XX,5.0,0.1,0,1)
+SYNTAX: y = norm_dist1D(data, m, s, absS, is_cdf)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: number or a one-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: m
+  ARG_DESCRIPTION: mean for the normal distribution
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: s
+  ARG_DESCRIPTION: standard deviation for the normal distribution
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: absS
+  ARG_DESCRIPTION: specifies absolute or relative standard deviation
+  ARG_DEFAULT: 1
+  ARG_RANGE: [0:inf) dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: is_cdf
+  ARG_DESCRIPTION: specifies cdf or pdf of normal distribution
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf) dagger.gif dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif When absS is not equal to "0", s is the absolute standard deviation; otherwise, s is the relative standard deviation
+dagger.gif dagger.gif When is_cdf is not equal to "0", the function returns the cdf of the normal distribution. Otherwise, it returns the pdf of the normal distribution. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: norm_dist_inv1D(), norms_dist_inv1D(), norms_dist1D(), lognorm_dist_inv1D(), lognorm_dist1D(), uniform_dist_inv1D(), uniform_dist1D() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//************************************************************************************
+//x is a sweep value
+//x is a sweep value
+defun norm_dist1D(x,m,s,absS,is_cdf)
+{
+    decl xDim, xSize, xType,xresult,result;
+    decl xx,xxSize,i,s_abs, cpf_true;
+
+    // check input
+    if( x == NULL) {
+        print_function_error("norm_dist1D","x must be given");     
+        return NULL;
+    }
+    xDim = sweep_dim(x);
+    if (xDim > 1) {
+        print_function_error("norm_dist1D","the funciton won't work for dimension larger than 1");
+        return NULL;
+    }
+    xType = type(x);
+    if( xType!="Integer" && xType!="Real" ) {
+        print_function_error("norm_dist1D","x must be integer or real number");     
+        return NULL;
+    }
+    if (sweep_dim(m)!=0 || sweep_dim(s)!=0 ) { 
+        print_function_error("norm_dist1D","m,s must be scalar");
+        return NULL;
+    }
+    if( s == 0.0 ) {
+        print_function_error("norm_dist1D","s can not be zero");
+        return NULL;
+    }
+    if(absS == NULL)
+        s_abs = 1;
+    else
+        s_abs = absS;
+
+    if(is_cdf == NULL)
+        cpf_true = 0;
+    else
+        cpf_true = is_cdf;
+
+    if ( sweep_dim(s_abs)!=0 ||sweep_dim(cpf_true)!=0) {
+        print_function_error("norm_dist1D","absS,is_cdf must be scalar");
+        return NULL;
+    }
+    if( type(s_abs)!="Integer" || type(cpf_true)!="Integer" ) {
+        print_function_error("norm_dist1D","absS and is_cdf must be integer");     
+        return NULL;
+    }
+    s_abs = abs(s_abs);
+    if( s_abs != 0)
+        s_abs = 1;
+    cpf_true = abs(cpf_true);
+    if( cpf_true != 0 )
+        cpf_true = 1;
+
+    //catch the special case, m=0, 
+    if( m == 0.0 && s_abs == 0 ) {
+        print_function_error("norm_dist1D","absS must be 1 when m is zero");     
+        return NULL;
+    }
+    //convert it to a sweep input
+    xSize=sweep_size(x);
+    if(xDim == 0) {
+        xxSize = size(x);
+        if(xxSize > 1) {
+            xx=[x(1)];
+            for(i=2;i<=xxSize;i++) {
+                xx=[xx,x(i)];
+            }
+        }
+        else{
+            xx=[x];
+        }
+    }
+    else {
+        xx = x;
+    }
+    
+    //do the calculation and build result
+    xxSize=sweep_size(xx);
+    xresult=norm_dist(xx[0],m,s,s_abs,cpf_true);
+    result=[xresult];
+    for( i=1; i<xxSize; i++) {
+        xresult=norm_dist(xx[i],m,s,s_abs,cpf_true);
+        result=[result,xresult];
+    }
+    return vs(result,xx);
+} //fun - norm_dist1D
+
+//************************************************************************************
+/*BEGIN_DOC
+FUN_NAME: norm_dist_inv1D()
+FUN_DESCRIPTION: Returns the inverse of the cumulative distribution function (cdf) for a normal distribution
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = norm_dist_inv1D(data, m, s, absS)
+EXAMPLE:
+X_cpf = 0.5
+X= norm_dist_inv1D(X_cpf, 0, 1, 1) will be equal to 0.0 
+
+XX_cpf=[0.0::0.01::1.0]
+XX= norm_dist_inv1D(XX_cpf, 5.0, 0.5, 1) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: represents the cumulative probability
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: m
+  ARG_DESCRIPTION: mean for the normal distribution
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: s
+  ARG_DESCRIPTION: standard deviation for the normal distribution
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: absS
+  ARG_DESCRIPTION: specifies absolute or relative standard deviation
+  ARG_DEFAULT: 1
+  ARG_RANGE: [0:inf) dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif When absS is not equal to "0", s is the absolute standard deviation; otherwise, s is the relative standard deviation
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: norm_dist1D(), norms_dist_inv1D(), norms_dist1D(), lognorm_dist_inv1D(), lognorm_dist1D(), uniform_dist_inv1D(), uniform_dist1D() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//************************************************************************************
+//x is a sweep value
+defun norm_dist_inv1D(p,m,s,absS)
+{
+    decl pDim, pSize, pType,xresult,result;
+    decl pp,ppSize,i,s_abs;
+
+    // check input
+    if( p == NULL) {
+        print_function_error("norm_dist_inv1D","p must be given");     
+        return NULL;
+    }
+    pDim = sweep_dim(p);
+    if (pDim > 1) {
+        print_function_error("norm_dist_inv1D","the funciton won't work for dimension larger than 1");
+        return NULL;
+    }
+    pType = type(p);
+    if( pType!="Integer" && pType!="Real" ) {
+        print_function_error("norm_dist_inv1D","p must be integer or real number");     
+        return NULL;
+    }
+    if (sweep_dim(m)!=0 || sweep_dim(s)!=0) {
+        print_function_error("norm_dist_inv1D","m,s must be scalar");
+        return NULL;
+    }
+    if( s == 0.0 ) {
+        print_function_error("norm_dist_inv1D","s can not be zero");
+        return NULL;
+    }
+    if( absS == NULL )
+        s_abs = 1;
+    else
+        s_abs = absS;
+
+    if ( sweep_dim(s_abs) !=0 ) {
+        print_function_error("norm_dist_inv1D","absS must be scalar");
+        return NULL;
+    }
+    if( type(s_abs)!="Integer" ) {
+        print_function_error("norm_dist_inv1D","absS must be integer");     
+        return NULL;
+    }
+    s_abs = abs(s_abs);
+    if( s_abs != 0)
+        s_abs = 1; 
+
+    if( m == 0.0 && s_abs == 0 ) {
+        print_function_error("norm_dist_inv1D","absS must be 1 when m is zero");     
+        return NULL;
+    }
+    //convert it to a sweep input
+    pSize=sweep_size(p);
+    if(pDim == 0) {
+        ppSize = size(p);
+        if(ppSize > 1) {
+            pp=[p(1)];
+            for(i=2;i<=ppSize;i++) {
+                pp=[pp,p(i)];
+            }
+        }
+        else{
+            pp=[p];
+        }
+    }
+    else {
+        pp = p;
+    }
+    
+    //do the calculation and build result
+    ppSize=sweep_size(pp);
+    if(pp[0] < 0.0 || pp[0] > (1.0+1.0e-8)) {
+        print_function_error("norm_dist_inv1D","px must be in range 0.0 to 1.0");     
+        return NULL;
+    }
+    xresult=norm_dist_inv(pp[0],m,s,s_abs);
+    result=[xresult];
+    for( i=1; i<ppSize; i++) {
+        if(pp[i] < 0.0 || pp[i] > (1.0+1.0e-8)) {
+            print_function_error("norm_dist_inv1D","px must be in range 0.0 to 1.0");     
+            return NULL;
+        }
+        xresult=norm_dist_inv(pp[i],m,s,s_abs);
+        result=[result,xresult];
+    }
+    return vs(result,pp);
+} //fun - norm_dist_inv1D
+
+//************************************************************************************
+/*BEGIN_DOC
+FUN_NAME: lognorm_dist_1D()
+FUN_DESCRIPTION: Returns a lognormal distribution: either its probability density function (pdf), or cumulative distribution function (cdf). 
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+EXAMPLE:
+X = 0.5 
+X_pdf= lognorm_dist1D(X, 2.0,0.2, 1, 0) 
+X_cdf = lognorm_dist1D(X,2.0,0.1, 0, 1) 
+XX=[-3.9::0.1::3.9] 
+XX_pdf = lognorm_dist1D(XX,2.0, 0.2,1,0) 
+XX_cdf = lognorm_dist1D(XX,2.0,0.2,0,1) 
+SYNTAX: y = lognorm_dist1D(data, m, s, absS, is_cpf)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: number or a one-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: m
+  ARG_DESCRIPTION: mean for the lognormal distribution
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: s
+  ARG_DESCRIPTION: standard deviation for the lognormal distribution
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: absS
+  ARG_DESCRIPTION: specifies absolute or relative standard deviation
+  ARG_DEFAULT: 1
+  ARG_RANGE: [0:inf) dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: is_cpf
+  ARG_DESCRIPTION: specifies cdf or pdf og lognormal distribution
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf) dagger.gif dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif When absS is not equal to "0", s is the absolute standard deviation; otherwise, s is the relative standard deviation
+dagger.gif dagger.gif When is_cdf is not equal to "0", the function returns the cdf of the lognormal distribution. Otherwise, it returns the pdf of the lognormal distribution. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: None
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//************************************************************************************
+//x is a sweep value
+defun lognorm_dist1D(x,m,s,absS,is_cdf)
+{
+    decl xDim, xSize, xType,xresult,result;
+    decl xx,xxSize,i,s_abs,cpf_true;
+
+    // check input
+    if( x == NULL) {
+        print_function_error("lognorm_dist1D","x must be given");     
+        return NULL;
+    }
+    xDim = sweep_dim(x);
+    if (xDim > 1) {
+        print_function_error("lognorm_dist1D","the funciton won't work for dimension larger than 1");
+        return NULL;
+    }
+    xType = type(x);
+    if( xType!="Integer" && xType!="Real" ) {
+        print_function_error("lognorm_dist1D","x must be integer or real number");     
+        return NULL;
+    }
+    if (sweep_dim(m)!=0 || sweep_dim(s)!=0 ) {
+        print_function_error("lognorm_dist1D","m,s must be scalar");
+        return NULL;
+    }
+    if( m == 0.0 ) {
+        print_function_error("lognorm_dist1D","m can not be zero");
+        return NULL;
+    }
+    if( s == 0.0 ) {
+        print_function_error("lognorm_dist1D","s can not be zero");
+        return NULL;
+    }
+    if( absS == NULL )
+        s_abs = 1;
+    else
+        s_abs = absS;
+
+    if( is_cdf == NULL )
+        cpf_true = 0;
+    else
+        cpf_true = is_cdf;
+
+    if( sweep_dim(s_abs)!=0 ||sweep_dim(cpf_true)!=0) {
+        print_function_error("lognorm_dist1D","absS and is_cdf must be scalar");
+        return NULL;
+    }
+    if( type(s_abs)!="Integer" || type(cpf_true)!="Integer" ) {
+        print_function_error("lognorm_dist1D","absS and is_cdf must be integer");    
+        return NULL;
+    }
+
+    s_abs = abs(s_abs);
+    if( s_abs != 0)
+        s_abs = 1;
+    cpf_true = abs(cpf_true);
+    if( cpf_true != 0 )
+        cpf_true = 1;
+
+    //convert it to a sweep input
+    xSize=sweep_size(x);
+    if(xDim == 0) {
+        xxSize = size(x);
+        if(xxSize > 1) {
+            xx=[x(1)];
+            for(i=2;i<=xxSize;i++) {
+                xx=[xx,x(i)];
+            }
+        }
+        else{
+            xx=[x];
+        }
+    }
+    else {
+        xx = x;
+    }
+    
+    //do the calculation and build result
+    xxSize=sweep_size(xx);
+    xresult=lognorm_dist(xx[0],m,s,s_abs,cpf_true);
+    result=[xresult];
+    for( i=1; i<xxSize; i++) {
+        xresult=lognorm_dist(xx[i],m,s,s_abs,cpf_true);
+        result=[result,xresult];
+    }
+    return vs(result,xx);
+} //fun - lognorm_dist1D
+
+//************************************************************************************
+/*BEGIN_DOC
+FUN_NAME: lognorm_dist_inv1D()
+FUN_DESCRIPTION: Returns the inverse of the cumulative distribution function (cdf) for a lognormal distribution
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+EXAMPLE:
+X_cpf = 0.5 
+X= lognorm_dist_inv1D(X_cpf, 2.0, 0.2, 1) 
+XX_cpf=[0.0::0.01::1.0] 
+XX= lognorm_dist_inv1D(XX_cpf, 2.0, 0.2, 1) 
+SYNTAX: y = lognorm_dist_inv1D(data, m, s, absS) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: real number representing the cumulative probability
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: m
+  ARG_DESCRIPTION: mean for the lognormal distribution
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: s
+  ARG_DESCRIPTION: standard deviation for the lognormal distribution
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: absS
+  ARG_DESCRIPTION: specifies absolute or relative standard deviation
+  ARG_DEFAULT: 1
+  ARG_RANGE: [0:inf) dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif absS is not equal to "0", s is the absolute standard deviation; otherwise, s is the relative standard deviation
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: None
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//************************************************************************************
+defun lognorm_dist_inv1D(p,m,s,absS)
+{
+    decl pDim, pSize, pType,xresult,result;
+    decl pp,ppSize,i,s_abs;
+
+    // check input
+    if( p == NULL) {
+        print_function_error("lognorm_dist_inv1D","p must be given");     
+        return NULL;
+    }
+    pDim = sweep_dim(p);
+    if (pDim > 1) {
+        print_function_error("lognorm_dist_inv1D","the funciton won't work for dimension larger than 1");
+        return NULL;
+    }
+    pType = type(p);
+    if( pType!="Integer" && pType!="Real" ) {
+        print_function_error("lognorm_dist_inv1D","p must be integer or real number");     
+        return NULL;
+    }
+    if (sweep_dim(m)!=0 || sweep_dim(s)!=0) {
+        print_function_error("lognorm_dist_inv1D","m,s must be scalar");
+        return NULL;
+    }
+    if( m == 0.0 ) {
+        print_function_error("lognorm_dist_inv1D","m can not be zero");
+        return NULL;
+    }
+    if( s == 0.0 ) {
+        print_function_error("lognorm_dist_inv1D","s can not be zero");
+        return NULL;
+    }
+    if(absS == NULL)
+        s_abs = 1;
+    else
+        s_abs = absS;
+
+    if (sweep_dim(s_abs) !=0 ) {
+        print_function_error("lognorm_dist_inv1D","absS must be scalar");
+        return NULL;
+    }
+    if( type(s_abs)!="Integer" ) {
+        print_function_error("lognorm_dist_inv1D","absS must be integer");     
+        return NULL;
+    }
+    s_abs = abs(s_abs);
+    if( s_abs != 0)
+        s_abs = 1; 
+
+    //convert it to a sweep input
+    pSize=sweep_size(p);
+    if(pDim == 0) {
+        ppSize = size(p);
+        if(ppSize > 1) {
+            pp=[p(1)];
+            for(i=2;i<=ppSize;i++) {
+                pp=[pp,p(i)];
+            }
+        }
+        else{
+            pp=[p];
+        }
+    }
+    else {
+        pp = p;
+    }
+    
+    //do the calculation and build result
+    ppSize=sweep_size(pp);
+    if(pp[0] < 0.0 || pp[0] > (1.0+1.0e-08)) {
+        print_function_error("lognorm_dist_inv1D","px must be in range 0.0 to 1.0");     
+        return NULL;
+    }
+    xresult=lognorm_dist_inv(pp[0],m,s,s_abs);
+    result=[xresult];
+    for( i=1; i<ppSize; i++) {
+        if(pp[i] < 0.0 || pp[i] > (1.0+1.0e-08)) {
+            print_function_error("lognorm_dist_inv1D","px must be in range 0.0 to 1.0");     
+            return NULL;
+        }
+        xresult=lognorm_dist_inv(pp[i],m,s,s_abs);
+        result=[result,xresult];
+    }
+    return vs(result,pp);
+} //fun - lognorm_dist_inv1D
+
+//************************************************************************************
+//uniform distribution
+/*BEGIN_DOC
+FUN_NAME: uniform_dist1D()
+FUN_DESCRIPTION: Returns a uniform distribution: either its probability density function (pdf), or cumulative distribution function (cdf)
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = uniform_dist1D(data, A, B, is_cdf) 
+EXAMPLE: 
+X = 0.5
+X_pdf= uniform_dist1D(X, 0.0,1.0, 0)
+X_cdf = uniform_dist1D(X,0.0,1.0, 1) 
+
+XX=[-3.9::0.1::3.9]
+XX_pdf = uniform_dist1D(XX,0.0,5.0,0)
+XX_cdf = uniform_dist1D(XX,0.0,5.0,1) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: number or a one-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: A
+  ARG_DESCRIPTION: uniform distributed range
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: B
+  ARG_DESCRIPTION: uniform distributed range
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: is_cdf
+  ARG_DESCRIPTION: specifies cdf or pdf of standard uniform distribution
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf) dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif When is_cdf is not equal to "0", the function returns the cdf of the uniform distribution. Otherwise, it returns the pdf of the uniform distribution.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: norm_dist1D(), norm_dist_inv1D(), norms_dist_inv1D(), norms_dist1D(), lognorm_dist_inv1D(), lognorm_dist1D(), uniform_dist_inv1D() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+defun uniform_dist1D(x,A,B,is_cdf)
+{
+    decl xDim, xSize, xType,xresult,result,aType;
+    decl xx,xxSize,i,cpf_true;
+
+    // check input
+    if( x == NULL) {
+        print_function_error("uniform_dist1D","x must be given");     
+        return NULL;
+    }
+    xDim = sweep_dim(x);
+    if (xDim > 1) {
+        print_function_error("uniform_dist1D","the funciton won't work for dimension larger than 1");
+        return NULL;
+    }
+    xType = type(x);
+    if( xType!="Integer" && xType!="Real" ) {
+        print_function_error("uniform_dist1D","x must be integer or real number");     
+        return NULL;
+    }
+    if (sweep_dim(A)!=0 || sweep_dim(B)!=0) {
+        print_function_error("uniform_dist1D","A,B must be scalar");
+        return NULL;
+    }
+    aType = type(A);
+    if( aType!="Integer" && aType!="Real" ) {
+        print_function_error("uniform_dist1D","A must be integer or real number");     
+        return NULL;
+    }
+    aType = type(B);
+    if( aType!="Integer" && aType!="Real" ) {
+        print_function_error("uniform_dist1D","B must be integer or real number");     
+        return NULL;
+    }
+    if( A >= B) {
+        print_function_error("uniform_dist1D","A must less than B ");     
+        return NULL;
+    }
+    if( is_cdf == NULL)
+        cpf_true = 0;
+    else
+        cpf_true = is_cdf;
+
+    if ( sweep_dim(cpf_true)!=0 ) {
+        print_function_error("uniform_dist1D","is_cdf must be scalar");
+        return NULL;
+    }
+    if( type(cpf_true)!="Integer" ) {
+        print_function_error("uniform_dist1D","is_cdf must be integer");     
+        return NULL;
+    }
+    cpf_true = abs(cpf_true);
+    if( cpf_true != 0 )
+        cpf_true = 1;
+
+    //convert it to a sweep input
+    xSize=sweep_size(x);
+    if(xDim == 0) {
+        xxSize = size(x);
+        if(xxSize > 1) {
+            xx=[x(1)];
+            for(i=2;i<=xxSize;i++) {
+                xx=[xx,x(i)];
+            }
+        }
+        else{
+            xx=[x];
+        }
+    }
+    else {
+        xx = x;
+    }
+    
+    //do the calculation and build result
+    xxSize=sweep_size(xx);
+    xresult=uniform_dist(xx[0],A,B,cpf_true);
+    result=[xresult];
+    for( i=1; i<xxSize; i++) {
+        xresult=uniform_dist(xx[i],A,B,cpf_true);
+        result=[result,xresult];
+    }
+    return vs(result,xx);
+}
+
+//*******************************************************************************
+//inverse uniform
+/*BEGIN_DOC
+FUN_NAME: uniform_dist_inv1D()
+FUN_DESCRIPTION: Returns the inverse of the cumulative distribution function (cdf) for a uniform distribution
+RETURNED_VALUE: Real
+CATEGORY: Statistics
+SYNTAX: y = uniform_dist_inv1D(data, A, B)
+EXAMPLE: 
+X_cpf = 0.5
+X= uniform_dist_inv1D(X_cpf, 0.0, 1.5) 
+
+XX_cpf=[0.0::0.01::1.0]
+XX= uniform_dist_inv1D(XX_cpf, 0.0, 1.5) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: represents the cumulative probability
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: A
+  ARG_DESCRIPTION: uniform distributed range
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: B
+  ARG_DESCRIPTION: uniform distributed range
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/statistical_fun.ael
+SEE ALSO: norm_dist1D(), norm_dist_inv1D(), norms_dist_inv1D(), norms_dist1D(), lognorm_dist_inv1D(), lognorm_dist1D(), uniform_dist1D() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+defun uniform_dist_inv1D(p,A,B)
+{
+    decl pDim, pSize, pType,xresult,result,aType;
+    decl pp,ppSize,i;
+
+    // check input
+    if( p == NULL) {
+        print_function_error("uniform_dist_inv1D","p must be given");     
+        return NULL;
+    }
+    pDim = sweep_dim(p);
+    if (pDim > 1) {
+        print_function_error("uniform_dist_inv1D","the funciton won't work for dimension larger than 1");
+        return NULL;
+    }
+    pType = type(p);
+    if( pType!="Integer" && pType!="Real" ) {
+        print_function_error("uniform_dist_inv1D","p must be integer or real number");     
+        return NULL;
+    }
+    if (sweep_dim(A)!=0 || sweep_dim(B)!=0 ) {
+        print_function_error("uniform_dist_inv1D","A,B must be scalar");
+        return NULL;
+    }
+    aType = type(A);
+    if( aType!="Integer" && aType!="Real" ) {
+        print_function_error("uniform_dist_inv1D","A must be integer or real number");     
+        return NULL;
+    }
+    aType = type(B);
+    if( aType!="Integer" && aType!="Real" ) {
+        print_function_error("uniform_dist_inv1D","B must be integer or real number");     
+        return NULL;
+    }
+    if( A >= B) {
+        print_function_error("uniform_dist_inv1D","A must less than B ");     
+        return NULL;
+    }
+
+    //convert it to a sweep input
+    pSize=sweep_size(p);
+    if(pDim == 0) {
+        ppSize = size(p);
+        if(ppSize > 1) {
+            pp=[p(1)];
+            for(i=2;i<=ppSize;i++) {
+                pp=[pp,p(i)];
+            }
+        }
+        else{
+            pp=[p];
+        }
+    }
+    else {
+        pp = p;
+    }
+    
+    //do the calculation and build result
+    ppSize=sweep_size(pp);
+    if(pp[0] < 0.0 || pp[0] > (1.0+1.0e-08)) {
+        print_function_error("uniform_dist_inv1D","px must be in range 0.0 to 1.0");     
+        return NULL;
+    }
+    xresult=uniform_dist_inv(pp[0],A,B);
+    result=[xresult];
+    for( i=1; i<ppSize; i++) {
+        if(pp[i] < 0.0 || pp[i] > (1.0+1.0e-08)) {
+            print_function_error("uniform_dist_inv1D","px must be in range 0.0 to 1.0");     
+            return NULL;
+        }
+        xresult=uniform_dist_inv(pp[i],A,B);
+        result=[result,xresult];
+    }
+    return vs(result,pp);
+} //fun - uniform_dist_inv1D
+
+//*********************** Code has been commented out ***************************
+/* the following is ael function
+// the ael function for normal distribution
+// standard normal distribution, probability mass function
+// assumption: x is not NULL and it has dim=0, type = integer or real
+defun norms_dist_pdf(x) {
+    decl dataDim, dataType; 
+    decl result;
+
+    if( x == NULL ) {
+        print_function_error("norms_dist_pdf","x must be given");     
+    }
+    dataDim = sweep_dim(x); 
+    dataType = type(x);
+    if( dataDim!=0 || ( dataType!="Integer" && dataType!="Real" )) {
+        print_function_error("norms_dist_pdf","x must be a integer or real number");     
+    }
+    result = exp(-x*x/2.0)/sqrt(2.0*pi);
+    return result;
+} 
+
+// normal distribution mass function 
+// assumption: x, m and s are not NULL
+//             they are integer or real numbers
+defun norm_dist_pdf(x, m, s) {
+    decl xDim, mDim, sDim;
+    decl xType, mType, sType;
+    decl normX, result;
+
+    if( x == NULL || m == NULL || s == NULL ) {
+        print_function_error("norm_dist_pdf","x, m and s must be given");     
+    }
+    xDim=sweep_dim(x);
+    mDim=sweep_dim(m);
+    sDim=sweep_dim(s);
+    xType=type(x);
+    mType=type(m);
+    sType=type(s);
+    if( xDim != 0 || mDim != 0 || sDim != 0 || 
+        (xType!="Integer" && xType!="Real") ||
+        (mType!="Integer" && mType!="Real") ||
+        (sType!="Integer" && sType!="Real") ) {
+        print_function_error("norm_dist_pdf","x, m and s must be integer or real number");     
+    }
+    if( s == 0.0 ) {
+        print_function_error("norm_dist_pdf","s can not be zero.");     
+    }
+    normX = (x-m)/s;
+    result = norms_dist_pdf(normX);
+    return result;
+}
+
+// return the two dimenstion data for 
+// the whole standard gauss distribtuion
+defun complete_norms_dist_data(x_min, x_max, x_step) {
+    decl x, result;
+
+    if( x_min == NULL) {
+        x_min=-10.0;
+    }
+    if( x_max == NULL) {
+        x_max=10.0;
+    }
+    if( x_step == NULL) {
+        x_step=0.0001;
+    }
+    x=[x_min::x_step::x_max];
+    result=vs(exp(-x*x/2.0)/sqrt(2.0*pi),x);
+    return result;
+}
+
+defun enhanced_erfc( x ) {
+    decl xDim, xType, result;
+
+    if( x == NULL) {
+        print_function_error("enhanced_erfc","x must be given");     
+    }
+    xDim = sweep_dim(x);
+    xType = type(x);
+    if( xDim != 0 || (xType!="Integer" && xType!="Real") ) {
+        print_function_error("enhanced_erfc","x must be integer or real number");     
+    }
+    if( x < 10.0 ) {
+        result = erfc(x);
+    }
+    else {
+        result = exp(-x*x - 1.0/(2.0*x*x))/(sqrt(pi)*x);
+    }
+    return result;
+}
+
+//standard normal distribution
+defun norms_dist(x,cpf_true) {
+    decl xDim, xType;
+
+    if( x == NULL) {
+        print_function_error("norms_dist","x must be given");     
+    }
+    xDim = sweep_dim(x);
+    xType = type(x);
+    if( xDim != 0 || (xType!="Integer" && xType!="Real") ) {
+        print_function_error("norms_dist","x must be integer or real number");     
+    }
+    if( cpf_true != "yes" ) {
+        return norms_dist_pdf(x);
+    }
+    else {
+        decl xx, result;
+
+        xx = x/sqrt(2);
+        // use 0.5 as a separate point, erfc(x) == erf(x)
+        if( xx > 0.5 ) {
+            result = 1.0-0.5*enhanced_erfc(xx);
+        }
+        else if ( xx > -0.5 ) {
+            result = 0.5 + 0.5*erf(xx);
+        }
+        else {
+            result = 0.5*enhanced_erfc(-xx);
+        }
+        return result;
+        //return result;
+        // the following is to use integrate function to do the calculation
+        // which is very very slow 
+        //decl x_min = -10.0;
+        //decl x_max = 10.0;
+        //decl x_step = 0.001;
+        //decl completeData, result;
+        //if( x < x_min ) {
+        //    result = 0.0;
+        //}
+        //else if( x > x_max ) {
+        //    result = 1.0;
+        //}
+        //else {
+        //    completeData=complete_norms_dist_data(x_min,x_max,x_step);
+        //    result=integrate(completeData,x_min,x,x_step/10.0);
+        //}
+        //return result;
+    }
+}
+
+//normal distribution 
+//assumptions: x, m, and s are not NULL
+defun norm_dist(x,m,s,cpf_true) {
+    decl xDim, mDim, sDim;
+    decl xType, mType, sType;
+    decl normX, result;
+
+    if( x == NULL || m == NULL || s == NULL ) {
+        print_function_error("norm_dist","x, m and s must be given");     
+    }
+    xDim=sweep_dim(x);
+    mDim=sweep_dim(m);
+    sDim=sweep_dim(s);
+    xType=type(x);
+    mType=type(m);
+    sType=type(s);
+    if( xDim != 0 || mDim != 0 || sDim != 0 || 
+        (xType!="Integer" && xType!="Real") ||
+        (mType!="Integer" && mType!="Real") ||
+        (sType!="Integer" && sType!="Real") ) {
+        print_function_error("norm_dist","x, m and s must be integer or real number");     
+    }
+    if( s == 0.0 ) {
+        print_function_error("norm_dist","s can not be zero.");     
+    }
+    normX = (x-m)/s;
+    return norms_dist(normX,cpf_true);
+}    
+    
+//standard normal distribution inversion
+defun norms_dist_inv( p ) {
+    decl maxIter=100;
+    decl iter, xTry,pTry;
+    decl xC = 0.0;
+    decl pDiff, xDiff;
+
+    if( p==NULL || sweep_dim(p)!= 0 || 
+        (type(p)!="Integer" && type(p)!="Real") ) {
+        print_function_error("norms_dist_inv","p must be an integer or real number");     
+    }  
+    if( p > 1.0 || p< 0.0 ) {
+        print_function_error("norms_dist_inv","p must be in the range 0 to 1");     
+    }
+    xTry = 0.0;
+    iter = 0;
+    pTry = norms_dist(xTry, "yes"); 
+    pDiff = pTry - p;
+    while( iter<maxIter && abs(pDiff)>1.0e-10 ) {
+        xDiff = -pDiff*sqrt(2.0*pi)/exp(-xTry*xTry/2.0); 
+        if(abs(xDiff) > 0.5) {
+            if(xDiff > 0.0) {
+                xDiff = 0.5;
+            }
+            else {
+                xDiff = -0.5;
+            }
+        }
+        xTry = xTry + xDiff;
+        iter = iter + 1;
+        pTry = norms_dist(xTry, "yes"); 
+        pDiff = pTry - p;
+    }
+    if( iter > maxIter ) {
+        print_function_error("norms_dist_inv","after 100 iteeration, can not find the result");     
+    }
+    return xTry;
+}
+
+//standard normal distribution inversion
+defun norm_dist_inv(p,m,s) {
+    decl pDim, mDim, sDim;
+    decl pType, mType, sType;
+    decl normX, x;
+
+    if( p == NULL || m == NULL || s == NULL ) {
+        print_function_error("norm_dist_inv","p, m and s must be given");     
+    }
+    pDim=sweep_dim(p);
+    mDim=sweep_dim(m);
+    sDim=sweep_dim(s);
+    pType=type(p);
+    mType=type(m);
+    sType=type(s);
+    if( pDim != 0 || mDim != 0 || sDim != 0 || 
+        (pType!="Integer" && pType!="Real") ||
+        (mType!="Integer" && mType!="Real") ||
+        (sType!="Integer" && sType!="Real") ) {
+        print_function_error("norm_dist_inv","x, m and s must be integer or real number");     
+    }
+    if( s == 0.0 ) {
+        print_function_error("norm_dist_inv","s can not be zero.");     
+    }
+    normX = norms_dist_inv(p);
+    x = m + normX*s;
+    return x;
+}
+*/
+//****************************************************************************
+
+
+// NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+//

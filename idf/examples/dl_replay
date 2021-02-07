@@ -1,0 +1,17 @@
+\###  Dynamic Link power_amp/schematic example cellview SKILL replay script  ###
+\#
+\# Load ads.cxt context based on Cadence version
+\a (unless (isContextLoaded "ads") (if (index (getVersion) "6.1.") then (load (strcat (getShellEnvVar "HPEESOF_DIR") "/idf/skill/6.1.5/ads.ini")) else (error "Unsupported Cadence version %s" (getVersion) )))
+\#
+\# Open examples/power_amp/schematic cellview 
+\a (deOpen)
+\a (hiiSetCurrentForm 'deOpenForm)
+\a deOpenForm->deLibName->value = "examples"
+\a deOpenForm->deCellChoice->value = '("power_amp" )
+\a (_deCellChoiceCB)
+\a (hiFormDone deOpenForm)
+\#
+\# Start ADS from schematic window or CIW (if power_amp failed to open)
+\a win=(getCurrentWindow)
+\a (if (type win)=='wtype then (deInstallApp win "IdfSchematic") else (IdfStartADS) (error "Failed to open example/power_amp/schematic cellview, will try to start ADS from CIW instead..."))
+\#

@@ -1,0 +1,4 @@
+setwindow pcb
+trapsize 666
+# run the skill install script when found otherwise ask the user that the working dir is changed when replaying the script
+skill (prog (fileParts fileName)(setq fileName (strcat (getWorkingDir) "/eemLocalConfig.scr"))(while fileName (when (isFile fileName) (setq fileParts (axlDMFileParts fileName)) (load (strcat (car fileParts) "/../skill/eemLocalInstall.il"))(eemADFILocalInstall)(println (strcat "ADFI configuration script running: " fileName))(return))(println (strcat "ADFI configuration script not in: " fileName ". Please select the file again."))(setq fileName (axlDMFileBrowse nil t ?title "Script eemLocalConfig.scr not in working directory, please select it again" ?optFilters "Scripts (*.scr) | *.scr"))))

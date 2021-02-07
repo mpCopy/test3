@@ -1,0 +1,452 @@
+// Copyright Keysight Technologies 2006 - 2011  
+//////////////////////////////////////////////////////////////////////
+// $Source: /cvs/sr/src/genfun/source/marker_fun.ael,v $
+// $Revision: 1.9 $
+// $Date: 2011/08/23 21:25:20 $
+//
+// Copyright Keysight Technologies 2006 - 2011  
+//
+//////////////////////////////////////////////////////////////////////
+// This AEL file contains functions used by DDS Markers to find
+// their Max, Min and Offset locations.
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// This is the marker routine used by the Max Marker. If find the
+// maximum values of the data and then uses these values to send
+// to the marker() function to find the final location.
+//
+// The routine will look for the closest (independent) max value and
+// it is biased to increasing indpendent data.
+//
+// The direction parameter is used to indicate which direction to move
+// the max marker to a "1" will move the marker in the direction of
+// increasing data and a "-1" will move the marker in the direction 
+// of decreasing data.
+//////////////////////////////////////////////////////////////////////
+defun marker_max(data, ind, dep, guess, direction)
+{
+	return marker_find_closest_point(max(data), data, ind, dep, guess, direction);
+}
+
+//////////////////////////////////////////////////////////////////////
+// This is the marker routine used by the Min Marker. If find the
+// minimum values of the data and then uses these values to send
+// to the marker() function to find the final location.
+//
+// The routine will look for the closest (independent) min value and
+// it is biased to increasing indpendent data.
+//
+// The direction parameter is used to indicate which direction to move
+// the min marker to a "1" will move the marker in the direction of
+// increasing data and a "-1" will move the marker in the direction 
+// of decreasing data.
+//////////////////////////////////////////////////////////////////////
+defun marker_min(data, ind, dep, guess, direction)
+{
+	return marker_find_closest_point(min(data), data, ind, dep, guess, direction);
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// This is the routine that finds the closest point to the search
+// value passed in. It's works for Min and Max markers.
+//////////////////////////////////////////////////////////////////////
+defun marker_find_closest_point(search_value, data, ind, dep, guess, direction)
+{
+	// Check to see if there are atleast 2 data points.
+	// If not the just return the current marker posistion.
+	if (sweep_size(data)<2)
+		return marker(data, ind, dep, guess);
+
+	decl search_value_index = find(data == search_value);
+	decl search_value_index_size = sweep_size(search_value_index);
+
+	// Now check each index and find the one that
+	// is closest to the current location.
+	decl search_ind, search_dep, search_guess;
+	decl search_ind_test, test_index, search_index;
+	decl i=0;
+	decl indepData = indep(data);
+	decl hasIndepData = has_indep(data);
+
+	while (i < search_value_index_size)
+	{
+		test_index = search_value_index[i];
+
+		if (i == 0)
+		{
+			if (hasIndepData)
+				search_ind = indepData[test_index];
+			else
+				search_ind = test_index;
+			search_dep = data[test_index];
+			search_guess = test_index;
+			search_index = i;
+		}
+		else
+		{
+			if (hasIndepData)
+				search_ind_test = indepData[test_index];
+			else
+				search_ind_test = test_index;
+			
+			if (abs(ind - search_ind_test) <= abs(ind - search_ind))
+			{
+				if (hasIndepData)
+					search_ind = indepData[test_index];
+				else
+					search_ind = test_index;
+				search_dep = data[test_index];				
+				search_guess = test_index;
+				search_index = i;				
+			}
+
+		}
+		i++;
+	}
+	
+	// If the direction is passed in then find the next
+	// min datapoint in the cooresponding direction.
+	// The search will loop back around when the end
+	// is reached.
+	if ((search_value_index_size > 1) && (direction != NULL))
+	{
+		decl move_dir = direction;
+
+		if ((move_dir == 1) || (move_dir == -1))
+		{
+			if (move_dir == 1)
+			{
+				if (search_index != search_value_index_size-1)
+					search_index++;
+			}
+			else if (move_dir == -1)
+			{
+				if (search_index != 0)
+					search_index--;
+			}
+
+			test_index = search_value_index[search_index];
+
+			if (hasIndepData)
+				search_ind = indepData[test_index];
+			else
+				search_ind = test_index;
+			search_dep = data[test_index];
+			search_guess = test_index;				
+		}
+	}
+
+	// If the data wasn't created with independent data then
+	// only pass in the index into the data and not the
+	// dependent value.
+	if (hasIndepData)
+		return  marker(data, search_ind, search_dep, search_guess);
+	else
+		return  marker(data, search_ind, , search_guess);
+}
+
+//////////////////////////////////////////////////////////////////////
+// This routine will find current index location of a data point.
+//////////////////////////////////////////////////////////////////////
+defun marker_find_index_with_location(ind, dep, data, offset)
+{
+	decl search_index = -1;
+
+	if (has_indep(data))
+	{
+		decl indepData = indep(data);
+		decl marker_index;
+
+		if (dep != NULL)
+		{
+			marker_index = find(data == dep);
+			
+			decl marker_index_size = sweep_size(marker_index);
+			decl test_index;
+			decl i = 0;
+			while (i < marker_index_size)
+			{
+				test_index = marker_index[i];
+				if (test_index == -1)
+					test_index = 0;
+				if (indepData[test_index] == ind)
+				{
+					search_index = test_index;
+					break;
+				}
+				i++;
+			}
+		}
+		else
+		{
+			marker_index = find(indepData == ind);
+			search_index = marker_index[0];			
+		}
+	}
+	else 
+	{
+		decl marker_index;
+		if (dep != NULL)
+		{
+			// Search for the dependent value in the data.
+			if (offset > 0)
+				marker_index = find(data <= dep);
+			else
+				marker_index = find(data >= dep);
+
+			// Check to see if multiple dependent values were found.
+			// If there are more then one then check the independent
+			// values..
+			if (sweep_size(marker_index) > 1)
+			{
+				decl j;
+				decl tmp_index = marker_index[0];
+				for (j=0; j<sweep_size(marker_index); j++)
+				{
+					if (marker_index[j] == ind)
+					{
+						tmp_index = marker_index[j];
+						break;
+					}
+				}
+				marker_index = tmp_index;
+			}
+		}
+		else
+		{
+			marker_index = ind;
+		}
+		
+		search_index = marker_index;
+	}
+
+	// If we didn't find an index start from the beginning....
+	if (search_index == -1)
+		search_index = 0; 
+
+	return search_index;
+}
+
+//////////////////////////////////////////////////////////////////////
+// This routine is used by offset markers. It finds the closest value
+// that exceeds the offset value. If no values are found then the
+// closest value is returned.
+//
+//      data:   The data that the offset marker is attached to.
+//       ind:   The independent value of the offset marker.
+//       dep:   The dependent value of the offset marker.
+// direction:   The direction to move. Greater then 0 move in the
+//              direction of increasing data index. Less then 0 move 
+//              in the direction of decreasing data index. 0 stay
+//              on the same side of the data.
+//    offset:   The offset target to shoot for. Look for values that
+//              are equal to or greater than the offset.
+//
+//////////////////////////////////////////////////////////////////////
+defun marker_offset(data, ref_marker, ind, dep, direction, offset)
+{
+	//fputs(stderr, strcat("ind = ", identify_value(ind)));
+	//fputs(stderr, strcat("ref_marker = ", identify_value(ref_marker)));	
+	//fputs(stderr, strcat("indep(ref_marker) = ", identify_value(indep(ref_marker))));
+	//fputs(stderr, strcat("dep = ", identify_value(dep)));
+	//fputs(stderr, strcat("direction = ", identify_value(direction)));
+	//fputs(stderr, strcat("offset = ", identify_value(offset)));	
+	
+	decl data_size = sweep_size(data);
+	if (data_size<2)
+		return ref_marker;
+
+	// Get an index that is close to the current reference marker. 
+	decl ref_marker_index = marker_find_index_with_location(indep(ref_marker), ref_marker, data, offset);
+
+	// Now get where the offset marker is currently located.
+	decl offset_marker_index = marker_find_index_with_location(ind, dep, data, offset);
+
+	// Determine which side of the reference marker to place the offset marker.
+	// If the direction is passed in then use that else look at the indpendent
+	// value and base the direction on which side the offset marker starts at.
+	decl dir = 0;
+	if (direction)
+	{
+		if (direction > 0)
+			dir = 1;
+		else if (direction < 0)
+			dir = -1;
+	}
+
+	if (dir == 0)
+	{
+		if (indep(ref_marker) > ind)
+			dir = -1;
+		else
+			dir = 1;
+	}
+
+	// The following loop is used to find a good value for the offset
+	// marker. The first pass through the loop checks in the direction
+	// that was passed in or based on the original location of the marker.
+	// If we fail to find a suitable value then reset values and look
+	// on the other side of the reference marker.
+	decl limit;
+	decl i = ref_marker_index;
+	decl target_value = ref_marker + offset;
+	decl test_value = data[i];
+	decl test_index = i;
+	decl good_value = FALSE;
+	decl loop_count = 0;
+	decl max_count = 0;
+	decl max_count_limit = 500; // Limit search to 500 points either way
+	while (loop_count < 2)
+	{
+		loop_count = loop_count + 1;
+
+		if (dir == -1)
+			limit = -1;
+		else
+			limit = data_size;
+		
+		if (offset < 0)
+		{
+			while ((i != limit) && (max_count < max_count_limit))
+			{
+				// Keep track of values that are less
+				// then the reference marker for cases
+				// where we don't find a valid value
+				// we choose the closest point...
+				if (data[i] < test_value)
+				{
+					test_value = data[i];
+					test_index = i;
+				}
+
+				// Found a good value
+				if (data[i] <= target_value)
+				{
+					good_value = TRUE;
+					break;
+				}
+
+				i = i + dir;
+				max_count++;
+			}
+		}
+		else
+		{
+			while ((i != limit) && (max_count < max_count_limit))				
+			{
+				// Keep track of values that are less
+				// then the reference marker for cases
+				// where we don't find a valid value
+				// we choose the closest point...
+				if (data[i] > test_value)
+				{
+					test_value = data[i];
+					test_index = i;
+				}
+
+				// Found a good value
+				if (data[i] >= target_value)
+				{
+					good_value = TRUE;
+					break;
+				}
+
+				i = i + dir;
+				max_count++;				
+			}
+		}
+		
+		if (good_value == TRUE)
+		{
+			// Got a good value so terminate the loop.
+			loop_count = 2;
+		}
+		else
+		{
+			// Not a suitable value so reset the loop
+			// and look on the other side of the
+			// reference marker.
+			dir = dir * -1;
+			i = ref_marker_index;
+		}
+	}
+
+	// In the case where we didn't find a suitable
+	// value use the index found during the first
+	// pass of the loop...
+	if (!good_value)
+		i = test_index;
+
+	if (has_indep(data))
+	{
+		decl indep_data = indep(data);
+		return marker(data, indep_data[i], data[i], i);
+	}
+	else
+	{
+		return marker(data,i,,i);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////
+// This routine is a basic line marker function. It's intented to
+// be a stop gap until it is supported fully.
+//
+//    indValue:   The independent value to set the marker to.
+//  snapToData:   [TRUE/FALSE] snap to the data or not. If not then
+//                interpolate between the two closest data points.
+//   traceNameN:  The string to "name" the trace with.
+//   traceExprN:  The expression to use for the trace.
+//                traceNameN and traceExprN will repeat until all
+//                the traces have been handled.
+//////////////////////////////////////////////////////////////////////
+/*
+defun line_marker(indValue, snapToData)
+{
+	decl argList = arg_list();
+	argList = cdr(cdr(argList));
+	decl numArgs = int(listlen(argList)/2);
+	if (numArgs <= 0)
+		return "ERROR: must pass in trace expressions";
+	
+	decl i = 0;
+	decl indName = "";
+	decl traceName;
+	decl traceExpr;
+	while (i < numArgs)
+	{
+		traceName = car(argList); argList = cdr(argList);
+		traceExpr = car(argList); argList = cdr(argList);
+		fputs(stderr, strcat("TraceName = ", traceName, ", indepName = ", indep_name(traceExpr)));
+		if (indName == "")
+			indName = indep_name(traceExpr);
+		else if (indName != indep_name(traceExpr))
+			return "ERROR: indpendent data must be the same for all traces";
+		i++;
+	}
+
+	decl marker_data = create(2, "Real", {indName, "name"}, {"Real", "String"}, 1, 1);	
+	decl marker_data_trace_name = indep(marker_data, "name");
+	decl marker_data_freq= indep(marker_data, indName);
+
+	argList = arg_list();
+	argList = cdr(cdr(argList));
+
+	marker_data_freq[0] = indValue;
+
+	i = 0;
+	while (i < numArgs)
+	{
+		traceName = car(argList); argList = cdr(argList);
+		traceExpr = car(argList); argList = cdr(argList);
+
+		marker_data_trace_name[i] = traceName;
+		marker_data[0,i] = marker(traceExpr, indValue);
+		i++;
+	}
+	
+	return marker_data;
+}
+*/

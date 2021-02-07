@@ -1,0 +1,59 @@
+
+simulator lang=spectre
+
+// Create a Cadence cell with the same name as the subckt below.
+// This cell should have an ads view and a symbol view with pins matching those in the subckt.
+// In the ads simInfo section of this cell's CDF add uselib with value dl_lib,
+// i.e., the encrypted ADS library name.
+// The termOrder should be "GND Vcc1 Vcc2 Vin Vout", i.e., the same as that of the subckt.
+// The netlistProcedure should be ADSsimCompPrim. 
+//
+
+// encrypted_power_amp_with_models_dl_lib was renamed from the netlist of power_amp cell.
+// Models npnpwa_1 & npnpwa_2 were copied from npnpwa1 & npnpwa2 in the models directory.
+subckt encrypted_power_amp_with_models_dl_lib GND Vcc1 Vcc2 Vin Vout
+    Q0 (net44 Vin net15 0) npnpwa_1
+    Q1 (net44 net15 net12 0) npnpwa_2
+    Q2 (net44 net15 net9 0) npnpwa_2
+    Q3 (net44 net15 net6 0) npnpwa_2
+    Q4 (net15 Vcc2 net31 0) npnpwa_2
+    Q5 (net12 Vcc2 net13 0) npnpwa_2
+    Q6 (net9 Vcc2 net35 0) npnpwa_2
+    Q7 (net6 Vcc2 net37 0) npnpwa_2
+    R0 (Vcc1 net44) resistor r=10
+    R1 (net12 Vout) resistor r=Rout
+    R2 (net9 Vout) resistor r=Rout
+    R3 (net6 Vout) resistor r=Rout
+    R4 (net37 GND) resistor r=Remitout
+    R5 (net35 GND) resistor r=Remitout
+    R6 (net13 GND) resistor r=Remitout
+    R7 (net31 GND) resistor r=200
+
+model npnpwa_1 bjt type=npn bf=130 ikf=0.01085 \
+    ise=7.56E-13 ne=2 vaf=25 nf=1.03 tf=8.91e-12 \
+    xtf=3.35 itf=0.0217 ptf=18 xtb=2.2 \
+    br=5.123 ikr=0.056 isc=2.01e-12 \
+    nc=2 var=0 nr=1 tr=1.6e-9 eg=1.11 is=2.15e-16 \
+    imax=1 xti=8 tnom=25 nkf=0.5 iss=3.28e-13 ns=1 \
+    cjc=1.045e-13 vjc=0.75 mjc=0.5 xcjc=0.2292 \
+    fc=0.5 cje=1.935E-13 vje=0.85 mje=0.4 \
+    cjs=1.092e-13 vjs=0.7 mjs=0.5 rb=317 irb=0 \
+    rbm=10.63 re=1.79 rc=37.6 af=1 \
+    bnoisefc=1 struct=vertical
+
+model npnpwa_2 bjt type=npn bf=166 ikf=0.02325 \
+    ise=1.218E-12 ne=2 vaf=25 nf=1.03 tf=7.97e-12 \
+    xtf=3.16 itf=0.0465 ptf=18 xtb=2.2 \
+    br=5.123 ikr=0.12 isc=4.08e-12 \
+    nc=2 var=0 nr=1 tr=1.6e-9 eg=1.11 is=4.08e-16 \
+    imax=1 xti=8 tnom=25 nkf=0.5 iss=4.96E-13 ns=1 \
+    cjc=2.13e-13 vjc=0.75 mjc=0.5 xcjc=0.22 \
+    fc=0.5 cje=3.123e-13 vje=0.85 mje=0.4 \
+    cjs=1.65e-13 vjs=0.7 mjs=0.5 rb=59.2 irb=0 \
+    rbm=14.1 re=0.833 rc=22 af=1 \
+    bnoisefc=1 struct=vertical 
+
+ends power_amp
+
+simulator lang=ads
+

@@ -1,0 +1,722 @@
+(setupData 
+;;
+;; The file must start with (setupData, no comment or blank lines allowed
+;; before this line or the setup dialog will not open!
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Copyright 2007-2017 Keysight Technologies, Inc 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; skill list defining the directives to be used when exporting the Allegro
+; layout to ADS. More documentation can be found at the end of this list
+; definition
+;
+  (scratchLayerName "MANUFACTURING/EEM_SCRATCH")
+;  (cutterExpansion 5.0)
+;  (firstEgsLayerNum 1001)
+;  (useShortAdsMaskNames nil) ; global setting must be read before design processing
+
+  (simulationSettings
+    (setting "Sample Fine Setting A: use Strips and Vias" 
+      (description "Signal viaType asDefined, padType asDefined"
+                   "Ground viaType asDefined, padType asDefined"
+                   "Signal and Ground arcResolution 15 degrees"
+                   "Convert negative planes to Strip objects"
+                   "Do not automatically generate negative reference pins"
+      )
+      (options
+        (negativeMasksToStrip "TRUE")
+        (egsArcResolution 22.5)
+        (egsMinEdgeLength 0.000)
+        (skipGlobalHandling "FALSE")
+        (skipNegRefPinGeneration "TRUE")
+        (gndOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+        )
+        (sigOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+        )
+      )
+    ) ; end of setting "Sample Fine Setting A: use Strip/Via"
+    (setting "Sample Fine Setting B: use Strips, Slots and Vias" 
+      (description "Uses Strip/Slot/Via when negative layers present"
+                   "Signal viaType asDefined, padType asDefined"
+                   "Ground viaType asDefined, padType asDefined"
+                   "Signal and Ground arcResolution 15 degrees"
+                   "Export negative plane objects as Slots"
+                   "Catch pads are created everywhere (impossible to pick up Padstack editor setting)"
+      )
+      (options
+        (negativeMasksToStrip "FALSE")
+        (egsArcResolution 22.5)
+        (egsMinEdgeLength 0.000)
+        (skipGlobalHandling "FALSE")
+        (gndOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+        )
+        (sigOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+        )
+      )
+    ) ; end of setting "Sample Fine Setting B: use Strip/Slot/Via"
+    (setting "Sample Board Setting 1: use Strips, Slots and Vias, with only via simplification" 
+      (description "Sample Board Setting 1: use Strips, Slots and Vias,"
+                   "with only simplifications for vias enabled"
+                   "==========================================================================="
+                   "Recommended setting for large scale export of board data to ADS"
+                   ""
+                   "Uses Strip/Slot/Via when negative layers present"
+                   "Export negative plane objects as Slots"
+                   "Signal viaType asDefined, padType asDefined"
+                   "Ground viaType square, padType asDefined"
+                   "Catch pads on top/bottom and connected layers only"
+                   "Simplify thermal relief connections on negative shapes"
+                   "Always keep arcs in objects when possible"
+                   "Signal and Ground arcResolution is 15 degrees for segmentation operations"
+      )
+      (options
+        (negativeMasksToStrip "FALSE")
+        (egsArcResolution 22.5)
+        (egsMinEdgeLength 0.000)
+        (skipGlobalHandling "FALSE")
+        (gndOpt
+          (viaType "square")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 0.7978845608028653)
+          (padTfAreaRatio 1.0)
+          (simplifyThermal "TRUE")
+          (exportPads "startend-connect")
+        )
+        (sigOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+          (simplifyThermal "TRUE")
+          (exportPads "startend-connect")
+        )
+      )
+    ) ; end of setting "Sample Board Setting 1"
+    (setting "Sample Board Setting 2: use Strips and Vias, with only via simplification on RF Ground" 
+      (description "Sample Board Setting 2: use Strips and Vias,"
+                   "with only simplifications for vias enabled"
+                   "==========================================================================="
+                   "Recommended setting for large scale export of board data to ADS"
+                   ""
+                   "Uses Strip/Via even when negative layers present"
+                   "Signal viaType asDefined, padType asDefined"
+                   "Ground viaType square, padType asDefined"
+                   "Catch pads on top/bottom and connected layers only"
+                   "Simplify thermal relief connections on negative shapes"
+                   "Always keep arcs in objects when possible"
+                   "Signal and Ground arcResolution is 15 degrees for segmentation operations"
+      )
+      (options
+        (negativeMasksToStrip "TRUE")
+        (egsArcResolution 22.5)
+        (egsMinEdgeLength 0.000)
+        (skipGlobalHandling "FALSE")
+        (gndOpt
+          (viaType "square")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 0.7978845608028653)
+          (padTfAreaRatio 1.0)
+          (simplifyThermal "TRUE")
+          (exportPads "startend-connect")
+        )
+        (sigOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+          (simplifyThermal "TRUE")
+          (exportPads "startend-connect")
+        )
+      )
+    ) ; end of setting "Sample Board Setting 2"
+    (setting "Sample Board setting using Strips, Slots and Vias" 
+      (description "Legacy Sample Board setting using Strips, Slots and Vias with"
+                   "all available shape simplifications possible"
+                   "======================================================================"
+                   "Only intended for export of small fragments for fast EM analysis in ADS"
+                   "NOTE: this mode can fail due to problems with intermediate polygon creation,"
+                   "      Allegro Boolean operations and complex shape conversion"
+                   ""
+                   "Signal viaType asDefined, padType asDefined"
+                   "Ground viaType square, padType asDefined"
+                   "Signal and Ground arcResolution 30.0 degrees"
+                   "Export negative plane objects as Slots"
+                   "Simplify thermal reliefs on negative shapes"
+                   "Remove unconnected catch pads"
+                   "Do not automatically generate negative reference pins"
+      )
+      (options
+        (negativeMasksToStrip "FALSE")
+        (egsArcResolution 30.0)
+        (egsMinEdgeLength 0.000)
+;        (cutterDefinesCrossingGndHoles "TRUE") 
+;        (gndHoleDropDistance 0.0)
+        (skipGlobalHandling "FALSE")
+        (skipNegRefPinGeneration "TRUE")
+        (gndOpt
+          (viaType "square")
+          (padType "asDefined")
+          (arcResolution 30.0)
+          (minEdgeLength 0.000)
+;          (pathType "mitered")
+          (viaTfAreaRatio 0.7978845608028653)
+          (padTfAreaRatio 1.0)
+          (simplifyThermal "TRUE")
+          (exportPads "startend-connect")
+        )
+        (sigOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 30.0)
+          (minEdgeLength 0.000)
+;          (pathType "mitered")
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+          (simplifyThermal "TRUE")
+          (exportPads "startend-connect")
+        )
+      )
+    ) ; end of setting "Sample Board setting using Strips, Slots and Vias"
+    (setting "Sample Medium Setting"
+      (description "Uses Strip/Slot/Via when negative layers present"
+                   "Signal viaType square, padType asdefined (use simplification tool in ADS)"
+                   "Ground viaType square, padType asdefined (use simplification tool in ADS)"
+                   "Signal and Ground arcResolution 30 degrees"
+                   "Catch pads on top/bottome and connected layers only"
+      )
+      (options
+        (negativeMasksToStrip "FALSE")
+        (egsArcResolution 30.0)
+        (egsMinEdgeLength 0.000)
+        (skipGlobalHandling "FALSE")
+        (gndOpt
+          (viaType "square")
+          (padType "asDefined")
+          (arcResolution 30.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 0.7978845608028653)
+          (padTfAreaRatio 1.0)
+          (exportPads "startend-connect")
+        )
+        (sigOpt
+          (viaType "square")
+          (padType "asDefined")
+          (arcResolution 30.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 0.7978845608028653)
+          (padTfAreaRatio 1.0)
+          (exportPads "startend-connect")
+        )
+      )
+    ) ; end of sample medium setting
+    (setting "Sample Coarse Setting" 
+      (description "Uses Strip/Slot/Via when negative layers present"
+                   "Signal viaType diamond, padType as defined (use Ads simplification here)"
+                   "Ground viaType diamond, padType as defined (use Ads simplification here)"
+                   "Signal and Ground arcResolution 45 degrees"
+                   "Simplify thermal via connections in negative layers"
+                   "Remove unconnected catch pads"
+                   "Remove all catch pads on GND signals"
+                   "Remove voids in RF Ground Shapes that do not overlap Signals"
+      )
+      (options
+        (negativeMasksToStrip "FALSE")
+        (egsArcResolution 45.0)
+        (egsMinEdgeLength 0.000)
+        (skipGlobalHandling "FALSE")
+        (cutterDefinesCrossingGndHoles "TRUE") 
+        (gndHoleDropDistance 0.0)
+        (gndOpt
+          (viaType "diamond")
+          (padType "asDefined")
+          (arcResolution 45.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 0.7978845608028653)
+          (padTfAreaRatio 1.0)
+          (simplifyThermal "TRUE")
+          (exportPads "none")
+        )
+        (sigOpt
+          (viaType "diamond")
+          (padType "asDefined")
+          (arcResolution 45.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 0.7978845608028653)
+          (padTfAreaRatio 1.0)
+          (simplifyThermal "TRUE")
+          (exportPads "startend-connect")
+        )
+      )
+    ) ; end of sample course setting 
+    (setting "Sample setup for export to EMPro" 
+      (description "NOTE: Make sure to select components with both pins inside net/cutter selection"
+                   "      Ports in EMPro require valid + and - pin setup, please verify before export"
+                   ""
+                   "Export uses Strip/Slot/Via representations when negative layers present"
+                   "Keep negative layers as slot layers during export (EMPro import does the conversion)"
+                   "No slot contour around exported design (verify split negative plane structures)"
+                   "Drop the unconnected pads except on top/bottom layer"
+                   "rf ground vias will be exported as squares"
+                   "15 degrees arc res for rf signal selection"
+                   "15 degrees arc res for rf ground selection"
+      )
+      (options
+        (exporterMode 4.0)
+        (negativeMasksToStrip "FALSE")
+        (egsArcResolution 22.5)
+        (egsMinEdgeLength 0.000)
+        (skipGlobalHandling "FALSE")
+        (noContourSlotOnNegative "TRUE")
+;        (gndHoleDropDistance -1.0)
+;        (cutterDefinesCrossingGndHoles "FALSE")
+;        (autoPortForAllNetPads "TRUE")
+        (skipNegRefPinGeneration "FALSE")
+        (combinePinsDiscreteToPort "TRUE")
+        (sortByRefDes "FALSE")
+        (bgaBallTranslation "guiVia")
+        (useFigureDescription "FALSE")
+        (sharedRefPinPortModel "TRUE")
+        (gndOpt
+          (simplifyThermal "TRUE")
+          (exportPads "startend-connect")
+          (viaType "square")
+          (padType "asDefined")
+          (pathType "mitered")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 0.8862269254527580)
+          (padTfAreaRatio 1.0)
+        )
+        (sigOpt
+          (simplifyThermal "TRUE")
+          (exportPads "startend-connect")
+          (viaType "asDefined")
+          (padType "asDefined")
+          (pathType "mitered")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+        )
+      )
+    )
+    (setting "Sample Fine Setting for Packages Suppressing the Flip Chip Dies" 
+      (description "Signal viaType asDefined, padType asDefined"
+                   "Ground viaType asDefined, padType asDefined"
+                   "Signal and Ground arcResolution 15 degrees"
+                   "Convert negative planes to Strip objects"
+                   "Do not automatically generate negative reference pins"
+                   "Export all pads"
+                   "Suppress flip chip dies"
+                   "Add unnamed nets"
+                   "Expand layers symmetrical in substrate"
+      )
+      (options
+        (negativeMasksToStrip "TRUE")
+        (egsArcResolution 22.5)
+        (egsMinEdgeLength 0.000)
+        (skipGlobalHandling "FALSE")
+        (skipNegRefPinGeneration "TRUE")
+        ;(expandHatchPattern "TRUE")
+        ;(clinesToFigurePoly "TRUE")
+        (addUnnamedNets "TRUE")
+        (suppressFlipChipDies "TRUE")
+        (shortADSCmpPinNames "TRUE")
+        (suppressUnusedDrills "TRUE")
+        ;(useFlipChipDieOffsetMode 2)
+        (exportExpandedLayers 1)
+        (gndOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+          (exportPads "all")
+        )
+        (sigOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+          (exportPads "all")
+        )
+      )
+    )
+    (setting "Sample Fine Setting for Packages with Flip Chip Die Bumps Adjusted" 
+      (description "Signal viaType asDefined, padType asDefined"
+                   "Ground viaType asDefined, padType asDefined"
+                   "Signal and Ground arcResolution 15 degrees"
+                   "Convert negative planes to Strip objects"
+                   "Do not automatically generate negative reference pins"
+                   "Export all pads"
+                   "Add unnamed nets"
+                   "Expand layers symmetrical in substrate"
+                   "Change height of solder bumps of flip chip dies to make substrate valid for Momentum and FEM"
+      )
+      (options
+        (negativeMasksToStrip "TRUE")
+        (egsArcResolution 22.5)
+        (egsMinEdgeLength 0.000)
+        (skipGlobalHandling "FALSE")
+        (skipNegRefPinGeneration "TRUE")
+        ;(expandHatchPattern "TRUE")
+        ;(clinesToFigurePoly "TRUE")
+        (addUnnamedNets "TRUE")
+        (suppressFlipChipDies "FALSE")
+        (shortADSCmpPinNames "TRUE")
+        (suppressUnusedDrills "TRUE")
+        (useFlipChipDieOffsetMode 2)
+        (exportExpandedLayers 1)
+        (gndOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+          (exportPads "all")
+        )
+        (sigOpt
+          (viaType "asDefined")
+          (padType "asDefined")
+          (arcResolution 15.0)
+          (minEdgeLength 0.000)
+          (viaTfAreaRatio 1.0)
+          (padTfAreaRatio 1.0)
+          (exportPads "all")
+        )
+      )
+    )
+  ) ; end of simulationSettings 
+
+  (drillProps
+    (drillUnits
+      (layerThicknessUnits "mil")
+      (electricalConductivityUnits "mho/cm")
+    )
+    (drill -1
+      (layerType DRILL)
+      (layerName "default")
+      (layerMaterial "COPPER")
+      (layerThickness 1.0)
+      (layerElectricalConductivity 595900.0)
+    )
+    (drill -2
+      (layerType DRILL)
+      (layerName "other")
+      (layerMaterial "COPPER")
+      (layerThickness 1.0)
+      (layerElectricalConductivity 595900.0)
+    )
+  ) ; end of drillProps
+
+) ;  end of setupData
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; As a reference, a full set of configurable options with their documentation:
+;
+;(setupData 
+;            ; mnemonic to mark the start of the setup list
+;  (scratchLayerName "MANUFACTURING/EEM_SCRATCH")
+;            ; name of a class/subclass in the allegro board that can be 
+;            ; used as a scratch layer for the ADS integration for e.g.
+;            ; storing the cutter shape ... should not belong to the edge 
+;            ; class
+;  (exporterGlobalMode majorversion.revision) 
+;            ; need to be set to value < 4.2 for ADS 2009U1 and before compatible export
+;            ; also for EMPro export we need to use value < 4.2 because some EGS data is missing for higher versions.
+;  (cutterExpansion 5.0)
+;            ; default expansion in drawing units of the generated cookie cutter
+;            ; during a selection operation
+;  (firstEgsLayerNum 1001)
+;            ; layer number shift used to export to EGS format
+;  (layerNamePrefix "")
+;            ; prefix string prepended to existing layer names
+;  (useShortAdsMaskNames nil)
+;            ; t remove CONDUCTOR or ETCH class part from a layer name when possible without conflicts
+;            ; nil keep the class name for etch type layers
+;  (simulationSettings
+;            ; start of list of settings available to choose from in the
+;            ; setup window
+;    (setting "Sample Setting A" 
+;            ; name that is displayed in setup dialog drop-down combo box 
+;      (description "This Description is viewable in setup dialog"
+;                   "This will be displayed as the second line"
+;                   "And this is the third line"
+;                   "Do not use special escape characters as \n \t")
+;            ; discription displayed in the setup dialog, 1 string/line
+;      (options
+;        (exporterMode majorversion.revision) 
+;            ; need to be set to value < 4.2 for ADS 2009U1 and before compatible export
+;            ; also for EMPro export we need to use value < 4.2 because some EGS data is missing for higher versions.
+;        (negativeMasksToStrip "FALSE")
+;            ; determines how to handle negative masks
+;            ; flag: false - negative masks -> slots
+;            ;       true - negative masks -> strips 
+;        (noContourSlotOnNegative "FALSE")
+;            ; determines how to handle shapes on negative masks exported as slot
+;            ; flag: false - negative masks -> slots with contour slot 
+;            ;       true - negative masks -> slots no contour slot
+;            ;       negative masks exported as strip don't have contour around the shapes anyhow
+;        (egsArcResolution 22.5)
+;            ; arc facetting angle used when translating Allegro arcs
+;            ; into the output EGS file
+;            ; float: (0 < deg < 90) arc resolution used for export
+;            ;    only for arcs not dealt with in signal or ground
+;            ;    refacetting step
+;            ; nil:  use 22.5 degrees 
+;        (egsMinEdgeLength 0.000)
+;            ; minimum edge length of segments written into the output EGS 
+;            ; file (smaller segments are combined until the threshold is 
+;            ; reached 
+;            ; float: (>= 0) min edge length in the egs file 
+;            ; nil:  use 0.999999 times the layout resolution 
+;        (egsExportResolution  1000)
+;            ; int: > 0 preferably a multiple of 10
+;            ; if not specified, the allegro native resolution will be used
+;        (skipGlobalHandling "FALSE")
+;            ; determines the strategy to use when preparing the selected 
+;            ; objects for export to EGS
+;            ; skipGlobalHandling does not have any effect for negative
+;            ; masks when negativeMasksToStrip "TRUE" as this option
+;            ; requires global handling
+;            ; flag: true  perform boolean operations locally 
+;            ;       false perform boolean operations globally 
+;        (gndHoleDropDistance 0.0)
+;            ; determines how to handle voids in the RF ground shapes 
+;            ; depending on their distance to Signal net features they can be
+;            ; skipped from export in the egs file
+;            ; float: (>=0.0) voids further away are dropped form the egs export
+;            ; nil or (< 0.0): keep all holes
+;        (cutterDefinesCrossingGndHoles "TRUE")
+;            ; determines how holes/voids in RF ground shapes are threated
+;            ; either as voids with respect to the shape of the board or as voids
+;            ; with respect to the cutter shape. 
+;            ; flag: false: only real holes in the original shape are considered for hole removal
+;            ;       true: the cutter shape is used to define potential holes in a shape for removal
+;            ; Note: when true the cutter outline is followed outside the board outline because
+;            ;       this area is essentially also a void region with repect to the cutter
+;            ;       If board shape must be maintained use either the false setting which is less
+;            ;       agressive or modify the cutter shape to stay within the board boundary.
+;        (autoPortForAllNetPads "FALSE")
+;            ; determines if the automatic port insertion feature will generate individual
+;            ; ports for RF Signal Pads only or on both RF Signal and RF Ground Pads
+;            ; flag: false: (default) only on RF Signal Pads are used to generate ports automatically
+;            ;                        RF Ground Pads will be used as negative reference pins for the ports
+;            ;                        when possible.
+;            ;       true: the automatic port generation feature will generate ports for all RF Signal 
+;            ;             and RF Ground pads.
+;            ;             Only vias, shapes and lines which are part of an RF Ground net will be used to 
+;            ;             find pin positions. 
+;            ;             Manual placement of pins will allow generation of port pins on any pad for the pos. ref. pin of the port
+;            ;             the negative pin can be placed anywhere on a RF Signal/Ground net structure.
+;        (skipNegRefPinGeneration "FALSE")
+;            ; flag: false: (default) automatic port generation will try to generate a neg. ref. pin for each port when no infinite gnd plane is present
+;            ;       true : no negative ref pins will be generated automatically
+;        (combinePinsDiscreteToPort "FALSE")
+;            ; flag: true : automatic port generation will try to combine pins of discrete 2 pin components R,L,C,.. into 1 port
+;            ;       false: (default)
+;        (sortByRefDes "FALSE")
+;            ; flag: false: (default) when true the automatic port generation will sort the additional ports by ref. des. and not net name
+;            ;       true 
+;        (bgaBallTranslation "momvia")
+;            ; determines how a BGA ball object specification from select interface is used when exporting to mask data.
+;            ; string enum : "momVia" (default) make sure a valid Momentum via is generated by reducing the diameter if needed.
+;            ;               "guiVia"           use the value of the ball diameter in select UI 
+;            ;                                  to directly in output via of that diameter
+;            ;                                  This can cause trouble in Momentum simulation setups.
+;        (addViaShapesOnNamedDielectric "FALSE")
+;            ; flag: false: (default) This setting processes named dielectric layers as etch layers with regards to all shapes. Normally only circle vias are considered.
+;            ;                        Disabled by default because substrate/connectivity processing can behave very different and if design is not correctly
+;            ;                        set up to do this.
+;            ;       true 
+;        (useFigureDescription "TRUE")
+;            ; flag: true: if exporter mode is >= 4.2 default true else false
+;            ;             Exports complex layout object is adfi specific format instead of EGS to allow better generation in ADS objects like traces, paths 
+;            ;             and polygons special properties
+;
+;        (sharedRefPinPortModel "TRUE")
+;            ; flag: true: if exporter mode is >= 4.2 default true else false
+;            ;             Allow to reuse negative reference pins with multiple EM port definitions in the export
+;        (clinesToFigurePoly "FALSE")
+;            ; flag: false: if figure description used in ADFI format clines are exported as sequences of ADS path objects and circles as tees and endcaps
+;            ;       true : if figure description used in ADFI format the arced polygon representation is used for clines.
+;
+;        (expandHatchPattern "FALSE")
+;            ; flag: false: (default) if shapes have hatching patterns export them as full shape
+;            ;       true : if shapes have hatching/fill patterns defined flatten shape and generate the defined pattern
+;
+;        (addUnnamedNets "FALSE")
+;            ; flag: false: (default) don't select nets without name (initializes unnamed nets as ground flag)
+;            ;       true : select nets without name
+;
+;        (shortADSCmpPinNames "FALSE") ; default FALSE
+;            ; flag : when true use functional pin name only when no confusion is possible in all other cases pin number + functional pin name 
+;            
+;        (suppressUnusedDrills "FALSE") ; default FALSE
+;            ; flag : when true this flag suppresses DRILL layers not used by the export in the substrate and layer definitions of the design
+;
+;        (suppressFlipChipDies "FALSE") ; default FALSE
+;            ; flag : when true it converts flip chip dies into standard components without solder balls and diestack properties are not used
+;
+;        (useFlipChipDieOffsetMode 0) ; default 0 nil
+;            ; flag : 0 or nil don't move anything (needs almost always manual adjusting when using this substrate)
+;            ;      : 1 shift the nested substrates at top or bottom to the top/bottom layers of the main substrate (FEM will work with this, Momentum not)
+;            ;      : 2 make the first dielectric layer of a nested substrate include the thickness of top/bottom layers (Momentum via ok this way)
+;            ;          setting 2 is not ok if you replace solder bump vias with 3D objects...
+;
+;        (exportExpandedLayers 0) ; default 0 nil controls the exported expansion direction of strips in the substrate
+;            ; flag : 0 inside main substrate only up, 
+;            ;      : 1 inside substrate upper half layers go up and lower half go down;
+;
+;        (gndOpt
+;          (viaType "asDefined")
+;            ; determines how the viashapes will be translated in the output
+;            ; shape
+;            ; string enum: "asDefined" 
+;            ;              "square" 
+;            ;              "diamond" (i.esquare rotated by 45 deg)
+;          (padType "asDefined")
+;            ; determines how the pin and via pads will be translated in the
+;            ; output shape
+;            ; string enum: "asDefined" 
+;            ;              "square" 
+;            ;              "diamond" (i.esquare rotated by 45 deg)
+;          (ballType nil)
+;          (pinType nil)
+;            ; in BGA case for solder balls 
+;            ; same as padType or viaType and when not set but if different use this behavior 
+;          (pathType "rounded")
+;            ; determines how the cline/path/trace objects are exported at corners 
+;            ; string enum: "rounded" (default)
+;            ;              "mitered" 
+;            ;              (Allegro's {"octagon"|"square"} settings are not supported)
+;          (arcResolution 15.0)
+;            ; arc facetting angle used when translating Allogro arcs
+;            ; into the output EGS file
+;            ; float: (0 < deg < 90) arc resolution used for export
+;            ;        (<= 0) do not refacet arc
+;            ; nil:  use 22.5 degrees 
+;          (minEdgeLength 0.000)
+;            ; minimum edge length of segments written into the output EGS 
+;            ; file (smaller segments are combined until the threshold is 
+;            ; reached 
+;            ; float: (>= 0) min edge length in the egs file 
+;            ; nil:  use 0.999999 the layout resolution 
+;            ; if arcResolution <= 0, this setting is ignored
+;          (viaTfAreaRatio 1.0)
+;            ; multiplication factor for vias when translating the original
+;            ; shape into the new one. Currently this factor will only
+;            ; work correctly for circles to square or diamond
+;            ;    0.0000000000000000   delete shape
+;            ;    0.7978845608028653   e.g. circle -> inner square
+;            ;    0.8862269254527580   same perimeter (if circle->square)
+;            ;    1.0000000000000000   same area
+;            ;    1.1283791670955125   e.g. circle -> cricumvent square
+;          (padTfAreaRatio 1.0)
+;          (ballTfAreaRatio 1.0)
+;          (pinfAreaRatio 1.0)
+;            ; same behavior as viaTfAreaRatio but for pads instead of vias, BGA solder balls and BGA pins
+;          (simplifyThermal "TRUE")
+;            ; thermal relief connections with flash shapes are conditionally exported
+;            ; (used only on negative layers)
+;            ;   TRUE  : do not generate thermal relief pad polygons
+;            ;   FALSE : generate thermal relief pad polygons 
+;          (exportPads "connected") 
+;            ; string property describing which "catch" pads
+;            ; will be generated in the egs output for pins and vias
+;            ;   "all"       : (default) generate all regular pads in the output
+;            ;   "none       : no pads are generate except the ones on outer layers
+;            ;   "connected" : only if a regular connection other than a via exists 
+;            ;   "startend-connect" :  "connected" setting + the top and bottom pads 
+;        )
+;        (sigOpt
+;          ; same options as in the gnd opt subsection but now for shapes
+;          ; being defined as signal traces
+;          (viaType "asDefined")
+;          (padType "asDefined")
+;          (arcResolution 15.0)
+;          (viaTfAreaRatio 1.0)
+;          (padTfAreaRatio 1.0)
+;        )
+;      )
+;    ) ; end of setting "Sample Setting A"
+;  )
+;  (drillProps
+;            ; currently not used
+;  )
+;  (extendExportLayers 
+;        (("MANUFACTURING/OUTLINE_TOP" "ETCH/TOP") ("MANUFACTURING/FITTING_INT2" nil))
+;  )
+;
+;
+;)
+;
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; The final content of the list is derived from the contents of possibly 3
+; files that are loaded one after the other. If possible the definitions
+; are appended otherwise the definition of the latter overwrites the 
+; definition of the former one 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;File Load Order.
+;
+;global
+; * The file defined by the environment varable EEMOM_OPTIONSFILE.
+;   If the environment variable is not set 
+;      $HPEESOF_DIR/ial/config/eemom.option 
+;   will be used instead
+;
+;user specific
+; * The file
+;     $HOME/pcbenv/eemom.option
+;   if it exists
+;
+;board specific
+; * The file 
+;     ./<boardname>.eemom
+;   in the same directory as <boardname>.brd, if it exists
+;
+;Note
+;
+;If none of the files above exist, the export to ADS will not work.
+;
+

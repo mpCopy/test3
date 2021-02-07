@@ -1,0 +1,1769 @@
+// Copyright Keysight Technologies 1998 - 2014  
+// @(#) $Source: /cvs/sr/src/genfun/source/circle_fun.ael,v $ $Revision: 1.29 $ $Date: 2011/08/23 21:25:20 $
+
+
+
+
+//****************************************************************************
+// Calculates the center and radius for source or load mismatch gain circles.
+//****************************************************************************
+defun center_and_radius(sParam, dbGain, center, radius)
+{ 
+    decl sqMagS = pow(abs(sParam),2.0);
+    decl gx = (1.0-sqMagS)*pow(10,(dbGain)/10.0);
+    decl g1 = (gx < 1).*gx + (gx >= 1);    
+    // limit to max gain
+    decl denom = 1.0 - sqMagS*(1.0 - g1);
+      *center = g1*conj(sParam)/denom;
+      *radius = sqrt(abs(1.0 - g1))*(1-sqMagS)/denom;     
+}
+
+//****************************************************************************
+// Calculates the center and radius for power gain circle. 
+//****************************************************************************
+defun gp_center_and_radius(sParam, gain, center, radius)
+{
+    decl maxGain = max_gain(sParam);
+    decl dbGain = if (gain > maxGain) then maxGain else gain;
+    decl detOfS = sParam(1,1)*sParam(2,2)-sParam(2,1)*sParam(1,2);   
+    decl detMagSq = pow(abs(detOfS),2); 
+    decl magS12xS21 = abs(sParam(2,1)*sParam(1,2));
+    decl s11MagSq = pow(abs(sParam(1,1)),2);
+    decl s22MagSq = pow(abs(sParam(2,2)),2);
+    decl c2 = sParam(2,2)-detOfS*conj(sParam(1,1));
+    decl k = (1-s11MagSq-s22MagSq+detMagSq)/(2.0*magS12xS21);
+    decl gp = pow(10.0,(dbGain)/10.0)/pow(abs(sParam(2,1)),2);
+    decl denom = 1+gp*(s22MagSq-detMagSq);
+    decl K = 2*k*magS12xS21*gp-pow(magS12xS21,2)*pow(gp,2);
+       *center = gp*conj(c2)/denom;
+       *radius = sqrt(abs(1-K))/denom;
+}
+
+//****************************************************************************
+// Calculates the center and radius for available gain circle.
+//****************************************************************************
+defun ga_center_and_radius(sParam, gain, center, radius)
+{
+    decl maxGain = max_gain(sParam);
+    decl dbGain = if (gain > maxGain) then maxGain else gain;
+    decl detOfS = sParam(1,1)*sParam(2,2)-sParam(2,1)*sParam(1,2);   
+    decl detMagSq = pow(abs(detOfS),2); 
+    decl magS12xS21 = abs(sParam(2,1)*sParam(1,2));
+    decl s11MagSq = pow(abs(sParam(1,1)),2);    decl s22MagSq = pow(abs(sParam(2,2)),2);
+    decl c1 = sParam(1,1)-detOfS*conj(sParam(2,2));
+    decl k = (1.0-s11MagSq-s22MagSq+detMagSq)/(2.0*magS12xS21);
+    decl ga = pow(10.0,(dbGain)/10.0)/pow(abs(sParam(2,1)),2);
+    decl denom = 1+ga*(s11MagSq-detMagSq);
+    decl K = 2*k*magS12xS21*ga-pow(magS12xS21,2)*pow(ga,2);
+       *center = ga*conj(c1)/denom; 
+       *radius = sqrt(abs(1-K))/denom;      
+}
+
+//****************************************************************************
+// Calculates the center and radius for source stability circle.
+//****************************************************************************
+defun s_stab_center_and_radius(sParam, center, radius)
+{
+    decl detOfS = sParam(1,1)*sParam(2,2)-sParam(2,1)*sParam(1,2);
+    decl S12xS21 = sParam(1,2)*sParam(2,1);
+    decl s11MagSq = pow(abs(sParam(1,1)),2);
+    decl denom = s11MagSq - pow(abs(detOfS),2);
+     *center = conj(sParam(1,1)-detOfS*conj(sParam(2,2)))/denom;
+     *radius = abs(S12xS21/denom);
+}
+
+//****************************************************************************
+// Calculates the center and radius for load stability circle.
+//****************************************************************************
+defun l_stab_center_and_radius(sParam, center, radius)
+{
+    decl detOfS = sParam(1,1)*sParam(2,2)-sParam(2,1)*sParam(1,2);
+    decl S12xS21 = sParam(1,2)*sParam(2,1);
+    decl s22MagSq = pow(abs(sParam(2,2)),2);
+    decl denom = s22MagSq - pow(abs(detOfS),2);
+     *center = conj(sParam(2,2)-detOfS*conj(sParam(1,1)))/denom;
+     *radius = abs(S12xS21/denom);
+}
+
+//****************************************************************************
+// Calculates the center and radius for source noise mismatch circle.
+//****************************************************************************
+defun ns_center_and_radius(nsFigure,dBnfmin,sopt,rn,center,radius)
+{
+    decl dBnf = if (nsFigure < dBnfmin) then dBnfmin else nsFigure;
+    decl nfmin = pow(10.0,dBnfmin/10.0);
+    decl nf = pow(10.0,dBnf/10.0);
+    decl nx = (nf-nfmin)*pow(abs(1+sopt),2)/(4.0*rn); 
+    decl ni = (nx >= 0).*nx;
+     *center = sopt/(1+ni);
+     *radius = sqrt(pow(ni,2)+ni*(1-pow(abs(sopt),2)))/(1+ni);
+}
+
+
+//****************************************************************************
+// Calculates the center and radius for source mapping circle: port 2 to port 1.
+//****************************************************************************
+defun map1_center_and_radius(sParam, center, radius)
+{
+    decl S12xS21 = sParam(1,2)*sParam(2,1);
+    decl s22MagSq = pow(abs(sParam(2,2)),2);
+     *center = sParam(1,1)+S12xS21*conj(sParam(2,2))/(1-s22MagSq);
+     *radius = abs(S12xS21)/(1-s22MagSq);
+}
+
+
+//****************************************************************************
+// Calculates the center and radius for source mapping circle: port 1 to port 2.
+//****************************************************************************
+defun map2_center_and_radius(sParam, center, radius)
+{
+    decl S12xS21 = sParam(1,2)*sParam(2,1);
+    decl s11MagSq = pow(abs(sParam(1,1)),2);
+     *center = sParam(2,2)+S12xS21*conj(sParam(1,1))/(1-s11MagSq);
+     *radius = abs(S12xS21)/(1-s11MagSq);
+}
+
+//****************************************************************************
+// Returns a list of names of the independet variables
+//****************************************************************************
+defun indep_name_list(sParam)    
+{   
+    decl sWhat = what(sParam);
+    decl strg = parse(sWhat[0]);
+    strg = member("[",strg);
+    strg = cdr(strg);
+    decl strg_len = listlen(strg);
+    decl i, subStrg, indepList = list();
+      
+    for(i=0; i<strg_len; i++)
+     {     
+         subStrg = nth(i,strg);
+         
+         if (subStrg!="," && subStrg!="]")
+         {
+             if(!listlen(indepList))
+                 indepList=list(subStrg);        
+             else
+                 indepList = append(indepList,list(subStrg));         
+         }
+     }
+return indepList;
+}
+
+//****************************************************************************
+// This function extends gs_circle, gl_circle, gp_circle and ga_circle
+// to support multiple gains (gain vector)
+//****************************************************************************
+defun multiple_gain_circle(
+  circleFunction, sParam, gain,
+  numberOfPts, iNumCircles, fGainStepIn)
+{
+  decl dbGain;
+   if (gain == NULL) {
+     if (sweep_dim(sParam) > 3) {
+        print_function_error("multiple_gain_circle","Need to specify a scalar gain for a scattering parameter with dimension greater than three ");
+       return;
+     }
+     else {
+       //Gain not specified, generate circles at 0,1,2,3 dB below max_gain
+       decl vGains = {0,1,2,3};
+
+       //2003C: If number of circles given, then generate gains below max_gain
+       if (iNumCircles != NULL) {
+         decl fGainStep = if(fGainStepIn) then fGainStepIn else 1.0;
+         decl iCount = 0;
+	 vGains = {0};
+	 for (iCount = 1; iCount < iNumCircles; iCount++) {
+           vGains = {vGains, iCount * fGainStep}; 
+	 } //for
+       }
+       //Default behavior in 2003A and before
+       if(circleFunction == gs_circle_eqn)
+         dbGain =  min(min(min(10*log(1/(1-pow(abs(sParam(1,1)),2)))))) - vGains; 
+       else if(circleFunction == gl_circle_eqn)
+         dbGain = min(min(min(10*log(1/(1-pow(abs(sParam(2,2)),2)))))) - vGains; 
+       else
+         dbGain = min(min(min(max_gain(sParam)))) - vGains;
+     }
+   } //gain == NULL
+   else 
+     dbGain = gain;
+
+  decl itsVector = 0;
+  decl itsSweep = 0;
+ 
+  if (sweep_dim(dbGain) < 2)
+    {
+      itsVector  = size(dbGain) > 1 && sweep_dim(dbGain) == 0;
+      itsSweep  = sweep_size(dbGain) > 1  && sweep_dim(dbGain) == 1;
+    }
+ 
+  decl matchedDim = sweep_dim(sParam) == sweep_dim(dbGain) && inner_sweep_size(sParam) == inner_sweep_size(dbGain);
+
+  if (sweep_dim(dbGain) > 1 && (!matchedDim)) {
+    print_function_error("multiple_gain_circle","Gain value is not supported");
+    return;
+  }
+  if (size(dbGain) == 1 && sweep_dim(dbGain) == 0 ) {
+    //Fix for AELexpress.330 - 2004A
+    decl freqValue = indep(sParam);
+    decl freqLen = sweep_size(freqValue);
+    decl indepName = indep_name_list(sParam);
+    decl j;
+    decl sIndep = "freq";
+    if (indepName != NULL)
+      sIndep = nth(0, indepName);
+
+    decl allCircles=create(3, "Complex", {"gain", sIndep, "cir_pts"},
+					 {"Real", "Real", "Implicit"}, 1, 1);
+    decl gain_indep=indep(allCircles,"gain");
+    decl freq_indep=indep(allCircles,sIndep);
+    gain_indep[0] = dbGain;
+    for (j=0; j< freqLen; j++) {
+      allCircles[0,j,::]=circleFunction(sParam[j], gain_indep[0],numberOfPts);
+      freq_indep[j]=freqValue[j];
+    }  
+    return allCircles;
+//    return circleFunction(sParam, dbGain, numberOfPts);
+  }
+  else
+    {	  
+      decl sDim = sweep_dim(sParam);
+      decl indepName = indep_name_list(sParam);
+      decl gainLen = if(itsVector) then size(dbGain) else inner_sweep_size(dbGain);
+   
+       if (sDim == 0) {
+	  decl i, j, gain_indep, allCircles; 
+	  
+	  if((!matchedDim) || itsVector) {
+	      allCircles=create(2, "Complex", {"gain", "cir_pts"},
+				{"Real","Implicit"}, 1, 1);
+	      gain_indep=indep(allCircles,"gain");
+	  }
+	  else
+	      allCircles=create(1, "Complex", {"cir_pts"}, {"Implicit"}, 1, 1);
+	  
+	  if ((!matchedDim) || itsVector) {
+	    for(i=0; i< gainLen; i++) {
+	      gain_indep[i] = if(itsVector) then dbGain(i+1) else dbGain[i];
+	      allCircles[i,::]=circleFunction(sParam, gain_indep[i],numberOfPts);
+	    } 
+	  } 
+	  else
+	    allCircles=circleFunction(sParam,dbGain,numberOfPts);
+	  return allCircles;
+	}
+      else
+	if (sDim == 1)
+	  {
+	 if(listlen(indepName) < 1)
+	   indepName = list("indep1"); 
+	  decl i, j, gain_indep, freq_indep, allCircles; 
+	  decl freqValue = indep(sParam);
+	  decl freqLen = sweep_size(freqValue);
+	  
+	  if((!matchedDim) || itsVector)
+	    {
+	      allCircles=create(3,
+				"Complex",
+				{"gain", nth(0,indepName),"cir_pts"},
+				{"Real","Real","Implicit"},
+				1, 1);
+	      gain_indep=indep(allCircles,"gain");
+	      freq_indep=indep(allCircles,nth(0,indepName));
+	    }
+	  else
+	    {
+	      allCircles=create(2,
+				"Complex",
+				{nth(0,indepName),"cir_pts"},
+				{"Real","Implicit"},
+				1, 1);
+	      freq_indep=indep(allCircles,nth(0,indepName));
+	    }
+	   
+	  
+	  if ((!matchedDim) || itsVector)
+	    {
+	      for(i=0; i< gainLen; i++)
+		{
+		  gain_indep[i] = if(itsVector) then dbGain(i+1) else dbGain[i];
+		  for(j=0; j< freqLen; j++)
+		    {
+		      allCircles[i,j,::]=circleFunction(sParam[j], gain_indep[i],numberOfPts);
+		      freq_indep[j]=freqValue[j];
+		    }  
+		} 
+	    } 
+	  else
+	    {
+	      for(j=0; j< freqLen; j++)
+		{
+		  allCircles[j,::]=circleFunction(sParam[j], dbGain[j],numberOfPts);
+		  freq_indep[j]=freqValue[j];
+		}  
+	    }
+	  return allCircles;
+	}
+      else 
+	if (sDim ==2)
+	  {
+	    if(listlen(indepName) < 2 )
+	      indepName = list("indep2","indep1"); 
+	    decl i, j, k, gain_indep, freq_indep, plv_indep, allCircles; 
+	    decl plvValue = indep(sParam,2);
+	    decl plvLen = sweep_size(plvValue);
+	    decl freqValue, freqLen;
+
+	    if ((!matchedDim) || itsVector)
+	      {
+		allCircles=create(4,
+				  "Complex",
+				  {"gain", nth(0,indepName),nth(1,indepName),"cir_pts"},
+				  {"Real","Real","Real","Implicit"},
+				  1, 1);
+		gain_indep=indep(allCircles,"gain");
+		freq_indep=indep(allCircles,nth(1,indepName));
+		plv_indep=indep(allCircles,nth(0,indepName));
+	      }
+	    else
+	      {
+		allCircles=create(3,
+				  "Complex",
+				  {nth(0,indepName),nth(1,indepName),"cir_pts"},
+				  {"Real","Real","Implicit"},
+				  1, 1);
+		freq_indep=indep(allCircles,nth(1,indepName));
+		plv_indep=indep(allCircles,nth(0,indepName));
+	      }
+	    
+	    if ((!matchedDim) || itsVector)
+	      {
+		for(i=0; i< gainLen; i++)
+		  {
+		    gain_indep[i] = if(itsVector) then dbGain(i+1) else dbGain[i];
+		    for(j=0; j< plvLen; j++)
+		      {
+			freqValue = indep(sParam[j,::]);
+			freqLen = sweep_size(freqValue);
+			for(k=0; k< freqLen; k++)
+			  {
+			    allCircles[i,j,k,::]=circleFunction(sParam[j,k],gain_indep[i],numberOfPts); 
+			    freq_indep[k]=freqValue[k];
+			  }
+			plv_indep[j]=plvValue[j];
+		      }
+		  }
+	      }
+	    else
+	      {
+		for(j=0; j< plvLen; j++)
+		  {
+		    freqValue = indep(sParam[j,::]);
+		    freqLen = sweep_size(freqValue);
+		    for(k=0; k< freqLen; k++)
+		      {
+			allCircles[j,k,::]=circleFunction(sParam[j,k],dbGain[j,k],numberOfPts); 
+			freq_indep[k]=freqValue[k];
+		      }
+		    plv_indep[j]=plvValue[j];
+		  }
+	      }
+	    return allCircles;
+	  }
+	else
+	  if (sDim ==3)
+	    {
+	      if(listlen(indepName) < 3)
+		indepName = list("indep3","indep2","indep1"); 
+	      decl i, j, k, l, gain_indep, freq_indep, plv_indep, param_indep, allCircles; ;
+	      decl paramValue = indep(sParam,3);
+	      decl paramLen = sweep_size(paramValue);
+	      decl plvValue, plvLen, freqValue,  freqLen; 
+	      
+	      if ((!matchedDim) || itsVector)
+		{
+		  allCircles=create(5,
+				  "Complex",
+				  {"gain", nth(0,indepName),nth(1,indepName),nth(2,indepName),"cir_pts"},
+				  {"Real","Real","Real","Real","Implicit"},
+				  1, 1);
+		  gain_indep=indep(allCircles,"gain");
+		  freq_indep=indep(allCircles,nth(2,indepName));
+		  plv_indep=indep(allCircles,nth(1,indepName));
+		  param_indep=indep(allCircles,nth(0,indepName));
+		}
+	      else
+		{
+		  allCircles=create(4,
+				  "Complex",
+				  {nth(0,indepName),nth(1,indepName),nth(2,indepName),"cir_pts"},
+				  {"Real","Real","Real","Implicit"},
+				  1, 1);
+		  freq_indep=indep(allCircles,nth(2,indepName));
+		  plv_indep=indep(allCircles,nth(1,indepName));
+		  param_indep=indep(allCircles,nth(0,indepName));
+		}
+
+	      if ((!matchedDim) || itsVector)
+		{
+		  for(i=0; i< gainLen; i++)
+		    { 
+		      gain_indep[i] = if(itsVector) then dbGain(i+1) else dbGain[i];
+		      for(j=0; j< paramLen; j++)
+			{
+			  plvValue = indep(sParam[j,::,::],2);
+			  plvLen = sweep_size(plvValue);
+			  for(k=0; k< plvLen; k++)
+			    {
+			      freqValue = indep(sParam[j,k,::]);
+			      freqLen = sweep_size(freqValue);
+			      for(l=0; l< freqLen; l++)
+				{
+				  allCircles[i,j,k,l,::]=circleFunction(sParam[j,k,l],gain_indep[i],numberOfPts); 
+				  freq_indep[l]=freqValue[l];
+				}
+			      plv_indep[k]=plvValue[k];
+			    }
+			  param_indep[j]=paramValue[j];
+			}
+		    }
+		}
+	      else
+		{
+		  for(j=0; j< paramLen; j++)
+		    {
+		      plvValue = indep(sParam[j,::,::],2);
+		      plvLen = sweep_size(plvValue);
+		      for(k=0; k< plvLen; k++)
+			{
+			  freqValue = indep(sParam[j,k,::]);
+			  freqLen = sweep_size(freqValue);
+			  for(l=0; l< freqLen; l++)
+			    {
+			      allCircles[j,k,l,::]=circleFunction(sParam[j,k,l],dbGain[j,k,l],numberOfPts); 
+			      freq_indep[l]=freqValue[l];
+			    }
+			  plv_indep[k]=plvValue[k];
+			}
+		      param_indep[j]=paramValue[j];
+		    }
+		}
+	      return allCircles;
+
+	    }
+	  else
+	    print_function_error("multiple_gain_circle","A gain vector is not supported for a scattering parameter with dimension greater than three ");
+    }    
+} //fun - multiple_gain_circle
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: gs_circle()
+FUN_DESCRIPTION: Returns a source-mismatch gain circle.
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX:  y = gs_circle(S, gain, numOfPts, numCircles, gainStep)
+EXAMPLE:
+circleData = gs_circle(S, 2, 51) 
+
+circleData = gs_circle(S, {2, 3, 4}, 51) return the points on the circle(s). 
+
+circleData = gs_circle(S, , 51, 5, 0.5) return the points on the circle(s) for 5 circles at maxGain - {0,0.5,1.0,1.5,2.0}
+
+circleData = gs_circle(S, , , 2, 1.0) return the points on the circle(s) for 2 circles at maxGain - {0,1.0} 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: gain
+  ARG_DESCRIPTION: specified gain in dB
+  ARG_DEFAULT: maxGain - {0, 1, 2, 3} dagger.gif
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real array
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numOfPts
+  ARG_DESCRIPTION: desired number of points per circle
+  ARG_DEFAULT: 51
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numCircles
+  ARG_DESCRIPTION: number of desired circles. This is used if gain is not specified.
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: gainStep
+  ARG_DESCRIPTION: gain step size.  This is used if gain is not specified.
+  ARG_DEFAULT: 1.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Where maxGain = 10*log(1 / (1 - mag(S11)**2)) 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO: ga_circle(), gl_circle(), gp_circle() 
+EXTERNAL: yes
+NOTES:
+This function generates the unilateral gain circle resulting from a source
+mismatch. The circle is defined by the loci of the source-reflection coefficients that result in the specified gain. 
+
+A gain circle is created for each value of the swept variable(s). Multiple gain
+values can be specified for a scattering parameter that has dimension less than
+four. This measurement is supported for 2-port networks only.
+
+If gain is not specified, and if numCircles is not specified as well gain circles are drawn at maxGain - {0,1,2,3}. That is gain values are calculated at a loss of 0,1,2,3 dB from the maximum gain. If gain is not specified, and if numCircles is given then numCircles gain circles are drawn at gainStep below maxGain. 
+Gain is also limited by maxGain (i.e., if gain > maxGain, then the circle is generated at maxGain). 
+
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun gs_circle(sParam, dbGain, numberOfPts, iNumCircles, fGainstep)
+{
+  return multiple_gain_circle(gs_circle_eqn, sParam, dbGain, numberOfPts, iNumCircles, fGainstep);
+}
+
+defun gs_circle_eqn(sParam, dbGain, numOfPts)
+{
+  decl numberOfPts = if(numOfPts) then numOfPts else 51;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 )  
+    {
+      decl circleData;             
+      decl center,radius;
+
+      // calculate center and radius
+      center_and_radius(sParam(1,1), dbGain, &center, &radius);
+      
+      // generate circles
+      circleData = circle(center, radius, numberOfPts);
+      return(expand(circleData));
+    }
+  print_function_error("gs_circle_eqn","Source mismatch gain circle is only available for 2-port scattering parameters");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: gl_circle()
+FUN_DESCRIPTION: Returns a load-mismatch gain circle.
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX:  y = gl_circle(S, gain, numOfPts, numCircles, gainStep)
+EXAMPLE:
+circleData = gl_circle(S, 2, 51) 
+
+circleData = gl_circle(S, {2, 3, 4}, 51) return the points on the circle(s). 
+
+circleData = gl_circle(S, , 51, 5, 0.5) return the points on the circle(s) for 5 circles at maxGain - {0,0.5,1.0,1.5,2.0}
+
+circleData = gl_circle(S, , , 2, 1.0) return the points on the circle(s) for 2 circles at maxGain - {0,1.0} 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: gain
+  ARG_DESCRIPTION: specified gain in dB
+  ARG_DEFAULT: maxGain - {0, 1, 2, 3} dagger.gif
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real array
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numOfPts
+  ARG_DESCRIPTION: desired number of points per circle
+  ARG_DEFAULT: 51
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numCircles
+  ARG_DESCRIPTION: number of desired circles. This is used if gain is not specified.
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: gainStep
+  ARG_DESCRIPTION: gain step size.  This is used if gain is not specified.
+  ARG_DEFAULT: 1.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Where maxGain = 10*log(1 / (1 - mag(S22)**2)) 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO: ga_circle(), gs_circle(), gp_circle() 
+EXTERNAL: yes
+NOTES:
+This function generates the unilateral gain circle resulting from a load mismatch.
+
+The circle is defined by the loci of the load-reflection coefficients that result in the specified gain. 
+
+A gain circle is created for each value of the swept variable(s). Multiple gain
+values can be specified for a scattering parameter that has dimension less than
+four. This measurement is supported for 2-port networks only.
+
+If gain is not specified, and if numCircles is not specified as well gain circles are drawn at maxGain - {0,1,2,3}. That is gain is calculated at a loss of 0,1,2,3 dB from the maximum gain. If gain is not specified, and if numCircles is given then numCircles gain circles are drawn at gainStep below maxGain. Gain isalso limited by maxGain (i.e., if gain > maxGain, then the circle is generated at maxGain). 
+
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun gl_circle(sParam, dbGain, numberOfPts, iNumCircles, fGainstep)
+{
+  return multiple_gain_circle(gl_circle_eqn, sParam, dbGain, numberOfPts, iNumCircles, fGainstep);
+}
+
+
+defun gl_circle_eqn(sParam, dbGain, numOfPts)
+{
+  decl numberOfPts = if(numOfPts) then numOfPts else 51;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 )  
+    {
+      decl circleData;             
+      decl center,radius;
+    
+      // calculate center and radius
+      center_and_radius(sParam(2,2), dbGain, &center, &radius);
+    
+      // generate circles
+      circleData = circle(center, radius, numberOfPts);
+      return(expand(circleData));
+    }
+  print_function_error("gl_circle_eqn","Load mismatch gain circle is only available for 2-port scattering parameters");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: gp_circle()
+FUN_DESCRIPTION: Generates a power gain circle.
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX:  y = gp_circle(S, gain, numOfPts, numCircles, gainStep)
+EXAMPLE:
+circleData = gp_circle(S, 2, 51) 
+
+circleData = gp_circle(S, {2, 3, 4}, 51) return the points on the circle(s). 
+
+circleData = gp_circle(S, , 51, 5, 0.5) return the points on the circle(s) for 5 circles at maxGain - {0,0.5,1.0,1.5,2.0}
+
+circleData = gp_circle(S, , , 2, 1.0) return the points on the circle(s) for 2 circles at maxGain - {0,1.0} 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: gain
+  ARG_DESCRIPTION: specified gain in dB
+  ARG_DEFAULT: dagger.gif
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real array
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numOfPts
+  ARG_DESCRIPTION: desired number of points per circle
+  ARG_DEFAULT: 51
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numCircles
+  ARG_DESCRIPTION: number of desired circles. This is used if gain is not specified.
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: gainStep
+  ARG_DESCRIPTION: gain step size.  This is used if gain is not specified.
+  ARG_DEFAULT: 1.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Default value for gain is min(max_gain(S)) - {1, 2, 3}
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO: ga_circle(), gl_circle(), gs_circle() 
+EXTERNAL: yes
+NOTES:
+This function generates a constant-power-gain circle resulting from a load
+mismatch. The circle is defined by the loci of the output-reflection coefficients
+that result in the specified gain. 
+
+A gain circle is created for each value of the swept variable(s). Multiple gain
+values can be specified for a scattering parameter that has dimension less than
+four. This measurement is supported for 2-port networks only.
+
+If gain is not specified, and if numCircles is not specified as well gain circles
+are drawn at min(max_gain(S)) - {0,1,2,3}. That is gains are calculated at a loss
+of 0,1,2,3 dB from the maximum gain. If gain is not specified, and if numCircles
+is given then numCircles gain circles are drawn at gainStep below max_gain(). Gain
+is also limited by max_gain(S) (i.e., if gain > max_gain(S), then the circle is
+generated at max_gain(S)). 
+
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun gp_circle(sParam, dbGain, numberOfPts, iNumCircles, fGainstep)
+{
+  return multiple_gain_circle(gp_circle_eqn, sParam, dbGain, numberOfPts, iNumCircles, fGainstep);
+}
+
+
+defun gp_circle_eqn(sParam, dbGain, numOfPts)
+{
+  decl numberOfPts = if(numOfPts) then numOfPts else 51;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 )  
+    {  
+      decl circleData;             
+      decl center,radius;
+      gp_center_and_radius(sParam, dbGain, &center, &radius);
+      circleData = circle(center, radius, numberOfPts);
+      return(expand(circleData));
+    }
+ print_function_error("gp_circle_eqn","Power gain circle is only available for 2-port scattering parameters");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: ga_circle()
+FUN_DESCRIPTION: Generates an available gain circle.
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX:  y = ga_circle(S, gain, numOfPts, numCircles, gainStep)
+EXAMPLE:
+circleData = ga_circle(S, 2, 51) 
+
+circleData = ga_circle(S, {2, 3, 4}, 51) return the points on the circle(s). 
+
+circleData = ga_circle(S, , 51, 5, 0.5) return the points on the circle(s) for 5 circles at maxGain - {0,0.5,1.0,1.5,2.0}
+
+circleData = ga_circle(S, , , 2, 1.0) return the points on the circle(s) for 2 circles at maxGain - {0,1.0} 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: gain
+  ARG_DESCRIPTION: specified gain in dB
+  ARG_DEFAULT: dagger.gif
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real array
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numOfPts
+  ARG_DESCRIPTION: desired number of points per circle
+  ARG_DEFAULT: 51
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numCircles
+  ARG_DESCRIPTION: number of desired circles. This is used if gain is not specified.
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: gainStep
+  ARG_DESCRIPTION: gain step size.  This is used if gain is not specified.
+  ARG_DEFAULT: 1.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Default value for gain is min(max_gain(S)) - {1, 2, 3}
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO: gl_circle(), gp_circle(), gs_circle() 
+EXTERNAL: yes
+NOTES:
+This function generates the constant available-gain circle resulting from a source
+mismatch. The circle is defined by the loci of the source-reflection coefficients
+resulting in the specified gain. 
+
+A gain circle is created for each value of the swept variable(s). Multiple gain
+values can be specified for a scattering parameter that has dimension less than
+four. This measurement is supported for 2-port networks only.
+
+If gain is not specified, and if numCircles is not specified as well gain circles
+are drawn at min(max_gain(S)) - {0,1,2,3}. That is gain is calculated at a loss of
+0,1,2,3 dB from maxGain. If gain is not specified, and if numCircles is given then
+numCircles gain circles are drawn at gainStep below max_gain(). Gain is also
+limited by max_gain(S) (i.e., is gain > max_gain(S), then the circle is generated
+at max_gain(S)). 
+
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun ga_circle(sParam, dbGain, numberOfPts, iNumCircles, fGainstep)
+{
+  return multiple_gain_circle(ga_circle_eqn, sParam, dbGain, numberOfPts, iNumCircles, fGainstep);
+}
+
+defun ga_circle_eqn(sParam, dbGain, numOfPts)
+{
+  decl numberOfPts = if(numOfPts) then numOfPts else 51;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 )  
+    {
+      decl circleData;             
+      decl center,radius;
+      ga_center_and_radius(sParam, dbGain, &center, &radius);
+      circleData = circle(center, radius, numberOfPts);
+      return(expand(circleData));
+    }
+  print_function_error("ga_circle_eqn","Available gain circle is only available for 2-port scattering parameters");  
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: s_stab_circle_center_radius()
+FUN_DESCRIPTION: Returns the center and radius of the source stability circle
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX: s_cr = s_stab_circle_center_radius(S, Type)
+EXAMPLE:
+1. s_cr=s_stab_circle_center_radius(S) returns a 1X2 matrix containing center and radius
+sCirc=expand(circle(s_cr(1), real(s_cr(2)), 51)) returns data for the source stability circle
+
+2. s_radius=s_stab_circle_center_radius(S, "radius") returns the radius
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: 2-port S-Parameters
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Type
+  ARG_DESCRIPTION: Type of parameter to return
+  ARG_DEFAULT: "both"
+  ARG_RANGE: ["both"|"center"|"radius"]
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+SEE ALSO: s_stab_circle(), l_stab_circle(), l_stab_circle_center_radius()
+EXTERNAL: yes
+NOTES: If the argument "Type" is not specified, the function returns complex data.
+
+Although radius is of type real, the values are returned as complex.  Therefore
+when using the returned radius, use the real part.  To obtain the radius as a real number, set "Type" to "radius".
+
+AUTHOR: Keysight Technologies
+DATE: June.2003
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+//****************************************************************************
+defun s_stab_circle_center_radius(sParam, Type)
+{
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 ) {
+    decl center,radius;
+    s_stab_center_and_radius(sParam, &center, &radius);
+    decl sType = if(Type) then Type else "both";
+    if (tolower(Type) == "center")
+      return(expand(center));
+    else if (tolower(Type) == "radius")
+      return(expand(radius));
+    //return center and radius as a matrix
+    else {  
+      decl sRet = {S(1,1), indep(S)};
+      sRet = {center, real(radius)};
+      return sRet;
+    }
+  } //if
+  print_function_error("s_stab_circle_center_radius","Source stability circle center and radius is only available for 2-port scattering parameters"); 
+
+} //fun - s_stab_circle_center_radius
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: s_stab_circle()
+FUN_DESCRIPTION: Returns source (input) stability circles. 
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX:  y = s_stab_circle(S, numOfPts) 
+EXAMPLE:
+circleData = s_stab_circle(S, 51) returns the points on the circle(s). 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numOfPts
+  ARG_DESCRIPTION: desired number of points per circle
+  ARG_DEFAULT: 51
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO:  l_stab_circle(), l_stab_region(), s_stab_region(), s_stab_circle_center_radius()
+EXTERNAL: yes
+NOTES:
+Used in Small-signal S-parameter simulations.
+
+This expression generates source stability circles. The circles are defined by the loci of source-reflection coefficients where the magnitude of the load-reflection coefficient is 1. 
+
+A circle is created for each value of the swept variable(s). This measurement is supported for 2-port networks only. 
+
+To find the center and radius of the stability circle use the following expressions: 
+
+cir=s_stab_circle(S,2)
+cir_center=sum((cir[0::1]) /2)
+cir_radius=abs(cir[1]-cir[0]) /2
+
+Alternately the function s_stab_circle_center_radius() can be used.
+
+Use the function s_stab_region(S) to determine the region of stability. 
+
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun s_stab_circle(sParam, numOfPts)
+{
+  decl numberOfPts = if(numOfPts) then numOfPts else 51;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 )  
+    {
+      decl circleData;             
+      decl center,radius;
+      s_stab_center_and_radius(sParam, &center, &radius);
+      circleData = circle(center, radius, numberOfPts);
+      return(expand(circleData));  
+    }
+  print_function_error("s_stab_circle","Source stability gain circle is only available for 2-port scattering parameters"); 
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: l_stab_circle_center_radius()
+FUN_DESCRIPTION: Returns the center and radius of the load (output) stability circle
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX: l_cr = l_stab_circle_center_radius(S, Type)
+EXAMPLE:
+1. l_cr=l_stab_circle_center_radius(S) returns a 1X2 matrix containing center and radius
+lCirc=expand(circle(l_cr(1), real(l_cr(2)), 51)) returns data for the load stability circle
+
+2. l_radius=l_stab_circle_center_radius(S, "radius") returns the radius
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: 2-port S-Parameters
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Type
+  ARG_DESCRIPTION: Type of parameter to return
+  ARG_DEFAULT: "both"
+  ARG_RANGE: ["both"|"center"|"radius"]
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+SEE ALSO: l_stab_circle(), s_stab_circle(), s_stab_circle_center_radius()
+EXTERNAL: yes
+NOTES: If the argument "Type" is not specified, the function returns complex data.
+
+Although radius is of type real, the values are returned as complex.  Therefore
+when using the returned radius, use the real part.  To obtain the radius as a real number, set "Type" to "radius".
+AUTHOR: Keysight Technologies
+DATE: June.2003
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+//****************************************************************************
+defun l_stab_circle_center_radius(sParam, Type)
+{
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 ) {
+    decl center,radius;
+    l_stab_center_and_radius(sParam, &center, &radius);
+
+    //Depending on Type specified by User, return values
+    decl sType = if(Type) then Type else "both";
+    if (tolower(Type) == "center")
+      return(expand(center));
+    else if (tolower(Type) == "radius")
+      return(expand(radius));
+    //return center and radius as a matrix
+    else {
+      decl sRet = {S(1,1), indep(S)};
+      sRet = {center, real(radius)};
+      return sRet;
+    }
+  } //if
+  print_function_error("l_stab_circle_center_radius","Load stability circle center and radius is only available for 2-port scattering parameters"); 
+
+} //fun - l_stab_circle_center_radius
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: l_stab_circle()
+FUN_DESCRIPTION: Returns load (output) stability circles. 
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX:  y = l_stab_circle(S, numOfPts) 
+EXAMPLE:
+circleData = l_stab_circle(S, 51) returns the points on the circle(s). 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numOfPts
+  ARG_DESCRIPTION: desired number of points per circle
+  ARG_DEFAULT: 51
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO:  l_stab_region(), l_stab_circle_center_radius(), s_stab_circle(), s_stab_region()
+EXTERNAL: yes
+NOTES:
+The function generates a load stability circle. The circle is defined by the
+loci of load-reflection coefficients where the magnitude of the source-reflection coefficient is 1. 
+
+A circle is created for each value of the swept variable(s). This measurement is supported for 2-port networks only. 
+
+Use the function l_stab_circle_center_radius() to find the center and radius of the stability circle.
+
+Use the function l_stab_region(S) to determine the region of stability. 
+
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun l_stab_circle(sParam, numOfPts)
+{
+  decl numberOfPts = if(numOfPts) then numOfPts else 51;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 )  
+   {
+    decl circleData;             
+    decl center,radius;
+    l_stab_center_and_radius(sParam, &center, &radius);
+    circleData = circle(center, radius, numberOfPts);
+    return(expand(circleData)); 
+   }
+   print_function_error("l_stab_circle","Load stability gain circle is only available for 2-port scattering parameters");   
+} //fun - l_stab_circle
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: map1_circle()
+FUN_DESCRIPTION: Returns source-mapping circles from port 2 to port 1.
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX: circleData=map1_circle(S, numOfPts) 
+EXAMPLE:
+
+circleData=map1_circle(S, 51) returns the points on the circle(s). 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numOfPts
+  ARG_DESCRIPTION: desired number of points per circle
+  ARG_DEFAULT: 51
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO: map2_circle() 
+EXTERNAL: yes
+NOTES:
+Used in Small-signal S-parameter simulations 
+
+The expression maps the set of terminations with unity magnitude at port 2 to port
+1. The circles are defined by the loci of terminations on one port as seen at the
+other port. 
+
+A source-mapping circle is created for each value of the swept variable(s). This
+measurement is supported for 2-port networks only. 
+
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun map1_circle(sParam,numOfPts)
+{
+  decl numberOfPts = if(numOfPts) then numOfPts else 51;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 )  
+   {
+    decl circleData;             
+    decl center,radius;
+    map1_center_and_radius(sParam, &center, &radius);
+    circleData = circle(center, radius, numberOfPts);
+    return (expand(circleData));
+    }
+   print_function_error("map1_circle","Source mapping circle is only available for 2-port scattering parameters");   
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: map2_circle()
+FUN_DESCRIPTION: Returns load-mapping circles from port 1 to port 2.
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX: circleData=map2_circle(S, numOfPts) 
+EXAMPLE:
+circleData=map2_circle(S, 51) returns the points on the circle(s). 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numOfPts
+  ARG_DESCRIPTION: desired number of points per circle
+  ARG_DEFAULT: 51
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO: map1_circle() 
+EXTERNAL: yes
+NOTES:
+Used in Small-signal S-parameter simulations 
+
+This function maps the set of terminations with unity magnitude at port 1 to port
+2. The circles are defined by the loci of terminations on one port as seen at the
+other port. 
+
+A source-mapping circle is created for each value of the swept variable(s). This
+measurement is supported for 2-port networks only. 
+
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun map2_circle(sParam,numOfPts)
+{
+  decl numberOfPts = if(numOfPts) then numOfPts else 51;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 )  
+    {
+    decl circleData;             
+    decl center,radius;
+    map2_center_and_radius(sParam, &center, &radius);
+    circleData = circle(center, radius, numberOfPts);
+    return (expand(circleData));
+    }
+   print_function_error("map2_circle","Source mapping circle is only available for 2-port scattering parameters");   
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: ns_circle()
+FUN_DESCRIPTION: Returns noise-figure circles.
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter, Harmonic Balance
+SYNTAX: y = ns_circle(nf2, NFmin, Sopt, rn, numOfPts, numCircles, NFStep) 
+EXAMPLE:
+circleData = ns_circle(0+NFmin, NFmin, Sopt, Rn/50, 51) 
+
+circleData = ns_circle(NULL, NFmin, Sopt,Rn/50,51) return the points on the circle for 4 circles at max(NFmin)+{0,1,2,3}
+
+Returns the points on the circle(s):
+circleData = ns_circle({0, 1}+NFmin, NFmin, Sopt, Rn/50, 51)
+
+Returns the points on the circle(s) for 3 circles at max(NFmin) + {0, 0.5, 1.0}:
+circleData = ns_circle(, NFmin, Sopt, Rn/50, 51, 3, 0.5)
+
+Returns the points on the circle(s) for 3 circles at max(NFmin) + {0, 1, 2.0}:
+circleData = ns_circle(, NFmin, Sopt, Rn/50, , 3)
+
+ARGUMENT
+  ARG_NAME: nf2
+  ARG_DESCRIPTION: specified noise figure
+  ARG_DEFAULT: dagger.gif
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: NFmin
+  ARG_DESCRIPTION: minimum noise figure
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Sopt
+  ARG_DESCRIPTION: optimum mismatch
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: rn
+  ARG_DESCRIPTION: equivalent normalized noise resistance of a 2-port network dbldagr.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numOfPts
+  ARG_DESCRIPTION: desired number of points per circle
+  ARG_DEFAULT: 51
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numCircles
+  ARG_DESCRIPTION: number of desired circles. This is used if nf2 is not specified.
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: NFStep
+  ARG_DESCRIPTION: nf step size.  This is used if nf2 is not specified.
+  ARG_DEFAULT: 1.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer or Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif If nf2 is NULL or not specified the default is max(NFmin)+{0,1,2,3}.
+dbldagr.gif rn = Rn/zRef where Rn is the equivalent noise resistance and zRef is the reference impedance. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO: None
+EXTERNAL: yes
+NOTES:
+Used in Small-signal S-parameter simulations, Harmonic Balance simulation.
+
+The expression generates constant noise-figure circles. The circles are defined by
+the loci of the source-reflection coefficients that result in the specified noise
+figure. NFmin, Sopt, and Rn are generated from noise analysis. 
+
+A circle is created for each value of the swept variable(s). 
+
+If nf2 is not specified, and if numCircles is not specified as well then nf circles are
+drawn at max(NFmin) + {0,1,2,3}. If nf2 is not specified, and if numCircles is
+given then numCircles nf circles are drawn at NFStep above max(NFmin). 
+
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ns_circle(nf, dBnfMin, sopt, rn, numberOfPts, iNumCircles, fStepSizeIn)
+{
+  decl dBnf;
+   if (nf == NULL) {
+     if (sweep_dim(dBnfMin) > 3) {
+       print_function_error("ns_circle","Need to specify a scalar noise figure for noise parameters dimension greater than three ");
+       return;
+     }
+
+     //NF not specified, generate circles at 0,1,2,3 dB above max_NFmin
+     decl vNFs = {0,1,2,3};
+
+     //2003C: If number of circles given, then generate NF above NFmin
+     if (iNumCircles != NULL) {
+       decl fStepSize = if(fStepSizeIn) then fStepSizeIn else 1.0;
+       decl iCount = 0;
+       vNFs = {0};
+       for (iCount = 1; iCount < iNumCircles; iCount++) {
+         vNFs = {vNFs, iCount * fStepSize}; 
+       } //for
+     }
+     //Default behavior in 2003A and before
+     dBnf = max(max(max(dBnfMin))) + vNFs;
+   } //nf == NULL
+   else 
+     dBnf = nf;
+       
+   decl itsVector = 0;
+   decl itsSweep = 0;
+ 
+   if (sweep_dim(dBnf) < 2) {
+     itsVector  = size(dBnf) > 1 && sweep_dim(dBnf) == 0;
+     itsSweep  = sweep_size(dBnf) > 1  && sweep_dim(dBnf) == 1;
+   }
+ 
+   decl matchedDim = sweep_dim(dBnfMin) == sweep_dim(dBnf) && inner_sweep_size(dBnfMin) == inner_sweep_size(dBnf);
+
+   if (sweep_dim(dBnf) > 1 && (!matchedDim)) {      
+     print_function_error("ns_circle","noise figure value is not supported");
+     return;
+   }
+   if (size(dBnf) == 1 && sweep_dim(dBnf) == 0 ) {
+     //Fix for AELexpress.330 - 2004A
+     decl allCircles=create(2, "Complex", {"ns figure","cir_pts"},
+					  {"Real","Implicit"}, 1, 1);
+     decl nf_indep=indep(allCircles,"ns figure");
+     nf_indep[0] = dBnf;
+     allCircles[0,::]=ns_circle_eqn(dBnf, dBnfMin, sopt, rn, numberOfPts);
+     return allCircles;
+//     return ns_circle_eqn(dBnf, dBnfMin, sopt, rn, numberOfPts);
+   }
+   else
+    {	 
+      decl sDim = sweep_dim(dBnfMin);
+      decl indepName = indep_name_list(dBnfMin);
+      decl nfLen = if(itsVector) then size(dBnf) else inner_sweep_size(dBnf);
+   
+      if (sDim == 0)
+	{  
+	  decl i, j, nf_indep, allCircles;
+
+	  if ((!matchedDim) || itsVector)
+	    {
+	      allCircles=create(2,
+				"Complex",
+				{"ns figure", "cir_pts"},
+				{"Real","Implicit"},
+				1, 1);
+	      nf_indep=indep(allCircles,"ns figure");
+	    }
+	  else
+	    {
+	      allCircles=create(1,
+				"Complex",
+				{"cir_pts"},
+				{"Implicit"},
+				1, 1);
+	    }
+	  if ((!matchedDim) || itsVector)
+	    {
+	      for(i=0; i< nfLen; i++)
+		{
+		  nf_indep[i]= if(itsVector) then dBnf(i+1) else dBnf[i];
+		  allCircles[i,::]=ns_circle_eqn(nf_indep[i],dBnfMin,sopt,rn,numberOfPts);       
+		}  
+	    }
+	  else
+	    allCircles=ns_circle_eqn(dBnf,dBnfMin,sopt,rn,numberOfPts);
+		 
+	  return allCircles;
+	}
+      else 
+	if (sDim == 1)
+	  {  
+	 if(listlen(indepName) < 1)
+	   indepName = list("indep1"); 
+	  decl i, j, nf_indep, freq_indep, allCircles;
+	  decl freqValue = indep(dBnfMin);
+	  decl freqLen = sweep_size(freqValue);
+
+	  if ((!matchedDim) || itsVector)
+	    {
+	      allCircles=create(3,
+				"Complex",
+				{"ns figure", nth(0,indepName),"cir_pts"},
+				{"Real","Real","Implicit"},
+				1, 1);
+	      nf_indep=indep(allCircles,"ns figure");
+	      freq_indep=indep(allCircles,nth(0,indepName));
+	    }
+	  else
+	    {
+	      allCircles=create(2,
+				"Complex",
+				{nth(0,indepName),"cir_pts"},
+				{"Real","Implicit"},
+				1, 1);
+	      freq_indep=indep(allCircles,nth(0,indepName));
+	    }
+	  if ((!matchedDim) || itsVector)
+	    {
+	      for(i=0; i< nfLen; i++)
+		{
+		  nf_indep[i]= if(itsVector) then dBnf(i+1) else dBnf[i];
+		  for(j=0; j< freqLen; j++)
+		    {
+		      allCircles[i,j,::]=ns_circle_eqn(nf_indep[i],dBnfMin[j],sopt[j],rn[j],numberOfPts);
+		      freq_indep[j]=freqValue[j];
+		    }      
+		}  
+	    }
+	  else
+	    {
+	      for(j=0; j< freqLen; j++)
+		    {
+		      allCircles[j,::]=ns_circle_eqn(dBnf[j],dBnfMin[j],sopt[j],rn[j],numberOfPts);
+		      freq_indep[j]=freqValue[j];
+		    }    
+	    }
+	  return allCircles;
+	}
+      else 
+	if (sDim ==2)
+	  {
+	    if(listlen(indepName) < 2 )
+	      indepName = list("indep2","indep1");   
+	    decl i, j, k, nf_indep, freq_indep, plv_indep, allCircles;
+	    decl plvValue = indep(dBnfMin,2);
+	    decl plvLen = sweep_size(plvValue);
+	    decl freqValue,  freqLen;
+	   
+	  if ((!matchedDim) || itsVector)
+	    {
+	      allCircles=create(4,
+				  "Complex",
+				  {"ns figure", nth(0,indepName),nth(1,indepName),"cir_pts"},
+				  {"Real","Real","Real","Implicit"},
+				  1, 1);
+	      nf_indep=indep(allCircles,"ns figure");
+	      freq_indep=indep(allCircles,nth(1,indepName));
+	      plv_indep=indep(allCircles,nth(0,indepName));
+	    }
+	  else
+	    {
+	      allCircles=create(3,
+				  "Complex",
+				  {nth(0,indepName),nth(1,indepName),"cir_pts"},
+				  {"Real","Real","Implicit"},
+				  1, 1);
+	      freq_indep=indep(allCircles,nth(1,indepName));
+	      plv_indep=indep(allCircles,nth(0,indepName));
+	    }
+	    
+	  if ((!matchedDim) || itsVector)
+	    {
+	      for(i=0; i< nfLen; i++)
+		{
+		nf_indep[i]= if(itsVector) then dBnf(i+1) else dBnf[i];
+		for(j=0; j< plvLen; j++)
+		  {
+		    freqValue = indep(dBnfMin[j,::]);
+		    freqLen = sweep_size(freqValue);
+		    for(k=0; k< freqLen; k++)
+		      {
+			allCircles[i,j,k,::]=ns_circle_eqn(nf_indep[i],dBnfMin[j,k],sopt[j,k],rn[j,k],numberOfPts); 
+			freq_indep[k]=freqValue[k];
+		      }
+		    plv_indep[j]=plvValue[j];
+		  }
+		}
+	    }
+	  else
+	    {
+	      for(j=0; j< plvLen; j++)
+		{
+		    freqValue = indep(dBnfMin[j,::]);
+		    freqLen = sweep_size(freqValue);
+		    for(k=0; k< freqLen; k++)
+		      {
+			allCircles[j,k,::]=ns_circle_eqn(dBnf[j,k],dBnfMin[j,k],sopt[j,k],rn[j,k],numberOfPts); 
+			freq_indep[k]=freqValue[k];
+		      }
+		    plv_indep[j]=plvValue[j];
+		  } 
+	      
+	    }
+	    return allCircles;
+	  }
+	else
+	  if (sDim ==3)
+	    {
+	      if(listlen(indepName) < 3)
+		indepName = list("indep3","indep2","indep1"); 
+	      decl i, j, k, l,  nf_indep, freq_indep, plv_indep, param_indep, allCircles;
+	      decl paramValue = indep(dBnfMin,3);
+	      decl paramLen = sweep_size(paramValue);
+	      decl plvValue, plvLen, freqValue, freqLen;
+	     
+
+	      if ((!matchedDim) || itsVector)
+		{
+		  allCircles=create(5,
+				  "Complex",
+				  {"ns figure", nth(0,indepName),nth(1,indepName),nth(2,indepName),"cir_pts"},
+				  {"Real","Real","Real","Real","Implicit"},
+				  1, 1);
+		  nf_indep=indep(allCircles,"ns figure");
+		  freq_indep=indep(allCircles,nth(2,indepName));
+		  plv_indep=indep(allCircles,nth(1,indepName));
+		  param_indep=indep(allCircles,nth(0,indepName));
+		}
+	      else
+		{
+		  allCircles=create(4,
+				  "Complex",
+				  {nth(0,indepName),nth(1,indepName),nth(2,indepName),"cir_pts"},
+				  {"Real","Real","Real","Implicit"},
+				  1, 1);
+		  freq_indep=indep(allCircles,nth(2,indepName));
+		  plv_indep=indep(allCircles,nth(1,indepName));
+		  param_indep=indep(allCircles,nth(0,indepName));
+		}
+	      
+	      if ((!matchedDim) || itsVector)
+		{
+		  for(i=0; i< nfLen; i++)
+		    {
+		      nf_indep[i]=if(itsVector) then dBnf(i+1) else dBnf[i];
+		      for(j=0; j< paramLen; j++)
+			{
+			  plvValue = indep(dBnfMin[j,::,::],2);
+			  plvLen = sweep_size(plvValue);
+			  for(k=0; k< plvLen; k++)
+			    {
+			      freqValue = indep(dBnfMin[j,k,::]);
+			      freqLen = sweep_size(freqValue);
+			      for(l=0; l< freqLen; l++)
+				{
+				  allCircles[i,j,k,l,::]=ns_circle_eqn(dBnf(i+1),dBnfMin[j,k,l],sopt[j,k,l],rn[j,k,l],numberOfPts); 
+				  freq_indep[l]=freqValue[l];
+				}
+			      plv_indep[k]=plvValue[k];
+			    }
+			  param_indep[j]=paramValue[j];
+			}	      
+		    }
+		}
+	      else
+		{
+		 for(j=0; j< paramLen; j++)
+			{
+			  plvValue = indep(dBnfMin[j,::,::],2);
+			  plvLen = sweep_size(plvValue);
+			  for(k=0; k< plvLen; k++)
+			    {
+			      freqValue = indep(dBnfMin[j,k,::]);
+			      freqLen = sweep_size(freqValue);
+			      for(l=0; l< freqLen; l++)
+				{
+				  allCircles[j,k,l,::]=ns_circle_eqn(dBnf[j,k,l],dBnfMin[j,k,l],sopt[j,k,l],rn[j,k,l],numberOfPts); 
+				  freq_indep[l]=freqValue[l];
+				}
+			      plv_indep[k]=plvValue[k];
+			    }
+			  param_indep[j]=paramValue[j];
+			}	       
+		}
+	  return allCircles;
+
+	    }
+	  else
+	    print_function_error("ns_circle","A noise figure vector is not supported for dimension greater than three ");
+    }    
+}
+
+defun ns_circle_eqn(dBnf, dBnfmin, sopt, rn, numOfPts)
+{
+  decl numberOfPts = if(numOfPts) then numOfPts else 51;
+  decl circleData, center, radius;
+  ns_center_and_radius(dBnf, dBnfmin, sopt, rn, &center, &radius);
+  circleData = circle(center, radius, numberOfPts);
+  return (expand(circleData));
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: s_stab_region()
+FUN_DESCRIPTION: This expression returns a string identifying the region of stability of the corresponding source stability circle.
+RETURNED_VALUE: String
+CATEGORY: S-Parameter
+SYNTAX: y = s_stab_region(S) 
+EXAMPLE:
+region = s_stab_region(S) returns "Outside" or "Inside". 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO: l_stab_circle(), l_stab_region(), s_stab_region() 
+EXTERNAL: yes
+NOTES:
+Used in Small-signal S-parameter simulations.
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun s_stab_region(sParam)
+{
+ decl size_s = size(sParam);
+ if ( size_s(1) == 2 && size_s(2) == 2 )  
+  {             
+    decl flag = abs(sParam(1,1)) > (abs(sParam(1,1)*sParam(2,2)-sParam(2,1)*sParam(1,2)));
+    decl stabRegion = if(flag) then "Outside" else "Inside";
+    return stabRegion;
+  }
+   print_function_error("s_stab_region","Source stability region is only available for 2-port scattering parameters");
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: l_stab_region()
+FUN_DESCRIPTION: This expression returns a string identifying the region of stability of the corresponding load stability circle.
+RETURNED_VALUE: String
+CATEGORY: S-Parameter
+SYNTAX: y = l_stab_region(S) 
+EXAMPLE:
+region = l_stab_region(S) returns "Outside" or "Inside". 
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circle_fun.ael
+SEE ALSO: l_stab_circle(), l_stab_circle(), s_stab_region() 
+EXTERNAL: yes
+NOTES:
+Used in Small-signal S-parameter simulations.
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun l_stab_region(sParam)
+{
+ decl size_s = size(sParam);
+ if ( size_s(1) == 2 && size_s(2) == 2 )  
+  {            
+    decl flag = abs(sParam(2,2)) > (abs(sParam(1,1)*sParam(2,2)-sParam(2,1)*sParam(1,2)));
+    decl stabRegion = if(flag) then "Outside" else "Inside";
+    return stabRegion;
+  }
+   print_function_error("l_stab_region","Source stability region is only available for 2-port scattering parameters");
+}
+
+//****************************************************************************
+// Calculates the center and radius for input vswr circle.
+//****************************************************************************
+defun s_vswr_center_and_radius(sParam, refCoef, center, radius)
+{
+    decl detOfS = sParam(1,1)*sParam(2,2)-sParam(2,1)*sParam(1,2);
+    decl S12xS21 = sParam(1,2)*sParam(2,1);
+    decl s11MagSq = pow(abs(sParam(1,1)),2);
+    decl denom = s11MagSq - pow(refCoef,2)*pow(abs(detOfS),2);
+     *center = conj(pow(refCoef,2)*sParam(1,1)-detOfS*conj(sParam(2,2)))/denom;
+     *radius = abs(refCoef*S12xS21/denom);
+}
+
+//****************************************************************************
+// Calculates the center and radius for output vswr circle.
+//****************************************************************************
+defun l_vswr_center_and_radius(sParam, refCoef, center, radius)
+{
+    decl detOfS = sParam(1,1)*sParam(2,2)-sParam(2,1)*sParam(1,2);
+    decl S12xS21 = sParam(1,2)*sParam(2,1);
+    decl s22MagSq = pow(abs(sParam(2,2)),2);
+    decl denom = s22MagSq - pow(refCoef,2)*pow(abs(detOfS),2);
+     *center = conj(pow(refCoef,2)*sParam(2,2)-detOfS*conj(sParam(1,1)))/denom;
+     *radius = abs(refCoef*S12xS21/denom);
+}
+
+//****************************************************************************
+// S_VSWR_Circle
+// Constant input VSWR circle
+//****************************************************************************
+defun s_vswr_circle(sParam, constVSWR, numOfPts)
+{
+ decl numberOfPts = if(numOfPts) then numOfPts else 51;
+ decl vswr = if(constVSWR) then constVSWR else 1;
+ decl size_s = size(sParam);
+ if ( size_s(1) == 2 && size_s(2) == 2 )  
+   { 
+     decl magRef = (vswr - 1) / (vswr + 1);  
+     decl center,radius;
+     s_vswr_center_and_radius(sParam, magRef, &center, &radius);
+     decl circleData = circle(center, radius, numberOfPts);
+     return(expand(circleData)); 
+   }
+   print_function_error("s_vswr_circle","Constant VSWR circle is only available for 2-port scattering parameters");
+   return;
+}
+
+//****************************************************************************
+// L_VSWR_Circle
+// Constant output VSWR circle
+//****************************************************************************
+defun l_vswr_circle(sParam, constVSWR, numOfPts)
+{
+ decl numberOfPts = if(numOfPts) then numOfPts else 51;
+ decl vswr = if(constVSWR) then constVSWR else 1;
+ decl size_s = size(sParam);
+ if ( size_s(1) == 2 && size_s(2) == 2 )  
+   {
+     decl magRef = (vswr - 1) / (vswr + 1);  
+     decl center,radius;
+     l_vswr_center_and_radius(sParam, magRef, &center, &radius);
+     decl circleData = circle(center, radius, numberOfPts);
+     return(expand(circleData)); 
+   }
+   print_function_error("l_vswr_circle","Constant VSWR circle is only available for 2-port scattering parameters");
+   return;
+}
+
+
+//
+// ***** DO NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+
+
+
+
+

@@ -1,0 +1,193 @@
+// Copyright Keysight Technologies 2009 - 2012  
+/////////////////////////////////////////////////////////////////
+//The function will read in the file and create contour for the//
+//user defined measurement///////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+
+/*defun loadpull_maury_contour(filename,measname,levels)
+{
+	decl Maury_parsed=lp_measurement_data_parser(filename,measname);
+	decl Maury_contours=lp_triangulation_sweep(Maury_parsed,levels);
+	return Maury_contours;
+}*/
+
+defun loadpull_maury_contour(filename,measname,levels,type)
+{
+	decl Maury_parsed=lp_measurement_data_parser(filename,measname);	
+
+	if(num_args()==3)
+	{	
+		decl Maury_contours=lp_triangulation_sweep(Maury_parsed,levels);
+		return Maury_contours;
+	}
+	if(num_args()==4)
+	{
+		decl check_type=type;	
+
+		if(check_type==-1)
+			return min_indep(Maury_parsed);
+		if(check_type==1)
+			return max_indep(Maury_parsed);
+		if(check_type==0)
+			decl Maury_contours=lp_triangulation_sweep(Maury_parsed,levels);
+		return Maury_contours;
+	}
+}
+
+/////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////
+//The function will generate a list of measured loadpull parameters//
+// Specifically created for load pull front panel .                //
+// Is not suitable for general use.                                //
+/////////////////////////////////////////////////////////////////////
+
+defun loadpull_maury_parameters(filename)
+{
+    decl Maury_file=fopen(filename,"R");
+    decl Get_line, Lst,LstLng;
+    Get_line=fgets(Maury_file);
+    decl Result=create(1,"String",{"Index"},{"Real"},1,1);
+    decl Indep= indep(Result,"Index");
+    decl count,Lst,LstLng;
+    if(Get_line == NULL)
+    {
+        fputs(stderr,"Maury data not valid");
+        return NULL;
+    }
+    do{
+        //fputs(stderr,Get_line);
+        if(index(Get_line,"Gt_dB")!=-1)
+        {
+            Lst=parse(Get_line," ");
+            LstLng=listlen(Lst);
+            decl Test=0;
+            for(count=0;count<LstLng;count=count+1)
+            {
+                if(nth(count,Lst)!=NULL && nth(count,Lst)!="\t" )
+                {
+                    Result[Test]=nth(Test,Lst);
+                    Indep[Test]=Test;
+                    Test=Test+1;
+                }
+            }
+            return Result;
+        }
+        Get_line=fgets(Maury_file);
+    }while(Get_line!= NULL);
+    
+    
+    return NULL;
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Get minimum and maximum vlaue of an independent variable /////////////
+/////////////////////////////////////////////////////////////////////////
+defun loadpull_indep_mmx(data)
+{
+	decl indep_data=indep(data);
+	if(indep_data==NULL)
+		return NULL;
+	decl min_data,max_data;
+	min_data=min(indep_data);
+	max_data=max(indep_data);
+	while(sweep_dim(min_data)>0)
+		min_data=min(min_data);
+	while(sweep_dim(max_data)>0)
+		max_data=max(max_data);
+	return [min_data,max_data];
+}		
+//////////////////////////////////////////////////////////////////////////
+
+defun loadpull_indep_sweep_size(data)
+{
+	decl data1=loadpull_indep_var_names(data);
+	return sweep_size(data1);
+}
+
+defun loadpull_indep_var_names(data)
+{
+	decl temp_data=what(data);
+	temp_data=identify_value(temp_data[0]);
+	decl indx1=index(temp_data,"[");
+	decl indx2=index(temp_data,"]");
+	temp_data=midstr(temp_data,indx1+1,indx2-1);
+	decl elem1,count,result=list();
+	while(index(temp_data,",")!=-1)
+	{
+		indx1=index(temp_data,",");
+		if(indx1!=-1)
+		{
+			elem1=midstr(temp_data,0,indx1-1);
+			result=append(result,list(elem1));
+			temp_data=midstr(temp_data,indx1+1,strlen(temp_data)-1);
+		}
+	}
+	if(strlen(temp_data)!=0)
+	{
+		result=append(result,list(temp_data));
+		elem1=listlen(result);
+		decl out_data = create(1,"String",{"Indep"},{"Integer"},1,1);
+  		decl timeresult = indep(out_data);
+		for(count=0;count<elem1;count++)
+		{
+			out_data[count]=nth(count,result);
+			timeresult[count]=count;
+		}
+		return out_data;
+	}
+
+	return NULL;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+	
+
+defun __loadpull_getlstpts(lst)
+{
+	decl count;
+	decl lstlng,templst;
+	lstlng=listlen(lst);
+	decl status=0;
+	decl result=lst;
+	for(count=0;count<lstlng;count++)
+	{
+		templst=nth(count,lst);
+		if(status<listlen(templst))
+			status=listlen(templst);
+	}
+	for(count=0;count<lstlng;count++)
+	{
+	       templst=nth(count,lst);
+		while(listlen(templst)<status)
+		{
+			templst=append(templst,list(nth(listlen(templst)-1,templst)));
+			result=replace(result,templst,count);
+		}
+	}
+		
+	return result;
+}		
+
+		
+
+defun __loadpull_var_info(data)
+{
+	decl temp_data=what(data);
+	temp_data=identify_value(temp_data[0]);
+	decl indx1=index(temp_data,"[");
+	decl indx2=index(temp_data,"]");
+        temp_data=midstr(temp_data,indx1+1,indx2-1);
+	indx1=index(temp_data,",");
+	decl elem1=midstr(temp_data,0,indx1-1);
+	temp_data=midstr(temp_data,indx1+1,strlen(temp_data)-1);
+	indx2=index(temp_data,",");
+	decl elem2=midstr(temp_data,0,indx2-1);
+	temp_data=midstr(temp_data,indx2+1,strlen(temp_data)-1);
+	return list(elem1,elem2,temp_data);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,22 @@
+#!/bin/ksh
+# Use Python installed under ADS, since /usr/bin/python is usually too old.
+# $HPEESOF_DIR/tools/${platform}/bin/python
+
+if [ "${HPEESOF_DIR}" = "" ]; then
+    echo "Please set HPEESOF_DIR to your ADS installation root and try again."
+    exit
+fi
+
+platform=linux_x86_64
+
+pythonCmd=$HPEESOF_DIR/tools/${platform}/bin/python
+
+
+if [ -x ${pythonCmd} ]; then
+    export PATH=${HPEESOF_DIR}/bin:$PATH
+    . eesofboot.sh
+    ${pythonCmd} $* 
+else
+    echo "Sorry, ${pythonCmd} is not an executable file."
+fi
+

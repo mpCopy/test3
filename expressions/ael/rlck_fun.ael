@@ -1,0 +1,173 @@
+// Copyright Keysight Technologies 2014 - 2019
+// -----------------------------------------------------------------------------
+// This file contains AEL functions that implement expressions to save 2D matrix
+// data of an RLCk simulation into the CSV format
+// 
+// Functions:
+//     save_mtx_to_csv(filename, mtx, labels, header, freq)
+//
+// -----------------------------------------------------------------------------
+//
+
+defun save_mtx_to_csv(filename, mtx, labels, header, freq)
+{
+  decl size_mtx = size(mtx);
+  decl dim_mtx  = size(size_mtx);
+  if (dim_mtx != 2)
+    return "argument 2 should be a matrix";
+
+  decl n = size_mtx(1);
+  if (n != size_mtx(2))
+    return "argument 2 should be a square matrix";
+  if (sweep_size(mtx) > 1)
+    return "argument 2 cannot be swept";
+
+  decl mylabel;
+  decl i, j;
+  if (labels != NULL)
+  {
+    decl size_label = size(labels);
+    decl dim_label  = size(size_label);
+    fprintf(stderr, "dim_label=%d\n", dim_label);
+    if (dim_label != 1)
+      return "argument 3 should be a scalar";
+    if (size_label != 1)
+      return "argument 3 should be a scalar";
+    size_label = sweep_size(labels);
+    if (size_label != n)
+      return "argument 3 size mismatch";
+    mylabel = list();
+    for (i = n; i > 0; i--)
+      mylabel = cons(labels[i - 1], mylabel);
+  } 
+  else
+  {
+    mylabel = list();
+    for (i = n; i > 0; i--)
+      mylabel = cons(sprintf("#%d", i), mylabel);
+  }
+
+  decl myHeader = "";
+  if (header!=NULL)
+  {
+    myHeader = strcat(myHeader, header);
+  }
+  if ( (freq != NULL) && (is_real(freq)) )
+  {
+    if (freq == 0.)
+      myHeader =  strcat(myHeader, " @ ",freq," Hz");
+    else
+    {
+      decl val = freq;
+      i = 5;
+      decl iList = list();
+      while( !((val<1000.) && (val>=1.)) )
+      {
+        if(val>=1000.)
+        {
+          val/=1000.;
+          i++;
+        }
+        else if (val<1.)
+        {
+          val*=1000.;
+          i--;
+        }
+        if(member(i,iList))
+        {
+          break;
+        }
+        iList = cons(i,iList);
+      }
+      decl pfx=list("f","p","n","u","m","","k","M","G","T");
+      if(i<0 || i>9)
+      {
+        myHeader =  strcat(myHeader, " @ ",freq," Hz");
+      }
+      else
+      {
+        myHeader =  strcat(myHeader, " @ ", sprintf("%.6g %sHz", val, nth(i,pfx)));
+      }
+    }
+  }
+ 
+  decl fid = fopen(filename, "W");
+  fprintf(fid, "%s",myHeader);
+  for (i = 0; i < n; i++)
+    fprintf(fid, ",%s", mylabel(i));
+  fprintf(fid, "\n");
+  for (i = 0; i < n; i++)
+  {
+    fprintf(fid, "%s", mylabel(i));
+    for (j = 0; j < n; j++)
+      fprintf(fid, ",%+.15e", mtx(i + 1, j + 1));
+    fprintf(fid, "\n");
+  } 
+
+  fclose(fid); 
+  return format_date_time("saved on %Y-%m-%d %H:%M:%S");
+ }  
+
+
+/*BEGIN_DOC
+FUN_NAME: save_mtx_to_csv()
+FUN_DESCRIPTION: Saves the 2D matrix data of an RLCk simulation into the CSV format
+RETURNED_VALUE: String
+CATEGORY: 
+SYNTAX: timeSavedInfo = save_mtx_to_csv(filename, mtx, labels, header)
+EXAMPLE: 
+
+used in: em/templates/RLCk.ddt
+
+called like: save_mtx_to_csv(strcat(DDS_File_Name, \"-lmtx.csv\"), L[f_freq_index]/1nH,Inputs, "L[nH]", 2.73e9)
+
+
+ARGUMENT
+  ARG_NAME: filename
+  ARG_DESCRIPTION: file name
+  ARG_DEFAULT: None
+  ARG_RANGE: 
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: mtx
+  ARG_DESCRIPTION: matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: 
+  ARG_TYPE: matrix
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: labels
+  ARG_DESCRIPTION: 
+  ARG_DEFAULT: None
+  ARG_RANGE: 
+  ARG_TYPE: list of strings
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: header
+  ARG_DESCRIPTION: 
+  ARG_DEFAULT: None
+  ARG_RANGE: 
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: freq
+  ARG_DESCRIPTION: 
+  ARG_DEFAULT: None
+  ARG_RANGE: 
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+
+
+FOOTNOTES: 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rlck_fun.ael
+SEE ALSO: RLCk.ddt
+NOTES:
+Used in DDS template file for RLCk output. Provided by NXP. 
+
+
+EXTERNAL: no
+AUTHOR: NXP
+DATE: 2014
+VERSION_CREATED: ADS 2014_01
+END_DOC*/

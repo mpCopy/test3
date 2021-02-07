@@ -1,0 +1,2636 @@
+// Copyright Keysight Technologies 2005 - 2014  
+defun FrontPanel_eye_width(data,eye_crossing,Data_Rate)
+{
+	decl Get_pt1,Get_pt2;
+	decl Get_xing1_level=eye_crossing[0];
+	decl Get_xing1_time=eye_crossing[1];
+	decl Get_xing2_level=eye_crossing[3];
+	decl Get_xing2_time=eye_crossing[4];
+	decl Get_xing_level=(Get_xing1_level+Get_xing2_level)/2;
+	decl histogram_data=FrontPanel_eye_horizontal_histogram(data,Get_xing1_time-1/(2*Data_Rate),Get_xing1_time+1/(2*Data_Rate),Get_xing_level,Get_xing_level);
+	decl Get_statistics=Frontpanel_get_histogram_mean_stddev(histogram_data,0,sweep_size(histogram_data)-1);
+	if(Get_statistics[1]==0)
+		Get_pt1=[Get_statistics[0],Get_statistics[0]];
+	else
+		Get_pt1=FrontPanel_eye_3sigma(histogram_data,Get_statistics[0],Get_statistics[1]);
+	histogram_data=FrontPanel_eye_horizontal_histogram(data,Get_xing2_time-1/(2*Data_Rate),Get_xing2_time+1/(2*Data_Rate),Get_xing_level,Get_xing_level);
+	Get_statistics=Frontpanel_get_histogram_mean_stddev(histogram_data,0,sweep_size(histogram_data)-1);
+	if(Get_statistics[1]==0)
+		Get_pt2=[Get_statistics[0],Get_statistics[0]];
+	else
+		Get_pt2=FrontPanel_eye_3sigma(histogram_data,Get_statistics[0],Get_statistics[1]);
+	return Get_pt2[0]-Get_pt1[1];
+}
+
+
+defun FrontPanel_eye_3sigma(histogram_data,Mean,Sigma)
+{
+
+	/*-Version 1.01-*/   
+	decl Get_indep=indep(histogram_data);
+	decl Getleft=Mean-3*Sigma;
+	decl Getright=Mean+3*Sigma;
+	decl Get_index_mean=find_index(Get_indep,Mean);
+	decl Get_index_left=find_index(Get_indep,Getleft);
+	decl Get_index_right=find_index(Get_indep,Getright);
+	if(max(histogram_data)==0)
+ 		return [Get_indep[Get_index_left],Get_indep[Get_index_right]]; 
+	decl Swpsze=sweep_size(histogram_data)-1;
+	decl count;
+	decl low_index=0;
+	decl high_index=0;
+	for(count=0;count<Swpsze;count=count+1)
+	{
+		low_index=count;
+		if(histogram_data[count]>0.5)
+		break;
+	}
+	for(count=Swpsze;count>=0;count=count-1)
+	{
+		high_index=count;
+		if(histogram_data[count]>0.5)
+			break;
+	}
+	if(Get_index_left<low_index)
+		Get_index_left=low_index;
+	if(Get_index_left>Get_index_mean)
+		Get_index_left=Get_index_mean;
+	if(Get_index_right>high_index)
+		Get_index_right=high_index;
+	if(Get_index_right<Get_index_mean)
+		Get_index_right=Get_index_mean;
+	return [Get_indep[Get_index_left],Get_indep[Get_index_right]]; 
+}
+
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes time domian waveform, the top and base logic levels, the top and base threshold pct and returns first negative pulse width
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_wave_positive_pulse_width() 
+FUN_DESCRIPTION: Given time domain voltage waveform, the logic levels, and the threshold levels, returns positive pulse width of the first cycle
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_wave_positive_pulse_width(data,base,top,base_threshold_pct,top_threshold_pct)
+EXAMPLE:
+get_negative_pulse_width=FrontPanel_wave_positive_pulse_width(data,-1.0,1.0,20,80)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: time domain voltage waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base
+  ARG_DESCRIPTION: logic level zero voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: top
+  ARG_DESCRIPTION: logic level one voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base_threshold_pct
+  ARG_DESCRIPTION: low threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: high_threshold_pct
+  ARG_DESCRIPTION: high threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: Positive pulse width is defined as the time from the mid-threshold of the first rising edge to the mid-threshold of the next falling edge. The FrontPanel_wave_positive_pulse_width() function essentially takes time domain data, and returns first positive pulse width
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_wave_positive_pulse_width(data,base,top,startpct,stoppct)
+{
+
+	decl Rise_mean_time=FrontPanel_eye_waveform_1st_rise_transition_mean_time(data,base,top,startpct,stoppct);
+	decl Indep_data=indep(data);
+	decl Swpsze=sweep_size(Indep_data)-1;
+	decl Get_index=find_index(Indep_data,Rise_mean_time);
+	decl New_wave=data[Get_index::Swpsze];
+	decl Fall_mean_time=FrontPanel_eye_waveform_1st_fall_transition_mean_time(New_wave,base,top,startpct,stoppct);
+	return Fall_mean_time-Rise_mean_time;
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes time domian waveform, the top and base logic levels, the top and base threshold pct and returns first negative pulse width
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_wave_negative_pulse_width() 
+FUN_DESCRIPTION: Given time domain voltage waveform, the logic levels, and the threshold levels, returns negative pulse width of the first cycle
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_wave_negative_pulse_width(data,base,top,base_threshold_pct,top_threshold_pct)
+EXAMPLE:
+get_negative_pulse_width=FrontPanel_wave_negative_pulse_width(data,-1.0,1.0,20,80)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: time domain voltage waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base
+  ARG_DESCRIPTION: logic level zero voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: top
+  ARG_DESCRIPTION: logic level one voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base_threshold_pct
+  ARG_DESCRIPTION: low threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: high_threshold_pct
+  ARG_DESCRIPTION: high threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: Negative pulse width is defined as the time from the mid-threshold of the first falling edge to the mid-threshold of the next rising edge. The FrontPanel_wave_negative_pulse_width() function essentially takes time domain data, and returns first negative pulse width
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_wave_negative_pulse_width(data,base,top,startpct,stoppct)
+{
+
+	decl Fall_mean_time=FrontPanel_eye_waveform_1st_fall_transition_mean_time(data,base,top,startpct,stoppct);
+	decl Indep_data=indep(data);
+	decl Swpsze=sweep_size(Indep_data)-1;
+	decl Get_index=find_index(Indep_data,Fall_mean_time);
+	decl New_wave=data[Get_index::Swpsze];
+	decl Rise_mean_time=FrontPanel_eye_waveform_1st_rise_transition_mean_time(New_wave,base,top,startpct,stoppct);
+	return Rise_mean_time-Fall_mean_time;
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes time domian waveform, the top and base logic levels, the top and base threshold pct and returns the first rising edge period
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_wave_1st_rising_edge_period() 
+FUN_DESCRIPTION: Given time domain voltage waveform, the logic levels, and the threshold levels, returns first rising edge period
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_wave_1st_rising_edge_period(data,base,top,base_threshold_pct,top_threshold_pct)
+EXAMPLE:
+get_rising_period=FrontPanel_wave_1st_rising_edge_period(data,-1.0,1.0,20,80)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: time domain voltage waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base
+  ARG_DESCRIPTION: logic level zero voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: top
+  ARG_DESCRIPTION: logic level one voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base_threshold_pct
+  ARG_DESCRIPTION: low threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: high_threshold_pct
+  ARG_DESCRIPTION: high threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: Period is a measure of the time between the first detected edge of a waveform and the next occurrence of the same type of edge. The time between the edges of the waveform used for measurement is taken at the middle threshold crossings. The FrontPanel_wave_1st_rising_edge_period() function essentially takes time domain data, and returns first rising edge period
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+
+defun FrontPanel_wave_1st_rising_edge_period(data,base,top,startpct,stoppct)
+{	
+
+	decl Rise_mean_time1=FrontPanel_eye_waveform_1st_rise_transition_mean_time(data,base,top,startpct,stoppct);
+	decl Indep_data=indep(data);
+	decl Swpsze=sweep_size(Indep_data)-1;
+	decl Get_index=find_index(Indep_data,Rise_mean_time1);
+	decl New_wave=data[Get_index::Swpsze];
+	decl Rise_mean_time2=FrontPanel_eye_waveform_1st_rise_transition_mean_time(New_wave,base,top,startpct,stoppct);
+	return Rise_mean_time2-Rise_mean_time1;
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes time domian waveform, the top and base logic levels, the top and base threshold pct and returns the first falling edge period
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_wave_1st_falling_edge_period() 
+FUN_DESCRIPTION: Given time domain voltage waveform, the logic levels, and the threshold levels, returns first falling edge period
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_wave_1st_falling_edge_period(data,base,top,base_threshold_pct,top_threshold_pct)
+EXAMPLE:
+get_rise_time=FrontPanel_wave_1st_falling_edge_period(data,-1.0,1.0,20,80)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: time domain voltage waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base
+  ARG_DESCRIPTION: logic level zero voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: top
+  ARG_DESCRIPTION: logic level one voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base_threshold_pct
+  ARG_DESCRIPTION: low threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: high_threshold_pct
+  ARG_DESCRIPTION: high threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: Period is a measure of the time between the first detected edge of a waveform and the next occurrence of the same type of edge. The time between the edges of the waveform used for measurement is taken at the middle threshold crossings.The FrontPanel_wave_1st_falling_edge_period() function essentially takes time domain data, and returns first falling edge period
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+
+defun FrontPanel_wave_1st_falling_edge_period(data,base,top,startpct,stoppct)
+{	
+
+	decl Fall_mean_time1=FrontPanel_eye_waveform_1st_fall_transition_mean_time(data,base,top,startpct,stoppct);
+	decl Indep_data=indep(data);
+	decl Swpsze=sweep_size(Indep_data)-1;
+	decl Get_index=find_index(Indep_data,Fall_mean_time1);
+	decl New_wave=data[Get_index::Swpsze];
+	decl Fall_mean_time2=FrontPanel_eye_waveform_1st_fall_transition_mean_time(New_wave,base,top,startpct,stoppct);
+	return Fall_mean_time2-Fall_mean_time1;
+}
+
+
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes time domian waveform, the top and base logic levels, the top and base threshold pct and returns the first transition fall time
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_wave_1st_transition_fall_time() 
+FUN_DESCRIPTION: Given time domain voltage waveform, the logic levels, and the threshold levels, returns wave first negative transition fall time
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_wave_1st_transition_fall_time(data,base,top,base_threshold_pct,top_threshold_pct)
+EXAMPLE:
+get_rise_time=FrontPanel_wave_1st_transition_fall_time(data,-1.0,1.0,20,80)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: time domain voltage waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base
+  ARG_DESCRIPTION: logic level zero voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: top
+  ARG_DESCRIPTION: logic level one voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base_threshold_pct
+  ARG_DESCRIPTION: low threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: high_threshold_pct
+  ARG_DESCRIPTION: high threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_wave_1st_transition_rise_time() function essentially takes time domain data, and measure fall time of the first negative edge of the waveform. The fall time will not be measured until the falling edge completes the transition through upper and lower threshold
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+				
+defun FrontPanel_wave_1st_transition_fall_time(data,base,top,startpct,stoppct)
+{
+	// Function requires time domain data, the top voltage level,
+	// the base voltage level, the low threshold (e.g 10%) and high threshold (e.g 80%) 
+	// cross function is not used in this function as it does 
+	// not work if there is just one crossing point in the waveform
+	// Get the time sampling points ---- >
+	// The last point is not accounted for. Modify the function to account for last data point
+
+
+	decl Get_indep=indep(data);
+	decl Get_mean=(top-base)*0.5 + base;
+	decl Get_low =(top-base)*startpct/100.0+base;
+	decl Get_high=(top-base)*stoppct/100.0+base;
+	decl Get_startwave=data-Get_low;
+	decl Get_stopwave=data-Get_high;
+	decl Get_meanwave=data-Get_mean;
+	decl SwpSze=sweep_size(Get_indep)-1;
+	decl count,Get_Lowpt,Get_Highpt,Get_Meanpt,result;
+	decl Status_Mean=FALSE;
+	decl Status_Low=FALSE;
+	decl Status_High=FALSE;
+	decl Fall_time=0;
+	for(count=0;count<SwpSze-1;count=count+1)
+	{
+		// get change in the sign of the waveform
+		if(Get_meanwave[count]>=0 && Get_meanwave[count+1]<=0)
+		{
+			if(Get_meanwave[count]==0)
+				Get_Meanpt=Get_indep[count];
+			else if (Get_meanwave[count+1]==0)
+				Get_Meanpt=Get_indep[count+1];
+			else
+				Get_Meanpt=Get_indep[count]-Get_meanwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_meanwave[count+1]-Get_meanwave[count]);
+				Status_Mean=TRUE;
+		}
+		if(Get_startwave[count]>=0 && Get_startwave[count+1]<=0)
+		{
+			if(Get_startwave[count]==0)
+				Get_Lowpt=Get_indep[count];
+			else if (Get_startwave[count+1]==0)
+				Get_Lowpt=Get_indep[count+1];
+			else
+				Get_Lowpt=Get_indep[count]-Get_startwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_startwave[count+1]-Get_startwave[count]);
+				Status_Low=TRUE;
+		}
+		if(Get_stopwave[count]>=0 && Get_stopwave[count+1]<=0)
+		{
+			if(Get_stopwave[count]==0)
+				Get_Highpt=Get_indep[count];
+			else if (Get_stopwave[count+1]==0)
+				Get_Highpt=Get_indep[count+1];
+			else
+				Get_Highpt=Get_indep[count]-Get_stopwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_stopwave[count+1]-Get_stopwave[count]);
+				Status_High=TRUE;
+		}
+
+		if(Status_High==FALSE && Status_Low==TRUE)
+			Status_Low=FALSE;
+
+		if(Status_High==FALSE && Status_Mean==TRUE)
+			Status_Mean=FALSE;
+
+		if(Status_Mean==FALSE && Status_Low==TRUE)
+			Status_Low=FALSE;
+
+		if(Status_Mean==TRUE && Status_Low== TRUE && Status_High==TRUE)
+		{
+			Fall_time=Get_Lowpt-Get_Highpt;
+			break;
+			
+		}
+	} 
+
+	return Fall_time;
+}
+			
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes time domian waveform, the top and base logic levels, the top and base threshold pct and returns the first transition rise time
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_wave_1st_transition_rise_time() 
+FUN_DESCRIPTION: Given time domain voltage waveform, the logic levels, and the threshold levels, returns wave first transition rise time
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_wave_1st_transition_rise_time(data,base,top,base_threshold_pct,top_threshold_pct)
+EXAMPLE:
+get_rise_time=FrontPanel_wave_1st_transition_rise_time(data,-1.0,1.0,20,80)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: time domain voltage waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base
+  ARG_DESCRIPTION: logic level zero voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: top
+  ARG_DESCRIPTION: logic level one voltage level
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base_threshold_pct
+  ARG_DESCRIPTION: low threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: high_threshold_pct
+  ARG_DESCRIPTION: high threshold point
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_wave_1st_transition_rise_time() function essentially takes time domain data, and measure rise time of the first positive edge of the waveform. The rise time will not be measured until the rising edge completes the transition through lower and upper threshold
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_wave_1st_transition_rise_time(data,base,top,startpct,stoppct)
+{
+	decl Get_indep=indep(data);
+	decl Get_mean=(top-base)*0.5 + base;
+	decl Get_low =(top-base)*startpct/100.0+base;
+	decl Get_high=(top-base)*stoppct/100.0+base;
+	decl Get_startwave=data-Get_low;
+	decl Get_stopwave=data-Get_high;
+	decl Get_meanwave=data-Get_mean;
+	decl SwpSze=sweep_size(Get_indep)-1;
+	decl count,Get_Lowpt,Get_Highpt,Get_Meanpt;
+	decl Status_Mean=FALSE;
+	decl Status_Low=FALSE;
+	decl Status_High=FALSE;
+	decl count1=0;
+	decl Rise_time=0;
+	for(count=0;count<SwpSze-1;count=count+1)
+	{
+		// get change in the sign of the waveform
+		if(Get_meanwave[count]<=0 && Get_meanwave[count+1]>0)
+		{
+			if(Get_meanwave[count]==0)
+				Get_Meanpt=Get_indep[count];
+			else if (Get_meanwave[count+1]==0)
+				Get_Meanpt=Get_indep[count+1];
+			else
+				Get_Meanpt=Get_indep[count]-Get_meanwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_meanwave[count+1]-Get_meanwave[count]);
+				Status_Mean=TRUE;
+		}
+		if(Get_startwave[count]<=0 && Get_startwave[count+1]>0)
+		{
+			if(Get_startwave[count]==0)
+				Get_Lowpt=Get_indep[count];
+			else if (Get_startwave[count+1]==0)
+				Get_Lowpt=Get_indep[count+1];
+			else
+				Get_Lowpt=Get_indep[count]-Get_startwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_startwave[count+1]-Get_startwave[count]);
+				Status_Low=TRUE;
+		}
+		if(Get_stopwave[count]<=0 && Get_stopwave[count+1]>0)
+		{
+			if(Get_stopwave[count]==0)
+				Get_Highpt=Get_indep[count];
+			else if (Get_stopwave[count+1]==0)
+				Get_Highpt=Get_indep[count+1];
+			else
+				Get_Highpt=Get_indep[count]-Get_stopwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_stopwave[count+1]-Get_stopwave[count]);
+				Status_High=TRUE;
+		}
+
+		if(Status_High==TRUE && Status_Low==FALSE)
+			Status_High=FALSE;
+
+		if(Status_High==TRUE && Status_Mean==FALSE)
+			Status_High=FALSE;
+
+		if(Status_Mean==TRUE && Status_Low==FALSE)
+			Status_Mean=FALSE;
+
+		if(Status_Mean==TRUE && Status_Low== TRUE && Status_High==TRUE)
+		{
+			Rise_time=Get_Highpt-Get_Lowpt;
+			break;
+		}
+	} 
+	return Rise_time;
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes amplitude histogram of the time domain waveform and returns logic level one and zero values
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_wave_topbase() 
+FUN_DESCRIPTION: Given amplitude histogram of a time domain waveform, returns logic level one and zero statistics
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_wave_topbase(data,data_type)
+EXAMPLE:
+get_level=FrontPanel_wave_topbase(amplitude_histogram,"NRZ")
+top_data=get_level[0::3]
+level_one_mean=top_data[0]
+level_one_stddev=top_data[1]
+level_one_start=top_data[2]
+level_one_stop=top_data[3]
+base_data=get_level[4::7]
+level_zero_mean=base_data[0]
+level_zero_stddev=base_data[1]
+level_zero_start=base_data[2]
+level_zero_stop=base_data[3]
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: amplitude histogram data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: data_type
+  ARG_DESCRIPTION: data type, only "NRZ" data is supported in current release
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_wave_topbase() function essentially takes amplitude histogram data, and returns logic level one and zero statistics as an array
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_wave_topbase(Get_histogram,Data_type)
+{
+	/* Version 1.01 */
+	if(Data_type!="NRZ")
+		return NULL;
+	decl Excursion_Factor=2;
+	decl Result = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl Indep_Result = indep(Result);
+	decl num_rows=sweep_size(Get_histogram);
+	Get_histogram=moving_average(Get_histogram,5);
+	decl Lower_list=Get_histogram[0::int((num_rows-1)*0.4)];
+	decl Lower_meanhits=A_FindMeanExcursion(Lower_list,0,sweep_size(Lower_list)-1,Excursion_Factor);
+	decl Lower_pk=A_FindDbPeak(Lower_list,Lower_meanhits[0],Lower_meanhits[1],0,sweep_size(Lower_list)-1);
+	decl Upper_list=Get_histogram[int((num_rows-1)*0.6)::num_rows-1];
+	decl Upper_meanhits=A_FindMeanExcursion(Upper_list,0,sweep_size(Upper_list)-1,Excursion_Factor);
+	decl Upper_pk=A_FindDbPeak(Upper_list,Upper_meanhits[0],Upper_meanhits[1],0,sweep_size(Upper_list)-1);
+	Indep_Result[0]=0;
+	Result[0]=Upper_pk[0];
+	Indep_Result[1]=1;
+	Result[1]=Upper_pk[1];
+	Indep_Result[2]=2;
+	Result[2]=Upper_pk[2];
+	Indep_Result[3]=3;
+	Result[3]=Upper_pk[3];
+	Indep_Result[4]=4;
+	Result[4]=Lower_pk[0];
+	Indep_Result[5]=5;
+	Result[5]=Lower_pk[1];
+	Indep_Result[6]=6;
+	Result[6]=Lower_pk[2];
+	Indep_Result[7]=7;
+	Result[7]=Lower_pk[3];
+	return Result;
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the eye data and returns the uniformally spaced data. Note that this function will remove first and last cycle of eye data
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_regular() 
+FUN_DESCRIPTION: Given eye data and the resolution, returns uniformally spaced eye data
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_regular(eye_data,resolution_x)
+EXAMPLE:
+eye_data=eye(vout,1GHz)
+uniform_eye_data=FrontPanel_eye_regular(eye_data,450)
+ARGUMENT
+  ARG_NAME: eye_data
+  ARG_DESCRIPTION: eye diagram data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: resolution_x
+  ARG_DESCRIPTION: inner independent variable resolution
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_regular() function essentially takes eye data, and returns uniform spaced data. The first and last trace of the eye diagram will be removed when using this function
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_eye_regular(eye_data,Resolution_X)
+{
+	decl Get_Indep=indep(eye_data);
+	decl Mintime=min(min(Get_Indep));
+	decl Maxtime=max(max(Get_Indep));
+	decl Time_Step=(Maxtime-Mintime)/Resolution_X;
+	decl Result=interp(eye_data,Mintime,Maxtime,Time_Step);
+	decl SwpSze=Frontpanel_eye_2d_get_sweepsize_indepvar_outer(Result);
+	return Result[1::SwpSze-2,::];
+}
+
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function returns the maximum value of the inner independent varaiable of the two dimensional data
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_2d_indepvar_maximum_inner() 
+FUN_DESCRIPTION: Given two dimensional data, returns maximum value of the inner indpendent variable
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_2d_indepvar_maximum_inner(eye_bin_data)
+EXAMPLE:
+maximum_indep=FrontPanel_eye_2d_indepvar_maximum_inner(eye_bin_data)
+ARGUMENT
+  ARG_NAME: eye_bin_data
+  ARG_DESCRIPTION: eye binning data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_2d_indepvar_maximum_inner() function essentially takes two dimensional binning data, and returns maximum value of inner independent variable
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+
+defun FrontPanel_eye_2d_indepvar_maximum_inner(Data)
+{
+	// Return the maximum value of the inner 2D variable
+
+	decl Indep_data=indep(Data);
+	return max(max(Indep_data));
+} 
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the histogram data and returns mean and standard deviation
+//
+/*BEGIN_DOC
+FUN_NAME: Frontpanel_get_histogram_mean_stddev() 
+FUN_DESCRIPTION: Given histogram data computes mean and standard deviation values
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = Frontpanel_get_histogram_mean_stddev(data,start_bin,stop_bin)
+EXAMPLE:
+histogram_statistics=Frontpanel_get_histogram_mean_stddev(histogram_data,10,100)
+histogram_mean=histogram_statistics[0]
+histogram_stddev=histogram_statistics[1]
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: histogram data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: start_bin
+  ARG_DESCRIPTION: start bin number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: stop_bin
+  ARG_DESCRIPTION: stop bin number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The Frontpanel_get_histogram_mean_stddev() function essentially takes histogram data, and return man and standard deviation
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+
+defun Frontpanel_get_histogram_mean_stddev(data,Start,Stop)
+{
+
+	decl Get_Indep=indep(data);
+	decl MeanSum=sum(data[Start::Stop]*Get_Indep[Start::Stop]);
+	decl Mean2Sum=sum(data[Start::Stop]*Get_Indep[Start::Stop]*Get_Indep[Start::Stop]);
+	decl TotalHits=sum(data[Start::Stop]);
+	decl ReturnData = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl Indexreturn = indep(ReturnData);
+	decl Mean,Stddev;
+
+	if(TotalHits>0)
+	{
+		
+		
+		Mean=MeanSum/TotalHits;
+		if(TotalHits==1)
+			Stddev=0;
+		else
+			Stddev=sqrt((Mean2Sum-Mean*MeanSum)/(TotalHits-1));
+		Indexreturn[0]=0;
+		ReturnData[0]=Mean;
+		Indexreturn[1]=1;
+		ReturnData[1]=Stddev;
+		return ReturnData;
+	}
+	else
+	{
+		Indexreturn[0]=0;
+		ReturnData[0]=0;
+		Indexreturn[1]=1;
+		ReturnData[1]=0;
+		return ReturnData;
+	}
+}
+
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the histogram data and return the peak to peak jitter value and RMS value of the histogram in an array.
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_pp_rms_jitter() 
+FUN_DESCRIPTION: Given histogram data computes peak to peak jitter value and RMS jitter value
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_pp_rms_jitter(histogram_data)
+EXAMPLE:
+eye_jitter=FrontPanel_pp_rms_jitter(histogram_data)
+peak2peak_jitter=eye_jitter[0]
+rms_jitter=eye_jitter[1]
+ARGUMENT
+  ARG_NAME: histogram_data
+  ARG_DESCRIPTION: histogram data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_pp_rms_jitter() function essentially takes histogram data, and return peak to peak jitter by determining non zero start and stop values and one standard deviation. The first element of the array represents peak to peak value and the second element represents one standard deviation 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+
+defun FrontPanel_pp_rms_jitter(data)
+{
+	decl Lng=sweep_size(data);
+	decl Start_ptQ,Stop_ptQ,count,Get_jitter_pp;
+	for(count=0;count<Lng;count=count+1)
+	{
+		if(data[count]>0.5)
+		{
+			Start_ptQ=count;
+			break;
+		}
+		
+	}
+
+	for(count=Lng-1;count>=0;count=count-1)
+	{
+		if(data[count]>0.5)
+		{
+			Stop_ptQ=count;
+			break;
+		}
+	}
+	decl Get_meanstddev=Frontpanel_get_histogram_mean_stddev(data,Start_ptQ,Stop_ptQ);	
+	decl Indep_data=indep(data);
+	decl Start_pt=Indep_data[Start_ptQ];
+	decl Stop_pt=Indep_data[Stop_ptQ]; 
+
+	if((Stop_pt-Start_pt)>Get_meanstddev[1]*5)
+		Get_jitter_pp=Get_meanstddev[1]*5;
+	else
+		Get_jitter_pp=Stop_pt-Start_pt;
+
+	decl Result = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl Indep_Result = indep(Result);
+	Indep_Result[0]=0;
+	Result[0]=Get_jitter_pp;
+	Indep_Result[1]=1;
+	Result[1]=Get_meanstddev[1]; 
+	return Result;
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the eye binning data, the base level, top level, and the threshold level percentage and returns the threshold crossing points.
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_topbase() 
+FUN_DESCRIPTION: Given lower boundary, top boundary and the data type returns the eye crossing points
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_topbase(data,eye_crossing_points,lower_threshold,upper_threshold,data_type)
+EXAMPLE:
+eye_crossing_points=FrontPanel_eye_crossings(eye_bin_data,-1.0,1,0,"NRZ")
+eye_top_base = FrontPanel_eye_topbase(eye_bin_data,eye_crossing_points,20,80,"NRZ") 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: eye binning data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: eye_crossing_points
+  ARG_DESCRIPTION: array of eye crossing points, typically FrontPanel_eye_crossings function returned value
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: lower_threshold
+  ARG_DESCRIPTION: lower threshold point % 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: upper_threshold
+  ARG_DESCRIPTION: upper threshold point % 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: data_type
+  ARG_DESCRIPTION: data type, current version supports only "NRZ" data
+  ARG_DEFAULT: None
+  ARG_RANGE: 
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_topbase() function essentially takes the eye binning data, the crossing points, the lower and upper threshold percentage value and returned top and base levels
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_eye_topbase(data,cross_pt_array,pct_1,pct_2,data_type)
+{
+	if(data_type!="NRZ")
+		return NULL;	
+	decl Get_sze=sweep_size(cross_pt_array);
+	if(Get_sze==0)
+		return FALSE;
+	decl Cross_pt1,Cross_pt2,Get_boundary1,Get_boundary2,GetMeanQ,Get_top;
+	decl Get_boundary1_Q,Get_boundary2_Q,Get_histogram,Get_meanposition,Get_base;
+	decl Result,Indep_Result,Get_3sigma_base,Get_3sigma_top;
+	decl num_rows=sweep_size(data[0,::]);
+	if(Get_sze>3)
+	{			
+		Cross_pt1=cross_pt_array[1];
+		Cross_pt2=cross_pt_array[4];
+		Get_boundary1=Cross_pt1+(Cross_pt2-Cross_pt1)*pct_1/100;
+		Get_boundary2=Cross_pt1+(Cross_pt2-Cross_pt1)*pct_2/100;
+	     	if(Get_boundary2<=Get_boundary1)	
+			return FALSE;
+		Get_boundary1_Q=Frontpanel_eye_2d_get_indepvar_index_outer(data,Get_boundary1);
+		Get_boundary2_Q=Frontpanel_eye_2d_get_indepvar_index_outer(data,Get_boundary2);
+		Get_histogram=FrontPanel_eye_vertical_histogram_index(data,Get_boundary1_Q,Get_boundary2_Q,0,num_rows-1);
+		Get_top=Frontpanel_get_histogram_mean_stddev(Get_histogram,int(num_rows/2),num_rows-1);
+		Get_3sigma_top=FrontPanel_eye_3sigma(Get_histogram[int(num_rows/2)::num_rows-1],Get_top[0],Get_top[1]);
+		Get_base=Frontpanel_get_histogram_mean_stddev(Get_histogram,0,int(num_rows/2)); 
+		Get_3sigma_base=FrontPanel_eye_3sigma(Get_histogram[0::int(num_rows/2)],Get_base[0],Get_base[1]);
+		Result = create(1,"Real",{"Index"},{"Real"},1,1);
+		Indep_Result = indep(Result);
+		Indep_Result[0]=0;		     
+		Result[0]=Get_base[0]-Get_base[1];
+		Indep_Result[1]=1;
+		Result[1]=Get_base[0];
+		Indep_Result[2]=2;
+		Result[2]=Get_base[0]+Get_base[1];
+		Indep_Result[3]=3;
+		Result[3]=Get_top[0]-Get_top[1];
+		Indep_Result[4]=4;
+		Result[4]=Get_top[0];
+		Indep_Result[5]=5;
+		Result[5]=Get_top[0]+Get_top[1];  
+		Indep_Result[6]=6;		     
+		Result[6]=Get_base[0]+(Get_top[0]-Get_base[0])/2;
+		Indep_Result[7]=7;		     
+		Result[7]=Get_3sigma_base[0];
+		Indep_Result[8]=8;		     
+		Result[8]=Get_3sigma_base[1];
+		Indep_Result[9]=9;		     
+		Result[9]=Get_3sigma_top[0];
+		Indep_Result[10]=10;		     
+		Result[10]=Get_3sigma_top[1];
+
+
+
+		
+	}
+	return Result;
+	
+}
+
+
+	
+			
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the eye binning data and return histogram data between start and stop bins.
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_vertical_histogram_index() 
+FUN_DESCRIPTION: Given binning data, return amplitude histogram between start and stop bins
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_vertical_histogram_index(eye_binning_data,start_x_bin,stop_x_bin,start_y_bin,stop_y_bin)
+EXAMPLE:
+get_eye=eye(vout,5e9)
+get_bin_data=eye_binning(get_eye,451,321)
+get_histogram = FrontPanel_eye_vertical_histogram_index(get_bin_data,0,450,0,320) 
+ARGUMENT
+  ARG_NAME: eye_bin_data
+  ARG_DESCRIPTION: eye binning data.
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: start_x_bin
+  ARG_DESCRIPTION: Start X axis bin number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: stop_x_bin
+  ARG_DESCRIPTION: Stop X axis bin number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: start_y_bin
+  ARG_DESCRIPTION: Start Y axis bin number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: stop_y_bin
+  ARG_DESCRIPTION: Stop Y axis bin number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_vertical_histogram_index() function essentially takes the eye binning data, sum data across X axis bins and returns amplitude histogram. The return data will have the same number of bins as the eye binning data
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_eye_vertical_histogram_index(data,start_timeQ,stop_timeQ,start_ampQ,stop_ampQ)
+{
+	decl count;
+	decl Result=data[start_timeQ,::];
+	for(count=start_timeQ+1;count<=stop_timeQ;count=count+1)
+	{
+		Result=Result+data[count,::];
+	}
+	if(start_ampQ>0)
+		Result[0::start_ampQ-1]=0;
+	if(stop_ampQ<sweep_size(data[0,::])-1)
+		Result[stop_ampQ+1::sweep_size(data[0,::])-1]=0;
+	return Result;
+}
+
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the eye binning data, the base level, top level, and the threshold level percentage and returns the crossing points.
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_crossings() 
+FUN_DESCRIPTION: Given lower boundary, top boundary and the data type returns the eye crossing points
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_crossings(data,base_upper,top_lower,data_type)
+EXAMPLE:
+Eye_crossing_array = FrontPanel_eye_crossings(eye_bin_data,0.2,0.8,"NRZ") 
+Eye_crossing_1_level=Eye_crossing_array[0]
+Eye_crossing_1_time=Eye_crossing_array[1]
+Eye_crossing_2_level=Eye_crossing_array[3]
+Eye_crossing_2_time=Eye_crossing_array[4]
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: eye binning data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: base_upper
+  ARG_DESCRIPTION: upper three sigma point of the base boundary
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: top_lower
+  ARG_DESCRIPTION: lower three sigma point of the top boundary
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: data_type
+  ARG_DESCRIPTION: data type, current version supports only "NRZ" data
+  ARG_DEFAULT: None
+  ARG_RANGE: 
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_crossings() function essentially takes the eye binning data, the top and base boundary limits, the data type and returns crossing points as an array.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+// Need to still modify the document and add array info
+defun FrontPanel_eye_crossings(data,base_upper,top_lower,data_type)
+{
+	if(data_type!="NRZ")
+	{
+		print_function_error("Invalid data, Error: FrontPanel 102");
+		return NULL;
+	}
+	decl Result = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl Indep_Result = indep(Result);
+	decl Num_cols=sweep_size(data[::,0]);
+	decl Num_rows=sweep_size(data[0,::]);
+	decl Indep_data=indep(data[::,0]);
+	decl Indep_data_row=indep(data[0,::]);
+	decl Get_max_time=Indep_data[sweep_size(Indep_data)-1];
+	decl Get_histogram=moving_average(FrontPanel_eye_horizontal_histogram(data,0,Get_max_time,base_upper+(top_lower-base_upper)*0.2,base_upper+(top_lower-base_upper)*0.8),5);
+	decl Get_meanhits=max2(1,2*max(Get_histogram)/3);
+	decl Excursion=Get_meanhits+1;
+	decl Window_Size=3;
+	decl Crossing_count=0;
+	decl Start_1st_crossing,Stop_1st_crossing,Get_histogram2,Get_center_1st_crossing,Get_time_Index;
+	decl Get_hist2_meanhits,Get_hist2_excursion,Get_hist2_peak,Get_hist2_range,Get_hist2_mean,Get_hist_Q1;
+	decl Get_histogram3,Get_size,Get_time;
+	decl Get_peak=Frontpanel_eye_findhistpeak(Get_histogram,0,Get_meanhits,Excursion);
+	decl Num_crossings=sweep_size(Get_peak)/2;
+	decl base_upperQ=Frontpanel_eye_2d_indepvar_index_search_inner(data,base_upper+(top_lower-base_upper)*0.2);
+	decl top_lowerQ=Frontpanel_eye_2d_indepvar_index_search_inner(data,base_upper+(top_lower-base_upper)*0.8);
+	if(Num_crossings==2)
+		return FrontPanel_verify_converge_crossing(data,Get_peak,base_upperQ,top_lowerQ);
+
+	if(Num_crossings<2)
+	{
+		Get_histogram=FrontPanel_eye_horizontal_histogram(data,0,Get_max_time,base_upper+(top_lower-base_upper)*0.45,base_upper+(top_lower-base_upper)*0.55);
+		Get_meanhits=max2(1,2*max(Get_histogram)/3);
+		Excursion=Get_meanhits+1;
+		Get_peak=Frontpanel_eye_findhistpeak(Get_histogram,0,Get_meanhits,Excursion);
+		Num_crossings=sweep_size(Get_peak)/2;
+		base_upperQ=Frontpanel_eye_2d_indepvar_index_search_inner(data,base_upper+(top_lower-base_upper)*0.48);
+		top_lowerQ=Frontpanel_eye_2d_indepvar_index_search_inner(data,base_upper+(top_lower-base_upper)*0.52);
+		
+	}
+
+	if(Num_crossings>2)
+	{
+		Get_histogram=moving_average(FrontPanel_eye_horizontal_histogram(data,0,Get_max_time,base_upper,top_lower),5);
+		Get_meanhits=max2(1,2*max(Get_histogram)/3);
+		Excursion=Get_meanhits+1;
+		Get_peak=Frontpanel_eye_findhistpeak(Get_histogram,0,Get_meanhits,Excursion);
+		Num_crossings=sweep_size(Get_peak)/2;
+		base_upperQ=Frontpanel_eye_2d_indepvar_index_search_inner(data,base_upper);
+		top_lowerQ=Frontpanel_eye_2d_indepvar_index_search_inner(data,top_lower);
+		if(Num_crossings==2)
+			return FrontPanel_verify_converge_crossing(data,Get_peak,base_upperQ,top_lowerQ);
+
+	}
+	if(Num_crossings>2)
+	{	
+		Get_histogram=moving_average(FrontPanel_find_topbaseboundaries(data,base_upper,top_lower),5);	 
+		Get_meanhits=max2(1,2*max(Get_histogram)/3);
+		Excursion=Get_meanhits+1;
+		Get_peak=Frontpanel_eye_findhistpeak(Get_histogram,0,Get_meanhits,Excursion);
+		Num_crossings=sweep_size(Get_peak)/2;
+		base_upperQ=Frontpanel_eye_2d_indepvar_index_search_inner(data,base_upper);
+		top_lowerQ=Frontpanel_eye_2d_indepvar_index_search_inner(data,top_lower);
+		if(Num_crossings==2)
+			return FrontPanel_verify_converge_crossing(data,Get_peak,base_upperQ,top_lowerQ);
+	} 
+	if(Num_crossings>2)
+	{
+		
+		decl Temp_data=FrontPanel_search_crossing_pts(data);
+		base_upperQ=Temp_data[0];
+		top_lowerQ=Temp_data[1];
+		Get_histogram=moving_average(FrontPanel_eye_horizontal_histogram_index(data,0,Num_cols,base_upperQ,top_lowerQ),5);
+		Get_meanhits=max2(1,max(Get_histogram)/2);
+		Excursion=Get_meanhits+1;
+		Get_peak=Frontpanel_eye_findhistpeak(Get_histogram,0,Get_meanhits,Excursion);
+		Num_crossings=sweep_size(Get_peak)/2;
+		if(Num_crossings==2)
+			return FrontPanel_verify_converge_crossing(data,Get_peak,base_upperQ,top_lowerQ);
+
+
+	}
+	Indep_Result[0]=0;
+	Result[0]=base_upper+(top_lower-base_upper)*0.5;
+	Indep_Result[1]=1;
+	Result[1]=0;
+	Indep_Result[2]=2;
+	Result[2]=0; 
+	Indep_Result[3]=3;
+	Result[3]=base_upper+(top_lower-base_upper)*0.5;
+	Indep_Result[4]=4;
+	Result[4]=0;
+	Indep_Result[5]=5;
+	Result[5]=0; 
+	return Result;
+}
+
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the eye binning data, the base level, top level, and the threshold level percentage and returns the threshold crossing points.
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_horizontal_histogram() 
+FUN_DESCRIPTION: Given start, stop time and amplitude,returns horizontal histogram from the eye binning data
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_horizontal_histogram(data,start_time,stop_time,start_amp,stop_amp)
+EXAMPLE:
+Eye_histogram = FrontPanel_eye_horizontal_histogram(eye_bin_data,0,10e-9, -0.1, 0.1) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: eye binning data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: start_time
+  ARG_DESCRIPTION: start time of horizontal histogram
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: stop_time
+  ARG_DESCRIPTION: stop time of horizontal histogram
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: start_amp
+  ARG_DESCRIPTION: start amplitude of horizontal histogram
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: stop_amp
+  ARG_DESCRIPTION: start amplitude of horizontal histogram
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_horizontal_histogram() function essentially takes the eye binning data and returns horizontal histogram between start and stop points.  
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+
+defun FrontPanel_eye_horizontal_histogram(data,start_time,stop_time,start_amp,stop_amp)
+{
+	decl Get_x1=Frontpanel_eye_2d_get_indepvar_index_outer(data,start_time);
+	decl Get_x2=Frontpanel_eye_2d_get_indepvar_index_outer(data,stop_time);
+	decl Get_y1=Frontpanel_eye_2d_indepvar_index_search_inner(data,start_amp);
+	decl Get_y2=Frontpanel_eye_2d_indepvar_index_search_inner(data,stop_amp);
+	decl Swpsze=Frontpanel_eye_2d_get_sweepsize_indepvar_outer(data);
+	decl count;
+	decl Start_X,Stop_X,Start_Y,Stop_Y,count;
+	if(Get_x2>=Get_x1)
+	{
+		Start_X=Get_x1;
+		Stop_X=Get_x2;
+	}
+	else
+	{
+		Start_X=Get_x2;
+		Stop_X=Get_x1;
+	}
+	if(Get_y2>=Get_y1)
+	{
+		Start_Y=Get_y1;
+		Stop_Y=Get_y2;
+	}
+	else
+	{
+		Start_Y=Get_y2;
+		Stop_Y=Get_y1;
+	}
+
+	decl Result=data[::,Start_Y];
+	for(count=Start_Y+1;count<=Stop_Y;count=count+1)
+	{
+		Result=Result+data[::,count];
+	}
+	if(Start_X>0)
+		Result[0::Start_X-1]=0;
+	if(Stop_X<Swpsze-1)
+		Result[Stop_X+1::Swpsze-1]=0;
+	return Result;
+}
+
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the eye binning data, the base level, top level, and the threshold level percentage and returns the threshold crossing points.
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_risefall_marker() 
+FUN_DESCRIPTION: Returns the threshold points from rising or falling edge data
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_risefall_marker(data, level_zero, level_one, low_threshold, high_threshold) 
+EXAMPLE:
+Eye_rise_marker = FrontPanel_eye_risefall_marker(eye_bin_data,0,1.8, 10, 90) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: eye binning data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: level_zero
+  ARG_DESCRIPTION: logic level zero amplitude
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: level_one
+  ARG_DESCRIPTION: logic level one amplitude
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: low_threshold
+  ARG_DESCRIPTION: low threshold percentage
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: high_threshold
+  ARG_DESCRIPTION: high threshold precentage
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_risefall_marker() function essentially takes the eye binning data and returns the gaussian mean position at lower threshold, 50% crossing, and upper threshold crossing points as an array. The first element of the arry will give the indepedent and dependent value at the lower threshold, the second element will give the 50% corssing point, and the third elemnt will give the high threshold point.  
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_eye_risefall_marker(data,base,top,startpct,stoppct)
+{
+	decl Meanpt=base+(top-base)/2;
+	decl Lowth=base+(top-base)*startpct/100;
+	decl Uppth=base+(top-base)*stoppct/100;
+	decl ResultData = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl Indep_Result = indep(ResultData);
+	decl Mean_level_Q=Frontpanel_eye_2d_indepvar_index_search_inner(data,Meanpt);
+	decl Start_time_Q=0;
+	decl Stop_time_Q=sweep_size(data[::,0])-1;
+	decl count,Get_histogram,Get_sum=0;
+	decl count1=0;
+	Get_sum=FrontPanel_eye_horizontal_histogram_index(data,0,Stop_time_Q,Mean_level_Q-1,Mean_level_Q+1);
+	decl Get_mean=Frontpanel_get_histogram_mean_stddev(Get_sum,0,sweep_size(Get_sum)-1);
+	decl Lowth_Q=Frontpanel_eye_2d_indepvar_index_search_inner(data,Lowth);
+	Get_sum=FrontPanel_eye_horizontal_histogram_index(data,0,Stop_time_Q,Lowth_Q-1,Lowth_Q+1);
+	decl Get_lowth=Frontpanel_get_histogram_mean_stddev(Get_sum,0,sweep_size(Get_sum)-1);
+	decl Uppth_Q=Frontpanel_eye_2d_indepvar_index_search_inner(data,Uppth);
+	Get_sum=FrontPanel_eye_horizontal_histogram_index(data,0,Stop_time_Q,Uppth_Q-1,Uppth_Q+1);
+	decl Get_upth=Frontpanel_get_histogram_mean_stddev(Get_sum,0,sweep_size(Get_sum)-1);
+	Indep_Result[0]=Get_lowth[0];
+	ResultData[0]=Lowth;
+	Indep_Result[1]=Get_mean[0];
+	ResultData[1]=Meanpt;
+	Indep_Result[2]=Get_upth[0];
+	ResultData[2]=Uppth; 
+	return ResultData; 
+	
+		
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the eye binning data, the base level, top level, and the threshold level percentage and returns rising edges.
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_fall_trace() 
+FUN_DESCRIPTION: Returns eye falling edges
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_fall_trace(eye_bin_data, level_zero, level_one, low_threshold, high_threshold) 
+EXAMPLE:
+Eye_falling_traces = FrontPanel_eye_fall_trace(eye_bin_data,0,1.8, 10, 90) 
+ARGUMENT
+  ARG_NAME: eye_bin_data
+  ARG_DESCRIPTION: eye binning data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: level_zero
+  ARG_DESCRIPTION: logic level zero amplitude
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: level_one
+  ARG_DESCRIPTION: logic level one amplitude
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: low_threshold
+  ARG_DESCRIPTION: low threshold percentage
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: high_threshold
+  ARG_DESCRIPTION: high threshold precentage
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_fall_trace() function essentially takes the eye binning data and returns the falling edges which crosses the lower and upper threshold points.  
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_eye_fall_trace(eyedata,level_zero,level_one,pct_low,pct_high)
+{
+
+	decl high_point=level_zero+(level_one-level_zero)*pct_high/100;
+	decl low_point=level_zero+(level_one-level_zero)*pct_low/100;
+	decl swpsze=sweep_size(eyedata[::,0]) ;
+	decl ampswpsze=sweep_size(eyedata[0,::])-1;
+	decl count,temp_data,get_time;
+	decl result=eyedata;
+	decl count1=0;
+	for(count=0;count<swpsze;count=count+1)
+	{
+		temp_data=eyedata[count,::];
+		get_time=indep(temp_data);
+		if(temp_data[ampswpsze]<=low_point && temp_data[0]>=high_point)
+		{
+				result[count1,::]=temp_data;
+				count1=count1+1;
+			
+		}
+		
+	}  
+	if(count1>0)
+		return result[0::count1-1,::];
+	else
+		return FALSE; 
+
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes the eye binning data, the base level, top level, and the threshold level percentage and returns rising edges.
+//
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_rise_trace() 
+FUN_DESCRIPTION: Returns eye rising edges
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_rise_trace(data, level_zero, level_one, low_threshold, high_threshold) 
+EXAMPLE:
+Eye_rising_traces = FrontPanel_eye_rise_trace(eye_bin_data,0,1.8, 10, 90) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: eye binning data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: level_zero
+  ARG_DESCRIPTION: logic level zero amplitude
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: level_one
+  ARG_DESCRIPTION: logic level one amplitude
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: low_threshold
+  ARG_DESCRIPTION: low threshold percentage
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: high_threshold
+  ARG_DESCRIPTION: high threshold precentage
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_rise_trace() function essentially takes the eye binning data and returns the rising edges which crosses the lower and upper threshold points.  
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_eye_rise_trace(eyedata,level_zero,level_one,pct_low,pct_high)
+{
+
+	decl high_point=level_zero+(level_one-level_zero)*pct_high/100;
+	decl low_point=level_zero+(level_one-level_zero)*pct_low/100;
+	decl swpsze=sweep_size(eyedata[::,0]) ;
+	decl ampswpsze=sweep_size(eyedata[0,::])-1;
+	decl count,temp_data,get_time;
+	decl result=eyedata;
+	decl count1=0;
+	for(count=0;count<swpsze;count=count+1)
+	{
+		temp_data=eyedata[count,::];
+		get_time=indep(temp_data);
+		if(temp_data[0]<=low_point && temp_data[ampswpsze]>=high_point)
+		{
+				result[count1,::]=temp_data;
+				count1=count1+1;
+			
+		}
+		
+	}  
+	if(count1>0)
+		return result[0::count1-1,::];
+	else
+		return FALSE; 
+
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes eye binning data and returns eye amplitude histogram
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_amplitude_histogram() 
+FUN_DESCRIPTION: Returns amplitude histogram from binning data
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_amplitude_histogram(data)
+EXAMPLE:
+Find_hist = FrontPanel_eye_amplitude_histogram(eye_bin_data) 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: Eye binning data, usually the output of eye_binning function
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_amplitude_histogram() calculate the amplitude histogram from eye binning data. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_eye_amplitude_histogram(data)
+{
+	decl Get_numbins=Frontpanel_eye_2d_get_sweepsize_indepvar_outer(data);
+	decl count;
+	decl Result=data[0,::];
+	for(count=1;count<Get_numbins;count=count+1)
+		Result=Result+data[count,::];	
+	return Result;
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes NRZ time domain bit stream and estimate bit rate.
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_wave_datarate() 
+FUN_DESCRIPTION: Estimate data rate from NRZ bitstream 
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_wave_datarate(Vout_time,Data_Type)
+EXAMPLE:
+Find_datarate = FrontPanel_wave_datarate(vout,"NRZ") 
+ARGUMENT
+  ARG_NAME: Vout_time
+  ARG_DESCRIPTION: time domain voltage waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_wave_datarate() estimate the data rate of the NRZ bit stream. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 2005A
+END_DOC*/
+//****************************************************************************
+
+defun FrontPanel_wave_datarate(data,Data_type)
+{
+	/* Version 1.01*/
+	if(Data_type!="NRZ")
+		return NULL;
+
+	decl min_val=min(data);
+	decl max_val=max(data);
+	decl crosspoint=min_val+(max_val-min_val)/2;
+	decl crossval=cross(data-crosspoint,1);
+	crossval=sort(crossval);
+	decl swpsize=sweep_size(crossval);
+	decl count,Tempval,Result=0.0;
+	if(swpsize==1)
+		return 0;
+	if(swpsize==2)
+		return crossval[1]/2.0;
+	decl expecteddatarate=crossval[1]/2.0;
+	for(count=1;count<swpsize;count=count+1)
+	{	
+		Tempval=crossval[count]/round(crossval[count]/expecteddatarate);
+		if(count==1)
+			Result=crossval[count];
+		else
+			Result=(Result+Tempval)/2.0;
+	} 
+	Result=Result;
+	return 1.0/(Result);
+}
+
+//****************************************************************************
+// Copyright Keysight Technologies 2005 - 2014  
+//
+// This function takes NRZ time domain data, and using eye patterns 
+// calculates the delay required to position the eye crossing at
+// center of the unit interval.
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_eye_delay() 
+FUN_DESCRIPTION: Returns delay required for eye pattern positioning
+RETURNED_VALUE: Real
+CATEGORY: Transient
+SYNTAX: y = FrontPanel_eye_delay(Vout_time,BitRate)
+EXAMPLE:
+Find_delay = FrontPanel_eye_delay(vout,1e9) 
+ARGUMENT
+  ARG_NAME: Vout_time
+  ARG_DESCRIPTION: time domain voltage waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: BitRate
+  ARG_DESCRIPTION: bit rate of the channel and is expressed in frequency units
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/FrontPanel_fun.ael
+SEE ALSO:  
+NOTES: The FrontPanel_eye_delay() function determines eye mid crossing point of NRZ data and calculates the delay required to position 50% eye crossing at the center of unit interval. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 2005A
+END_DOC*/
+//****************************************************************************
+defun FrontPanel_eye_delay(data,Data_Rate,Data_Type)
+{
+	if(Data_Type!="NRZ")
+		return FALSE;
+
+	decl Resolution_X=451;
+	decl Resolution_Y=321;
+	decl Start_Pct=2.5;
+	decl LowerQ=int((Resolution_Y-1)/2-(Resolution_Y-1)*Start_Pct/100);
+	decl UpperQ=int((Resolution_Y-1)/2+(Resolution_Y-1)*Start_Pct/100);
+	decl Unit_Interval=1/Data_Rate;		
+	decl Eye_Data=eye_binning(eye(data,Data_Rate),Resolution_X,Resolution_Y);
+	decl Get_Histogram=FrontPanel_eye_horizontal_histogram_index(Eye_Data,0,Resolution_X,LowerQ,UpperQ);
+	decl Get_Maximum=max(Get_Histogram);
+	decl Excursion=Get_Maximum/2;
+	decl Get_Segment=Frontpanel_eye_findhistpeak_excursion(Get_Histogram,0,Get_Maximum,Excursion);
+	decl Get_Mean=Frontpanel_get_histogram_mean_stddev(Get_Histogram,Get_Segment[0],Get_Segment[1]);
+	if(Get_Mean[0]<0.5/Data_Rate)
+		return 0.5/Data_Rate+Get_Mean[0];
+	elseif (Get_Mean[0]>0.5/Data_Rate)
+		return Get_Mean[0]-0.5/Data_Rate;
+	elseif (Get_Mean[0]==0.5/Data_Rate)
+		return 0;
+}
+
+
+/***********************Functions with no documentation  ********************/
+
+defun Frontpanel_eye_findhistpeak_excursion(data,Q_level,MeanHits,Excursion)
+{
+	decl count;
+	decl Stop_Q=0;
+	decl Max_hit=0;
+	decl Start_found=FALSE;
+	decl Stop_found=FALSE;
+	decl Skip_count=0;
+	decl histogramData = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl timeresult = indep(histogramData);
+	decl Get_swpsze=sweep_size(data)-1;
+	decl Get_max=max(data[Q_level::Get_swpsze]);
+        if(Get_max<Excursion)
+            return FALSE;
+	decl Get_data=data-Excursion;
+	decl count1=0;
+	for(count=Q_level;count<=Get_swpsze;count=count+1)
+	{
+		if(Start_found==FALSE && Get_data[count]<0)
+			continue;
+
+		if(Start_found==FALSE && Get_data[count]>=0)
+		{
+			Start_found=TRUE;
+			timeresult[count1]=count1;
+			histogramData[count1]=count;
+			count1=count1+1;
+
+		}
+		if(Start_found==TRUE && Get_data[count]<0)
+		{
+			if(Skip_count==0)
+				Stop_Q=count;
+			
+			Skip_count=Skip_count+1;
+			if(Skip_count>=5)
+			{
+				Stop_found=TRUE;
+				Start_found=FALSE;
+				//timeresult[count1]=count1;
+				//histogramData[count1]=Stop_Q;
+				count1=count1+1;
+			}
+			
+		}
+		if(Get_data[count]>=0)
+		{
+			Skip_count=0;
+			if(Max_hit<Get_data[count])
+				Max_hit=Get_data[count];
+			Stop_Q=count;
+			timeresult[count1]=count1;
+			histogramData[count1]=Stop_Q;
+		}  
+		
+	}
+	return histogramData; 
+	
+}
+
+
+	
+
+defun FrontPanel_eye_waveform_1st_rise_transition_mean_time(data,base,top,startpct,stoppct)
+{
+	decl Get_indep=indep(data);
+	decl Get_mean=(top-base)*0.5 + base;
+	decl Get_low =(top-base)*startpct/100.0+base;
+	decl Get_high=(top-base)*stoppct/100.0+base;
+	decl Get_startwave=data-Get_low;
+	decl Get_stopwave=data-Get_high;
+	decl Get_meanwave=data-Get_mean;
+	decl SwpSze=sweep_size(Get_indep)-1;
+	decl count,Get_Lowpt,Get_Highpt,Get_Meanpt;
+	decl Status_Mean=FALSE;
+	decl Status_Low=FALSE;
+	decl Status_High=FALSE;
+	decl count1=0;
+	decl Rise_mean_time=0;
+	for(count=0;count<SwpSze-1;count=count+1)
+	{
+		// get change in the sign of the waveform
+		if(Get_meanwave[count]<=0 && Get_meanwave[count+1]>0)
+		{
+			if(Get_meanwave[count]==0)
+				Get_Meanpt=Get_indep[count];
+			else if (Get_meanwave[count+1]==0)
+				Get_Meanpt=Get_indep[count+1];
+			else
+				Get_Meanpt=Get_indep[count]-Get_meanwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_meanwave[count+1]-Get_meanwave[count]);
+				Status_Mean=TRUE;
+		}
+		if(Get_startwave[count]<=0 && Get_startwave[count+1]>0)
+		{
+			if(Get_startwave[count]==0)
+				Get_Lowpt=Get_indep[count];
+			else if (Get_startwave[count+1]==0)
+				Get_Lowpt=Get_indep[count+1];
+			else
+				Get_Lowpt=Get_indep[count]-Get_startwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_startwave[count+1]-Get_startwave[count]);
+				Status_Low=TRUE;
+		}
+		if(Get_stopwave[count]<=0 && Get_stopwave[count+1]>0)
+		{
+			if(Get_stopwave[count]==0)
+				Get_Highpt=Get_indep[count];
+			else if (Get_stopwave[count+1]==0)
+				Get_Highpt=Get_indep[count+1];
+			else
+				Get_Highpt=Get_indep[count]-Get_stopwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_stopwave[count+1]-Get_stopwave[count]);
+				Status_High=TRUE;
+		}
+
+		if(Status_High==TRUE && Status_Low==FALSE)
+			Status_High=FALSE;
+
+		if(Status_High==TRUE && Status_Mean==FALSE)
+			Status_High=FALSE;
+
+		if(Status_Mean==TRUE && Status_Low==FALSE)
+			Status_Mean=FALSE;
+
+		if(Status_Mean==TRUE && Status_Low== TRUE && Status_High==TRUE)
+		{
+			Rise_mean_time=Get_Meanpt;
+			break;
+		}
+	} 
+	return Rise_mean_time;
+}
+
+defun FrontPanel_eye_waveform_1st_fall_transition_mean_time(data,base,top,startpct,stoppct)
+{
+	
+	decl Get_indep=indep(data);
+	decl Get_mean=(top-base)*0.5 + base;
+	decl Get_low =(top-base)*startpct/100.0+base;
+	decl Get_high=(top-base)*stoppct/100.0+base;
+	decl Get_startwave=data-Get_low;
+	decl Get_stopwave=data-Get_high;
+	decl Get_meanwave=data-Get_mean;
+	decl SwpSze=sweep_size(Get_indep)-1;
+	decl count,Get_Lowpt,Get_Highpt,Get_Meanpt,result;
+	decl Status_Mean=FALSE;
+	decl Status_Low=FALSE;
+	decl Status_High=FALSE;
+	decl Fall_mean_time=0;
+	for(count=0;count<SwpSze-1;count=count+1)
+	{
+		// get change in the sign of the waveform
+		if(Get_meanwave[count]>=0 && Get_meanwave[count+1]<=0)
+		{
+			if(Get_meanwave[count]==0)
+				Get_Meanpt=Get_indep[count];
+			else if (Get_meanwave[count+1]==0)
+				Get_Meanpt=Get_indep[count+1];
+			else
+				Get_Meanpt=Get_indep[count]-Get_meanwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_meanwave[count+1]-Get_meanwave[count]);
+				Status_Mean=TRUE;
+		}
+		if(Get_startwave[count]>=0 && Get_startwave[count+1]<=0)
+		{
+			if(Get_startwave[count]==0)
+				Get_Lowpt=Get_indep[count];
+			else if (Get_startwave[count+1]==0)
+				Get_Lowpt=Get_indep[count+1];
+			else
+				Get_Lowpt=Get_indep[count]-Get_startwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_startwave[count+1]-Get_startwave[count]);
+				Status_Low=TRUE;
+		}
+		if(Get_stopwave[count]>=0 && Get_stopwave[count+1]<=0)
+		{
+			if(Get_stopwave[count]==0)
+				Get_Highpt=Get_indep[count];
+			else if (Get_stopwave[count+1]==0)
+				Get_Highpt=Get_indep[count+1];
+			else
+				Get_Highpt=Get_indep[count]-Get_stopwave[count]*(Get_indep[count+1]-Get_indep[count])/(Get_stopwave[count+1]-Get_stopwave[count]);
+				Status_High=TRUE;
+		}
+
+		if(Status_High==FALSE && Status_Low==TRUE)
+			Status_Low=FALSE;
+
+		if(Status_High==FALSE && Status_Mean==TRUE)
+			Status_Mean=FALSE;
+
+		if(Status_Mean==FALSE && Status_Low==TRUE)
+			Status_Low=FALSE;
+
+		if(Status_Mean==TRUE && Status_Low== TRUE && Status_High==TRUE)
+		{
+			Fall_mean_time=Get_Meanpt;
+			break;
+			
+		}
+	} 
+
+	return Fall_mean_time;
+}
+
+
+
+defun Frontpanel_eye_2d_get_sweepsize_indepvar_outer(Data)
+{	
+
+	decl Indep_data=indep(Data[::,0]);
+	return sweep_size(Indep_data);
+}
+
+
+
+
+
+defun Frontpanel_eye_2d_indepvar_index_search_inner(Data,Value)
+{
+	decl Indep_inner=indep(Data[0,::]);
+	decl Index=find_index(Indep_inner,Value);
+	return Index;
+} 
+
+
+defun FrontPanel_eye_horizontal_histogram_index(data,start_timeQ,stop_timeQ,start_ampQ,stop_ampQ)
+{
+	decl count;
+	decl Result=data[::,start_ampQ];
+	for(count=start_ampQ+1;count<=stop_ampQ;count=count+1)
+	{
+		Result=Result+data[::,count];
+	}
+	if(start_timeQ>0)
+		Result[0::start_timeQ-1]=0;
+	if(stop_timeQ<sweep_size(data[::,0])-1)
+		Result[stop_timeQ+1::sweep_size(data[::,0])]=0;
+	return Result;
+}
+
+
+
+defun Frontpanel_eye_2d_get_indepvar_index_outer(Data,Value)
+{
+	decl Indep_Data=indep(Data[::,0]);
+	return find_index(Indep_Data,Value);
+}
+
+
+defun Frontpanel_eye_findhistpeak(data,Q_level,MeanHits,Excursion)
+{
+	decl count;
+	decl Stop_Q=0;
+	decl Max_hit=0;
+	decl Start_found=FALSE;
+	decl Stop_found=FALSE;
+	decl Skip_count=0;
+	decl histogramData = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl timeresult = indep(histogramData);
+	decl Get_swpsze=sweep_size(data)-1;
+	decl Get_max=max(data[Q_level::Get_swpsze]);
+	if(Get_max<Excursion)
+	{
+		timeresult[0]=0;
+		histogramData[0]=0;
+		return histogramData;
+	}
+	decl Get_data=data-MeanHits;
+	decl count1=0;
+	for(count=Q_level;count<=Get_swpsze;count=count+1)
+	{
+		if(Start_found==FALSE && Get_data[count]<0)
+			continue;
+
+		if(Start_found==FALSE && Get_data[count]>=0)
+		{
+			Start_found=TRUE;
+			timeresult[count1]=count1;
+			histogramData[count1]=count;
+			count1=count1+1;
+
+		}
+		if(Start_found==TRUE && Get_data[count]<0)
+		{
+			if(Skip_count==0)
+				Stop_Q=count;
+			
+			Skip_count=Skip_count+1;
+			if(Skip_count>=5)
+			{
+				Stop_found=TRUE;
+				Start_found=FALSE;
+				count1=count1+1;
+			}
+			
+		}
+		if(Get_data[count]>=0)
+		{
+			Skip_count=0;
+			if(Max_hit<Get_data[count])
+				Max_hit=Get_data[count];
+			Stop_Q=count;
+			timeresult[count1]=count1;
+			histogramData[count1]=Stop_Q;
+		}  
+		
+	}
+
+	return histogramData; 
+	
+}
+
+
+defun A_FindMeanExcursion(data,Start,Stop,Excursion_Factor)
+{
+	/* Version 1.01 */
+	decl ReturnData = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl Indexreturn = indep(ReturnData);
+	decl Result=mean(data[Start::Stop]);
+	if(Result>=0)
+	{
+		Indexreturn[0]=0;
+		ReturnData[0]=Result;
+		Indexreturn[1]=1;
+		ReturnData[1]=Result*Excursion_Factor;
+		return ReturnData;
+	}
+	else
+	{
+		Indexreturn[0]=0;
+		ReturnData[0]=0;
+		Indexreturn[1]=1;
+		ReturnData[1]=1;
+		return ReturnData;
+	}
+}
+
+
+defun A_HistSegmentMeanStdDev(data,Start,Stop)
+{
+	decl count=0;
+	decl TotalHits=0;
+	decl MeanSum=0;
+	decl Mean2Sum=0;
+	decl Mean=0;
+	decl Stddev;
+	decl Get_Indep=indep(data);
+	MeanSum=sum(data[Start::Stop]*Get_Indep[Start::Stop]);
+	Mean2Sum=sum(data[Start::Stop]*Get_Indep[Start::Stop]*Get_Indep[Start::Stop]);
+	TotalHits=sum(data[Start::Stop]);
+
+	decl ReturnData = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl Indexreturn = indep(ReturnData);
+	if(TotalHits>0)
+	{
+		
+		Mean=MeanSum/TotalHits;
+		Stddev=sqrt((Mean2Sum-Mean*MeanSum)/(TotalHits-1));
+		Indexreturn[0]=0;
+		ReturnData[0]=Mean;
+		Indexreturn[1]=1;
+		ReturnData[1]=Stddev;
+		return ReturnData;
+	}
+	else
+	{
+		Indexreturn[0]=0;
+		ReturnData[0]=0;
+		Indexreturn[1]=1;
+		ReturnData[1]=0;
+		return ReturnData;
+	}
+}
+
+
+
+defun FrontPanel_find_topbaseboundaries(data,start_amp,stop_amp)
+{
+	decl count,count1,Total_hits,Mean_hits,Excursion,Get_array,Get_swpsze,Get_mean,Get_index,Get_Q,Amp_hist;
+	decl Window_width=3;
+	decl Resolution_X=Frontpanel_eye_2d_get_sweepsize_indepvar_outer(data);
+	decl Resolution_Y=sweep_size(data[0,::]);
+	decl Bottom_array=[0::Resolution_X-1];
+	Bottom_array[0::Resolution_X-1]=-1000;
+	decl Top_array=[0::Resolution_X-1];
+	Top_array[0::Resolution_X-1]=-1000;
+	decl Base_upper_Q=Frontpanel_eye_2d_indepvar_index_search_inner(data,start_amp);
+	decl Top_lower_Q=Frontpanel_eye_2d_indepvar_index_search_inner(data,stop_amp);
+	decl Result=data[::,0];
+	for(count=0;count<=Resolution_X-Window_width-1;count=count+1)
+	{
+		Amp_hist=FrontPanel_eye_vertical_histogram_index(data,count,count+Window_width-1,0,Resolution_Y-1);
+		if(max(Amp_hist)==0)
+			continue;
+		Amp_hist=moving_average(Amp_hist,5);
+		Total_hits=sum(Amp_hist);
+		if(Total_hits <2.0) 
+			Mean_hits=1;
+		else
+			Mean_hits=int(Total_hits/Resolution_Y/6.0);
+		
+		Excursion=Mean_hits+1;
+
+		Amp_hist=Amp_hist-Excursion;
+		if(max(Amp_hist[0::Base_upper_Q])>0)
+		{
+			for(count1=Base_upper_Q;count1>=0;count1=count1-1)
+			{
+				if(Amp_hist[count1]>0)
+				{
+					Bottom_array[count]=count1;
+					break;
+				}
+			}
+		}
+		if(max(Amp_hist[Top_lower_Q::Resolution_Y-1])>0)
+		{
+			for(count1=Top_lower_Q;count1<Resolution_Y-1;count1=count1+1)
+			{
+				if(Amp_hist[count1]>0)
+				{
+					Top_array[count]=count1;
+					break;
+				}
+			}
+		}
+		if(Top_array[count]==-1000)
+			Top_array[count]=Top_lower_Q;
+		if(Bottom_array[count]==-1000)
+			Bottom_array[count]=Base_upper_Q;
+		Result[count]=sum(data[count,Bottom_array[count]::Top_array[count]]);		
+		
+	}
+	
+	return Result;
+	
+}
+
+
+defun FrontPanel_search_crossing_pts(data)
+{
+	decl DtaLng=sweep_size(data[0,::])-1;
+	decl Get_max_time=sweep_size(data[::,0])-1;
+        decl Get_histogram=moving_average(FrontPanel_eye_horizontal_histogram_index(data,0,Get_max_time,int(DtaLng*0.4),int(DtaLng*0.6)),5);
+	decl Get_meanhits=max2(1,2*max(Get_histogram)/3);
+	decl Excursion=Get_meanhits+1;
+	decl Get_peak=Frontpanel_eye_findhistpeak(Get_histogram,0,Get_meanhits,Excursion);
+	decl Num_crossings=sweep_size(Get_peak)/2;
+	decl Get_histogram1;
+	if(Num_crossings==4)
+	{
+		
+		decl Get_boundary1=Get_peak[0];
+		decl Get_boundary2=Get_peak[3];
+		decl Get_boundary3=Get_peak[4];
+		decl Get_boundary4=Get_peak[7];
+		Get_histogram=moving_average(FrontPanel_eye_amplitude_histogram(data),5);
+		decl Get_low=Get_histogram[0::int(DtaLng*0.4)];
+		decl Get_high=Get_histogram[int(DtaLng*0.6)::DtaLng];
+		decl Get_low_max=max(Get_low);
+		decl Get_high_max=max(Get_high);
+		decl Low_boundary,High_boundary,count;
+		decl Base_upperQ,TempData;
+		decl Top_lowerQ;
+		if(max(Get_low-Get_low_max)<0)
+		{
+			Low_boundary=0;
+			Base_upperQ=1;
+		}
+
+		else
+		{
+			for(count=0;count<int(DtaLng*0.4);count=count+1)
+			{
+				Low_boundary=count;
+				if(Get_histogram[count]-Get_low_max>=0)
+					break;
+			}
+		}
+		if(max(Get_high-Get_high_max)<0)
+		{
+			High_boundary=DtaLng;
+			Top_lowerQ=DtaLng-1;
+		}
+		else
+		{
+			for(count=DtaLng;count>=int(0.6*DtaLng);count=count-1)
+			{
+				High_boundary=count;
+				if(Get_histogram[count]-Get_high_max>=0)
+					break;
+			}
+		}
+		if(Base_upperQ==NULL)
+		{
+			Get_low_max=Get_low_max/3.0;
+			TempData=Get_histogram-Get_low_max;
+			Base_upperQ=Low_boundary;
+			for(count=Low_boundary;count<=int(DtaLng*0.4);count=count+1)
+			{
+				if(TempData[count]<=0)
+				{
+					Base_upperQ=count;
+					break;
+				}
+			}
+		}
+		if(Top_lowerQ==NULL)
+		{
+			Get_high_max=Get_high_max/6.0;
+			TempData=Get_histogram-Get_high_max;
+			Top_lowerQ=High_boundary;
+			for(count=High_boundary;count>=int(0.6*DtaLng);count=count-1)
+			{
+				if(TempData[count]<=0)
+				{
+					Top_lowerQ=count;
+					break;
+				}
+			}
+		} 
+		decl Startfound=FALSE;
+		decl Crossingfound=FALSE;
+		for(count=int(0.5*DtaLng)-2;count<=Top_lowerQ;count=count+1)
+		{
+			Get_histogram=moving_average(FrontPanel_eye_horizontal_histogram_index(data,Get_boundary1,Get_boundary2,count-2,count),5);
+			Get_meanhits=max2(1,2*max(Get_histogram)/3);
+			Excursion=Get_meanhits+1;
+			Get_peak=Frontpanel_eye_findhistpeak(Get_histogram,0,Get_meanhits,Excursion);
+			Num_crossings=sweep_size(Get_peak)/2;
+			if(Num_crossings==2 && Startfound!=FALSE)
+			{
+				Top_lowerQ=count;
+				break;
+			}
+			if(Num_crossings==1 && Startfound==FALSE)
+				Startfound=TRUE;
+
+		}
+		if(Startfound==FALSE)
+			Top_lowerQ=int(0.5*DtaLng);
+		Startfound=FALSE;
+		for(count=int(0.5*DtaLng)-1;count>=Base_upperQ;count=count-1)
+		{
+			Get_histogram=moving_average(FrontPanel_eye_horizontal_histogram_index(data,Get_boundary1,Get_boundary2,count,count+2),5);
+			Get_meanhits=max2(1,2*max(Get_histogram)/3);
+			Excursion=Get_meanhits+1;
+			Get_peak=Frontpanel_eye_findhistpeak(Get_histogram,0,Get_meanhits,Excursion);
+			Num_crossings=sweep_size(Get_peak)/2;
+			if(Num_crossings==2 && Startfound!=FALSE)
+			{
+				Base_upperQ=count;
+				break;
+			}
+			if(Num_crossings==1 && Startfound==FALSE)
+				Startfound=TRUE;
+		}
+		if(Startfound==FALSE)
+			Base_upperQ=int(0.5*DtaLng);
+		return [Base_upperQ,Top_lowerQ];
+								
+	}
+}
+
+defun FrontPanel_verify_converge_crossing(data,Get_peak,base_upperQ,top_lowerQ)
+{
+	decl Result = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl Indep_Result = indep(Result);
+	decl Crossing_count=0;	
+	decl Indep_data=indep(data[::,0]);
+	decl Indep_data_row=indep(data[0,::]);
+	decl  Verify_crossing=FrontPanel_verify_crossing(data,Get_peak,base_upperQ,top_lowerQ);
+	Verify_crossing=FrontPanel_refine_crossing_positions(data,Verify_crossing);
+	Verify_crossing=FrontPanel_refine_crossing_levels(data,Verify_crossing);
+	Verify_crossing=FrontPanel_refine_crossing_positions(data,Verify_crossing);
+	Verify_crossing=FrontPanel_refine_crossing_levels(data,Verify_crossing);
+	decl Num_crossings=sweep_size(Verify_crossing)/6.0;
+	while(Crossing_count<Num_crossings)
+	{	
+		Indep_Result[(3*Crossing_count)]=3*Crossing_count;
+		Result[(3*Crossing_count)]=Indep_data_row[Verify_crossing[6*Crossing_count+2]];
+		Indep_Result[(3*Crossing_count+1)]=3*Crossing_count+1;
+		Result[(3*Crossing_count+1)]=Indep_data[Verify_crossing[6*Crossing_count+3]];
+		Indep_Result[(3*Crossing_count+2)]=3*Crossing_count+2;
+		Result[(3*Crossing_count+2)]=Indep_data[Verify_crossing[6*Crossing_count+1]]-Indep_data[Verify_crossing[6*Crossing_count+3]]; 
+		Crossing_count=Crossing_count+1; 
+		
+	} 
+	return  Result;
+}
+
+
+defun FrontPanel_refine_crossing_positions(data,crossing_data)
+{
+	
+	decl SwpSze=sweep_size(crossing_data);
+	if(SwpSze<6)
+	{
+		print_function_error("No peak found, Error: FrontPanel 101");
+		return NULL;
+	}
+	decl count,Window_size=3,Get_hist;
+	decl Get_start,Get_stop,Get_q,Get_xing;
+	decl Result = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl IndepResult = indep(Result);
+	decl Num_row=sweep_size(data[0,::])-1;
+	for(count=0;count<SwpSze;count=count+6)
+	{
+		Get_start=crossing_data[count];
+		Get_stop=crossing_data[count+1];
+		Get_q=crossing_data[count+2];
+		if(Get_q==0)
+			Get_q=1;
+		if(Get_q==Num_row)
+			Get_q=Num_row-1;
+		Get_hist=FrontPanel_eye_horizontal_histogram_index(data,Get_start,Get_stop,Get_q-1,Get_q+1);
+		Get_xing=Frontpanel_get_histogram_mean_stddev(Get_hist,Get_start,Get_stop);
+		IndepResult[count]=count;
+		Result[count]=Frontpanel_eye_2d_get_indepvar_index_outer(data,Get_xing[0]-3*Get_xing[1]);
+		IndepResult[count+1]=count+1;
+		Result[count+1]=Frontpanel_eye_2d_get_indepvar_index_outer(data,Get_xing[0]+3*Get_xing[1]);
+		IndepResult[count+2]=count+2;
+		Result[count+2]=Get_q;
+		IndepResult[count+3]=count+3;
+		Result[count+3]=Frontpanel_eye_2d_get_indepvar_index_outer(data,Get_xing[0]);
+		IndepResult[count+4]=count+4;
+		Result[count+4]=crossing_data[count+4];
+		IndepResult[count+5]=count+5;
+		Result[count+5]=crossing_data[count+5];
+	}
+	return Result;
+}
+
+defun FrontPanel_refine_crossing_levels(data,crossing_data)
+{
+	
+	decl SwpSze=sweep_size(crossing_data);
+	if(SwpSze<6)
+	{
+		print_function_error("No peak found, Error: FrontPanel 102");
+		return NULL;
+	}
+	decl count,Window_size=3,Get_hist;
+	decl Get_start,Get_stop,Get_q,Get_xing,Meanhits,Excursion,Find_peaks;
+	decl Result = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl IndepResult = indep(Result);
+	decl Num_col=sweep_size(data[::,0])-1;
+	for(count=0;count<SwpSze;count=count+6)
+	{
+		Get_start=crossing_data[count+4];
+		Get_stop=crossing_data[count+5];
+		Get_q=crossing_data[count+3];
+		if(Get_q<1)
+			Get_q=1;
+		if(Get_q==Num_col)
+			Get_q=Num_col-1;
+		Get_hist=FrontPanel_eye_vertical_histogram_index(data,Get_q-1,Get_q+1,Get_start,Get_stop);
+		Meanhits=max2(1,max(Get_hist)/6);
+		Excursion=Meanhits+1;
+		Find_peaks=Frontpanel_eye_findhistpeak(Get_hist,0,Meanhits,Excursion);
+		Get_xing=Frontpanel_get_histogram_mean_stddev(Get_hist,Find_peaks[0],Find_peaks[sweep_size(Find_peaks)-1]);
+		IndepResult[count]=count;
+		Result[count]=crossing_data[count];
+		IndepResult[count+1]=count+1;
+		Result[count+1]=crossing_data[count+1];
+		IndepResult[count+2]=count+2;
+		Result[count+2]=Frontpanel_eye_2d_indepvar_index_search_inner(data,Get_xing[0]);
+		IndepResult[count+3]=count+3;
+		Result[count+3]=crossing_data[count+3];
+		IndepResult[count+4]=count+4;
+		Result[count+4]=crossing_data[count+4];
+		IndepResult[count+5]=count+5;
+		Result[count+5]=crossing_data[count+5];
+		
+	}
+	return Result;
+}
+						
+	
+
+
+defun FrontPanel_verify_crossing(data,Get_peak,Base_upperQ,Top_lowerQ)
+{
+	decl count,Start_xing,Stop_xing,Tempdata;
+	decl Center_xing,Get_xing,Get_index,Meanhits;
+	decl Excursion,Find_peaks;
+	decl Window_width=3;
+	decl Histogram_data;
+	decl Result = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl IndepResult = indep(Result);
+
+	decl QLst=list();
+	decl SrtLst=list();
+	decl StpLst=list();
+	decl XngLst=list();
+	decl MeanLst=list();
+
+	decl Num_xing=sweep_size(Get_peak)/2;
+	decl Max_col=sweep_size(data[::,0])-1;
+	decl Max_row=sweep_size(data[0,::])-1;
+	for(count=0;count<Num_xing;count=count+1)
+	{
+		Start_xing=Get_peak[(2*count)];
+		Stop_xing=Get_peak[(2*count+1)];
+		Histogram_data=FrontPanel_eye_horizontal_histogram_index(data,Start_xing,Stop_xing,Base_upperQ,Top_lowerQ);
+		Get_xing=Frontpanel_get_histogram_mean_stddev(Histogram_data,Start_xing,Stop_xing);
+		Get_index= Frontpanel_eye_2d_get_indepvar_index_outer(data,Get_xing[0]);
+		Center_xing=Start_xing+(Stop_xing-Get_index);
+		if(Center_xing<1)
+			Histogram_data=FrontPanel_eye_vertical_histogram_index(data,0,Window_width,Base_upperQ,Top_lowerQ);
+		else if(Max_col-Center_xing<1)
+			Histogram_data=FrontPanel_eye_vertical_histogram_index(data,Max_col-Window_width,Max_col,Base_upperQ,Top_lowerQ);		
+		else
+			Histogram_data=FrontPanel_eye_vertical_histogram_index(data,Center_xing-1,Center_xing+1,Base_upperQ,Top_lowerQ);		
+		Meanhits=max2(1,max(Histogram_data)/2);
+		Excursion=Meanhits+1;
+		Find_peaks=Frontpanel_eye_findhistpeak(Histogram_data,0,Meanhits,Excursion);
+		if(sweep_size(Find_peaks)==1)
+			continue;
+		Meanhits=Frontpanel_get_histogram_mean_stddev(Histogram_data,Find_peaks[0],Find_peaks[sweep_size(Find_peaks)-1]);
+		QLst=append(QLst,list(Frontpanel_eye_2d_indepvar_index_search_inner(data,Meanhits[0])));
+		SrtLst=append(SrtLst,list(Start_xing));
+		StpLst=append(StpLst,list(Stop_xing));
+
+	}
+	if(QLst==NULL)
+	{
+		print_function_error("No valid histogram peak found: Error: FrontPanel 100");
+		return NULL;
+	}
+	decl LstLng=listlen(QLst);
+	decl Sumdata=0;
+	for(count=0;count<LstLng;count=count+1)
+		Sumdata=Sumdata+nth(count,QLst);
+	if(LstLng>1)
+		Sumdata=Sumdata/(LstLng);
+	Sumdata=int(Sumdata);
+		
+	decl MaxVal=0;
+	for(count=0;count<LstLng;count=count+1)
+	{
+		Start_xing=Get_peak[(2*count)];
+		Stop_xing=Get_peak[(2*count+1)];
+
+		if(Sumdata<1)
+			Histogram_data=FrontPanel_eye_horizontal_histogram_index(data,Start_xing,Stop_xing,0,3);
+		else if( Sumdata>=Max_row)
+			Histogram_data=FrontPanel_eye_horizontal_histogram_index(data,Start_xing,Stop_xing,Max_row-3,Max_row);
+		else
+			Histogram_data=FrontPanel_eye_horizontal_histogram_index(data,Start_xing,Stop_xing,Sumdata-1,Sumdata+1);
+		
+		Meanhits=Frontpanel_get_histogram_mean_stddev(Histogram_data,Start_xing,Stop_xing);
+		MeanLst=append(MeanLst,list(Frontpanel_eye_2d_get_indepvar_index_outer(data,Meanhits[0])));
+		Tempdata=max(Histogram_data);
+		XngLst=append(XngLst,list(Tempdata));
+		if(MaxVal<Tempdata)
+			MaxVal=Tempdata;
+	}
+	decl Threshold_limit=20;
+	for(count=LstLng-1;count>=0;count=count-1)	
+	{
+		if(!(nth(count,XngLst)>=MaxVal/2 || (nth(count,StpLst)-nth(count,SrtLst))<=Threshold_limit))
+		{
+			QLst=delete_nth(count,QLst);
+			SrtLst=delete_nth(count,SrtLst);
+			StpLst=delete_nth(count,StpLst);
+			MeanLst=delete_nth(count,MeanLst);
+		}
+	}
+	
+	LstLng=listlen(QLst);
+	for(count=0;count<LstLng;count=count+1)
+	{
+		IndepResult[6*count]=6*count;
+		Result[6*count]=nth(count,SrtLst);
+		IndepResult[6*count+1]=6*count+1;
+		Result[6*count+1]=nth(count,StpLst);
+		IndepResult[6*count+2]=6*count+2;
+		Result[6*count+2]=nth(count,QLst);
+		IndepResult[6*count+3]=6*count+3;
+		Result[6*count+3]=nth(count,MeanLst);
+		IndepResult[6*count+4]=6*count+4;
+		Result[6*count+4]=Base_upperQ;
+		IndepResult[6*count+5]=6*count+5;
+		Result[6*count+5]=Top_lowerQ;
+	}
+	return Result;
+}
+
+defun A_FindDbPeak(data,meanhits,Excursion,StartQ,StopQ)
+{
+	decl ReturnData = create(1,"Real",{"Index"},{"Real"},1,1);
+	decl Indexreturn = indep(ReturnData);
+	decl Indep_data=indep(data);
+	decl Topfound=FALSE;
+	decl LargestHits=0;
+	// Initilaize to opposite extremes
+	decl Topupper=StartQ;
+	decl Toplower=StopQ; 
+	decl Get_Max=max(data[StartQ::StopQ]);
+	if(Get_Max>meanhits || Get_Max>=Excursion)
+		Topfound=TRUE;
+	if(Topfound==FALSE)
+	{
+		Indexreturn[0]=0;
+		ReturnData[0]=StopQ;
+		Indexreturn[1]=1;
+		ReturnData[1]=0;
+		Indexreturn[2]=2;
+		ReturnData[2]=Indep_data[StopQ];
+		Indexreturn[3]=3;
+		ReturnData[3]=Indep_data[StopQ];
+		return ReturnData;
+	}
+	decl count;
+	for(count=StartQ;count<=StopQ;count=count+1)
+	{
+		if(data[count]>=meanhits)
+			break;
+	}
+	Toplower=count;
+	for(count=StopQ;count>=StartQ;count=count-1)
+	{
+		if(data[count]>=meanhits)
+			break;
+	}
+	Topupper=count;
+	decl Get_meanQ=A_HistSegmentMeanStdDev(data,Toplower,Topupper);
+	Indexreturn[0]=0;
+	ReturnData[0]=Get_meanQ[0];
+	Indexreturn[1]=1;
+	ReturnData[1]=Get_meanQ[1];
+	Indexreturn[2]=2;
+	ReturnData[2]=Indep_data[Toplower];
+	Indexreturn[3]=3;
+	ReturnData[3]=Indep_data[Topupper];
+	return ReturnData;
+}
+

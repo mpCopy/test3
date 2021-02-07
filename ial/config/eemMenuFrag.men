@@ -1,0 +1,44 @@
+POPUP "Export To ADS/EMPro"
+BEGIN
+  MENUITEM "&Setup ...", "MomSetup"
+  MENUITEM "Select &Traces ...", "MomSelect"
+  MENUITEM SEPARATOR
+#ifdef Eem_Menu_Use2012
+  POPUP "&Export"
+#endif
+#ifndef Eem_Menu_Use2012
+  POPUP "&Export"
+#endif
+  BEGIN
+#ifdef Eem_Menu_Use2012
+    MENUITEM "Selected ", "MomExportSelected"
+    MENUITEM "Selected As ...", "MomExportSelectedAs"
+    MENUITEM "Selected Hierarchy", "MomExportSelectedAdfi"
+    MENUITEM "Selected Hierarchy As ...", "MomExportSelectedAdfiAs"
+    MENUITEM "Selected To EMPro As ...", "MomExportSelectedAdfiForEMPro"
+#endif
+#ifndef Eem_Menu_Use2012
+    MENUITEM "Selected To ADS ...", "MomExportSelectedAdfiAs"
+#ifdef EEM_MENU_ADD_EXPORTALL
+    MENUITEM "All To ADS ...", "MomExportAllSelectedAdfiAs"
+#endif
+    MENUITEM "Selected To EMPro ...", "MomExportSelectedAdfiForEMPro"
+#endif
+  END
+  MENUITEM SEPARATOR
+  POPUP "St&ate"
+    BEGIN
+      MENUITEM "Sa&ve State ...", "MomSaveState"
+      MENUITEM "&Load State ...", "MomLoadState"
+    END
+#ifdef Eem_Menu_HasStartAds
+  MENUITEM SEPARATOR
+  MENUITEM "Start Advanced Design System", "MomStartAds"
+#endif
+#ifdef Eem_Menu_AddABLLoad
+  MENUITEM SEPARATOR
+  MENUITEM "Load Ads ABL ...", "AaiLoadCmd"
+#endif
+  MENUITEM SEPARATOR
+  MENUITEM "About ADFI ...", "MomAdsAbout"
+END

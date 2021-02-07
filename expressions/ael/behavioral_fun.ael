@@ -1,0 +1,1655 @@
+// Copyright Keysight Technologies 2006 - 2014  
+// @(#) $Source: /cvs/sr/src/genfun/source/behavioral_fun.ael,v $ $Revision: 1.21 $ $Date: 2011/08/23 21:25:20 $
+// -----------------------------------------------------------------------------
+// This file contains AEL functions called from data-based behavioral extractors
+// and models
+// 
+// Functions:
+//     write_imtO(file,Sideband,RelativeToIF,RFharms,LOharms,freq,Mix,RFpowr,LOpowr,Vif)
+//     write_imtA(file,RFharms,LOharms,freq,Mix,RFfreq,LOfreq,RFpowr,LOpowr,
+//                Vrf,Irf,Vif,Iif,Vlo,Ilo)
+//     write_imtB(file,freq,Mix,LOfreq,LOpowr,rfV,Vrf,Irf,Vif,Iif,Vlo,Ilo)
+//     create_RF_indices(RFharms)
+//     write_phdA_citi(file,freq,Mix,PHD1a)
+//     write_citi_depdata(pFile,dimSize,nowdim,Expr,type,dcVal)
+//
+// -----------------------------------------------------------------------------
+//
+defun writeComplex( variable )
+{
+    decl tinyreal  = 1e-100;
+    decl magnitude = mag( variable );
+    if ( magnitude <= tinyreal )
+        return polar(tinyreal, 0);
+    else if ( type( variable ) != "Complex" )
+        return polar( magnitude , 0);
+    else 
+        return variable;
+}
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+/*BEGIN_DOC
+FUN_NAME: write_imtO()
+FUN_DESCRIPTION: Writes half-DSB intermodulation tables. Returns True or False.
+MAKE_PUBLIC: False
+RETURNED_VALUE: boolean
+CATEGORY: IMT  
+SYNTAX: y = write_imtO(file,Sideband,RelativeToIF,RFharms,LOharms,freq,Mix,RFpowr,LOpowr,Vif)
+EXAMPLE:
+Assume 2-tone Harmonic Balance analysis involving 1 RF and 1 LO tone.
+Assume MaxOrder = LOharms + RFharms.
+LO is always assumed to be assigned to the Mix(1)[] output of the analysis.
+No sweeps of frequency or power are expected so a single IM-table is generated within this file.
+Lower or upper sideband data are chosen for display either as an absolute dBm  value or relative
+to IF fundamental in dB.
+
+ARGUMENT
+  ARG_NAME: file
+  ARG_DESCRIPTION: Name or full-path of the IMT file.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Sideband 
+  ARG_DESCRIPTION: Choice of lower (0) or upper sideband for mixing.
+  ARG_DEFAULT: 0
+  ARG_RANGE: {0,1}  
+  ARG_TYPE: Integer 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: RelativeToIF 
+  ARG_DESCRIPTION: Choice of dBm (0) or dB relative to IF spur (1) for reporting.
+  ARG_DEFAULT: 1
+  ARG_RANGE: {0,1}  
+  ARG_TYPE: Integer 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: RFharms
+  ARG_DESCRIPTION: Number of RF harmonics involved in mixing.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Integer 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: LOharms
+  ARG_DESCRIPTION: Number of LO harmonics involved in mixing.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Integer 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: freq 
+  ARG_DESCRIPTION: Harmonic indices of simulation.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix 
+  ARG_DESCRIPTION: Mixing matrix (Fx2) where F is total number of IF tones.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: RFpowr
+  ARG_DESCRIPTION: Power at RF fundamental at mixer input in dBm.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: LOpowr
+  ARG_DESCRIPTION: Power at LO fundamental at mixer input in dBm.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Vif 
+  ARG_DESCRIPTION: Voltage vector at IF output of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+FOOTNOTES: 
+NOTES: 
+DEFINED IN: $HPEESOF_DIR/expressions/ael/behavioral_fun.ael
+SEE ALSO: write_imtA(), write_imtB()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Oct.2008
+VERSION_CREATED: ADS 2009
+END_DOC*/
+
+defun write_imtO (file,Sideband,RelativeToIF,
+                  RFharms,LOharms,
+                  freq,Mix,
+                  RFpowr,LOpowr,Vif)
+{
+    decl FILE;
+    decl f, m, n; 
+
+    decl freqSiz = sweep_size( freq );
+
+    decl nullPower = -400.0;
+    decl Vif_base  = nullPower;
+    decl RFd       = RFharms[0];
+    decl LOd       = LOharms[0];
+    decl RFindex   = -1;
+    decl LOindex   = -1;
+    decl IFlower   = -1;
+    decl IFupper   = -1;
+    decl Vif_dbm   = create(2,"Real", {"M","N"}, {"Implicit","Implicit"}, 1, 1);
+    decl tinyreal  = 1e-100;
+    decl Rref      = 50.0;
+    decl Vif_base  = dBm( Vif, Rref );
+
+    // open output file for writing
+    FILE = fopen( file, "W" );
+    if ( FILE == NULL ) 
+    {
+        print_function_error("write_imt", 
+                             strcat(" Could not open file '", file, "'" )); 
+        return 0;
+    } //if
+    fprintf( FILE, "! %s %s \n", file, date_time() );
+    fprintf( FILE, "BEGIN IMT_DATA\n" );
+    //fprintf( FILE, "# IMT ( GHZ S DB%s R %.1f )\n", ((RelativeToIF)?(""):("M")), Rref );
+
+    for ( f = 0; f < freqSiz; f++ ) 
+    {
+        if ( Vif_base[f] < nullPower ) 
+            Vif_base[f] = nullPower;
+
+        if ( ( Mix(1)[f] == 0 ) && 
+             ( Mix(2)[f] == 1 ) )
+            RFindex = f;
+
+        if ( ( Mix(1)[f] == 1 ) &&
+             ( Mix(2)[f] == 0 ) )
+            LOindex = f;
+
+        if ( ( Mix(1)[f] == 1 ) &&
+             ( Mix(2)[f] == 1 ) )
+            IFupper = f;
+
+        if ( ( abs( Mix(1)[f] ) == 1 ) && 
+             ( Mix(2)[f] == -Mix(1)[f] ) )
+            IFlower = f;
+
+    } // freq loop
+
+    for ( m = -RFd; m < RFd+1; m++ ) 
+    {
+        for ( n = -LOd; n < LOd+1; n++ ) 
+        {
+            for ( f = 0; f < freqSiz; f++ ) 
+            {
+                if ( ( Mix(1)[f] == n ) &&
+                     ( Mix(2)[f] == m ) ) 
+                    break;
+            } // for f
+
+            if ( f == freqSiz )
+                Vif_dbm[m+RFd,n+LOd] = nullPower;
+            else
+                Vif_dbm[m+RFd,n+LOd] = Vif_base[f];
+        } // n loop
+    } // m loop
+
+    for ( m = -RFd; m < RFd+1; m++ )
+    {
+        for (n = -LOd; n < LOd+1; n++ )
+        {
+            // Conjugate transpose from valid entry to blank spot
+            if ( Vif_dbm[m+RFd,n+LOd] == nullPower ) 
+                Vif_dbm[m+RFd,n+LOd] = Vif_dbm[RFd-m,LOd-n];
+            if ( RelativeToIF )
+            { 
+                if ( Sideband )
+                    Vif_dbm[m+RFd,n+LOd] = Vif_base[IFupper] - Vif_dbm[m+RFd,n+LOd];
+                else
+                    Vif_dbm[m+RFd,n+LOd] = Vif_base[IFlower] - Vif_dbm[m+RFd,n+LOd];
+            }
+            if ( Vif_dbm[m+RFd,n+LOd] < nullPower )
+                Vif_dbm[m+RFd,n+LOd] = nullPower;
+        } // n loop
+    } // m loop
+
+    // put out comment and option lines
+    fprintf( FILE, "!   Signal Level (dBm)   LO Level (dBm)\n" );
+    fprintf( FILE, "\t%.3f\t\t%.3f\n", RFpowr[0], LOpowr[0] );
+
+    // write index line
+    fprintf( FILE, "!   O-type %s-conversion Inter-modulation table determining IF behavior\n",
+        ((Sideband)?("up"):("down")) );
+    if ( RelativeToIF )
+        fprintf( FILE, "!   Each table entry represents a spur strength in dB relative to the %s IF fundamental\n",
+                 ((Sideband)?("upper"):("lower")) );
+    else
+        fprintf( FILE, "!   Each table entry represents absolute value of spur strength in dBm\n" );
+    fprintf( FILE, "%%" );
+    for ( n = 0; n < LOd+1; n++ )
+    {
+        fprintf( FILE, "\t%d", n );
+    } // n loop
+    fprintf( FILE, "\n" );
+
+    if ( Sideband )
+    {
+        for ( m = 0; m < RFd+1; m++ )
+        {
+            for ( n = 0; n < LOd+1; n++ )
+                fprintf( FILE, "\t%.3f", Vif_dbm[m+RFd,n+LOd] );
+            fprintf( FILE, "\n" );
+        }
+    }
+    else
+    {
+        for ( m = 0; m > -RFd-1; m-- )
+        {
+            for ( n = 0; n < LOd+1; n++ )
+                fprintf( FILE, "\t%.3f", Vif_dbm[m+RFd,n+LOd] );
+            fprintf( FILE, "\n" );
+        }
+    }
+
+    fprintf( FILE, "\n\n\n" );
+
+    fprintf( FILE, "END IMT_DATA\n" );
+
+    fclose( FILE );
+
+    return 1;
+
+}// END - write_imtO()
+// ---------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+/* Not for external use or customer documentation */
+/*BEGIN_DOC
+FUN_NAME: write_imtA()
+FUN_DESCRIPTION: Writes half-DSB intermodulation tables. Returns True or False.
+MAKE_PUBLIC: False
+RETURNED_VALUE: boolean
+CATEGORY: IMT  
+SYNTAX: y = write_imtA(file,RFharms,LOharms,freq,Mix,RFfreq,LOfreq,RFpowr,LOpowr,Vrf,Irf,Vif,Iif,Vlo,Ilo)
+EXAMPLE:
+Assume 2-tone Harmonic Balance analysis involving 1 RF and 1 LO tone.
+Assume MaxOrder = LOharms + RFharms.
+LOfreq is always assumed to be assigned to the Mix(1)[] output of the analysis.
+LOpowr, LOfreq, RFpowr and RFfreq may be swept over the HB analysis with RFfreq
+being highest sweep level.
+Each combination results in a new IM-table within the file.
+Each IM-table consists of two sections:
+a) Leakage data table (LDT) that maps reflected /emitted wave from RF and LO ports
+   to incident waves at same frequencies from RF, IF and LO ports. 
+   Only 4 fundamental tones are considered to be significant enough to cause 
+   leakage: RFfreq, LOfreq, RFfreq+LOfreq, |RFfreq-LOfreq|.
+   Leakage data is represented in (db,deg).
+b) Intermodulation table (IMT) containing signal voltage (dBm, deg) at IF port
+   at all mixing tones.
+
+ARGUMENT
+  ARG_NAME: file
+  ARG_DESCRIPTION: Name or full-path of the IMT file.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: RFharms
+  ARG_DESCRIPTION: Number of RF harmonics involved in mixing.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Integer 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: LOharms
+  ARG_DESCRIPTION: Number of LO harmonics involved in mixing.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Integer 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: freq 
+  ARG_DESCRIPTION: Harmonic indices of simulation.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix 
+  ARG_DESCRIPTION: Mixing matrix (Fx2) where F is total number of IF tones.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: RFfreq
+  ARG_DESCRIPTION: Frequency of RF fundamental at mixer input in Hz.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: LOfreq
+  ARG_DESCRIPTION: Frequency of LO fundamental at mixer input in Hz.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: RFpowr
+  ARG_DESCRIPTION: Power at RF fundamental at mixer input in dBm.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: LOpowr
+  ARG_DESCRIPTION: Power at LO fundamental at mixer input in dBm.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Vrf 
+  ARG_DESCRIPTION: Voltage vector at RF input of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Irf 
+  ARG_DESCRIPTION: Current vector at RF input of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Vif 
+  ARG_DESCRIPTION: Voltage vector at IF output of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Iif 
+  ARG_DESCRIPTION: Current vector at IF output of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Vlo 
+  ARG_DESCRIPTION: Voltage vector at LO input of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Ilo 
+  ARG_DESCRIPTION: Current vector at LO input of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+FOOTNOTES: 
+NOTES: 
+DEFINED IN: $HPEESOF_DIR/expressions/ael/behavioral_fun.ael
+SEE ALSO: write_imtB()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Feb.2006
+VERSION_CREATED: ADS 2006A
+END_DOC*/
+
+defun write_imtA (file,
+                  RFharms,LOharms,
+                  freq,Mix,RFfreq,LOfreq,
+                  RFpowr,LOpowr,
+                  Vrf,Irf,Vif,Iif,Vlo,Ilo)
+{
+    decl FILE;
+    decl f, m, n, lop, rfp, lof, rff;
+
+    decl freqSiz   = sweep_size( freq[0,0,0,0,::] );
+    decl LOpowrSiz = sweep_size( LOpowr[0,0,0,::] );
+    decl RFpowrSiz = sweep_size( RFpowr[0,0,::] );
+    decl LOfreqSiz = sweep_size( LOfreq[0,::] );
+    decl RFfreqSiz = sweep_size( RFfreq );
+
+    decl nullPower = -400.0;
+    decl nullPhase =    0.0;
+    decl Vif_base  = nullPower;
+    decl Vif_phase = nullPhase;
+    decl RFd       = RFharms[0];
+    decl LOd       = LOharms[0];
+    decl RFindex   = -1;
+    decl LOindex   = -1;
+    decl IFlower   = -1;
+    decl IFupper   = -1;
+    decl Arf       = create(2,"Complex",{"M","N"},{"Implicit","Implicit"},1,1);
+    decl Brf       = create(2,"Complex",{"M","N"},{"Implicit","Implicit"},1,1);
+    decl Alo       = create(2,"Complex",{"M","N"},{"Implicit","Implicit"},1,1);
+    decl Blo       = create(2,"Complex",{"M","N"},{"Implicit","Implicit"},1,1);
+    decl Aif       = create(2,"Complex",{"M","N"},{"Implicit","Implicit"},1,1);
+    decl SP        = create(3,"Complex",{"LeakSide","Bfreq","Afreq"},{"Implicit","Implicit","Implicit"},1,1);
+    decl Vif_dbm   = create(2,"Real", {"M","N"}, {"Implicit","Implicit"}, 1, 1);
+    decl Vif_deg   = create(2,"Real", {"M","N"}, {"Implicit","Implicit"}, 1, 1);
+    decl tempPh    = 0;
+    decl multPh    = 0;
+    decl tinyreal  = 1e-100;
+    decl Rref      = 50.0;
+
+    // open output file for writing
+    FILE = fopen( file, "W" );
+    if ( FILE == NULL ) 
+    {
+        print_function_error("write_imt", 
+                             strcat(" Could not open file '", file, "'" )); 
+        return 0;
+    } //if
+    fprintf( FILE, "! %s %s \n", file, date_time() );
+    fprintf( FILE, "BEGIN IMT_DATA\n" );
+    fprintf( FILE, "# IMT ( GHZ S DBM R %.1f )\n", Rref );
+
+    for ( m = 0; m < 2; m++ )
+    for ( n = 0; n < 2; n++ )
+    {
+        Arf[m,n] = writeComplex(tinyreal);
+        Brf[m,n] = writeComplex(tinyreal);
+        Alo[m,n] = writeComplex(tinyreal);
+        Blo[m,n] = writeComplex(tinyreal);
+        Aif[m,n] = writeComplex(tinyreal);
+    }
+
+    for ( rff = 0; rff < RFfreqSiz; rff++ )
+    {
+        for ( lof = 0; lof < LOfreqSiz; lof++ )
+        {
+            for ( rfp = 0; rfp < RFpowrSiz; rfp++ )
+            {
+                for ( lop = 0; lop < LOpowrSiz; lop++ )
+                {
+                    Vif_base  = dBm( Vif[rff,lof,rfp,lop,::], Rref );
+                    Vif_phase = phase( Vif[rff,lof,rfp,lop,::] );
+                    
+                    for ( f = 0; f < freqSiz; f++ ) 
+                    {
+                        if ( Vif_base[f] < nullPower ) 
+                            Vif_base[f] = nullPower;
+
+                        if ( ( Mix(1)[rff,lof,rfp,lop,f] == 0 ) && 
+                             ( Mix(2)[rff,lof,rfp,lop,f] == 1 ) )
+                        {
+                            RFindex = f;
+                            Arf[1,0] = writeComplex(Vrf[rff,lof,rfp,lop,f] + Rref * Irf[rff,lof,rfp,lop,f]); 
+                            Brf[1,0] = writeComplex(Vrf[rff,lof,rfp,lop,f] - Rref * Irf[rff,lof,rfp,lop,f]); 
+                            Alo[1,0] = writeComplex(Vlo[rff,lof,rfp,lop,f] + Rref * Ilo[rff,lof,rfp,lop,f]); 
+                            Blo[1,0] = writeComplex(Vlo[rff,lof,rfp,lop,f] - Rref * Ilo[rff,lof,rfp,lop,f]); 
+                            Aif[1,0] = writeComplex(Vif[rff,lof,rfp,lop,f] + Rref * Iif[rff,lof,rfp,lop,f]); 
+                        }
+
+
+                        if ( ( Mix(1)[rff,lof,rfp,lop,f] == 1 ) &&
+                             ( Mix(2)[rff,lof,rfp,lop,f] == 0 ) )
+                        {
+                            LOindex = f;
+                            Arf[0,1] = writeComplex(Vrf[rff,lof,rfp,lop,f] + Rref * Irf[rff,lof,rfp,lop,f]); 
+                            Brf[0,1] = writeComplex(Vrf[rff,lof,rfp,lop,f] - Rref * Irf[rff,lof,rfp,lop,f]); 
+                            Alo[0,1] = writeComplex(Vlo[rff,lof,rfp,lop,f] + Rref * Ilo[rff,lof,rfp,lop,f]); 
+                            Blo[0,1] = writeComplex(Vlo[rff,lof,rfp,lop,f] - Rref * Ilo[rff,lof,rfp,lop,f]); 
+                            Aif[0,1] = writeComplex(Vif[rff,lof,rfp,lop,f] + Rref * Iif[rff,lof,rfp,lop,f]); 
+                        }
+
+
+                        if ( ( Mix(1)[rff,lof,rfp,lop,f] == 1 ) &&
+                             ( Mix(2)[rff,lof,rfp,lop,f] == 1 ) )
+                        {
+                            IFupper = f;
+                            Arf[1,1] = writeComplex(Vrf[rff,lof,rfp,lop,f] + Rref * Irf[rff,lof,rfp,lop,f]); 
+                            Brf[1,1] = writeComplex(Vrf[rff,lof,rfp,lop,f] - Rref * Irf[rff,lof,rfp,lop,f]); 
+                            Alo[1,1] = writeComplex(Vlo[rff,lof,rfp,lop,f] + Rref * Ilo[rff,lof,rfp,lop,f]); 
+                            Blo[1,1] = writeComplex(Vlo[rff,lof,rfp,lop,f] - Rref * Ilo[rff,lof,rfp,lop,f]); 
+                            Aif[1,1] = writeComplex(Vif[rff,lof,rfp,lop,f] + Rref * Iif[rff,lof,rfp,lop,f]); 
+                        }
+
+
+                        if ( ( abs( Mix(1)[rff,lof,rfp,lop,f] ) == 1 ) && 
+                             ( Mix(2)[rff,lof,rfp,lop,f] == -Mix(1)[rff,lof,rfp,lop,f] ) )
+                        {
+                            IFlower = f;
+                            Arf[0,0] = writeComplex(Vrf[rff,lof,rfp,lop,f] + Rref * Irf[rff,lof,rfp,lop,f]); 
+                            Brf[0,0] = writeComplex(Vrf[rff,lof,rfp,lop,f] - Rref * Irf[rff,lof,rfp,lop,f]); 
+                            Alo[0,0] = writeComplex(Vlo[rff,lof,rfp,lop,f] + Rref * Ilo[rff,lof,rfp,lop,f]); 
+                            Blo[0,0] = writeComplex(Vlo[rff,lof,rfp,lop,f] - Rref * Ilo[rff,lof,rfp,lop,f]); 
+                            Aif[0,0] = writeComplex(Vif[rff,lof,rfp,lop,f] + Rref * Iif[rff,lof,rfp,lop,f]); 
+                        }
+
+
+                    } // freq loop
+
+                    //Compute essential S-parameters that are not part of IM-table
+                    //SP[x,y,z] := s-param from freq z of main port to freq y at port x
+                    // Main ports: LOport z=0, RFport z=1, IFport z=2,3
+                    // S-parameters defined due to emission from LO input: x=0
+                    SP[0,0,0] = writeComplex(Blo[0,1]/(Alo[0,1]+tinyreal)); // Alo(LOfreq)  -> Blo(LOfreq)
+                    SP[0,0,1] = writeComplex(Blo[0,1]/(Arf[1,0]+tinyreal)); // Arf(RFfreq)  -> Blo(LOfreq)
+                    SP[0,0,2] = writeComplex(Blo[0,1]/(Aif[0,0]+tinyreal)); // Aif(IFlower) -> Blo(LOfreq)
+                    SP[0,0,3] = writeComplex(Blo[0,1]/(Aif[1,1]+tinyreal)); // Aif(IFupper) -> Blo(LOfreq)
+                    SP[0,1,0] = writeComplex(Blo[1,0]/(Alo[0,1]+tinyreal)); // Alo(LOfreq)  -> Blo(RFfreq)
+                    SP[0,1,1] = writeComplex(Blo[1,0]/(Arf[1,0]+tinyreal)); // Arf(RFfreq)  -> Blo(RFfreq)
+                    SP[0,1,2] = writeComplex(Blo[1,0]/(Aif[0,0]+tinyreal)); // Aif(IFlower) -> Blo(RFfreq)
+                    SP[0,1,3] = writeComplex(Blo[1,0]/(Aif[1,1]+tinyreal)); // Aif(IFupper) -> Blo(RFfreq)
+                    SP[0,2,0] = writeComplex(Blo[0,0]/(Alo[0,1]+tinyreal)); // Alo(LOfreq)  -> Blo(IFlower)
+                    SP[0,2,1] = writeComplex(Blo[0,0]/(Arf[1,0]+tinyreal)); // Arf(RFfreq)  -> Blo(IFlower)
+                    SP[0,2,2] = writeComplex(Blo[0,0]/(Aif[0,0]+tinyreal)); // Aif(IFlower) -> Blo(IFlower)
+                    SP[0,2,3] = writeComplex(Blo[0,0]/(Aif[1,1]+tinyreal)); // Aif(IFupper) -> Blo(IFlower)
+                    SP[0,3,0] = writeComplex(Blo[1,1]/(Alo[0,1]+tinyreal)); // Alo(LOfreq)  -> Blo(IFupper)
+                    SP[0,3,1] = writeComplex(Blo[1,1]/(Arf[1,0]+tinyreal)); // Arf(RFfreq)  -> Blo(IFupper)
+                    SP[0,3,2] = writeComplex(Blo[1,1]/(Aif[0,0]+tinyreal)); // Aif(IFlower) -> Blo(IFupper)
+                    SP[0,3,3] = writeComplex(Blo[1,1]/(Aif[1,1]+tinyreal)); // Aif(IFupper) -> Blo(IFupper)
+                    // S-parameters defined due to emission from RF input: x = 1
+                    SP[1,0,0] = writeComplex(Brf[0,1]/(Alo[0,1]+tinyreal)); // Alo(LOfreq)  -> Brf(LOfreq)
+                    SP[1,0,1] = writeComplex(Brf[0,1]/(Arf[1,0]+tinyreal)); // Arf(RFfreq)  -> Brf(LOfreq)
+                    SP[1,0,2] = writeComplex(Brf[0,1]/(Aif[0,0]+tinyreal)); // Aif(IFlower) -> Brf(LOfreq)
+                    SP[1,0,3] = writeComplex(Brf[0,1]/(Aif[1,1]+tinyreal)); // Aif(IFupper) -> Brf(LOfreq)
+                    SP[1,1,0] = writeComplex(Brf[1,0]/(Alo[0,1]+tinyreal)); // Alo(LOfreq)  -> Brf(RFfreq)
+                    SP[1,1,1] = writeComplex(Brf[1,0]/(Arf[1,0]+tinyreal)); // Arf(RFfreq)  -> Brf(RFfreq)
+                    SP[1,1,2] = writeComplex(Brf[1,0]/(Aif[0,0]+tinyreal)); // Aif(IFlower) -> Brf(RFfreq)
+                    SP[1,1,3] = writeComplex(Brf[1,0]/(Aif[1,1]+tinyreal)); // Aif(IFupper) -> Brf(RFfreq)
+                    SP[1,2,0] = writeComplex(Brf[0,0]/(Alo[0,1]+tinyreal)); // Alo(LOfreq)  -> Brf(IFlower)
+                    SP[1,2,1] = writeComplex(Brf[0,0]/(Arf[1,0]+tinyreal)); // Arf(RFfreq)  -> Brf(IFlower)
+                    SP[1,2,2] = writeComplex(Brf[0,0]/(Aif[0,0]+tinyreal)); // Aif(IFlower) -> Brf(IFlower)
+                    SP[1,2,3] = writeComplex(Brf[0,0]/(Aif[1,1]+tinyreal)); // Aif(IFupper) -> Brf(IFlower)
+                    SP[1,3,0] = writeComplex(Brf[1,1]/(Alo[0,1]+tinyreal)); // Alo(LOfreq)  -> Brf(IFupper)
+                    SP[1,3,1] = writeComplex(Brf[1,1]/(Arf[1,0]+tinyreal)); // Arf(RFfreq)  -> Brf(IFupper)
+                    SP[1,3,2] = writeComplex(Brf[1,1]/(Aif[0,0]+tinyreal)); // Aif(IFlower) -> Brf(IFupper)
+                    SP[1,3,3] = writeComplex(Brf[1,1]/(Aif[1,1]+tinyreal)); // Aif(IFupper) -> Brf(IFupper)
+                    // All other S-parameters are captured in IM table at all possible
+                    // mixing tones.
+
+                    for ( m = -RFd; m < RFd+1; m++ ) 
+                    {
+                        for ( n = -LOd; n < LOd+1; n++ ) 
+                        {
+                            for ( f = 0; f < freqSiz; f++ ) 
+                            {
+                                if ( ( Mix(1)[rff,lof,rfp,lop,f] == n ) &&
+                                     ( Mix(2)[rff,lof,rfp,lop,f] == m ) ) 
+                                    break;
+                            } // for f
+
+                            if ( f == freqSiz )
+                            {
+                                Vif_dbm[m+RFd,n+LOd] = nullPower;
+                                Vif_deg[m+RFd,n+LOd] = -tinyreal;
+                            }
+                            else
+                            {
+                                Vif_dbm[m+RFd,n+LOd] = Vif_base[f];
+                                Vif_deg[m+RFd,n+LOd] = Vif_phase[f];
+                            }
+
+                        } // n loop
+
+                    } // m loop
+
+                    for ( m = -RFd; m < RFd+1; m++ )
+                    {
+                        for (n = -LOd; n < LOd+1; n++ )
+                        {
+                            if ( Vif_dbm[m+RFd,n+LOd] > nullPower ) 
+                                continue; // valid IF entry exists
+
+                            // Conjugate transpose from valid entry to blank spot
+                            Vif_dbm[m+RFd,n+LOd] = Vif_dbm[RFd-m,LOd-n];
+                            Vif_deg[m+RFd,n+LOd] = -Vif_deg[RFd-m,LOd-n];
+                        } // n loop
+
+                    } // m loop
+
+                    // Create (dB,deg) differences w.r.t. Mix(1,1) and ensure that 
+                    // phase difference is expressed in range (-180.0,180.0]
+                    // for easy readability.
+                    for ( m = -RFd; m < RFd+1; m++ )
+                    {
+                        for ( n = -LOd; n < LOd+1; n++ )
+                        {
+                            if ( Vif_dbm[m+RFd,n+LOd] < nullPower )
+                                Vif_dbm[m+RFd,n+LOd] = nullPower;
+
+                            tempPh = Vif_deg[m+RFd,n+LOd];
+
+                            // Limit degree to (-180.0, +180.0]
+                            if ( tempPh > 180.0 || tempPh <= -180.0 )
+                            {
+                                if ( tempPh < nullPhase )
+                                    multPh = ceil( tempPh / 360.0 - 1);
+                                else
+                                    multPh = floor( tempPh / 360.0 );
+
+                                tempPh = tempPh - multPh * 360.0;
+
+                                if ( tempPh > 180.0 )
+                                    Vif_deg[m+RFd,n+LOd] = tempPh - 360.0;
+                                else
+                                    Vif_deg[m+RFd,n+LOd] = tempPh;
+                            }
+
+                        } // n loop
+
+                    } // m loop
+
+                    // put out comment and option lines
+                    fprintf( FILE, "%%\tFRF\n\t%.3f\n", RFfreq[rff]*1e-9 );
+                    fprintf( FILE, "%%\tFLO\n\t%.3f\n", LOfreq[rff,lof]*1e-9 );
+                    fprintf( FILE, "%%\tPRF\n\t%.3f\n", RFpowr[rff,lof,rfp] );
+                    fprintf( FILE, "%%\tPLO\n\t%.3f\n", LOpowr[rff,lof,rfp,lop] );
+
+// -------------------------- Frequency-translated S-Parameters are suppressed --------------------------------------
+//                  fprintf( FILE, "!   Frequency-translated S-parameters determining behavior at LO port\n" );
+//                  fprintf( FILE, "%%\tLSLO\t\tLSRF\t\tLSIFL\t\tLSIFU\n" );
+//                  fprintf( FILE, "\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+//                                 dB(SP[0,0,0]), phase(SP[0,0,0]),
+//                                 dB(SP[0,0,1]), phase(SP[0,0,1]),
+//                                 dB(SP[0,0,2]), phase(SP[0,0,2]),
+//                                 dB(SP[0,0,3]), phase(SP[0,0,3]) );
+//                  fprintf( FILE, "\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+//                                 dB(SP[0,1,0]), phase(SP[0,1,0]),
+//                                 dB(SP[0,1,1]), phase(SP[0,1,1]),
+//                                 dB(SP[0,1,2]), phase(SP[0,1,2]),
+//                                 dB(SP[0,1,3]), phase(SP[0,1,3]) );
+//                  fprintf( FILE, "\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+//                                 dB(SP[0,2,0]), phase(SP[0,2,0]),
+//                                 dB(SP[0,2,1]), phase(SP[0,2,1]),
+//                                 dB(SP[0,2,2]), phase(SP[0,2,2]),
+//                                 dB(SP[0,2,3]), phase(SP[0,2,3]) );
+//                  fprintf( FILE, "\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+//                                 dB(SP[0,3,0]), phase(SP[0,3,0]),
+//                                 dB(SP[0,3,1]), phase(SP[0,3,1]),
+//                                 dB(SP[0,3,2]), phase(SP[0,3,2]),
+//                                 dB(SP[0,3,3]), phase(SP[0,3,3]) );
+//                  fprintf( FILE, "!   Frequency-translated S-parameters determining behavior at RF port\n" );
+//                  fprintf( FILE, "%%\tRSLO\t\tRSRF\t\tRSIFL\t\tRSIFU\n" );
+//                  fprintf( FILE, "\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+//                                 dB(SP[1,0,0]), phase(SP[1,0,0]),
+//                                 dB(SP[1,0,1]), phase(SP[1,0,1]),
+//                                 dB(SP[1,0,2]), phase(SP[1,0,2]),
+//                                 dB(SP[1,0,3]), phase(SP[1,0,3]) );
+//                  fprintf( FILE, "\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+//                                 dB(SP[1,1,0]), phase(SP[1,1,0]),
+//                                 dB(SP[1,1,1]), phase(SP[1,1,1]),
+//                                 dB(SP[1,1,2]), phase(SP[1,1,2]),
+//                                 dB(SP[1,1,3]), phase(SP[1,1,3]) );
+//                  fprintf( FILE, "\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+//                                 dB(SP[1,2,0]), phase(SP[1,2,0]),
+//                                 dB(SP[1,2,1]), phase(SP[1,2,1]),
+//                                 dB(SP[1,2,2]), phase(SP[1,2,2]),
+//                                 dB(SP[1,2,3]), phase(SP[1,2,3]) );
+//                  fprintf( FILE, "\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+//                                 dB(SP[1,3,0]), phase(SP[1,3,0]),
+//                                 dB(SP[1,3,1]), phase(SP[1,3,1]),
+//                                 dB(SP[1,3,2]), phase(SP[1,3,2]),
+//                                 dB(SP[1,3,3]), phase(SP[1,3,3]) );
+// ------------------------------------------------------------------------------------------------------------------
+                    // write index line
+                    fprintf( FILE, "!   Inter-modulation table determining IF behavior\n" );
+                    fprintf( FILE, "!   Col 1: M     - header of RF mixing\n" );
+                    fprintf( FILE, "!   Col n: (n-2) - header of LO mixing  0 <= (n-2) <= N\n" );
+                    fprintf( FILE, "!   Each row contains m - value of RF mixing and N+1 complex numbers for IF tones.\n" );
+                    fprintf( FILE, "!   A total of (2*M+1) * (N+1) IF tones are represented in this table.\n" );
+                    fprintf( FILE, "%%\tM" );
+                    for ( n = 0; n < LOd+1; n++ )
+                    {
+                        fprintf( FILE, "\t%d\t", n );
+                    } // n loop
+                    fprintf( FILE, "\n" );
+
+                    for ( m = -RFd; m < RFd+1; m++ )
+                    {
+                        fprintf( FILE, "\t%2d", m );
+                        for ( n = 0; n < LOd+1; n++ )
+                        {
+                            fprintf( FILE, "\t%.2f\t%.2f", Vif_dbm[m+RFd,n+LOd], Vif_deg[m+RFd,n+LOd] );
+                        } // n loop
+
+                        fprintf( FILE, "\n" );
+                    } // m loop
+
+                    fprintf( FILE, "\n\n\n" );
+
+                } //lop loop
+
+            } //rfp loop
+
+        } //lof loop
+
+    } //rff loop
+
+    fprintf( FILE, "END IMT_DATA\n" );
+
+    fclose( FILE );
+
+    return 1;
+
+}// END - write_imtA()
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+/* Not for external use or customer documentation */
+/*BEGIN_DOC
+FUN_NAME: write_imtB()
+FUN_DESCRIPTION: Writes multi-RF half-DSB IMT tables. Returns True or False.
+MAKE_PUBLIC: False
+RETURNED_VALUE: boolean
+CATEGORY: IMT  
+SYNTAX: y = write_imtB(file,freq,Mix,LOfreq,LOpowr,rfV,Vrf,Irf,Vif,Iif,Vlo,Ilo)
+EXAMPLE:
+We assume that a (1+RFsize)-tone Harmonic Balance analysis has been performed 
+involving one LO tone and RFsize number of RF tones. 
+We also assume that the MaxOrder of the analysis was the sum of all degrees of 
+distortion specified during the extraction process.
+Thus, for a 1-LO 3-RF extraction process, RFsize=3.
+The 4-tone Harmonic Balance simulation would have had:
+MaxOrder = LOharms + RFharm[1] + RFharm[2] + RFharm[3].
+LOfreq is always assumed to be assigned to the Mix(1)[] output of the analysis.
+LOharms, RFfreq and RFharm are computed from supplied freq and Mix matrices.
+Only LOfreq and LOpowr may be swept over the IMT Harmonic Balance analysis.
+Each combination results in a new IMT table within the file.
+
+ARGUMENT
+  ARG_NAME: file
+  ARG_DESCRIPTION: Name or full-path of the IMT file.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: freq 
+  ARG_DESCRIPTION: Harmonic indices of simulation.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix 
+  ARG_DESCRIPTION: Mixing matrix.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: LOfreq
+  ARG_DESCRIPTION: Frequency of LO fundamental at mixer input in Hz.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: LOpowr
+  ARG_DESCRIPTION: Power at LO fundamental at mixer input in dBm.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: rfV 
+  ARG_DESCRIPTION: Voltage representing supplied RF power input of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Vrf 
+  ARG_DESCRIPTION: Voltage vector observed at RF input of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Irf 
+  ARG_DESCRIPTION: Current vector at RF input of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Vif 
+  ARG_DESCRIPTION: Voltage vector at IF output of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Iif 
+  ARG_DESCRIPTION: Current vector at IF output of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Vlo 
+  ARG_DESCRIPTION: Voltage vector at LO input of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES 
+ARGUMENT
+  ARG_NAME: Ilo 
+  ARG_DESCRIPTION: Current vector at LO input of mixer.
+  ARG_DEFAULT: None 
+  ARG_RANGE: None
+  ARG_TYPE:  Complex 
+  ARG_REQUIRED: YES 
+FOOTNOTES: 
+NOTES: 
+DEFINED IN: $HPEESOF_DIR/expressions/ael/behavioral_fun.ael
+SEE ALSO: create_RF_indices(), write_imtA()
+EXTERNAL: no 
+AUTHOR: Keysight Technologies
+DATE: Jan.2005
+VERSION_CREATED: ADS 2006A
+END_DOC*/
+defun write_imtB(file,freq,Mix,LOfreq,LOpowr,rfV,Vrf,Irf,Vif,Iif,Vlo,Ilo)
+{
+    decl FILE;
+    decl RFsize, Hsize;
+    decl MixExpr;
+    decl rf, rf2, harm;
+    decl a, dBmVal;
+    decl LOharms = 0;
+    decl Rref = 50.0;
+
+    // open output file for writing
+    FILE = fopen( file, "W" );
+    if ( FILE == NULL ) 
+    {
+        print_function_error("write_imtB", 
+                             strcat(" could not open file:", 
+                             file));
+        return 0;
+    } //if
+    fprintf( FILE, "! %s %s \n", file, date_time() );
+    fprintf( FILE, "BEGIN IMT_DATA\n" );
+    fprintf( FILE, "# IMT ( GHZ S DBM R %.1f )\n", Rref );
+
+    // compute RF distortion
+    RFsize = size( Mix[0,0,::] ) - 1;
+    Hsize = sweep_size( Mix[0,0,::] );
+    //fprintf( IMTFILE, "RFsize = %d\tHsize = %d\n", RFsize, Hsize );
+    decl RFfreq = create(1,"Real",{"Index"},{"Real"},1,1);
+    decl RFpowr = create(1,"Real",{"Index"},{"Real"},1,1);
+    decl RFharm = create(1,"Real",{"Index"},{"Real"},1,1);
+    for ( rf = 0; rf < RFsize; rf++ )
+    {
+        RFfreq[rf] = 0.0;
+        RFpowr[rf] = 0.0;
+        RFharm[rf] = 0;
+    }
+
+    for ( harm = 0; harm < Hsize; harm++ )  
+    {
+        if ( Mix(1)[0,0,harm] == 0 ) 
+        {
+            for ( rf = 0; rf < RFsize; rf++ )
+            {
+                MixExpr = sprintf( "Mix(%d)[0,0,%d]", rf+2, harm );
+                a = evaluate( MixExpr, "ael" );
+                if ( int(a) != 0 )
+                    break;
+            }
+
+            if ( rf < RFsize && int(a) == 1 )
+            {
+                for ( rf2 = rf+1; rf2 < RFsize; rf2++ )
+                {
+                    MixExpr = sprintf( "Mix(%d)[0,0,%d]", rf2+2, harm );
+                    a = evaluate( MixExpr, "ael" );
+                    if ( int(a) != 0 )
+                        break;
+                }
+
+                if ( rf2 == RFsize )
+                {
+                    RFfreq[rf] = freq[0,0,harm];
+                    dBmVal = dBm( rfV[0,0,harm], Rref );
+                    RFpowr[rf] = dBmVal;
+                }
+            }
+
+        } // elseif
+
+    } // for harm
+
+    for ( harm = 0; harm < Hsize; harm++ )  
+    {
+        a = int( abs( Mix(1)[0,0,harm] ) );
+        if ( a > LOharms )
+            LOharms = a;
+
+        for ( rf = 0; rf < RFsize; rf++ )
+        {
+            MixExpr = sprintf( "Mix(%d)[0,0,%d]", rf+2, harm );
+            a = int( abs( evaluate( MixExpr, "ael" ) ) );
+            if ( a > RFharm[rf] )
+                RFharm[rf] = a;
+        }
+
+    } // for harm
+
+    decl nulldBm   = -400.0; 
+    decl nullMag   = sqrt( 20**((nulldBm-30)/10) );
+    decl nullPhase =    0.0;
+    decl Vif_base, Vif_phase;
+    decl lof, lop, n, m, mf;
+    decl LOpowrSize = sweep_size( LOpowr[0,::] );
+    decl LOfreqSize = sweep_size( LOfreq );
+
+    decl VifMat = create( 2, "Complex", {"M","N"}, {"Implicit","Implicit"}, 1, 1 );
+    decl RFmat = create_RF_indices( RFharm );
+    decl RFbundleSize = sweep_size( RFmat[::,0] );
+
+    for ( lof = 0; lof < LOfreqSize; lof++ )
+    {
+        for ( lop = 0; lop < LOpowrSize; lop++ )
+        {
+            for ( m = 0; m < RFbundleSize; m++ )
+                for ( n = 0; n < LOharms+1; n++ )
+                    VifMat[m,n] = polar( 0.0, 0.0 ); 
+
+            Vif_base  = mag( Vif[lof,lop,::] );
+            Vif_phase = phase( Vif[lof,lop,::] );
+
+            for ( harm = 0; harm < Hsize; harm++ ) 
+            {
+                if ( Vif_base[harm] < nullMag ) 
+                {
+                    Vif_base[harm] = nullMag;
+                    Vif_phase[harm] = nullPhase;
+                }
+
+                //Find LOindex
+                n = Mix(1)[lof,lop,harm];
+
+                for ( m = 0; m < RFbundleSize; m++ )
+                {
+                    for( rf = 0; rf < RFsize; rf++ )
+                    {
+                        MixExpr = sprintf( "Mix(%d)[%d,%d,%d];", rf+2, lof, lop, harm );
+                        mf = evaluate( MixExpr );
+                        if ( mf != RFmat[m,rf] )
+                            break;
+                    } // for rf
+
+                    if ( rf == RFsize ) // Match found
+                        break;
+
+                } // for m
+
+                if ( m < RFbundleSize )
+                {
+                    if     ( n < 0 )
+                        VifMat[RFbundleSize-1-m,-n] = polar( Vif_base[harm], -1*Vif_phase[harm] );
+                    elseif ( n > 0 )
+                        VifMat[m,n] = polar( Vif_base[harm], Vif_phase[harm] );
+                    elseif ( m == (RFbundleSize-1)/2 )
+                        VifMat[m,0] = polar( Vif_base[harm], Vif_phase[harm] );
+                    else
+                    {
+                        VifMat[m,0] = polar( Vif_base[harm], Vif_phase[harm] );
+                        VifMat[RFbundleSize-m-1,0] = conj( VifMat[m,0] );
+                    }
+
+                } // if m
+
+            } // for harm
+
+            // put out comment and option lines
+            fprintf( FILE, "%%");
+            if ( RFsize == 1 )
+                fprintf( FILE, "\tFRF" );
+            else
+            {
+                for ( rf = 0; rf < RFsize; rf++ )
+                    fprintf( FILE, "\tFRF%d", rf+1 );
+            }
+            fprintf( FILE, "\n" );
+            for ( rf = 0; rf < RFsize; rf++ )
+                fprintf( FILE, "\t%.3f", RFfreq[rf]*1e-9 );
+            fprintf( FILE, "\n" );
+            fprintf( FILE, "%%\tFLO\n\t%.3f\n", LOfreq[lof]*1e-9 );
+            fprintf( FILE, "%%");
+            if ( RFsize == 1 )
+                fprintf( FILE, "\tPRF" );
+            else
+            {
+                for ( rf = 0; rf < RFsize; rf++ )
+                    fprintf( FILE, "\tPRF%d", rf+1 );
+            }
+            fprintf( FILE, "\n" );
+            for ( rf = 0; rf < RFsize; rf++ )
+                fprintf( FILE, "\t%.3f", RFpowr[rf] );
+            fprintf( FILE, "\n" );
+            fprintf( FILE, "%%\tPLO\n\t%.3f\n", LOpowr[lof,lop] );
+
+            // write index line
+            fprintf( FILE, "!   Inter-modulation table determining IF behavior\n" );
+            fprintf( FILE, "!   Col 1-RFsize: M<m>  - header for distortion from mth RF input\n" );
+            fprintf( FILE, "!   Col n: (n > RFsize) - distortion from LO input\n" );
+            fprintf( FILE, "%%" );
+            if ( RFsize == 1 )
+                fprintf( FILE, "\tM" );
+            else
+            {
+                for ( rf = 0; rf < RFsize; rf++ )
+                    fprintf( FILE, "\tM%d", rf+1 );
+            }
+            for ( n = 0; n < LOharms+1; n++ )
+                fprintf( FILE, "\t%d\t", n );
+            fprintf( FILE, "\n" );
+                                                                                                                
+            for ( m = 0; m < RFbundleSize; m++ )
+            {
+                for ( rf = 0; rf < RFsize; rf++ )
+                    fprintf( FILE, "\t%2d", RFmat[m,rf] );
+
+                for ( n = 0; n < LOharms+1; n++ )
+                {
+                    if ( mag( VifMat[m,n] ) <= nullMag )
+                        fprintf( FILE, "\t%.2f\t%.2f", nulldBm, nullPhase );
+                    else
+                        fprintf( FILE, "\t%.2f\t%.2f", dBm(mag(VifMat[m,n]), Rref), phase(VifMat[m,n]) );
+                }
+
+                fprintf( FILE, "\n" );
+
+            } // m loop
+                                                                                                                
+            fprintf( FILE, "\n\n" );
+
+        } // for lop
+
+    } // for lof
+
+    fprintf( FILE, "END IMT_DATA\n" );
+    fclose( FILE );
+
+    return 1;
+
+} // END  write_imtB()
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+/* Not for external use or customer documentation */
+/*BEGIN_DOC
+FUN_NAME: create_RF_indices()
+FUN_DESCRIPTION: Creates a matrix of multi-tone distortion combinations.
+MAKE_PUBLIC: False
+RETURNED_VALUE: integer 2-D matrix 
+CATEGORY: IMT  
+SYNTAX: y = create_RF_indices(RFharms)
+EXAMPLE:
+  Assume X = [2,1];
+  When supplied with distortion vector RFharms=makearray(1,X[1],X[2]), the matrix
+    y[ 0,::] = -2 -1
+    y[ 1,::] = -2  0
+    y[ 2,::] = -2  1
+    y[ 3,::] = -1 -1
+    y[ 4,::] = -1  0
+    y[ 5,::] = -1  1
+    y[ 6,::] =  0 -1
+    y[ 7,::] =  0  0
+    y[ 8,::] =  0  1
+    y[ 9,::] =  1 -1
+    y[10,::] =  1  0
+    y[11,::] =  1  1
+    y[12,::] =  2 -1
+    y[13,::] =  2  0
+    y[14,::] =  2  1
+  is returned showing all combinations of double side banded mixing between the   two tones. Note 1st argument of makearray specifies type of real.
+
+ARGUMENT
+  ARG_NAME: RFharms
+  ARG_DESCRIPTION: Array of integers defining maximum harmonics for each signal tone.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real Array 
+  ARG_REQUIRED: YES
+FOOTNOTES: Use makearray(1,X[1],...,X[n]) to generate RFharms for n-tone mixing.
+NOTES: 
+DEFINED IN: $HPEESOF_DIR/expressions/ael/behavioral_fun.ael
+SEE ALSO: write_imtB() 
+EXTERNAL: no 
+AUTHOR: Keysight Technologies
+DATE: Jan.2005
+VERSION_CREATED: ADS 2006A
+END_DOC*/
+defun create_RF_indices(RFharms)
+{
+    decl rf, dist, m, n, periodM, rf2;
+    decl RFsize = sweep_size( RFharms );
+    decl STRsize = 1;
+
+    for ( rf = 0; rf < RFsize; rf++ )
+        STRsize = STRsize * (2 * RFharms[rf] + 1);
+
+    decl MixExpr = "create( 2, \"Real\", {\"M\"";
+    for ( rf = 0; rf < RFsize; rf++ )
+        MixExpr = sprintf( "%s,\"RF%d\"", MixExpr, rf );
+    MixExpr = strcat( MixExpr, "}, {\"Real\"" );
+    for ( rf = 0; rf < RFsize; rf++ )
+        MixExpr = sprintf( "%s,\"Real\"", MixExpr );
+    MixExpr = strcat( MixExpr, "}, 1, 1 );" );
+
+    decl RFmat = evaluate( MixExpr );
+    for ( m = 0; m < STRsize; m++ )
+    for ( n = 0; n < RFsize; n++ )
+        RFmat[m,n] = -400;
+
+    for ( rf = RFsize-1; rf > -1; rf-- )
+    {
+        periodM = 1;
+        for ( rf2 = rf+1; rf2 < RFsize; rf2++ )
+            periodM = periodM * ( 2*RFharms[rf2] + 1 );
+
+        for ( dist = -1*RFharms[rf]; dist < RFharms[rf]+1; dist++ )
+        {
+           m = (RFharms[rf]+dist) * periodM;
+           for ( n = 0; n < periodM; n++ )
+               RFmat[m+n,rf] = dist;
+
+        } // for dist
+
+        if ( rf == 0 )
+            break;
+
+        periodM = m+n;
+        m = periodM;
+        while ( m < STRsize )
+        {
+            n = m - int( m/periodM ) * periodM; 
+            RFmat[m,rf] = RFmat[n,rf];
+            m++;
+        }
+
+    } // for rf
+
+    return RFmat;
+
+} // END create_RF_indices()
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+/* Not for external use or customer documentation */
+/*BEGIN_DOC
+FUN_NAME: write_phdA_citi()
+FUN_DESCRIPTION: Writes single-RF PHD profiles in CITI format. Returns True or False.
+MAKE_PUBLIC: False
+RETURNED_VALUE: boolean
+CATEGORY: PHD  
+SYNTAX: y = write_phdA_citi(file,freq,Mix,PHD1a)
+EXAMPLE:
+ARGUMENT
+  ARG_NAME: file 
+  ARG_DESCRIPTION: Name of CITI file to be written
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: freq 
+  ARG_DESCRIPTION: Harmonic indices of simulation.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix 
+  ARG_DESCRIPTION: Mixing matrix.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: PHD1a 
+  ARG_DESCRIPTION: Some dependent variable from the PHD extractor output.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real, Complex 
+  ARG_REQUIRED: YES
+FOOTNOTES: This writer assumes that there are only 3 free standing bias pins in addition to 
+           the two signal pins that can also carry bias levels. 
+NOTES: This writer can only be used in conjunction with A-type PHD extractors.
+DEFINED IN: $HPEESOF_DIR/expressions/ael/behavioral_fun.ael
+SEE ALSO: write_citi_depdata() 
+EXTERNAL: no 
+AUTHOR: Keysight Technologies
+DATE: May.2006 
+VERSION_CREATED: ADS 2006A
+END_DOC*/
+defun write_phdA_citi(file,freq,Mix,PHD1a)
+{
+    decl sWhat = what( PHD1a );
+    decl strg = member( "[", parse( sWhat[0] ) );
+    decl strLen = listlen( strg );
+    decl s, subStr, subStrNext;
+    decl IndepList = list();
+    decl Indeps = 0;
+    decl isSM = 0;
+    decl instrName = "X1";
+
+    for ( s = 0; s < strLen; s++ )
+    {
+        subStr = nth( s, strg );
+
+        if ( subStr == "[" || subStr == "," || subStr == "." )
+            continue;
+        if ( s < strLen-1 )
+        {
+            subStrNext = nth( s+1, strg );
+            if ( subStrNext == "." )
+            {
+                instrName = sprintf( "%s", subStr );
+                s++;
+                continue;
+            }
+        }
+        if ( subStr == "]" )
+            continue;
+
+        if ( subStr == "freq" )
+            IndepList = append( IndepList, list( "harmindex" ) );
+        else
+            IndepList = append( IndepList, list( subStr ) );
+        Indeps++;
+
+        if ( subStr == "ssfreq" )
+            isSM = 1;
+    }
+
+    decl FILE;
+    decl i;
+    decl j;
+    decl MixExpr;
+
+    if ( isSM )
+        MixExpr = "size( SM.Mix[";
+    else
+        MixExpr = "size( HB.Mix[";
+
+    for ( i = 0; i < Indeps-1; i++ )
+        MixExpr = strcat( MixExpr, "0," );
+    MixExpr = strcat( MixExpr, "::] );" );
+    decl mixN = int( evaluate( MixExpr, "ael" ) );
+
+    // open output file for writing
+    if ( isSM )
+        FILE = fopen( file, "A" );
+    else
+        FILE = fopen( file, "W" );
+
+    if ( FILE == NULL ) 
+    {
+        print_function_error("write_phd", 
+                             strcat(" could not open file:", 
+                             file));
+        return 0;
+    } //if
+
+    //Get short file name
+    decl x =  parse( file );
+    strLen =  listlen( x );
+    subStr = "";
+    for ( i = 0; i < strLen; i++ )
+    {
+        if ( !strcmp( x[i], "" ) )
+	    return 0;
+
+	if ( i > strLen-4 )
+	    subStr = strcat( subStr, x[i] );
+    }
+
+    if ( !isSM )
+        fprintf( FILE, "# %s %s \n", subStr, date_time() );
+
+    fprintf( FILE, "CITIFILE A.01.00\n" );
+    if ( isSM )
+        fprintf( FILE, "NAME %s.SM\n", subStr );
+    else
+        fprintf( FILE, "NAME %s.HB\n", subStr );
+
+    decl IndepVals = create(2,"Real",{"Var","Val"},{"Implicit","Implicit"},1,1);
+    decl j;
+    decl iVals;
+
+    for ( i = 0; i < Indeps; i++ )
+    {
+        if ( isSM )
+            MixExpr = "indep( SM.Mix[";
+        else
+            MixExpr = "indep( HB.Mix[";
+        for ( j = 0; j < i; j++ )
+            MixExpr = strcat( MixExpr, "0," );
+        MixExpr = strcat( MixExpr, "::" );
+        for ( j = i+1; j < Indeps; j++ )
+            MixExpr = strcat( MixExpr, ",0" );
+        MixExpr = strcat( MixExpr, "] );" );
+
+        iVals = evaluate( MixExpr, "ael" );
+	IndepVals[i,0] = sweep_size( iVals );
+        for ( j = 0; j < sweep_size( iVals ); j++ )
+	    IndepVals[i,j+1] = iVals[j];
+
+        fprintf( FILE, "VAR %s MAG %d\n", IndepList[i], j );
+    }
+
+    fprintf( FILE, "DATA freq MAG\n" );
+    for ( i = 0; i < mixN; i++ )
+        fprintf( FILE, "DATA Mix[%d] MAG\n", i+1 );
+    fprintf( FILE, "DATA PHDoutGmag MAG\n" );
+    fprintf( FILE, "DATA PHDoutGdeg MAG\n" );
+    fprintf( FILE, "DATA PHDaV1 RI\n" );
+    fprintf( FILE, "DATA PHDbV1 RI\n" );
+    fprintf( FILE, "DATA PHDsigV1 RI\n" );
+    fprintf( FILE, "DATA PHDsigI1 RI\n" );
+    fprintf( FILE, "DATA PHDptbV1 RI\n" );
+    fprintf( FILE, "DATA PHDptbI1 RI\n" );
+    fprintf( FILE, "DATA PHDaV2 RI\n" );
+    fprintf( FILE, "DATA PHDbV2 RI\n" );
+    fprintf( FILE, "DATA PHDsigV2 RI\n" );
+    fprintf( FILE, "DATA PHDsigI2 RI\n" );
+    fprintf( FILE, "DATA PHDptbV2 RI\n" );
+    fprintf( FILE, "DATA PHDptbI2 RI\n" );
+    fprintf( FILE, "DATA PHDbiasV1 RI\n" );
+    fprintf( FILE, "DATA PHDbiasI1 RI\n" );
+    fprintf( FILE, "DATA PHDbiasV2 RI\n" );
+    fprintf( FILE, "DATA PHDbiasI2 RI\n" );
+    fprintf( FILE, "DATA PHDbiasV3 RI\n" );
+    fprintf( FILE, "DATA PHDbiasI3 RI\n" );
+
+    for ( i = 0; i < Indeps; i++ )
+    {
+        fprintf( FILE, "\n# Sweep of %s\n", IndepList[i] );
+        fprintf( FILE, "VAR_LIST_BEGIN\n" );
+        for ( j = 0; j < int( IndepVals[i,0] ); j++ )
+            fprintf( FILE, "%14.6g\n", IndepVals[i,j+1] );
+        fprintf( FILE, "VAR_LIST_END\n" );
+    }
+
+    decl MasterExpr;
+
+    if ( isSM )
+        MasterExpr = "SM.";
+    else
+        MasterExpr = "HB.";
+
+    //write "freq"
+    fprintf( FILE, "\n# Record of freq\n" );
+    MixExpr = strcat( MasterExpr, "freq[" );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Real", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write Mix
+    for ( i = 0; i < mixN; i++ )
+    {
+        fprintf( FILE, "\n# Record of Mix[%d]\n", i+1 );
+        MixExpr = sprintf( "%sMix(%d)[", MasterExpr, i+1 );
+        fprintf( FILE, "BEGIN\n" );
+        write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Real", 0 );
+        fprintf( FILE, "END\n" );
+    }
+
+    //write "PHDoutGmag"
+    fprintf( FILE, "\n# Record of PHDoutGmag\n" );
+    MixExpr = sprintf( "%s%s.PHDoutGmag[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Real", 1 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDoutGdeg"
+    fprintf( FILE, "\n# Record of PHDoutGdeg\n" );
+    MixExpr = sprintf( "%s%s.PHDoutGdeg[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Real", 1 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDaV1"
+    fprintf( FILE, "\n# Record of PHDaV1\n" );
+    MixExpr = sprintf( "%s%s.PHDaV1[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDbV1"
+    fprintf( FILE, "\n# Record of PHDbV1\n" );
+    MixExpr = sprintf( "%s%s.PHDbV1[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDsigV1"
+    fprintf( FILE, "\n# Record of PHDsigV1\n" );
+    MixExpr = sprintf( "%s%s.PHDsigV1[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDsigI1"
+    fprintf( FILE, "\n# Record of PHDsigI1\n" );
+    MixExpr = sprintf( "%s%s.PHDsigI1.i[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDptbV1"
+    fprintf( FILE, "\n# Record of PHDptbV1\n" );
+    MixExpr = sprintf( "%s%s.PHDptbV1[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDptbI1"
+    fprintf( FILE, "\n# Record of PHDptbI1\n" );
+    MixExpr = sprintf( "%s%s.PHDptbI1.i[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDaV2"
+    fprintf( FILE, "\n# Record of PHDaV2\n" );
+    MixExpr = sprintf( "%s%s.PHDaV2[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDbV2"
+    fprintf( FILE, "\n# Record of PHDbV2\n" );
+    MixExpr = sprintf( "%s%s.PHDbV2[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDsigV2"
+    fprintf( FILE, "\n# Record of PHDsigV2\n" );
+    MixExpr = sprintf( "%s%s.PHDsigV2[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDsigI2"
+    fprintf( FILE, "\n# Record of PHDsigI2\n" );
+    MixExpr = sprintf( "%s%s.PHDsigI2.i[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDptbV2"
+    fprintf( FILE, "\n# Record of PHDptbV2\n" );
+    MixExpr = sprintf( "%s%s.PHDptbV2[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDptbI2"
+    fprintf( FILE, "\n# Record of PHDptbI2\n" );
+    MixExpr = sprintf( "%s%s.PHDptbI2.i[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDbiasV1"
+    fprintf( FILE, "\n# Record of PHDbiasV1\n" );
+    MixExpr = sprintf( "%s%s.PHDbiasV1[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDbiasI1"
+    fprintf( FILE, "\n# Record of PHDbiasI1\n" );
+    MixExpr = sprintf( "%s%s.PHDbiasI1.i[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDbiasV2"
+    fprintf( FILE, "\n# Record of PHDbiasV2\n" );
+    MixExpr = sprintf( "%s%s.PHDbiasV2[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDbiasI2"
+    fprintf( FILE, "\n# Record of PHDbiasI2\n" );
+    MixExpr = sprintf( "%s%s.PHDbiasI2.i[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDbiasV3"
+    fprintf( FILE, "\n# Record of PHDbiasV3\n" );
+    MixExpr = sprintf( "%s%s.PHDbiasV3[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    //write "PHDbiasI3"
+    fprintf( FILE, "\n# Record of PHDbiasI3\n" );
+    MixExpr = sprintf( "%s%s.PHDbiasI3.i[", MasterExpr, instrName );
+    fprintf( FILE, "BEGIN\n" );
+    write_citi_depdata( FILE, IndepVals[::,0], 1, MixExpr, "Complex", 0 );
+    fprintf( FILE, "END\n" );
+
+    fprintf( FILE, "\n\n" );
+
+    fclose( FILE );
+
+    return 1;
+
+} // END write_phdA_citi()
+// ---------------------------------------------------------------------------
+/* Not for external use or customer documentation */
+/*BEGIN_DOC
+FUN_NAME: write_citi_depdata()
+FUN_DESCRIPTION: Recursively writes dependent variable values in CITI file
+MAKE_PUBLIC: False
+RETURNED_VALUE: boolean
+CATEGORY: PHD  
+SYNTAX: y = write_citi(pFile,dimsize,nowdim,Expr)
+EXAMPLE:
+ARGUMENT
+  ARG_NAME: pFile 
+  ARG_DESCRIPTION: Pointer to CITI file being written
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: File Pointer 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: dimsize 
+  ARG_DESCRIPTION: Maximum number of dimensions of the HPvar
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Integer 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: nowdim 
+  ARG_DESCRIPTION: Current depth within HPvar tree 
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Integer 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Expr 
+  ARG_DESCRIPTION: This string is progressively concatenated with variable indices for data reading
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: type 
+  ARG_DESCRIPTION: Type of expected data 
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String 
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: dcVal 
+  ARG_DESCRIPTION: Flag indicating repetition of DC value for all harmonics
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Boolean 
+  ARG_REQUIRED: YES
+FOOTNOTES: 
+NOTES: 
+DEFINED IN: $HPEESOF_DIR/expressions/ael/behavioral_fun.ael
+SEE ALSO: write_phdA_citi() 
+EXTERNAL: no 
+AUTHOR: Keysight Technologies
+DATE: May.2006 
+VERSION_CREATED: ADS 2006A
+END_DOC*/
+defun write_citi_depdata( pFile, dimSize, nowdim, Expr, type, dcVal )
+{
+    decl dimNum = sweep_size( dimSize );
+    decl myExpr;
+    decl i, val;
+
+    if ( dimNum == nowdim )
+    {
+        if ( dcVal == 1 )
+	{
+            myExpr = sprintf( "%s0];", Expr ); 
+            val = evaluate( myExpr, "ael" );
+            for ( i = 0; i < dimSize[nowdim-1]; i++ )
+                fprintf( pFile, "\t%.10g\n", real( val ) );
+        }
+	else
+	{
+            for ( i = 0; i < dimSize[nowdim-1]; i++ )
+            {
+                myExpr = sprintf( "%s%d];", Expr, i ); 
+                val = evaluate( myExpr, "ael" );
+                if ( type == "Complex" )
+                    fprintf( pFile, "\t%.10g\t%.10g\n", real( val ), imag( val ) );
+                else
+                    fprintf( pFile, "\t%.10g\n", real( val ) );
+            }
+        }
+        return 1;
+    }
+
+    for ( i = 0; i < dimSize[nowdim-1]; i++ )
+    {
+        myExpr = sprintf( "%s%d,", Expr, i ); 
+	write_citi_depdata( pFile, dimSize, nowdim+1, myExpr, type, dcVal ); 
+    }
+    
+    return 1;
+
+} // END write_citi_depdata()

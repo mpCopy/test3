@@ -1,0 +1,2926 @@
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRExtrapolate()
+FUN_DESCRIPTION:  Extrapolates frequency data with the ability to add a DC and low frequency points
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRExtrapolate(Data, Flag, DCFlag, OptFlag, DCValue, Step, PolyList)
+EXAMPLE: ExtrapolateOut = FrontPanel_TDRExtrapolate(FP_TDRFreq1Dto3D(S), TRUE, TRUE, TRUE, [0,1,1,0], 1e9, list(3,5,3,5)) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Flag
+  ARG_DESCRIPTION: boolean flag if set FALSE will return the original waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: DCFlag
+  ARG_DESCRIPTION: boolean flag if set TRUE a DC point will be added before Extrapolate
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: OptFlag
+  ARG_DESCRIPTION: boolean flag if set TRUE an optimizer is run on extrapolated data
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: DCValue
+  ARG_DESCRIPTION: array of values at DC (one value for each S parameter)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Step
+  ARG_DESCRIPTION: frequency step after Extrapolate
+  ARG_DEFAULT: None
+  ARG_RANGE: (0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: PolyList
+  ARG_DESCRIPTION: list data type representing parameters for extrapolation - list(even order, even num points, odd order, odd num points)
+  ARG_DEFAULT: None
+  ARG_RANGE: (1:inf)
+  ARG_TYPE:  List
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRExtrapolate(Data, Flag, DCFlag, OptFlag, DCValue, Step, PolyList)
+{
+	if(!Flag)
+		return Data;
+
+	decl f = FP_TDRindep(Data);
+	decl fmin = f[0];
+	decl fmax = max(f);
+	decl N = FP_TDRsweep_size(Data);
+	decl M = FP_TDRsize(Data);
+	decl NumPoints = floor(fmax / Step) + 1;
+	decl fout = [0::NumPoints-1]*Step;
+	decl Na = floor((fmin-.01)/Step)+1;
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+	decl OptParmList = list(5,1,1,DCFlag);
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+		{
+			// INITIALIZE OUTPUT
+			Y[i][j][::] = fout*0;
+
+			// INTERPOLATE KNOWN VALUES FIRST
+			Y[i][j][Na::NumPoints-1] = interpolate("linear", Data[i][j][::], 1, fout[Na::NumPoints-1]);//complex(interpolate("linear", real(Data[i][j][::]), 1, fout[Na::NumPoints-1]), interpolate("linear", imag(Data[i][j][::]), 1, fout[Na::NumPoints-1]));
+
+			// EXTRAPOLATE UNKNOWN VALUES
+			if(Na > 0)
+				Y[i][j][0::Na-1] = FP_TDRLeastSquares(vs(real(Y[i][j][Na::NumPoints-1]), fout[Na::NumPoints-1]), PolyList[0], Na, min2(PolyList[1],NumPoints-Na), DCFlag, DCValue[int(i*M + j)]) + sqrt(-1)*FP_TDRLeastSquares(vs(imag(Y[i][j][Na::NumPoints-1]), fout[Na::NumPoints-1]), PolyList[2], Na, min2(PolyList[3], NumPoints-Na), 1, 0);
+
+			// FORCE DC IF NECESSARY
+			if(DCFlag)	
+				Y[i][j][0] = DCValue[int(i*M + j)];
+
+			// OPTIMIZE
+			if(OptFlag AND Na > 0)
+				Y[i][j][::] = FP_TDRExtrapolate_Optimize(Y[i][j][::], Y[i][j][0], Na, OptParmList);
+		}
+
+	return vs(Y,fout);
+}
+
+defun FP_TDRExtrapolate_Optimize(Data, DC, Na, OptParmList)
+{
+	decl Niter = OptParmList[0];
+	decl RealCont = OptParmList[1];
+	decl ImagCont = OptParmList[2];
+	decl ForceDC = OptParmList[3];
+	decl N = FP_TDRsweep_size(Data);
+
+	decl Y = create(1, "Complex", "", "", 1, 1);
+    
+	decl Un = real(Data[Na-1]);
+    decl Vn = imag(Data[Na-1]);
+	decl U = real(Data);
+	decl V = imag(Data);
+	decl U2V = V;
+	decl V2U = U;
+
+	decl it, k;
+
+	for(it=0;it<Niter;it++)
+	{
+		// UPDATE REAL PART
+	    for(k=0;k<Na;k++)
+		    V2U[k] = FP_TDR_V2Ufun(V,k);
+
+		if(ForceDC)
+			U[0::Na-1] = V2U[0::Na-1] - V2U[0] + real(DC);
+		else
+			U[0::Na-1] = V2U[0::Na-1];
+
+		if(RealCont)
+		    U[0::Na-1] = U[0::Na-1] - [0::Na-1]/Na*(U[Na-1] - Un);
+		else
+			U[0::Na-1] = U[0::Na-1] - (U[Na-1] - Un);
+		
+		// UPDATE IMAG PART
+	    for(k=0;k<Na;k++)
+	        U2V[k] = FP_TDR_U2Vfun(U,k);
+
+		if(ForceDC)
+			V[0::Na-1] = U2V[0::Na-1] - U2V[0] + imag(DC);
+		else
+			V[0::Na-1] = U2V[0::Na-1];
+
+		if(ImagCont)
+		    V[0::Na-1] = V[0::Na-1] - [0::Na-1]/Na*(V[Na-1] - Vn);
+		else
+			V[0::Na-1] = V[0::Na-1] - (V[Na-1] - Vn);
+	}
+
+	return U+sqrt(-1)*V;
+}
+
+defun FP_TDR_U2Vfun(U, k)
+{
+	decl N = FP_TDRsweep_size(U);
+	decl U2V = (-1)**k*U[0]*FP_TDR_mu(k);
+	decl n;
+
+	for(n=1;n<N;n++)
+		U2V = U2V + (-1)**(n-k)*U[n]*(FP_TDR_mu(k+n) + FP_TDR_mu(k-n));
+
+	return U2V*2/pi;
+}
+
+defun FP_TDR_V2Ufun(V, k)
+{
+	decl N = FP_TDRsweep_size(V);
+	decl V2U = 0;
+	decl n;
+
+	for(n=1;n<N;n++)
+		V2U = V2U + (-1)**(n-k)*V[n]*(FP_TDR_mu(k+n) - FP_TDR_mu(k-n));
+
+	return V2U*2/pi;	
+}
+
+defun FP_TDR_mu(n)
+{
+	decl mu;
+
+	if(n == 0)
+	    mu = 0;
+	else
+		mu = 1/n*sin(n/2.0*pi)**2;
+
+	return mu;
+}
+
+defun FP_TDRAddDC(Data, ExtrapolateDCValue)
+{
+	decl N = FP_TDRsweep_size(Data);
+	decl M = FP_TDRsize(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1); 
+	decl X;
+	decl Freq = FP_TDRindep(Data);
+	decl i,j;
+
+	// ADD DC VALUE
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Y[i][j][0] = ExtrapolateDCValue[int(i*M + j)];
+
+	// ADD 0 FREQ IF NECESSARY
+	if(Freq[0] > .01)
+	{
+		Y[::][::][1::N] = Data;
+
+		return vs(Y,[0,Freq[::]]);
+	}
+	else
+	{
+		Y[::][::][1::N-1] = Data[::][::][1::N-1];
+
+		return vs(Y,Freq[::]);
+	}
+}
+
+defun FP_TDRFindDCMat(f0, f1)
+{
+	decl x1 = real(f0);
+	decl x2 = real(f1);
+	decl y1 = imag(f0);
+	decl y2 = imag(f1);
+	decl a, r, x0;
+
+	a = .5*(x1 + x2) + .5*(y1 + y2).*(y2 - y1)./(x2 - x1);
+	r = sqrt((x1 - a)**2 + y1**2);
+
+	x0 = a - sgn(y1).*r;
+
+	return x0;
+}
+
+defun FP_TDRLeastSquares(Data, K, M, N, DCFlag, DCValue)
+{
+	// K = order of polynomial
+	// M = number of extrapolated points
+	// N = number of data points
+
+	// INCLUDE FIRST KNOWN DATA POINT
+	M = M + 1;
+
+	if(DCFlag)
+		N = N + 1;
+
+	if(N == 1)
+		N = N + 1;
+
+	decl Nin = FP_TDRsweep_size(Data);
+	decl Ik = identity(K);
+	decl Im = identity(M);
+	decl In = identity(N);
+	decl freq = FP_TDRindep(Data);
+	decl fmin = freq[0];
+	decl fstep = freq[1] - freq[0];
+	decl Nmin = floor(fmin/fstep);
+	decl xin;
+	decl xout = {0::M-1};
+	decl a, y = 0, X = 0, yout = 0, A = 0;
+	decl k,n,m;
+	decl yarray = create(2, "Complex", "", "", 1, 1);
+
+	if(!DCFlag)
+		xin = {0::N-1} + fmin/fstep;
+	else
+		xin = {0, Nmin::(N+Nmin-2)};
+
+	// KNOWN DATA	
+	for(n=0;n<N;n++)
+		if(!DCFlag)
+			y = y + Data[n]*In(n+1);
+		else
+		{
+			if(n == 0)
+				y = y + DCValue*In(n+1);
+			else
+				y = y + Data[n-1]*In(n+1);
+		}
+
+	// SIMPLIFIED VANDERMONDE MATRIX
+	for(k=0;k<K;k++)
+		A = A + xin.**(k)'*Ik(k+1);
+
+	// ESTIMATED POLYNOMIAL COEFFICIENTS
+	a = (inverse(conj(A)'*A)*conj(A)')*y';
+
+	// NEW X-VALUES MATRIX
+	for(k=0;k<K;k++)
+		X = X + xout.**(k)'*Ik(k+1);
+
+	// NEW Y-VALUES
+	yout = X*a;
+
+	// NEW X-VALUES MATRIX
+	for(m=0;m<M;m++)
+		yarray[m] = yout(m+1);
+
+	// FORCE CONTINUITY ACROSS BOUNDRIES
+	if(DCFlag)
+		yarray = yarray - yarray[0] + DCValue;
+	yarray = yarray - [0::M-1]/(M-1)*(yarray[M-1] - Data[0]);
+
+	return vs(yarray[0::M-2], [0::M-2]*fstep);
+}
+// Copyright Keysight Technologies 2015 - 2018 
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDREye()
+FUN_DESCRIPTION:  Returns the eye waveform produced by running a randomly generated NRZ trace through the system described by the input S parameter
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDREye(Data, NumBits, DataRate, BitSpan, Vmax) 
+EXAMPLE: EyeOut = FrontPanel_TDREye(S11, 101, 1 GHz, 5, 1) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: NumBits
+  ARG_DESCRIPTION: number of bits in NRZ waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: DataRate
+  ARG_DESCRIPTION: data rate of NRZ wafeform
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: BitSpan
+  ARG_DESCRIPTION: number of samples per bit of NRZ waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Vmax
+  ARG_DESCRIPTION: maximum voltage for NRZ waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ ARGUMENT
+  ARG_NAME: Vmin
+  ARG_DESCRIPTION: minimum voltage for NRZ waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDREye(Data, NumBits, DataRate, BitSpan, WindowFlag, Vmax, Vmin)
+{
+	// PAD NRZ WAVEFORM
+	NumBits = NumBits*2;
+
+	// FILTER
+	decl Freq = FP_TDRindep(Data);
+	
+	// TIME
+	decl NRZ = FP_TDREyeNRZ(NumBits, DataRate, BitSpan, Vmax, Vmin);
+	decl Time = indep(NRZ);
+	decl TStep = 1 / DataRate / BitSpan;
+	decl NTime = NumBits*BitSpan;
+	decl TimeMax = (NTime-1)*TStep;
+
+	decl NFreq = floor(NTime/2);
+	decl FreqStep = 1/TimeMax;
+	decl FreqMax = (NFreq-1)*FreqStep;
+
+	decl NRZfs = fs(NRZ,0,FreqMax,NFreq);
+	decl DataMag = interpolate("spline", mag(Data), 1, [0::NFreq-1]*FreqStep);
+	decl DataAng = interpolate("linear", unwrap(phase(Data)), 1, [0::NFreq-1]*FreqStep);
+
+	// FILTERED NRZ DATA STREAM
+	decl Y = ts(NRZfs.*polar(DataMag, DataAng), 0, TimeMax, NTime,,(WindowFlag) ? 5 : 0);
+
+	// EYE DIAGRAM
+	return FrontPanel_eye(Y[int(NumBits/2*BitSpan)::NTime-1], DataRate);
+}
+
+defun FP_TDREyeNRZ(NumBits, Rate, BitSpan, Vmax, Vmin)
+{
+	decl Bits = (round(FP_Rand([1::NumBits]/(NumBits*BitSpan))));
+	decl N = BitSpan*NumBits;
+	decl NRZ = create(1, "Complex", {"time"}, {"Complex"},1, 1); 
+	decl Time = indep(NRZ, "time");
+	decl tmax = 1.0/Rate*NumBits;
+	decl tstep = 1.0/Rate/BitSpan;
+	decl i;
+	
+	// DEP Data
+	for(i=0;i<NumBits;i++)
+	{
+		if(i < NumBits-1)
+			NRZ[i*(BitSpan)::(i+1)*(BitSpan)-1] = Vmax*Bits[i] - Vmin*(Bits[i]-1);
+		else
+			NRZ[i*(BitSpan)::(i+1)*(BitSpan)-1] = Vmax*Bits[0] - Vmin*(Bits[0]-1);
+	}
+
+	// INDEP Data
+	Time[0::N-1] = [0::N-1]*tstep;
+
+	return NRZ;
+}
+
+defun FP_TDREyeBinaryArray(NumBits)
+{
+	decl Bits = [1::NumBits]*0 + 1;
+	Bits[1::2::NumBits-1] = 0;
+
+	return Bits;
+}
+
+defun FrontPanel_TDREyeIn(Data, NumBits, DataRate, BitSpan, Vmax, NRZ)
+{
+	// FILTER
+	decl Freq = indep(Data);
+	decl NFreq = sweep_size(Data);
+	decl FreqMax2 = max(Freq);
+	decl FreqStep2 = FreqMax2/(NFreq-1);
+	
+	// TIME
+	decl Time = indep(NRZ);
+	decl TimeMax = max(Time);
+	decl NTime = sweep_size(Time);
+	decl FreqStep1 = 1.0/TimeMax;
+	decl FreqMax1 = DataRate;
+
+	decl N = NTime;
+	decl FreqStep = 1.0/TimeMax; 
+	decl FreqMax = .5*DataRate*BitSpan;
+
+	decl NRZfs = fs(NRZ/2,0,FreqMax,N);
+
+	// INTERP DOESN'T ALLOW COMPLEX Data
+	decl NRZReal = interp(real(NRZfs), 0, FreqMax, FreqStep);
+	decl NRZImag = interp(imag(NRZfs), 0, FreqMax, FreqStep);
+	decl DataReal = interp(real(Data), 0, FreqMax, FreqStep);
+	decl DataImag = interp(imag(Data), 0, FreqMax, FreqStep);
+
+	// FILTERED NRZ DATA STREAM
+	decl Y = ts(complex(NRZReal, NRZImag)*complex(DataReal, DataImag), 0, TimeMax, N);
+
+	// EYE DIAGRAM
+	return FrontPanel_eye(Y, DataRate);
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRFreqMode()
+FUN_DESCRIPTION:  Returns single-ended or mixed-mode S parameters for 4-port datasets
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRFreqMode(Data, Mode)
+EXAMPLE: FreqModeOut = FrontPanel_TDRFreqMode(FP_TDRFreq1Dto3D(S), 0) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mode
+  ARG_DESCRIPTION: type of frequency mode dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:4]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+dagger.gif dagger.gif The different type of modes are:
+Mode = 0 Single-Ended
+Mode = 1 Differential
+Mode = 2 Common
+Mode = 3 Differential-Common
+Mode = 4 Common-Differential
+Any Mode > 0 is only valid for 4-port S parameters
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRFreqMode(Data, Mode)
+{
+	if(Mode == 0) // Single-Ended
+		return Data;
+	if(Mode == 1) // Differential
+		return FP_TDRFreqModeDifferential(Data);
+	if(Mode == 2) // Common
+		return FP_TDRFreqModeCommon(Data);
+	if(Mode == 3) // Differential-Common
+		return FP_TDRFreqModeDifferentialCommon(Data);
+	if(Mode == 4) // Common-Differential
+		return FP_TDRFreqModeCommonDifferential(Data);
+}
+defun FP_TDRFreqModeDifferential(Data)
+{
+	decl F = FP_TDRindep(Data);
+	decl M = (1/sqrt(2)) * {{1,0,-1,0}, {0,1,0,-1}, {1,0,1,0}, {0,1,0,1}};
+	decl MultiMode = M*Data*transpose(M);
+	decl Sdd = MultiMode[0::1][0::1][::];
+
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	Y[0][0][::] = 0.5*(Data[0,0,::]-Data[0,2,::]-Data[2,0,::]+Data[2,2,::]);
+	Y[0][1][::] = 0.5*(Data[0,1,::]-Data[0,3,::]-Data[2,1,::]+Data[2,3,::]);
+	Y[1][0][::] = 0.5*(Data[1,0,::]-Data[1,2,::]-Data[3,0,::]+Data[3,2,::]);
+	Y[1][1][::] = 0.5*(Data[1,1,::]-Data[1,3,::]-Data[3,1,::]+Data[3,3,::]);
+
+	return vs(Y,F);
+}
+defun FP_TDRFreqModeCommon(Data)
+{
+	decl F = FP_TDRindep(Data);
+	decl M = (1/sqrt(2)) * {{1,0,-1,0}, {0,1,0,-1}, {1,0,1,0}, {0,1,0,1}};
+	decl MultiMode = M*Data*transpose(M);
+	decl Scc = MultiMode[2::3][2::3][::];
+
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	Y[0][0][::] = 0.5*(Data[0,0,::]+Data[0,2,::]+Data[2,0,::]+Data[2,2,::]);
+	Y[0][1][::] = 0.5*(Data[0,1,::]+Data[0,3,::]+Data[2,1,::]+Data[2,3,::]);
+	Y[1][0][::] = 0.5*(Data[1,0,::]+Data[1,2,::]+Data[3,0,::]+Data[3,2,::]);
+	Y[1][1][::] = 0.5*(Data[1,1,::]+Data[1,3,::]+Data[3,1,::]+Data[3,3,::]);
+
+	return vs(Y,F);
+}
+defun FP_TDRFreqModeDifferentialCommon(Data)
+{
+	decl F = FP_TDRindep(Data);
+	decl M = (1/sqrt(2)) * {{1,0,-1,0}, {0,1,0,-1}, {1,0,1,0}, {0,1,0,1}};
+	decl MultiMode = M*Data*transpose(M);
+	decl Scc = MultiMode[2::3][2::3][::];
+
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	Y[0][0][::] = 0.5*(Data[0,0,::]+Data[0,2,::]-Data[2,0,::]-Data[2,2,::]);
+	Y[0][1][::] = 0.5*(Data[0,1,::]+Data[0,3,::]-Data[2,1,::]-Data[2,3,::]);
+	Y[1][0][::] = 0.5*(Data[1,0,::]+Data[1,2,::]-Data[3,0,::]-Data[3,2,::]);
+	Y[1][1][::] = 0.5*(Data[1,1,::]+Data[1,3,::]-Data[3,1,::]-Data[3,3,::]);
+
+	return vs(Y,F);
+}
+defun FP_TDRFreqModeCommonDifferential(Data)
+{
+	decl F = FP_TDRindep(Data);
+	decl M = (1/sqrt(2)) * {{1,0,-1,0}, {0,1,0,-1}, {1,0,1,0}, {0,1,0,1}};
+	decl MultiMode = M*Data*transpose(M);
+	decl Scc = MultiMode[2::3][2::3][::];
+
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	Y[0][0][::] = 0.5*(Data[0,0,::]-Data[0,2,::]+Data[2,0,::]-Data[2,2,::]);
+	Y[0][1][::] = 0.5*(Data[0,1,::]-Data[0,3,::]+Data[2,1,::]-Data[2,3,::]);
+	Y[1][0][::] = 0.5*(Data[1,0,::]-Data[1,2,::]+Data[3,0,::]-Data[3,2,::]);
+	Y[1][1][::] = 0.5*(Data[1,1,::]-Data[1,3,::]+Data[3,1,::]-Data[3,3,::]);
+
+	return vs(Y,F);
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRFreqScale()
+FUN_DESCRIPTION:  Scales raw frequency data
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRFreqScale(Data, Scale)
+EXAMPLE: FreqScaleOut = FrontPanel_TDRFreqScale(FP_TDRFreq1Dto3D(S), 1) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Scale
+  ARG_DESCRIPTION: type of scaling dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:4]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+ dagger.gif dagger.gif The available scale types are:
+Scale = 0 dB
+Scale = 1 Magnitude
+Scale = 2 Phase
+Scale = 3 Real
+Scale = 4 Imaginary
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRFreqScale(Data, Scale)
+{
+	if(Scale == 0) // dB
+		return dB(Data);
+	if(Scale == 1) // mag
+		return abs(Data);
+	if(Scale == 2) // phase
+		return phase(Data);
+	if(Scale == 3) // real
+		return real(Data);
+	if(Scale == 4) // imag
+		return imag(Data);
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRFreqSweep()
+FUN_DESCRIPTION:  Performs the time-to-frequency transform across multiple dimensions
+RETURNED_VALUE: Real Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRFreqSweep(Data, Flag, Mode, Start, Stop, NumPoints, FArray)
+EXAMPLE: FreqSweepOut = FrontPanel_TDRFreqSweep(ts(FP_TDRFreq1Dto3D(S)), TRUE, 0, 1 GHz, 101, 0) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION: multi-dimensional time waveform dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Flag
+  ARG_DESCRIPTION: boolean flag if set FALSE default sweep values are used
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mode
+  ARG_DESCRIPTION: type of time mode (0 = Lowpass Impulse, 1 = Lowpass Step, 2 = Bandpass Impulse, 3 = Bandpass Step)
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:2]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Start
+  ARG_DESCRIPTION: start frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Stop
+  ARG_DESCRIPTION: stop frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: NumPoints
+  ARG_DESCRIPTION: number of frequency points
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: FArray
+  ARG_DESCRIPTION: frequency sweep of the initial S parameter waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The input data is a multi-dimensional temporal array representing the time transform of an S parameter array. 
+The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRFreqSweep(Data, Flag, Mode, Start, Stop, NumPoints, FArray)
+{
+	decl DefaultList = FP_TDRFreqSweepDefaults(Data, FArray);
+
+	// DEFAULT VALUES
+	if(!Flag)
+	{
+		Start = DefaultList[0];
+		Stop = DefaultList[1];
+		NumPoints = DefaultList[2];
+	}
+
+	decl L = FP_TDRsize(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl fdc;
+	decl i,j;
+
+	for(i=0;i<L;i++)
+		for(j=0;j<L;j++)
+			Y[i][j][::] = Data[i][j][::];
+
+	if(Mode == 1) // Lowpass Step Mode
+	{
+		fdc = FP_TDRRampResponseFdc(Data, (Stop-Start) / (NumPoints-1));
+		Data = Data - FP_TDRRemoveRampResponse(Data, (Stop-Start) / (NumPoints-1));
+	}
+
+	// Frequency Transform
+	Y = fs(Data, Start+tinyReal, Stop, NumPoints);
+	Y = FP_TDRRemoveLowpassImpulseMode(Y);
+	if(Mode == 1) // Lowpass Step Mode
+		Y = FP_TDRRemoveLowpassStepMode(Y, fdc);
+
+	return Y;
+}
+
+defun FP_TDRFreqSweepDefaults(Data, FArray)
+{
+	decl f0 = FArray[0];
+	decl N = FP_TDRsweep_size(FArray);
+	decl fmax = FArray[N-1];
+	
+	return list(f0, fmax, int(N));
+}
+
+defun FP_TDRRemoveLowpassImpulseMode(Data)
+{
+	decl f = FP_TDRindep(Data);
+	decl NumFreqPts = FP_TDRsweep_size(f);
+
+	return Data*(NumFreqPts-1);
+}
+defun FP_TDRRemoveBandpassImpulseMode(Data, FData)
+{
+	decl f = FP_TDRindep(FData);
+	decl t = FP_TDRindep(Data);
+
+	return Data./exp(sqrt(-1)*2*pi*f[0]*t);
+}
+defun FP_TDRRemoveLowpassStepMode(data, fdc)
+{
+	decl f = FP_TDRindep(data);
+	decl fstep = f[1] - f[0];
+	decl NumFreqPts = FP_TDRsweep_size(f);
+	decl BandWidth = max(f)-min(f);
+	decl LaPlaceNorm, Gamma;
+
+	LaPlaceNorm = FP_LaPlaceNorm3d(f);
+	data[1::NumFreqPts-1] = data[1::NumFreqPts-1]/(2*BandWidth)/LaPlaceNorm;
+	data[0] = real(fdc);
+
+	return vs(data, f[0::NumFreqPts-1]);
+} 
+defun FP_TDRRemoveBandpassStepMode(data)
+{
+  decl f = FP_TDRindep(Data);
+  decl NumFreqPts = FP_TDRsweep_size(f);
+  decl BandWidth = max(f)-min(f);
+  decl LaPlaceNorm = 1/(sqrt(-1)*2*pi*f);
+  decl Gamma = data/(2*BandWidth/NumFreqPts)/LaPlaceNorm;
+
+  return Gamma;
+}
+defun FP_TDRRemoveRampResponse(Data, Fstep)
+{
+	decl M = FP_TDRsize(Data);
+	decl N = FP_TDRsweep_size(Data);
+	decl Ramp = create(3, "Complex", "", "", 1, 1);
+	decl time = indep(Data); time = time[0][0][::];
+	decl fdc, tgdc, i, j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+		{
+			fdc = (sum(real(Data[i][j][::])) - real(Data[i][j][0])) / ((N-1)/4 + Fstep*sum(time));
+			tgdc = 0;
+			Ramp[i][j][::] = .25*fdc + fdc*Fstep*(time - tgdc);
+		}
+
+	return vs(Ramp,time);
+}
+
+defun FP_TDRRampResponseFdc(Data, Fstep)
+{
+	decl M = FP_TDRsize(Data);
+	decl N = FP_TDRsweep_size(Data);
+
+	decl time = FP_TDRindep(Data);
+	decl fdc, tgdc, i, j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+		{
+			fdc = (sum(real(Data[i][j][::])) - real(Data[i][j][0])) / ((N-1)/4 + Fstep*sum(time));
+			tgdc = 0;
+		}
+
+	return fdc;
+}
+
+defun FP_TDRFreqFixDCFromFS(Data, TimeData)
+{
+	decl Freq = FP_TDRindep(Data);
+	decl M = FP_TDRsize(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j,DC;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+		{
+			Y[i][j][::] = Data[i][j][::];
+			DC = sum(TimeData[i][j][::]);
+			Y[i][j][0] = DC;
+		}
+
+	return vs(Y,Freq);
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRGate()
+FUN_DESCRIPTION:  Returns a gated time waveform
+RETURNED_VALUE: Real Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRGate(Data, Flag, Start, Length, OutFlag, ResponseType, sm, sn)
+EXAMPLE: GateOut = FrontPanel_TDRGate(ts(FP_TDRFreq1Dto3D(S)), GateMask, TRUE, FALSE) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  multi-dimensional time waveform dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Flag
+  ARG_DESCRIPTION: boolean flag if set FALSE will return the original waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: [0,1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Start
+  ARG_DESCRIPTION:  gate start time for each time waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Length
+  ARG_DESCRIPTION:  gate length time for each time waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: (0:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: OutFlag
+  ARG_DESCRIPTION: boolean flag if set TRUE will zero values inside the gate
+  ARG_DEFAULT: None
+  ARG_RANGE: [0,1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ ARGUMENT
+  ARG_NAME: ResponseType
+  ARG_DESCRIPTION: gate response type: (0) standard gate for impulse modes or (1) flat, (2) linear, or (3) hyperbolic for step modes
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:3]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The input data is a multi-dimensional temporal array representing the time transform of an S parameter array. 
+The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRGate(Data, Flag, Start, Length, OutFlag, ResponseType, sm, sn)
+{
+	decl L = FP_TDRsize(Data);
+	decl N = FP_TDRsweep_size(Data);
+	decl M = int(sqrt(sweep_size(Length)));
+	decl time = FP_TDRindep(Data);
+	decl tstart, tlength, tstop, istart, istop, nstart, nstop, rtype;
+	decl i, j, m, n;
+	decl x1, x2, y1, y2, mslope, gateN;
+	decl Y = create(3, "Complex", "", "", 1, 1);
+
+	for(i=0;i<L;i++)
+		for(j=0;j<L;j++)
+			Y[i][j][::] = Data[i][j][::];
+
+	for(i=0;i<M**2;i++)
+	{
+		if(Flag[int(i)])
+		{
+			// S PARAMETER MATRIX INDICES
+			m = int(floor(i/M));
+			n = int(int(i)%int(M));
+
+			// Single Dimensional Input
+			if(size(sm) == 1)
+			{
+				if(sm == [m] && sn == [n])
+				{
+					m = 0;
+					n = 0;
+				}
+				else
+					continue;
+			}
+
+			// CONVERT TO APPROPRIATE RESPONSE
+			rtype = ResponseType[int(i)];
+			if(!rtype)
+				Y[n,m,::] = FP_TDRdiff(Data[n::n,m::m,::]);
+			
+			// SPAN TYPE
+			tstart = Start[int(i)];
+			tlength = Length[int(i)];
+			tstop = tstart + tlength;
+
+			istart = find(time < tstart) + int(1);
+			istop = find(time > tstop) - int(1);
+			istop = (istop < 0) ? sweep_size(time)-1 : istop;
+			nstart = sweep_size(istart);
+			nstop = sweep_size(istop);
+			
+			// INDEXES OUTSIDE OF RANGE
+			if(OutFlag[i] == 0) // Zero-out tstart::tstop
+			{
+				if(tstart == tstop)
+					return vs(Y,time);
+				else
+				{	
+					if(!rtype)
+						Y[n,m,istart[nstart-1]::istop[0]] = 0;
+					elseif(rtype == 1) // Step Gate
+					{
+						Y[n,m,istart[nstart-1]::istop[0]] = Data[n,m,istart[nstart-1]];
+					}
+					elseif(rtype == 2) // Step Linear
+					{
+						x1 = istart[nstart-1];
+						x2 = istop[0];
+						y1 = Data[n,m,x1];
+						y2 = Data[n,m,x2];
+						mslope = (y2 - y1) / (x2 - x1);
+						Y[n,m,istart[nstart-1]::istop[0]] = mslope*([istart[nstart-1]::istop[0]] - x1) + y1;
+
+					}
+					else // Step Hyperbolic
+					{
+						x1 = istart[nstart-1];
+						x2 = istop[0];
+						y1 = Data[n,m,x1];
+						y2 = Data[n,m,x2];
+						gateN = sweep_size([istart[nstart-1]::istop[0]]);
+						Y[n,m,istart[nstart-1]::istop[0]] = (y2 - y1)/2*(tanh(([0::gateN-1]/(gateN-1) - .5)*6) + 1) + y1; // tanh(6) is essentially 1
+					}
+				}
+			}
+			if(OutFlag[i] == 1) // Zero-out 0::tstart and tstop::end
+			{
+				if(rtype) // step gate
+				{
+					if(tstart == tstop)
+						Y[n,m,::] = 0;
+					else
+					{
+						Y[n,m,istart[0]::istart[nstart-1]] = Data[n,m,istart[nstart-1]];
+						Y[n,m,istop[0]::istop[nstop-1]] = Data[n,m,istop[nstop-1]];
+					}
+				}
+				else // impulse gate
+				{
+					if(tstart == tstop)
+						Y[n,m,::] = 0;
+					else
+					{
+						Y[n,m,istart[0]::istart[nstart-1]] = 0;
+						Y[n,m,istop[0]::istop[nstop-1]] = 0;
+					}
+				}
+			}
+
+			// CONVERT TO STEP RESPONSE
+			if(!rtype)
+				Y[n,m,::] = cum_sum(Y[n,m,::]);
+
+			if(size(sm) == 1 && sm == [m] && sn == [n])
+				return vs(Y,time);
+		}
+	}
+	
+	return vs(Y,time);
+}
+defun FP_TDRGateMask(Data, MaskFlag, Parm1, Parm2, OutFlag, Span)
+{
+	if(!MaskFlag)
+		return list(0);
+
+	decl time = indep(Data); time = time[0][0][::];
+	decl tmin = min(time);
+	decl tmax = max(time);
+	decl vmax = max(Data);
+	decl vmin = min(Data);
+
+	decl xvec, yvec, tstart, tstop;
+
+	// SPAN TYPE
+	if(Span == 0) // Start/Stop
+	{
+		tstart = Parm1;
+		tstop = Parm1+Parm2;
+	}
+	if(Span == 1) // Center/Width
+	{
+		tstart = Parm1 - Parm2/2;
+		tstop = Parm1 + Parm2/2;
+	}
+
+	xvec = [tstart, tstart, tstop, tstop, tstart];
+	yvec = [vmin, vmax, vmax, vmin, vmin];
+
+	return vs(yvec, xvec);
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRIFW()
+FUN_DESCRIPTION:  Converts an IFW dataset to S parameters
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRIFW(DatasetName)
+EXAMPLE: IFWOut = FrontPanel_TDRIFW("my_sym.ds") 
+ARGUMENT
+  ARG_NAME: DatasetName
+  ARG_DESCRIPTION:  name of IFW dataset
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE:  String
+  ARG_REQUIRED: YES
+FOOTNOTES: 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRIFW(DatasetName)
+{
+	decl Sin;
+	
+	decl DataTime = FrontPanel_TDRIFWParse(DatasetName);
+	decl N = FP_TDRsweep_size(DataTime);
+	decl time = FP_TDRindep(DataTime);
+
+	decl tmax = max(time);
+	decl tn = N;
+	decl tstep = time[1] - time[0];
+	decl fn = floor((tn+1)/2);
+	decl fstart = 0;
+	decl fmax = 1 / (2*tstep);
+	decl fstep = fmax / (fn-1);
+	
+
+	Sin = FrontPanel_TDRFreqSweep(DataTime, 1, 0, fstart, fmax, fn, [0::fn-1]*fstep);
+
+	return Sin;
+}
+
+defun FrontPanel_TDRIFWParse(DSFileName)
+{
+	decl DSDesignName = strcat(DSFileName, "_IFW");
+	decl Proj_dir = getcwd();
+	decl fileName = sprintf("%s/data/IFWTemplate%s.CMP1_SNP.imp",Proj_dir, DSDesignName);
+	decl fileName1 = sprintf("%s/data/IFWTemplate1.%s.CMP1_S1P.imp",Proj_dir, DSDesignName);
+	decl fileName2 = sprintf("%s/data/IFWTemplate2.%s.CMP1_S2P.imp",Proj_dir, DSDesignName);
+	decl fileName3 = sprintf("%s/data/IFWTemplate3.%s.CMP1_S3P.imp",Proj_dir, DSDesignName);
+	decl fileName4 = sprintf("%s/data/IFWTemplate4.%s.CMP1_S4P.imp",Proj_dir, DSDesignName);
+
+	decl fid, i, j, k, N, LinePtr, WordPtr, CharPtr, TokenList, TimeCounter, PortCounter;
+	decl Parameter, Impedance, ImpedanceValue, tstep;
+	decl parameter_list;
+	decl NumPoints, NumPorts;
+
+	// MAKE SURE STRINGS ARE IN UNIX FORMAT
+	fileName = FP_DatasetWindowsToUnix(fileName);
+
+	// OPEN VALID FILE
+	if ((fid = fopen(fileName1, "R")) == NULL)
+	{
+		if ((fid = fopen(fileName2, "R")) == NULL)
+		{
+			if ((fid = fopen(fileName3, "R")) == NULL)
+			{
+				if ((fid = fopen(fileName4, "R")) == NULL)
+				{
+					print_function_error("FrontPanel_TDRIFW",sprintf("Error opening file %s", DSDesignName));
+					return 0;
+				}
+				else
+					fileName = fileName4;
+			}
+			else
+				fileName = fileName3;
+		}
+		else
+			fileName = fileName2;
+	}
+	else
+		fileName = fileName1;
+
+	// FIND HEADER
+	do
+	{
+		LinePtr = fgets(fid);
+		CharPtr = midstr(LinePtr, 0, 0);
+
+	}while (CharPtr != "#");
+
+	// GET HEADER PARAMETERS
+	TokenList = FP_parse_blank2(LinePtr);
+
+	if(listlen(TokenList) != 4)
+	{
+		print_function_error("FrontPanel_TDRIFW", sprintf("Error reading header for %s", DSDesignName));
+		return NULL;
+	}
+	else
+	{
+		Parameter = toupper(TokenList[1]);
+		Impedance = TokenList[2];
+		ImpedanceValue = val(TokenList[3]);
+	}
+	parameter_list = list("S", "Y", "Z");
+	if (member(Parameter, parameter_list) == NULL)
+	{
+		print_function_error("FrontPanel_TDRIFW", sprintf("Invalid parameter specification in %s", DSDesignName));
+		return NULL;
+	}
+
+	//	SKIP PAST ANY LINES BEGINNING IN A '!'
+	do
+	{
+		LinePtr = fgets(fid);
+		TokenList = FP_parse_blank2(LinePtr);
+		WordPtr = midstr(LinePtr, 1, -1);
+		if(WordPtr)
+			WordPtr = midstr(WordPtr, 0, index(WordPtr, "]")-1);
+
+		if(WordPtr == "Number of Ports")
+			NumPorts = val(TokenList[3]);
+		if(WordPtr == "Reference")
+			;
+		if(WordPtr == "Original Frequency Range")
+			;
+		if(WordPtr == "Time Step")
+			tstep = val(TokenList[2]);
+		if(WordPtr == "Base Delay")
+			;
+	}while (WordPtr != "Number of time points");
+
+	// CREATE DATA ARRAYS
+	NumPoints = val(TokenList[4]);
+	decl Data = create(3, "Complex", "", "", 1, 1);
+	for(i=0;i<NumPorts;i++)
+		for(j=0;j<NumPorts;j++)
+			Data[i][j][::] = [1::NumPoints];
+	decl TimeArray = [0::NumPoints-1]*tstep;
+
+	// EVALUATE IMPULSE POINTS
+	LinePtr = fgets(fid);
+	TimeCounter = 0;
+	PortCounter = 0;
+	i = 0;
+	j = 0;
+	do
+	{
+		TokenList = FP_parse_blank2(LinePtr);
+
+		if(TokenList)
+		{
+			if(val(TokenList[0]) != NULL)
+			for(k=0;k<listlen(TokenList);k++)
+			{
+				if(val(TokenList[k]) != NULL)
+				{
+					Data[i][j][TimeCounter] = val(TokenList[k]);
+					TimeCounter = TimeCounter + 1;	
+				}
+			}
+		}
+		
+		// Next Line
+		LinePtr = fgets(fid);
+		
+		// Next Port
+		if(TimeCounter == NumPoints)
+		{
+			PortCounter = PortCounter + 1;
+			TimeCounter = 0;
+			i = int(floor(PortCounter/NumPorts));
+			j = int(int(PortCounter)%int(NumPorts));
+		}
+
+	} while(PortCounter != NumPorts**2 AND TimeCounter != NumPoints);
+
+	fclose(fid);
+
+	return vs(Data, TimeArray);
+}
+
+defun FP_parse_blank2(String)
+{
+	decl rList, i, Char, Start, Stop;
+
+	Start = -1;
+	Stop = -1;
+
+	for(i=0;i<strlen(String);i++)
+	{
+		Char = midstr(String, i, i);
+
+		if(Char == " " || Char == "\t")
+		{
+			if(Stop != -1)
+				rList = append(rList, list(midstr(String, Start, Stop)));
+
+			Start = -1;
+			Stop = -1;
+		}
+		else
+		{
+			if(Start == -1)
+				Start = i;
+
+			Stop = i;
+		}
+	}
+
+	if(Stop != -1)
+		rList = append(rList, list(midstr(String, Start, Stop+1)));
+
+	return rList;
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRPeeling()
+FUN_DESCRIPTION:  Applies the peeling algorithm to all ports of an S parameter array
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRPeeling(Data, Flag, Step)
+EXAMPLE: PeelingOut = FrontPanel_TDRPeeling(FP_TDRFreq1Dto3D(S), TRUE, 1) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Flag
+  ARG_DESCRIPTION: boolean flag if set FALSE will return the original waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Step
+  ARG_DESCRIPTION: voltage step value
+  ARG_DEFAULT: None
+  ARG_RANGE: (0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRPeeling(Data, Flag, Step)
+{
+	if(!Flag)
+		return Data;
+
+	decl Time = FP_TDRindep(Data);
+	decl M = FP_TDRsize(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Y[i][j][::] = real(tdr_peeling(vs(real(Data[i][j][::]),Time), Step))+sqrt(-1)*tdr_peeling(vs(imag(Data[i][j][::]),Time), Step);
+
+	return vs(Y,Time);
+}
+
+defun FrontPanel_TDRInversePeeling(Data, Flag, Step)
+{
+	if(!Flag)
+		return Data;
+
+	decl Time = FP_TDRindep(Data);
+	decl M = FP_TDRsize(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Y[i][j][::] = real(tdr_inverse_peeling(real(Data[i][j][::])));
+
+	return vs(Y,Time);
+}
+// Copyright Keysight Technologies 2015 - 2015  
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRPortExt()
+FUN_DESCRIPTION:  Adds a virtual length of ideal transmission line to each port of S parameter data
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRPortExt(Data, Flag, Length, Velocity, LossType, Loss1, Loss2, Freq1, Freq2)
+EXAMPLE: PortExtOut = FrontPanel_TDRPortExt(FP_TDRFreq1Dto3D(S), TRUE, [1,1], [1,1], [0,0], [3,3], [3,3], [1 Ghz, 1 GHz], [2 GHz, 2 GHz]) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Flag
+  ARG_DESCRIPTION: boolean flag if set FALSE default sweep values are used
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Length
+  ARG_DESCRIPTION: array representing virtual lengths for each port dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Velocity
+  ARG_DESCRIPTION: normalized velocity
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: LossType
+  ARG_DESCRIPTION: array representing loss types for each port (0 = Lossless, 1 = Constant, 2 = Linear) dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Loss1
+  ARG_DESCRIPTION: array representing loss in dB for each port (only used for LossType > 0) dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Loss2
+  ARG_DESCRIPTION: array representing loss in dB for each port (only used for LossType > 1) dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Freq1
+  ARG_DESCRIPTION: array representing frequency bin of loss for each port (only used for LossType > 0) dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Freq2
+  ARG_DESCRIPTION: array representing frequency bin of loss for each port (only used for LossType > 1) dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+dagger.gif dagger.gif Each parameter for port extensions is the same length as the number of ports in the input S parameter
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRPortExt(Data, Flag, Length, Velocity, LossType, Loss1, Loss2, Freq1, Freq2)
+{
+	if(!Flag)
+		return Data;
+
+	decl NumPorts = int(sweep_size(Length));
+	decl L = FP_TDRsize(Data);
+	decl Freq = FP_TDRindep(Data);
+	decl NumPoints = FP_TDRsweep_size(Data);
+	decl Pin, Pout;
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+    
+	for(i=0;i<L;i++)
+		for(j=0;j<L;j++)
+			Y[i][j][::] = Data[i][j][::];
+
+	decl m,n;
+	decl y2in,y1in,x2in,x1in,min,Gamin;
+	decl y2out,y1out,x2out,x1out,mout,Gamout;
+
+	// DEP DATA
+	for(m=0;m<NumPorts;m++)
+	{
+		if(LossType[m] == 0) // Lossless
+			Gamin = 0;
+		if(LossType[m] == 1) // Constant
+			Gamin = Loss1[m]*Length[m]/20*ln(10);
+		if(LossType[m] == 2) // Linear
+		{
+			y2in = Loss2[m]*Length[m]/20*ln(10);
+			y1in = Loss1[m]*Length[m]/20*ln(10);
+			x2in = Freq2[m];
+			x1in = Freq1[m];
+			min = (y2in - y1in) / (x2in - x1in);
+			Gamin = min*Freq - x1in*min + y1in;
+		}
+
+		for(n=0;n<NumPorts;n++)
+		{
+			if(LossType[n] == 0) // Lossless
+				Gamout = 0;
+			if(LossType[n] == 1) // Constant
+				Gamout = Loss1[n]*Length[n]/20*ln(10);
+			if(LossType[n] == 2) // Linear
+			{
+				y2out = Loss2[n]*Length[n]/20*ln(10);
+				y1out = Loss1[n]*Length[n]/20*ln(10);
+				x2out = Freq2[n];
+				x1out = Freq1[n];
+				mout = (y2out - y1out) / (x2out - x1out);
+				Gamout = mout*Freq - x1out*mout + y1out;
+			}
+
+			Pin =  exp(-sqrt(-1)*2*pi*Freq/(Velocity*3.0e8)*Length[m] - Gamin);
+			Pout =  exp(-sqrt(-1)*2*pi*Freq/(Velocity*3.0e8)*Length[n] - Gamout);
+			Y[m,n,::] = Y[m,n,::]*Pout;
+			Y[m,n,::] = Y[m,n,::]*Pin;
+		}
+	}
+
+	// INDEP DATA
+	return vs(Y, Freq);
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRPortMap()
+FUN_DESCRIPTION:  Maps input and output ports of an S parameter array
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRPortMap(Data, Flag, MapArray)
+EXAMPLE: PortMapOut = FrontPanel_TDRPortMap(FP_TDRFreq1Dto3D(S), TRUE, [1,2,3,4]) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Flag
+  ARG_DESCRIPTION: boolean flag if set FALSE will return the original waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: MapArray
+  ARG_DESCRIPTION: array where indicies represent output ports and values represent input ports
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRPortMap(Data, Flag, MapArray)
+{
+	if(!Flag)
+		return Data;
+
+	decl Freq = FP_TDRindep(Data);
+	decl M = sweep_size(MapArray);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Y[i][j][::] = Data[MapArray[i]-1][MapArray[j]-1][::];
+
+	return vs(Y,Freq);
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRSmooth()
+FUN_DESCRIPTION:  Performs the specified smoothing operation on S parameter data
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRSmooth(Data, Flag, Type, ParmList)
+EXAMPLE: SmoothOut = FrontPanel_TDRSmooth(FP_TDRFreq1Dto3D(S), TRUE, 0, list(10)) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Flag
+  ARG_DESCRIPTION: boolean flag if set FALSE will return the original waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Type
+  ARG_DESCRIPTION: specifies the type of smoothing (0 = moving average, 1 = alpha-beta)
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: ParmList
+  ARG_DESCRIPTION: filter specific parameters (e.g. list(10) for N=10 width moving average filter)
+  ARG_DEFAULT: None
+  ARG_RANGE: (0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRSmooth(Data, Flag, Type, ParmList)
+{
+	if(!Flag)
+		return Data;
+
+	decl f = FP_TDRindep(Data);
+	decl M = FP_TDRsize(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+		{
+			if(Type == 0) // "Moving Average"
+				Y[i][j][::] = FP_TDRSmooth_MA(Data[i][j][::], ParmList);
+			if(Type == 1) // "Alpha-Beta"
+				Y[i][j][::] = FP_TDRSmooth_AB(Data[i][j][::], ParmList);
+			if(Type == 2) // "Flip-Flop"
+				Y[i][j][::] = FP_TDRSmooth_FF(Data[i][j][::], ParmList);
+		}
+
+	return vs(Y,f);
+}
+
+//--------------------------------------------------------------------------//
+//	FP_TDRSmooth_MAF()
+//
+//	DESCRIPTION:
+//		Computes a moving average filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Width:	(int)	Window width
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRSmooth_MA(nArray, ParmList)
+{
+	decl i, j, temp, Index;
+	decl N = FP_TDRsweep_size(nArray);
+	decl rArray = nArray*0;
+	decl Width = ParmList[0];
+	decl Type = ParmList[1];
+
+	if(Width <= 1 || Width >= N)
+		return nArray;
+
+	if(Type == 0) // COMPLEX
+		return moving_average(real(nArray), Width) + sqrt(-1)*moving_average(imag(nArray), Width);
+	if(Type == 1) // POLAR
+		return polar(moving_average((abs(nArray)), Width), moving_average(unwrap(phase(nArray)), Width));//polar(10**moving_average(log(abs(nArray)), Width), moving_average(unwrap(phase(nArray)), Width));
+
+/*
+	// ADD EDGE POINTS
+	for(i=0;i<Width-1;i++)
+		rArray[int(i)] = sum(nArray[0::int(i)]) / (1.0*(i+1));
+
+	// FILTER
+	for(i=Width-1;i<N-Width+1;i++)
+		rArray[i] = sum(nArray[i-1::i+Width-2]) / (Width*1.0);
+
+	// ADD EDGE POINTS
+	for(i=N-Width+1;i<N;i++)
+		rArray[i] = sum(nArray[i::N-1]) / (1.0*(N-i));
+
+	return rArray;
+*/
+}
+
+//--------------------------------------------------------------------------//
+//	FP_TDRSmooth_AB()
+//
+//	DESCRIPTION:
+//		Computes an Alpha-Beta filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Alpha:	(real)	Weight
+//		Beta:	(real)	1 - Alpha
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRSmooth_AB(nArray, ParmList)
+{
+	decl N = FP_TDRsweep_size(nArray);
+	decl rArray = nArray*0;
+	decl Alpha = ParmList[0];
+	decl Type = ParmList[1];
+	decl Beta = 1.0 - Alpha;
+	decl i;
+
+	// INITIAL CONDITION
+	rArray[0] = nArray[0];
+
+	// FILTER
+	if(Type == 0) // COMPLEX
+		rArray[1::N-1] = Alpha*nArray[0::N-2] + Beta*nArray[1::N-1];
+	if(Type == 1) // POLAR
+		rArray[1::N-1] = polar((Alpha*(abs(nArray[0::N-2])) + Beta*(abs(nArray[1::N-1]))), Alpha*phase(nArray[0::N-2]) + Beta*phase(nArray[1::N-1]));//polar(10**(Alpha*log(abs(nArray[0::N-2])) + Beta*log(abs(nArray[1::N-1]))), Alpha*phase(nArray[0::N-2]) + Beta*phase(nArray[1::N-1]));
+
+	return rArray;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRSmooth_FF()
+//
+//	DESCRIPTION:
+//		Computes a Flip-Flop filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Width:	(int)	Window width
+//		Agile:	(real)	Agile weight
+//		Stable:	(real)	Stable weight
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRSmooth_FF(nArray, ParmList)
+{
+	decl N = FP_TDRsweep_size(nArray);
+	decl rArray = nArray*0;
+	decl Width = ParmList[0];
+	decl Agile = ParmList[1];
+	decl Stable = ParmList[2];
+
+	if(Width <= 1 || Width >= N)
+		return nArray;
+
+	decl i, j, Mu, Var, Std, Alpha, temp;
+
+	// INITIAL CONDITION
+	rArray[0] = nArray[0];
+
+	for(i=1;i<N;i++)
+	{
+		Mu = 0.0;
+		Var = 0.0;
+
+		// FIND THE MEAN
+		for(j=0;j<Width;j++)
+			if((i+j-1) >= 0 AND (i+j-1) < N)
+				Mu += nArray[int(i+j-1)];
+		Mu = Mu / Width;
+
+		// FIND THE VARIANCE
+		for(j=0;j<Width;j++)
+			if((i+j-1) >= 0 AND (i+j-1) < N)
+				Var = Var + (nArray[int(i+j-1)] - Mu)**2;
+		Var = Var / N;
+
+		// FIND THE STANDARD DEVIATION
+		Std = sqrt(Var);
+
+		if(Mu - Std < nArray[int(i)] AND nArray[int(i)] < Mu + Std)
+			Alpha = Agile;
+		else
+			Alpha = Stable;
+
+		rArray[int(i)] = Alpha*rArray[int(i-1)] + (1-Alpha)*nArray[int(i)];
+	}
+
+	return rArray;
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRTimeScale()
+FUN_DESCRIPTION:  Scales raw time data and sweep
+RETURNED_VALUE: Real Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRTimeScale(Data, Scale, Units, Z0, VelocityFactor, TimeModeFlag, FreqModeFlag, sm, sn)
+EXAMPLE: TimeScaleOut = FrontPanel_TDRTimeScale(ts(FP_TDRFreq1Dto3D(S)), "seconds", 50) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION:  multi-dimensional time waveform dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Scale
+  ARG_DESCRIPTION: type of time scale (Scale = 1 for Impedance, Scale = 5 for Ref. Coeff.)
+  ARG_DEFAULT: None
+  ARG_RANGE: [1,5]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Units
+  ARG_DESCRIPTION: type of sweep units "seconds" or "meters"
+  ARG_DEFAULT: None
+  ARG_RANGE: [0,1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Z0
+  ARG_DESCRIPTION: characteristic impedance
+  ARG_DEFAULT: 50
+  ARG_RANGE: [1::inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ ARGUMENT
+  ARG_NAME: VelocityFactor
+  ARG_DESCRIPTION: speed of light scale factor
+  ARG_DEFAULT: None
+  ARG_RANGE: [1::inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: TimeModeFlag
+  ARG_DESCRIPTION: time mode flag (see FrontPanel_TDRTimeSweep())
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: FreqModeFlag
+  ARG_DESCRIPTION: freq mode flag (see FrontPanel_TDRFreqMode())
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The input data is a multi-dimensional temporal array representing the time transform of an S parameter array. 
+The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRTimeScale(Data, Scale, Units, Z0, VelocityFactor, TimeModeFlag, FreqModeFlag, sm, sn)
+{
+	if(Scale == 0) // Ref. Coeff.
+		Data = FP_TDRTimeScaleSToRho(Data, Z0);
+	if(Scale == 1) // Impedance
+		Data = FP_TDRTimeScaleSToZ(Data, Z0, FreqModeFlag);
+	if(Scale == 2) // Volts
+		Data = FP_TDRTimeScaleSToVolts(Data, TimeModeFlag, FreqModeFlag, sm, sn);
+
+	if(Units == 0)
+		return Data;
+	else
+	if(Units == 1)
+		return vs(Data, indep(Data)*3e8*VelocityFactor, "Distance");
+}
+
+defun FP_TDRTimeScaleSToRho(Data, Z0)
+{
+	decl N = FP_TDRsweep_size(Data);
+	decl M = FP_TDRsize(Data);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Data[i][j][::] = Data[i][j][::] - Data[i][j][0];
+
+	return Data;
+}
+
+defun FP_TDRTimeScaleSToZ(Data, Z0, FreqModeFlag)
+{
+	decl N = FP_TDRsweep_size(Data);
+	decl M = FP_TDRsize(Data);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Data[i][j][::] = Data[i][j][::] - Data[i][j][0];
+
+	if(FreqModeFlag == 1 OR FreqModeFlag == 4)
+		Z0 = Z0*2;
+	if(FreqModeFlag == 2 OR FreqModeFlag == 3)
+		Z0 = Z0/2;
+
+	return mag(zin(Data, Z0));
+}
+
+defun FP_TDRTimeScaleSToVolts(Data, TimeModeFlag, FreqModeFlag, sm, sn)
+{
+	decl N = FP_TDRsweep_size(Data);
+	decl M = FP_TDRsize(Data);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Data[i][j][::] = Data[i][j][::] - Data[i][j][0];
+
+	// Scale Depending on Modes
+	decl x = [1,2];
+	if(TimeModeFlag == 1 AND x[sm] == x[sn] AND FreqModeFlag < 3)
+		Data = Data + 1.0;
+	else
+	if(FreqModeFlag == 3) // Sdc
+	{
+		Data = Data * 2;
+	}
+	else
+	if(FreqModeFlag == 4) // Scd
+	{
+		Data = Data;
+	}
+
+	return Data;
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRTimeSweep()
+FUN_DESCRIPTION:  Transforms S parameter data into a time waveform
+RETURNED_VALUE: Real Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRTimeSweep(Data, Flag, Mode, Start, Stop, NumPoints)
+EXAMPLE: TimeSweepOut = FrontPanel_TDRTimeSweep(FP_TDRFreq1Dto3D(S), TRUE, 1, 0, 10 ns, 101) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION: multi-dimensional frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Flag
+  ARG_DESCRIPTION: boolean flag if set FALSE default sweep values are used
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mode
+  ARG_DESCRIPTION: type of time mode (0 = Lowpass Impulse, 1 = Lowpass Step, 2 = Bandpass Impulse, 3 = Bandpass Step)
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:2]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Start
+  ARG_DESCRIPTION: start time
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Stop
+  ARG_DESCRIPTION: stop time
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: NumPoints
+  ARG_DESCRIPTION: number of time points
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRTimeSweep(Data, Flag, Mode, Start, Stop, NumPoints)
+{
+	//get defaul number of time step, tmax and min tmin
+	decl DefaultList = FP_TDRTimeSweepDefaults(Data);
+	// DEFAULT VALUES
+	if(!Flag)
+	{
+		Start = DefaultList[0]; // start time
+		Stop = DefaultList[1]; // end time 
+		NumPoints = int(DefaultList[2]); // number of points
+	}
+
+	// Extrapolate DATA
+	decl DataDC = FP_TDRLowFreq(Data);
+	decl M = FP_TDRsweep_size(Data);
+	decl freq = FP_TDRindep(Data);
+	decl NFreq = sweep_size(freq);
+	decl FreqMax = max(freq);
+	decl FreqMin = freq[0];
+	decl BW = FreqMax - FreqMin;
+	decl FreqStep = BW/(NFreq-1);
+	decl FreqShift = (FreqMin > 0) ? FreqMin : 0;
+	decl f = [0::NFreq-1]*FreqStep + FreqShift; // new start and stop freq sweep
+	decl L = FP_TDRsize(Data);
+	
+	//create 3 3-d arrays 
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl YTime = create(3, "Complex", "", "", 1, 1);
+	decl YFreq = create(3, "Complex", "", "", 1, 1);
+
+	decl i,j;
+	// fill in array with Data value 
+	/* removed folling loops because the proccess takes time and doesn't do anything 
+	for(i=0;i<L;i++)
+		for(j=0;j<L;j++)
+		{
+			Y[i][j][::] = Data[i][j][::];
+			YTime[i][j][::] = Data[i][j][::];
+			//YFreq[i][j][::] = Data[i][j][::];
+		}*/
+		
+	// use interpolation on data 
+	YFreq = FP_interp3d(Data, f);
+	
+	if(Mode == 0) // Lowpass Impulse
+	{
+		if(Flag)
+			YFreq = YFreq / NFreq;
+		else 
+			YFreq = FP_TDRLowpassImpulseMode(YFreq);
+	}
+	else
+	if(Mode == 1) // Lowpass Step
+	{
+		//Flag is on when you set your own time steps
+		if(Flag)
+			YFreq = FP_TDRLowpassStepMode(YFreq);
+		else
+			YFreq = FP_TDRConjugateSymmetric(YFreq)/2;
+	}
+	else
+	if(Mode == 2) // Bandpass Impulse
+	{
+		if(Flag)
+			YFreq = YFreq / NFreq;
+		else
+			YFreq = FP_TDRBandpassImpulseMode(YFreq);
+	}
+	
+	// TRANSFORM
+	if(Flag)
+		YTime = ts(YFreq, Start+tinyReal, Stop, NumPoints);
+	else
+		YTime = conj(fs(conj(YFreq), Start+tinyReal, Stop, NumPoints));
+	
+	// COMPENSATE FOR BP MODES
+	YTime = YTime.*exp(sqrt(-1)*2*pi*FreqMin*indep(YTime));
+
+	decl f2;
+	if(Mode == 1) // Apply Lowpass Step
+	{
+		
+		if(Flag)
+		{
+			f2 = FP_RampResponse3d(Data,YTime,DataDC);
+			YTime = YTime + f2;
+		}
+		else // integration 
+			YTime = cum_sum(YTime);
+	}
+	return YTime;
+}
+
+defun FrontPanel_TDRFind_tmax(dBloss)
+{
+	decl freq = FP_TDRindep(dBloss);
+	decl ind_max = sweep_size(freq);
+	decl ind_halfway = floor(ind_max/2);
+	decl dBloss_halfway = dBloss[ind_halfway];
+	decl freq_halfway = freq[ind_halfway];
+	decl freq_GHz_halfway = freq_halfway*1e-9;
+	decl dBloss_per_inch_per_GHz = -0.2; 
+	decl length_inch; 
+	decl length_nsec; 
+	decl speed_of_FR4_inch_per_nsec = 6; 
+	
+	length_inch = dBloss_halfway/freq_GHz_halfway/dBloss_per_inch_per_GHz;
+	length_nsec = length_inch/speed_of_FR4_inch_per_nsec;
+	length_nsec*=2; // round trip time
+	length_nsec = ceil(length_nsec)+2; // take into account 2nsec of port extension 
+
+	return length_nsec;
+}
+
+defun FP_TDRTimeSweepDefaults(Data)
+{
+
+	decl freq = FP_TDRindep(Data);
+	decl Nfreq = sweep_size(freq);
+	decl FreqMax = max(freq);
+	decl FreqMin = freq[0];
+	decl BW = FreqMax - FreqMin;
+	decl FreqStep = BW/(Nfreq-1);
+	decl FreqShift = (FreqMin > 0) ? FreqMin : 0;
+
+	decl N = 2*((FreqMax)/FreqStep + 1) - 1;
+	
+	decl tstep = 1/(2*(FreqMax));
+	decl tmax = tstep*(N-1);
+	
+	return list(0, tmax, int(N), FreqShift);
+}
+
+defun FP_TDRLowpassImpulseMode(Data)
+{
+	decl f = FP_TDRindep(Data);
+	decl NumFreqPts = FP_TDRsweep_size(f);
+
+	return FP_TDRConjugateSymmetric(Data)/2;
+}
+defun FP_TDRBandpassImpulseMode(Data)
+{
+	decl f = FP_TDRindep(Data);
+	decl NumFreqPts = FP_TDRsweep_size(f);
+
+	return FP_TDRConjugateSymmetric(Data)/2;
+}
+defun FP_TDRLowpassStepMode(data)
+{
+  decl f = FP_TDRindep(data);
+  decl fstep = f[1] - f[0];
+  decl NumFreqPts = FP_TDRsweep_size(f);
+  decl BandWidth = max(f)-min(f);
+  decl LaPlaceNorm, Gamma;
+
+	LaPlaceNorm = FP_LaPlaceNorm3d(f);
+	Gamma = data[1::NumFreqPts-1]*(2*BandWidth/NumFreqPts).*LaPlaceNorm;
+
+  return vs(Gamma, f[1::NumFreqPts-1]);
+}
+defun FP_TDRBandpassStepMode(data)
+{
+  decl f = FP_TDRindep(data);
+  decl NumFreqPts = FP_TDRsweep_size(f);
+  decl BandWidth = max(f)-min(f);
+  decl LaPlaceNorm = 1.0/(sqrt(-1)*2*pi*f);
+  decl Gamma = data*(2*BandWidth/NumFreqPts)*LaPlaceNorm;
+
+  return Gamma;
+}
+
+defun FP_TDRTimeSweepShift(Data)
+{
+	decl M = FP_TDRsweep_size(Data);
+	decl L = FP_TDRsize(Data);
+	decl f = FP_TDRindep(Data);
+	decl tstep = 1 / (2*(f[M-1]-f[0]));
+	decl Y = create(3, "Complex", "", "", 1, 1);
+
+	decl i,j;
+
+	for(i=0;i<L;i++)
+		for(j=0;j<L;j++)
+			Y[i][j][::] = Data[i][j][::].*exp(-sqrt(-1)*2*pi*f*tstep);
+
+	return vs(Y, indep(Data));
+}
+defun FP_TDRTimeSweepFixDCFromTS(TimeData, FreqData, DataDC, Mode)
+{
+	decl Time = FP_TDRindep(TimeData);
+	decl M = sweep_size(TimeData); M = M(1);
+	decl N = FP_TDRsweep_size(TimeData);
+	decl NFreq = FP_TDRsweep_size(FreqData);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j,DC;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+		{
+			if(Mode == 1)
+			{
+				DC = -1.0*sum(real(TimeData[i][j][::]));
+				Y[i][j][::] = TimeData[i][j][::] + DC / N;
+			}
+			else
+			{
+				DC =  real(DataDC[i][j]);
+				Y[i][j][::] = TimeData[i][j][::] - sum(real(TimeData[i][j][::]))/N  + DC/N;
+			}
+		}
+
+	return vs(Y,Time);
+}
+// Copyright Keysight Technologies 2015 - 2015  
+defun FP_TDRFindDC(f0, f1, g0, g1)
+{
+	decl m = real(g1 - g0) / (f1 - f0);
+	return real(g0) - m*f0;
+}
+
+defun FP_TDRConcatenateArrays(aList)
+{
+	decl K = listlen(aList);
+	decl N = 0;
+	decl N_prev;
+	decl i;
+
+	// FIND TOTAL SWEEP SIZE
+	for(i=0;i<K;i++)
+		N = N + sweep_size(aList[i]);
+
+	decl rArray = {1::N}*0;
+
+	// CONCATENATE ARRAYS
+	N_prev = 1;
+	for(i=0;i<K;i++)
+	{
+		N = sweep_size(aList[i]);
+		rArray[N_prev::N_prev+N-1] = aList[i];
+		N_prev = N_prev+N;
+	}
+
+	return rArray;
+}
+
+defun FP_TDRFreq1Dto3D(Data)
+{
+	decl N = sweep_size(Data);
+	decl M = size(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1); 
+	decl I = ones(1, N);
+	decl i,j;
+
+	// COMPSENATE FOR 1-PORT
+	if(size(M) == 1)
+	{
+		// DEP VALUES
+		for(i=0;i<1;i++)
+			for(j=0;j<1;j++)
+				Y[i,j,::] = Data(i+1,j+1)[::];
+	}
+	else
+	{
+		// DEP VALUES
+		for(i=0;i<M(1);i++)
+			for(j=0;j<M(1);j++)
+				Y[i,j,::] = Data(i+1,j+1)[::];
+	}
+
+	// INDEP VALUES
+	decl X = indep(Data);
+
+	return vs(Y,X);
+}
+defun FP_TDRTimeScalarTo3D(Imp11, Imp12, Imp21, Imp22)
+{
+	decl Y = create(3, "Complex", "", "", 1, 1); 
+	Y[0,0,::] = Imp11[::];
+	Y[0,1,::] = Imp12[::];
+	Y[1,0,::] = Imp21[::];
+	Y[1,1,::] = Imp22[::];
+
+	// INDEP VALUES
+	decl X = indep(Imp11);
+
+	return vs(Y,X);
+}
+defun FP_TDRFreq3Dto3D(Data)
+{
+	decl Indep = indep(Data); Indep = Indep[0][0][::];
+	decl M = sweep_size(Data); M = M(1);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Y[i][j][::] = Data[i][j][::];
+
+	return vs(Y,Indep);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------//
+//	FP_TDRRandom()
+// 
+//	DESCRIPTION:	Returns a random number of zero mean and unit variance
+//
+//	INPUT VARIABLES:
+//		None
+//		
+//	RETURN VARIABLES:
+//		FP_TDRSeed:		(real) The global random number
+//
+//	REFERENCES:
+//		Numerical Recipes in C: Press, Teukolsky, Vetterling, Flannery, p. 276 (eq. 7.1.1) and p. 285 (table)
+//		Note: AEL has some overflow issues so constant tweaking was required.
+//--------------------------------------------------------------------------------------------------------------------------//
+defun FP_TDRRandom(Seed)
+{
+	decl FP_TDRSeed = FP_TDRMod(int(69069*Seed + 1),int(2.0**20));
+	return FP_TDRSeed / 2.0**20;
+}
+//--------------------------------------------------------------------------------------------------------------------------//
+//	FP_TDRRandomArray()
+// 
+//	DESCRIPTION:	Returns a randomized array of zero mean and unit variance given a previously random array
+//
+//	INPUT VARIABLES:
+//		nArray:	(array)	
+//		
+//	RETURN VARIABLES:
+//		RandomArray:	(array) A further random array
+//
+//	REFERENCES:
+//		Numerical Recipes in C: Press, Teukolsky, Vetterling, Flannery, p. 276 (eq. 7.1.1) and p. 285 (table)
+//		Note: AEL has some overflow issues so constant tweaking was required.
+//--------------------------------------------------------------------------------------------------------------------------//
+defun FP_TDRRandomArray(nArray, Seed)
+{
+//	decl Seed = 33;//FP_TDRRandom(1);
+	decl RandomArray = FP_TDRMod((69069.0*(nArray*Seed) + 1),(2.0**20));
+	return RandomArray / 2.0**20;
+}
+
+defun FP_TDRMod(x,y)
+{
+	if(y == 0)
+		return x;
+
+	decl n = floor(x/y);
+	return x - n*y;
+}
+
+defun FP_TDRsweep_size(Data)
+{
+	decl N = sweep_size(Data); N = (size(N) == 3) ? N(3) : N;
+
+	return N;
+}
+
+defun FP_TDRsize(Data)
+{
+	decl N = sweep_size(Data); N = (size(N) == 3) ? N(1) : 1;
+
+	return N;
+}
+
+defun FP_TDRindep(Data)
+{
+	decl ind = indep(Data); ind = (size(sweep_size(Data)) == 1) ? ind[::] : ind[0][0][::];
+
+	return ind;
+}
+
+defun FP_TDRLowFreq(Data)
+{
+	decl DC = (size(sweep_size(Data)) == 1) ? Data[0] : Data[::][::][0];
+
+	return DC;
+}
+
+defun FP_interp3d(Data, fout)
+{
+	decl N = FP_TDRsweep_size(Data);// N = N(3);
+	decl M = FP_TDRsize(Data);// M = M(1);
+
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	if(M == 1)
+		Y[0][0][::] = interpolate("linear", Data[0][0][::], 1, fout);
+	else
+	{
+		for(i=0;i<M;i++)
+			for(j=0;j<M;j++)
+				Y[i][j][::] = interpolate("linear", Data[i][j][::], 1, fout);
+	}
+
+	return vs(Y, fout);
+}
+
+defun FP_SubtractDC3d(Data, DC)
+{
+	decl N = FP_TDRsweep_size(Data);
+	decl M = FP_TDRsize(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Y[i][j][::] = Data[i][j][::] - DC[i][j][0];
+
+	return Y;
+}
+
+defun FP_LaPlaceNorm3d(f)
+{
+	decl N = FP_TDRsweep_size(f);
+	decl L = create(1, "Complex", "", "", 1, 1);
+	L = 1.0/(sqrt(-1)*2*pi*f[1::N-1]);
+
+	return L;
+}
+
+defun FP_RampResponse3d(YFreq,YTime,DataDC)
+{
+	decl M = FP_TDRsize(YFreq);
+	decl fn = FP_TDRsweep_size(YFreq);
+	decl tn = FP_TDRsweep_size(YTime);
+	decl Ramp = create(3, "Complex", "", "", 1, 1);
+	decl freq = indep(YFreq); freq = freq[0][0][::];
+	decl fstart = max(freq) / (fn - 1);
+	decl time = indep(YTime); time = time[0][0][::];
+	decl fdc, tgdc;
+    decl i,j;
+    
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+		{
+			fdc = real(DataDC[i][j]);
+			tgdc = 0;//-1.0*phase(YFreq[i][j][0])/360/fstart;
+			Ramp[i][j][::] = .25*fdc + fdc*fstart*(time - tgdc);
+		}
+
+	return Ramp;
+}
+
+defun FP_TDRdiff(Data)
+{
+	decl IndepData = FP_TDRindep(Data);
+	decl M = FP_TDRsize(Data);
+	decl N = FP_TDRsweep_size(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	if(!N)
+		return Data;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Y[i][j][::] = Data[i][j][::] - [0, Data[i][j][0::N-2]];
+
+	return vs(Y,IndepData);
+}
+
+defun FP_TDRConjugateSymmetric(Data)
+{
+	decl freq = FP_TDRindep(Data);
+	decl M = FP_TDRsize(Data);
+	decl fn = FP_TDRsweep_size(Data);
+	decl tn = 2*fn-1;
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl fstep = (freq[fn-1] - freq[0]) / (fn-1);
+	decl i,j;
+
+	for(i=0;i<M;i++)
+		for(j=0;j<M;j++)
+			Y[i][j][::] = [Data[i][j][::], indep(sort(vs([0::fn-2]*fstep, conj(Data[i][j][0::fn-2])), "descending"))];
+
+	return vs(Y,[0::tn-1]*fstep);
+}
+
+defun FP_DatasetWindowsToUnix(string)
+{
+	decl i, ReturnString = "", CharPtr;
+
+	for(i=0;i<strlen(string);i++)
+	{
+		CharPtr = midstr(string, i, i);
+		if(CharPtr == "\\") CharPtr = "/";
+		ReturnString = strcat(ReturnString, CharPtr);
+	}
+
+	return ReturnString;
+}
+// Copyright Keysight Technologies 2015 - 2018
+/*BEGIN_DOC
+FUN_NAME: FrontPanel_TDRWindow()
+FUN_DESCRIPTION:  Returns windowed S parameter data
+RETURNED_VALUE: Complex Array
+CATEGORY: S-Parameter, Signal Processing
+SYNTAX: y = FrontPanel_TDRWindow(Data, Flag, Type, ParmArray) 
+EXAMPLE: WindowOut = FrontPanel_TDRWindow(FP_TDRFreq1Dto3D(S), TRUE, 2, list(0, .42)) 
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION: multi-dimensional frequency transfer function dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex Array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Flag
+  ARG_DESCRIPTION: boolean flag if set FALSE will return the original waveform
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:1]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Type
+  ARG_DESCRIPTION: specifies the type of window dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:6]
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: ParmArray
+  ARG_DESCRIPTION: list containing window parameter values: list(TimeMode, Parm1, Parm2)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE:  Real Array
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif The multi-dimensional S parameter array can be created with FP_TDRFreq1Dto3D(S).
+dagger.gif dagger.gif The window types are enumerated by the following:
+0 = Rectangular
+1 = Hanning
+2 = Hamming
+3 = Gaussian
+4 = Kaiser
+5 = Blackman
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/tdr_fun.ael
+  SEE ALSO: FrontPanel_TDRGate(), FrontPanel_TDRIFW(), FrontPanel_TDRPortExt(), FrontPanel_TDRSmooth(), FrontPanel_TDRTimeSweep(), FrontPanel_TDRWindow(), FrontPanel_TDRFreqMode(), FrontPanel_TDRFreqSweep(), FrontPanel_TDRPeeling(), FrontPanel_TDRTimeScale(), FrontPanel_TDRExtrapolate(), FrontPanel_TDRPortMap(), FrontPanel_TDRFreqScale()
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: AJ Design Group
+  DATE: Unknown
+  VERSION_CREATED: ADS 2008
+END_DOC*/
+defun FrontPanel_TDRWindow(Data, Flag, Type, ParmArray)
+{
+	if(!Flag)
+		return Data;
+
+	decl L = FP_TDRsize(Data);
+	decl Y = create(3, "Complex", "", "", 1, 1);
+	decl i,j;
+
+	for(i=0;i<L;i++)
+		for(j=0;j<L;j++)
+			Y[i][j][::] = Data[i][j][::];
+
+	if(Type == 0) // Rectangular Window
+		return FP_TDRWindow_RECT(Data, ParmArray);
+	if(Type == 1) // Hanning Window
+		return FP_TDRWindow_HAN(Data, ParmArray);
+	if(Type == 2) // Hamming Window
+		return FP_TDRWindow_HAM(Data, ParmArray);
+	if(Type == 3) // Gaussian Window
+		return FP_TDRWindow_GAUSS(Data, ParmArray);
+	if(Type == 4) // Kaiser Window
+		return FP_TDRWindow_KAISER(Data, ParmArray);
+	if(Type == 5) // Blackman Window
+		return FP_TDRWindow_BLACK(Data, ParmArray);
+	if(Type == 6) // Ideal Window
+		return FP_TDRWindow_IDEAL(Data, ParmArray);
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_RECT()
+//
+//	DESCRIPTION:
+//		Computes a rect filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Width:	(int)	Rect width
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRWindow_RECT(nArray, ParmArray)
+{
+	decl N = FP_TDRsweep_size(nArray);
+	decl rectArray = FP_TDRWindow_RectArray(N, ParmArray);
+	decl rArray = nArray.*rectArray;
+
+	return rArray;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_HAN()
+//
+//	DESCRIPTION:
+//		Computes a hanning filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Width:	(int)	Han width
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRWindow_HAN(nArray, ParmArray)
+{
+	decl N = FP_TDRsweep_size(nArray);
+	decl hanArray = FP_TDRWindow_HanningArray(N, ParmArray);
+	decl rArray = nArray.*hanArray;
+
+	return rArray;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_HAM()
+//
+//	DESCRIPTION:
+//		Computes a hamming filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Width:	(int)	Ham width
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRWindow_HAM(nArray, ParmArray)
+{
+	decl N = FP_TDRsweep_size(nArray);
+	decl hamArray = FP_TDRWindow_HammingArray(N, ParmArray);
+	decl rArray = nArray.*hamArray;
+
+	return rArray;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_GAUSS()
+//
+//	DESCRIPTION:
+//		Computes a Gaussian filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Width:	(int)	Ham width
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRWindow_GAUSS(nArray, ParmArray)
+{
+	decl N = FP_TDRsweep_size(nArray);
+	decl hamArray = FP_TDRWindow_GaussianArray(N, ParmArray);
+	decl rArray = nArray.*hamArray;
+
+	return rArray;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_KAISER()
+//
+//	DESCRIPTION:
+//		Computes a KAISER filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Width:	(int)	Ham width
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRWindow_KAISER(nArray, ParmArray)
+{
+	decl N = FP_TDRsweep_size(nArray);
+	decl hamArray = FP_TDRWindow_KaiserArray(N, ParmArray);
+	decl rArray = nArray.*hamArray;
+
+	return rArray;
+}
+
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_BLACK()
+//
+//	DESCRIPTION:
+//		Computes a blackman filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Width:	(int)	Black width
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRWindow_BLACK(nArray, ParmArray)
+{
+	decl N = FP_TDRsweep_size(nArray);
+	decl blackArray = FP_TDRWindow_BlackmanArray(N, ParmArray);
+	decl rArray = nArray.*blackArray;
+
+	return rArray;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_IDEAL()
+//
+//	DESCRIPTION:
+//		Computes an ideal filter
+//
+//	INPUT VARIABLES
+//		nArray:	(array)	Array of numbers
+//		Start:	(int)	IDEAL start
+//		Width:	(int)	IDEAL width
+//
+//	RETURN VALUE
+//		rArray:	(array)	Filtered array
+//----------------------------------------------
+defun FP_TDRWindow_IDEAL(nArray, ParmArray)
+{
+	decl Start = ParmArray[0];
+	decl Width = ParmArray[1];
+	decl TimeMode = ParmArray[2];
+	decl idealArray = FP_TDRWindow_IdealArray(FP_TDRsweep_size(nArray), Start, Width, TimeMode);
+	decl rArray = nArray.*idealArray;
+
+	return rArray;
+}
+
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_RectArray()
+//
+//	DESCRIPTION:
+//		Creates the response for a rectangular filter
+//
+//	INPUT VARIABLES
+//		Size:	(int)	Size of array
+//		N:		(int)	Size of filter in array
+//
+//	RETURN VALUE
+//		w:	(array)	Filter array
+//----------------------------------------------
+defun FP_TDRWindow_RectArray(N, ParmArray)
+{
+	decl TimeMode = ParmArray[0];
+	decl Width = ParmArray[1];
+	decl M = N;
+	decl w;
+	
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+	{
+		M = 2*N;
+		Width = 2*Width;
+	}
+	
+	w = [1::M]*0;
+	w[ceil((M*1.0+1)/2-Width*1.0/2)-1::floor((M*1.0+1)/2+Width*1.0/2)-1] = 1;
+
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		w = w[N::M-1];
+
+	return w;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_HanningArray()
+//
+//	DESCRIPTION:
+//		Creates the response for a hanning filter
+//
+//	INPUT VARIABLES
+//		Size:	(int)	Size of array
+//		N:		(int)	Size of filter in array
+//
+//	RETURN VALUE
+//		w:	(array)	Filter array
+//----------------------------------------------
+defun FP_TDRWindow_HanningArray(N, ParmArray)
+{
+	decl TimeMode = ParmArray[0];
+	decl a0 = ParmArray[1];
+	decl M = N;
+	decl n, w;
+	
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		M = 2*N;
+
+	n = [0::M-1];
+	w = a0 - (1 - a0)*cos(2*PI*n / (M-1));
+	
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		w = w[N::M-1];
+
+	return w;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_HammingArray()
+//
+//	DESCRIPTION:
+//		Creates the response for a hamming filter
+//
+//	INPUT VARIABLES
+//		Size:	(int)	Size of array
+//		N:		(int)	Size of filter in array
+//
+//	RETURN VALUE
+//		w:	(array)	Filter array
+//----------------------------------------------
+defun FP_TDRWindow_HammingArray(N, ParmArray)
+{
+	decl TimeMode = ParmArray[0];
+	decl a0 = ParmArray[1];
+	decl M = N;
+	decl n, w;
+	
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		M = 2*N;
+
+	n = [0::M-1];
+	w = a0 - (1 - a0)*cos(2*PI*n / (M-1));
+	
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		w = w[N::M-1];
+
+	return w;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_GaussianArray()
+//
+//	DESCRIPTION:
+//		Creates the response for a Gaussian filter
+//
+//	INPUT VARIABLES
+//		Size:	(int)	Size of array
+//		N:		(int)	Size of filter in array
+//
+//	RETURN VALUE
+//		w:	(array)	Filter array
+//----------------------------------------------
+defun FP_TDRWindow_GaussianArray(N, ParmArray)
+{
+	decl TimeMode = ParmArray[0];
+	decl sigma = ParmArray[1];
+	decl M = N;
+	decl n, w;
+	
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		M = 2*N;
+
+	n = [0::M-1];
+	w = exp(-.5*((n - (M-1)/2)/(sigma*(M-1)/2)).**2);
+	
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		w = w[N::M-1];
+
+	return w;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_KaiserArray()
+//
+//	DESCRIPTION:
+//		Creates the response for a Kaiser filter
+//
+//	INPUT VARIABLES
+//		Size:	(int)	Size of array
+//		N:		(int)	Size of filter in array
+//
+//	RETURN VALUE
+//		w:	(array)	Filter array
+//----------------------------------------------
+defun FP_TDRWindow_KaiserArray(N, ParmArray)
+{
+	decl TimeMode = ParmArray[0];
+	decl alpha = ParmArray[1];
+	decl M = N;
+	decl n, w;
+	
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		M = 2*N;
+
+	n = [0::M-1];
+	w = FP_TDRZeroOrder_ModBess_FirstKind(PI*alpha*sqrt(1 - (2*n / (M-1) - 1).**2))./FP_TDRZeroOrder_ModBess_FirstKind(PI*alpha);
+
+
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		w = w[N::M-1];
+
+	return w;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_BlackmanArray()
+//
+//	DESCRIPTION:
+//		Creates the response for a blackman filter
+//
+//	INPUT VARIABLES
+//		Size:	(int)	Size of array
+//		N:		(int)	Size of filter in array
+//
+//	RETURN VALUE
+//		w:	(array)	Filter array
+//----------------------------------------------
+defun FP_TDRWindow_BlackmanArray(N, ParmArray)
+{
+	decl TimeMode = ParmArray[0];
+	decl alpha0 = ParmArray[1];
+	decl alpha1 = ParmArray[2];
+	decl alpha2 = 1.0 - alpha0 - alpha1;
+	decl M = N;
+	decl n, w;
+	
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		M = 2*N;
+
+	n = [0::M-1];
+	w = alpha0 - alpha1*cos(2*PI*n / (M-1)) + alpha2*cos(4*PI*n / (M - 1));
+
+
+	if(TimeMode == 0 || TimeMode == 1) // Lowpass Mode
+		w = w[N::M-1];
+
+	return w;
+}
+//--------------------------------------------------------------------------//
+//	FP_TDRWindow_RectArray()
+//
+//	DESCRIPTION:
+//		Creates the response for an ideal filter
+//
+//	INPUT VARIABLES
+//		ArraySize:	(int)	Size of array
+//		Start:		(int)	IDEAL start
+//		Width:		(int)	IDEAL width
+//
+//	RETURN VALUE
+//		w:	(array)	Filter array
+//----------------------------------------------
+defun FP_TDRWindow_IdealArray(ArraySize, Start, Width, TimeMode)
+{
+	decl w = [1::ArraySize]*0;
+	decl Stop;
+
+	Stop = ((Start + Width) > (ArraySize-1)) ? (ArraySize-1) : Start+Width;
+
+	w[Start::Stop] = 1;
+
+	return w;
+}
+
+defun FP_TDRZeroOrder_ModBess_FirstKind(x)
+{
+	decl N = FP_TDRsweep_size(x);
+	decl DS = x*0.0 + 1.0;
+	decl D = 0.0;
+	decl S = x*0.0;
+	decl eps = 10**(-12);
+
+	while(max(DS) > eps)
+	{
+		D = D + 2.0;
+		DS = DS.*(x.**2) / (D**2);
+		S = S + DS;
+	}
+
+	return S + 1;
+}
+
+defun FP_TDRArrayMax(x)
+{
+	decl N = array_size(x);
+	decl i, temp = x[0];
+
+	for(i=0;i<N;i++)
+		if(x[i] > temp)
+			temp = x[i];
+
+	return temp;
+}

@@ -1,0 +1,435 @@
+// Copyright Keysight Technologies 2007 - 2014  
+// @(#) $Source: /cvs/sr/src/genfun/source/JitAnalysis.ael,v $ $Revision: 1.9 $ $Date: 2011/08/23 21:25:20 $
+// Copyright Keysight Technologies 2007 - 2014  
+//**********************************************************************
+// This file has functions to support the Jitter Analysis Feature.
+
+
+defun estimate_bit_period(
+  vJitDataSig,  //Jittered data
+  dBitPeriod   //Bit Period e.g. 400 ps
+)
+{
+ //fprintf(stderr,"DEBUG estimate_bit_period begins   at  : %s ", date_time() );
+  decl btein = 0.0 ;
+  if( dBitPeriod != NULL )
+	btein = dBitPeriod ;
+  decl bpestimate = JAC_calculate_bit_period( vJitDataSig , btein ) ;
+ //fprintf(stderr,"DEBUG estimate_bit_period Ends     at  : %s ", date_time() );
+  return bpestimate ;
+}
+//**********************************************************************
+/*BEGIN_DOC
+FUN_NAME: jitter_separation()
+FUN_DESCRIPTION: This function does a jitter analysis and separates the jitter components.
+RETURNED_VALUE: Real
+CATEGORY: Transient, Ptolemy
+SYNTAX: JitRes = jitter_separation(vJitterSig, vRefClkSig, Nbpp, BitPeriod, BERLevel, DataType, Pattern, Nbps, NumSeq, RJBWMode, EdgeType, InterpType, MeasType)
+EXAMPLE: The following example does a jitter separation of a jittered signal that uses a PRBS10 source:
+
+JitRes = jitter_separation(vJitSig, vRefClk, 1023, 50 ps, 1e-12, 1,, 5000, 95,,,4)
+The returned value JitRes is a list of 18 different measurements.
+TJpp = JitRes[0]
+RJrms = JitRes[1]
+DJdd = JitRes[2]
+PJdd = JitRes[3]
+PJrms = JitRes[4]
+ISIpp = JitRes[5]
+DCD = JitRes[6]
+DDJpp = JitRes[7]
+
+TJHist = JitRes[8]
+RJPJHist = JitRes[9]
+DDJHist = JitRes[10]
+DDJFHist = JitRes[11]
+DDJRHist = JitRes[12]
+
+DataBath = JitRes[13]
+MdlBath = JitRes[14]
+DataQBath = JitRes[15]
+MdlQBath = JitRes[16]
+
+DDJvsBit = JitRes[17]
+RJPJSpec = JitRes[18]
+
+ARGUMENT
+  ARG_NAME: vJitterSig
+  ARG_DESCRIPTION: time-domain based jittered signal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vRefClk
+  ARG_DESCRIPTION: time-domain based reference clock signal or bit period
+  ARG_DEFAULT: None
+  ARG_RANGE: (0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Nbpp
+  ARG_DESCRIPTION: number of bits per pattern
+  ARG_DEFAULT: None
+  ARG_RANGE: 2 to 2^17
+  ARG_TYPE: integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: BitPeriod
+  ARG_DESCRIPTION: bit period
+  ARG_DEFAULT: None
+  ARG_RANGE: 0 < BitPeriod < 1e-3
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: BERLevel
+  ARG_DESCRIPTION: BER level at which to measure TJ
+  ARG_DEFAULT: 1e-12
+  ARG_RANGE: 1e-40 < BERLevel < 1e-1
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: DataType
+  ARG_DESCRIPTION: data-type
+  ARG_DEFAULT: 1
+  ARG_RANGE: 1 (Periodic), 2(Random) dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Pattern
+  ARG_DESCRIPTION: bit pattern vector or bit pattern file-name
+  ARG_DEFAULT: None
+  ARG_RANGE: 0 and 1
+  ARG_TYPE: Array, String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Nbps
+  ARG_DESCRIPTION: number of bits per sequence
+  ARG_DEFAULT: dagger.gif dagger.gif
+  ARG_RANGE: [2:Inf]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: NumSeq
+  ARG_DESCRIPTION: number of sequences of data to be used in jitter analysis
+  ARG_DEFAULT: dagger.gif dagger.gif dagger.gif
+  ARG_RANGE: [1:Inf]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: RJBWMode
+  ARG_DESCRIPTION: RJ Bandwidth Mode
+  ARG_DEFAULT: 1
+  ARG_RANGE: 1(Narrow or Pink), 2(Wide or White)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: EdgeType
+  ARG_DESCRIPTION: Data Edge Type
+  ARG_DEFAULT: 3
+  ARG_RANGE: 1(Rising), 2(Falling), 3(Both)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: InterType
+  ARG_DESCRIPTION: Interpolation type for holes in TIE for jitter spectrum
+  ARG_DEFAULT: 1
+  ARG_RANGE: 1(None), 2(Linear)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: MeasType
+  ARG_DESCRIPTION: Specifies the jitter components and graphs to calculate.
+  ARG_DEFAULT: 3
+  ARG_RANGE: dagger.gif dagger.gif dagger.gif dagger.gif 
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Note that Random data type is not supported in this release.
+dagger.gif dagger.gif The default for Nbps is 2 * minimum number of whole patterns per sequence * Nbpp.
+dagger.gif dagger.gif dagger.gif NumSeq defaults is calculated as number of TIE points/Nbps.
+dagger.gif dagger.gif dagger.gif dagger.gif MeasType can be one of the following:
+1 Calculate TJpp,RJrms,DJdd
+2 Returns TJpp,RJrms,DJdd,PJdd,PJrms,ISIpp,DCD,DDJpp.
+3 In addition to measurements in type 2, calculate TJ,RJPJ,DDJ,DDJR,DDJF Histograms & Bathtub Plot & DDJ vs Bit
+4 In addition to measurements in type 3, calculate RJPJ spectrum. WARNING: Takes a long-time
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/JitAnalysis.ael
+SEE ALSO: jitter_bathtub()
+NOTES: See Documentation.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: March.2007
+VERSION_CREATED: ADS 2006 UR2
+END_DOC*/
+
+//"One-for-All" Function which does a jitter analysis for TIE data stored
+//in a text file.  The results are then obtained from the Jitter Analysis
+//object through individual interface functions and returned as a list
+//of DS variables.
+defun jitter_separation(
+  vJitDataSig,  //Jittered data
+  vRefClkSig,   //Reference clock signal or bit-period
+  iNbpp,        //Number of bits per pattern
+  dBitPeriod,   //Bit Period in ps e.g. 400
+  doErrRate,    //BER level at which to calculate TJ, RJpp       //Optional
+  ioDataType,   //Data type - 1 (Periodic), 2 (Random),          //Optional
+  vPattern,     //Pattern e.g. [1 0 1 0]                         //Optional
+  iNbps,        //# bits to be acquired per sequence             //Optional
+  iNumAcqs,     //# of acqs # if time iNbps sequence is used     //Optional
+  ioRJBWMode,   //RJ Bandwidth Mode - 1(Pink), 2(White)          //Optional
+  ioEdgeType,   //Edge Type: 1 (Rising), 2(Falling), 3(Both)     //Optional
+  ioInterpType, //Interpolate holes in TIE for jitter spectrum
+	        //1(None), 2(Linear)                             //Optional
+  ioCalcLevel,   //Jitter Components to calculate                 //Optional
+	        //1(RJ DJ TJ): Calculate TJpp,RJrms,DJdd
+		//2(Add PJ DDJ): TJpp,RJrms,DJdd,PJdd,PJrms,ISIpp,DCD,DDJpp
+		//3(Add Histograms, Bathtub, DDJ vs Bit): In addition to
+                  // measurements in mode 2, calculate TJ,RJPJ,DDJ,DDJR,DDJF
+                  // Histograms & Bathtub Plot & DDJ vs Bit
+		//4(Add full RJPJ spectrum): In addition to measurements in mode
+		  //  3, calculate RJPJ spectrum. WARNING: Takes a long-time
+	ioISIFilterLead,
+	ioISIFilterLag
+)
+{
+  decl dErrRate = if (doErrRate == NULL) then 1e-12 else doErrRate;
+  decl iDataType = if (ioDataType == NULL) then 1 else ioDataType;
+  decl iRJBWMode = if (ioRJBWMode == NULL) then 1 else ioRJBWMode;
+  decl iEdgeType = if (ioEdgeType == NULL) then 3 else ioEdgeType;
+  decl iInterpType = if (ioInterpType == NULL) then 2 else ioInterpType;
+  decl iCalcLevel = if (ioCalcLevel == NULL) then 3 else ioCalcLevel;
+  decl iISIFilterLead = if (ioISIFilterLead == NULL) then -2 else ioISIFilterLead ;
+  decl iISIFilterLag  = if (ioISIFilterLag  == NULL) then 5  else ioISIFilterLag  ;
+  //Perform the Jitter Analysis
+  decl JitMeasO = JAC_analyze_jitter(
+                    vJitDataSig, vRefClkSig, iNbpp, dBitPeriod, dErrRate,
+                    iDataType, vPattern, iNbps, iNumAcqs, iRJBWMode, iEdgeType,
+                    iInterpType, iCalcLevel,iISIFilterLead, iISIFilterLag);
+
+  return(jitter_process_results(JitMeasO, iCalcLevel, iNbpp));
+} // defun jitter_separation()
+
+//**********************************************************************
+defun jitter_process_results(JitMeasO, iCalcLevel, iNbpp)
+{
+  if (JitMeasO == NULL)
+    return NULL;
+
+  //Now get each measurement from JitMeasO, by calling the C function
+  //Based on Calc Level, format results to return
+
+  //CalcLevel = 1: (RJ DJ TJ): Calculate TJpp,RJrms,DJdd
+  decl dTJpp = JAC_get_result_TJpp(JitMeasO);
+  decl dRJrms = JAC_get_result_RJrms(JitMeasO);
+  decl dDJdd = JAC_get_result_DJdd(JitMeasO);
+  decl lResults = list(dTJpp, dRJrms, dDJdd);
+//fputs(stderr, fmt_tokens(list("lResults=", identify_value(lResults))));
+  if (iCalcLevel < 2) {
+    JAC_completed(JitMeasO);
+    return lResults;
+  } //if
+
+  //CalcLevel = 2: Calculate TJpp,RJrms,DJdd,PJdd,PJrms,ISIpp,DCD,DDJpp
+  decl dPJdd = JAC_get_result_PJdd(JitMeasO);
+  decl dPJrms = JAC_get_result_PJrms(JitMeasO);
+  decl dISIpp = JAC_get_result_ISIpp(JitMeasO);
+  decl dDCD = JAC_get_result_DCD(JitMeasO);
+  decl dDDJpp = JAC_get_result_DDJpp(JitMeasO);
+  lResults = list(dTJpp, dRJrms, dDJdd, dPJdd, dPJrms, dISIpp, dDCD, dDDJpp);
+//fputs(stderr, fmt_tokens(list("lResults=", identify_value(lResults))));
+  if (iCalcLevel < 3) {
+    JAC_completed(JitMeasO);
+    return lResults;
+  } //if
+
+decl TempIn = 1;
+
+  //CalcLevel = 3: TJ,RJPJ,DDJ,DDJR,DDJF Histograms & Bathtub & DDJvsBits
+  decl TJHist = JAC_get_Histogram(JitMeasO, TempIn, 1);
+  decl RJPJHist = JAC_get_Histogram(JitMeasO, TempIn, 2);
+  decl DDJHist = JAC_get_Histogram(JitMeasO, TempIn, 3);
+  decl DDJFHist = JAC_get_Histogram(JitMeasO, TempIn, 4);
+  decl DDJRHist = JAC_get_Histogram(JitMeasO, TempIn, 5);
+
+  //Data Bathtub
+  decl DataBathTubO = JAC_get_Bathtub(JitMeasO, TempIn, 1);
+
+  //Model Bathtub
+  decl MdlBathTubO = JAC_get_Bathtub(JitMeasO, TempIn, 2);
+
+  //Inverted Data or Q Bathtub
+  decl InvDataBathTubO = JAC_get_Bathtub(JitMeasO, TempIn, 3);
+
+  //Inverted Modeled or Q Bathtub
+  decl IndMdlBathTubO = JAC_get_Bathtub(JitMeasO, TempIn, 4);
+
+  decl DDJvsBit = JAC_get_DDJvsBit(JitMeasO, TempIn, 1, iNbpp);
+  lResults = list(dTJpp, dRJrms, dDJdd, dPJdd, dPJrms, dISIpp, dDCD, dDDJpp,
+                  TJHist, RJPJHist, DDJHist, DDJFHist, DDJRHist,
+                  DataBathTubO, MdlBathTubO, InvDataBathTubO, IndMdlBathTubO,
+                  DDJvsBit);
+  if (iCalcLevel < 4) {
+    JAC_completed(JitMeasO);
+    return lResults;
+  } //if
+
+  //CalcLevel = 4: Calculate RJPJ spectrum
+  decl RJPJSpec = JAC_get_RJPJSpectrum(JitMeasO, TempIn, 1);
+  lResults = list(dTJpp, dRJrms, dDJdd, dPJdd, dPJrms, dISIpp, dDCD, dDDJpp,
+                  TJHist, RJPJHist, DDJHist, DDJFHist, DDJRHist,
+                  DataBathTubO, MdlBathTubO, InvDataBathTubO, IndMdlBathTubO,
+                  DDJvsBit,
+                  RJPJSpec);
+  JAC_completed(JitMeasO);
+  return lResults;
+} // defun jitter_process_results()
+
+//**********************************************************************
+/*BEGIN_DOC
+FUN_NAME: bathtub()
+FUN_DESCRIPTION: This measurement returns the data based and extrapolated bathtub curves and Q curves.
+RETURNED_VALUE: Real
+CATEGORY: Transient, Ptolemy
+SYNTAX: BathTub = bathtub(vJitterSig, vRefClkSig, Nbpp, BitPeriod, BERLevel, DataType, Pattern, Nbps, NumSeq, RJBWMode, EdgeType)
+EXAMPLE: The following example measures the bathtub of a jittered signal that uses a PRBS10 source:
+
+BathTub = bathtub(vJitSig, vRefClkSig, 1023, 50 ps, 1e-12, 1,, 5000, 95,,)
+The returned value BathTub is a list of four measurements - data based BER curve, extrapolated BER curve, data based Q BER curve and extrapolated Q BER curve.
+DataBath = BathTub[0]
+MdlBath = BathTub[1]
+DataQBath = BathTub[2]
+MdlQBath = BathTub[3]
+
+ARGUMENT
+  ARG_NAME: vJitterSig
+  ARG_DESCRIPTION: time-domain based jittered signal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vRefClkSig
+  ARG_DESCRIPTION: time-domain based reference clock signal or bit-period
+  ARG_DEFAULT: None
+  ARG_RANGE: (0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Nbpp
+  ARG_DESCRIPTION: number of bits per pattern
+  ARG_DEFAULT: None
+  ARG_RANGE: 2 to 2^17
+  ARG_TYPE: integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: BitPeriod
+  ARG_DESCRIPTION: bit period
+  ARG_DEFAULT: None
+  ARG_RANGE: 0 < BitPeriod < 1e-3
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: BERLevel
+  ARG_DESCRIPTION: BER level at which to measure TJ
+  ARG_DEFAULT: 1e-12
+  ARG_RANGE: 1e-40 < BERLevel < 1e-1
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: DataType
+  ARG_DESCRIPTION: data-type
+  ARG_DEFAULT: 1
+  ARG_RANGE: 1 (Periodic), 2(Random) dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Pattern
+  ARG_DESCRIPTION: bit pattern vector or bit pattern file-name
+  ARG_DEFAULT: None
+  ARG_RANGE: 0 and 1
+  ARG_TYPE: Array, String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Nbps
+  ARG_DESCRIPTION: number of bits per sequence
+  ARG_DEFAULT: dagger.gif dagger.gif
+  ARG_RANGE: [2:Inf]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: NumSeq
+  ARG_DESCRIPTION: number of sequences of data to be used in creating the bathtub
+  ARG_DEFAULT: dagger.gif dagger.gif dagger.gif
+  ARG_RANGE: [1:Inf]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: RJBWMode
+  ARG_DESCRIPTION: RJ Bandwidth Mode
+  ARG_DEFAULT: 1
+  ARG_RANGE: 1(Narrow), 2(Wide)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: EdgeType
+  ARG_DESCRIPTION: Data Edge Type
+  ARG_DEFAULT: 3
+  ARG_RANGE: 1(Rising), 2(Falling), 3(Both)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+
+FOOT_NOTES: dagger.gif Note that Random data type is not supported in this release.
+dagger.gif dagger.gif The default for Nbps is 2 * minimum number of whole patterns per sequence * Nbpp.
+dagger.gif dagger.gif dagger.gif NumSeq defaults is calculated as number of TIE points/Nbps.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/JitAnalysis.ael
+SEE ALSO: jitter_separation()
+NOTES: See Documentation.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: March.2007
+VERSION_CREATED: ADS 2006 UR2
+END_DOC*/
+
+//Function returns the bathtub curve.
+defun bathtub(
+  vJitDataSig,  //Jittered data
+  vRefClkSig,   //Reference clock signal
+  iNbpp,        //Number of bits per pattern
+  dBitPeriod,   //Bit Period in ps e.g. 400
+  doErrRate,    //BER level at which to calculate TJ, RJpp       //Optional
+  ioDataType,   //Data type - 1 (Periodic), 2 (Random),          //Optional
+  vPattern,     //Pattern e.g. [1 0 1 0]                         //Optional
+  iNbps,        //# bits to be acquired per sequence             //Optional
+  iNumAcqs,     //# of acqs # if time iNbps sequence is used     //Optional
+  ioRJBWMode,   //RJ Bandwidth Mode - 1(Pink), 2(White)          //Optional
+  ioEdgeType    //Edge Type: 1 (Rising), 2(Falling), 3(Both)     //Optional
+)
+{
+  decl dErrRate = if (doErrRate == NULL) then 1e-12 else doErrRate;
+  decl iDataType = if (ioDataType == NULL) then 1 else ioDataType;
+  decl iRJBWMode = if (ioRJBWMode == NULL) then 1 else ioRJBWMode;
+  decl iEdgeType = if (ioEdgeType == NULL) then 3 else ioEdgeType;
+
+  //Perform the Jitter Analysis
+  decl JitMeasO = JAC_bathtub(
+                    vJitDataSig, vRefClkSig, iNbpp, dBitPeriod, dErrRate,
+                    iDataType, vPattern, iNbps, iNumAcqs, iRJBWMode, iEdgeType); 
+  if (JitMeasO == NULL)
+    return NULL;
+
+  //Data Bathtub
+  decl DataBathTubO = JAC_get_Bathtub(JitMeasO, 1, 1);
+
+  //Model Bathtub
+  decl MdlBathTubO = JAC_get_Bathtub(JitMeasO, 1, 2);
+
+  //Inverted Data or Q Bathtub
+  decl InvDataBathTubO = JAC_get_Bathtub(JitMeasO, 1, 3);
+
+  //Inverted Modeled or Q Bathtub
+  decl IndMdlBathTubO = JAC_get_Bathtub(JitMeasO, 1, 4);
+
+  decl lResults = list(DataBathTubO, MdlBathTubO, InvDataBathTubO, IndMdlBathTubO);
+//fputs(stderr, fmt_tokens(list("lResults=", identify_value(lResults))));
+  JAC_completed(JitMeasO);
+  return(lResults);
+} // defun bathtub()
+

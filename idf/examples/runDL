@@ -1,0 +1,102 @@
+#!/bin/ksh 
+# 
+# Start Cadence, open examples/power_amp/schematic cellview, and then start ADS
+
+PROG_NAME=$(basename $0)
+
+adsDir=
+cadenceTools=
+
+while getopts a:c:h OPTION
+do
+    case ${OPTION} in
+        a) 
+            adsDir=${OPTARG}
+            pdeExe=${adsDir}/bin/hpeesofde
+            if [ ! -f ${pdeExe} ]; then
+                echo "ERROR: ${pdeExe} does not exist!"
+                adsDir=
+            fi
+            ;;
+        c) 
+            cadenceTools=${OPTARG}
+            if [ -f ${cadenceTools}/tools/dfII/bin/virtuoso -o  -f ${cadenceTools}/tools/dfII/bin/msfb ]; then
+                cadenceTools=${cadenceTools}/tools
+            elif [ ! -f ${cadenceTools}/tools/dfII/bin/virtuoso -a  ! -f ${cadenceTools}/tools/dfII/bin/msfb ]; then
+                echo "ERROR: ${cadenceTools}/tools/dfII/bin/virtuoso does not exist!"
+                cadenceTools=
+            fi
+            ;;
+        h) 
+            echo 
+            echo "Usage: ${PROG_NAME} [ -a \$HPEESOF_DIR -c Cadence_installation_dir ]"
+            exit 0
+            ;;
+    esac
+done
+
+# ADS license
+if [ -z "$ADS_LICENSE_FILE" ]; then
+    echo "WARNING: ADS_LICENSE_FILE is not set, ADS may not work."
+fi
+
+# Cadence license
+if [ -z "$CDS_LIC_FILE" ]; then
+    echo "WARNING: CDS_LIC_FILE is not set, Cadence may not work."
+fi
+
+# ADS HPEESOF_DIR variable
+if [ ! -z "${adsDir}" ]; then
+    export HPEESOF_DIR=${adsDir}
+fi
+echo "NOTE:Edit $0 to modify HPEESOF_DIR, if necessary"
+echo HPEESOF_DIR=$HPEESOF_DIR
+
+# Cadence tools directory
+if [ -z "${cadenceTools}" ]; then
+    cadenceTools=`cds_root virtuoso 2>/dev/null`
+fi
+if [ -z "${cadenceTools}" ]; then
+    cadenceTools=`cds_root msfb 2>/dev/null`
+fi
+if [ -z "${cadenceTools}" ]; then
+    echo "ERROR: Cadence virtuoso not found!"
+    exit 1
+fi
+echo "NOTE: Edit $0 to modify cadenceTools for Cadence tool version, if necessary"
+
+# Add ADS and Cadence to PATH
+export PATH=${HPEESOF_DIR}/bin:${cadenceTools}/bin:${cadenceTools}/dfII/bin:$PATH
+type virtuoso 
+
+# Copy the examples over, which I may not want to do depending on the situation.
+if [ $(basename `pwd`) != "examples" -a ! -d "examples" ]; then
+    cp -r $HPEESOF_DIR/idf/examples .
+    status=$?
+    if [ $status -ne 0 ]; then
+        echo "ERROR: Failed to create examples under current directory"
+        exit 2
+    fi
+fi
+if [ $(basename `pwd`) != "examples" ]; then
+    cd examples
+fi
+
+# Set ADS shared library paths
+#. eesofboot.sh
+
+# Set variables in order to use original Cadence installation
+. setCSF.ksh
+
+replayFile=dl_replay
+if [ ! -f "${replayFile}" ]; then
+    replayFile=$HPEESOF_DIR/idf/examples/dl_replay
+fi
+
+# Start Cadence msfb or virtuoso and replay the dl_replay log file
+if [ -f "`which msfb 2>/dev/null`" ]; then
+    msfb -replay ${replayFile} -log ./DL_CDS.log &
+else
+    virtuoso -replay ${replayFile} -log ./DL_CDS.log &
+fi
+

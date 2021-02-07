@@ -1,0 +1,138 @@
+// Copyright 2005 - 2014 Keysight Technologies, Inc  
+defun ptExprCreateTim(vardata, timfile) {
+  decl ftim=fopen(timfile,"w");
+  decl vartime=indep(vardata,"time");
+  fprintf(ftim, "BEGIN TIMEDATA\n");
+  fprintf(ftim, "%% t v\n");
+  decl i=0;
+  for(i=0;i<sweep_size(vardata);i++) {
+    fprintf(ftim,"%s %s\n", identify_value(vartime[i]), identify_value(vardata[i]));
+  }
+  fclose(ftim);
+}
+
+defun ptExprCreateNet(netFile, comp, parmString, dataFile) {
+  decl netf=fopen(netFile, "w");
+  fprintf(netf, "Options ResourceUsage=yes UseNutmegFormat=no TopDesignName=%s\n", identify_value(dataFile));
+  fprintf(netf, "#include \"%s_expr.net\"\n", comp);
+  fprintf(netf, "%s_expr:%s %s\n", comp, comp, parmString);
+  fprintf(netf, "DefaultNumericStart=0\n");
+  fprintf(netf, "DefaultNumericStop=100\n");
+  fprintf(netf, "DefaultTimeStart=0 usec\n");
+  fprintf(netf, "DefaultTimeStop=100 usec\n");
+  fprintf(netf, "DefaultSeed=1234567\n");
+  fprintf(netf, "DefaultRIn=50 Ohm\n");
+  fprintf(netf, "DefaultROut=50 Ohm\n");
+  fprintf(netf, "DefaultRLoad=1.0e18 Ohm\n");
+  fprintf(netf, "DefaultRTemp=-273.15\n");
+  fprintf(netf, "__DefaultPartition=1\n");
+  fprintf(netf, "__SimulationID=0\n");
+  fprintf(netf, "_vKeysightEEsof_dTSDF_nDF_ltsdf:DF DefaultTimeUnit=3 DefaultSeed=if (DefaultSeed==0) then 0 else (DefaultSeed+__SimulationID) endif OutVar=\"\" ProfileTimes=\"\" logFile=\"\" SchedulerType=1 DeadlockManager=0\n");
+
+  fclose(netf);
+}
+    
+defun ptExprGetWorkDir() {
+  decl workDir=getcwd();
+  if(!filedate(strcat(workDir,"/data"))) {
+    return(leftstr(workDir,strlen(workDir)-strlen("data")));
+  }
+  return(workDir);
+}
+
+defun ptExprGetFreqIndex(vardata, varfreq) {
+  decl dim=sweep_dim(vardata);
+  decl indexExpr="find_index(freq[";
+  decl i=1;
+  while(i++<dim) {
+    indexExpr=strcat(indexExpr,"0,");
+  }
+  indexExpr=strcat(indexExpr,"::],", identify_value(varfreq), ")");
+  decl varindex=evaluate(indexExpr);
+  return(varindex);
+}
+
+defun ptExprSimAndGetData( comp, parmString, workdir) {
+  decl netFile=strcat(workdir, "/data/dsp.net");
+  decl dataFile=strcat(workdir, "/data/dspdata.ds");
+  remove(netFile);
+  ptExprCreateNet(netFile, comp, parmString, dataFile);
+  remove(dataFile);
+  decl hpeesofsimCmd=strcat("hpeesofsim ", netFile);
+  decl msg=system(hpeesofsimCmd,,workdir,TRUE);
+  warning("EXPR",0,"ptExpr",msg);
+  //remove(netFile);
+  decl sinkData;
+  if(filedate(dataFile)) {
+    decl sinkExpr=sprintf("\"dspdata\"..%s", comp);
+    sinkData=evaluate(sinkExpr);
+    //remove(dataFile);
+  }
+  else {
+    print_function_error(comp,"Simulation did not produce any data");
+  }
+  return(sinkData);
+}
+
+defun ptExprConvertStringEnumToInt(paramName, comp, paramVal, enumList) {
+  decl retVal=paramVal;
+  if(is_string(paramVal)) {
+    decl paramV;
+    if(paramV=member(paramVal, enumList)) {
+      retVal = listlen(enumList) - listlen(paramV);
+      if(listlen(paramV)==1) {
+        decl errMsg=sprintf("If you select the %s as the parameter value for %s, then you must %s", identify_value(paramVal), paramName, identify_value(paramVal));
+        print_function_error(comp, errMsg);
+        fputs(stderr, strcat(comp, ":", errMsg));
+        retVal=-1;
+      }
+    }
+    else {
+      decl errMsg=sprintf("Error in parameter value - %s = %s, the value must be selected from the list - %s", paramName, identify_value(paramVal), identify_value(enumList));
+      print_function_error(comp, errMsg);
+      fputs(stderr, strcat(comp, ":", errMsg));
+      retVal=-1;
+    }
+  }
+  return(retVal);
+}
+
+defun loadPtolemyAELExpr() {
+  decl prodpath=expandenv("$HPEESOF_DIR");
+  if(prodpath) {
+    prodpath=strcat(prodpath, "/adsptolemy");
+  }
+  else {
+    fputs(stderr, "PtolemyAELExpr: HPEESOF_DIR not set");
+    return;
+  }
+  decl pathList=expandenv("$ADSPTOLEMY_MODEL_PATH");
+  if(pathList)
+    pathList = parse(pathList, ":");
+  else
+    pathList = list();
+  pathList=append(pathList,list(prodpath));
+  pathList=append(list("adsptolemy"), pathList); //local deveploment
+  decl ext="_Expr.ael";
+  decl i=listlen(pathList);
+  decl path;
+  for(; i && path=nth(i-1, pathList);i--) {
+    decl pathDir = strcat(path, "/wtb/");
+    if(is_dir(pathDir)) {
+      decl filelist = get_dir_files(pathDir);
+      decl file=car(filelist);
+      for(file=car(filelist); file=car(filelist);filelist=cdr(filelist)) {
+        if(!strcmp(rightstr(file, strlen(ext)), ext)) {
+          decl aelFile=strcat(pathDir, file);
+          if(filestat(aelFile)) {
+            if(strcmp(path, prodpath))
+              fputs(stderr, strcat("Loading ", identify_value(aelFile)));
+            load(aelFile);
+          }
+        }
+      }
+    }
+  }
+}
+
+loadPtolemyAELExpr();

@@ -1,0 +1,42 @@
+// Copyright Keysight Technologies 2014 - 2014  
+/*----------------------------------------------------------------------------+/
+
+   FILE         :  boot.ael
+
+   This file controls the loading of the design kit.
+
+   To use this file properly, your ads.lib file should contain the
+   following line:
+
+   designKitName|designKitPath|designKitBootFile
+
+   These are also the 3 first list items in the designKitRecord.  The 4th
+   item is a boolean indicating if the library is loaded.
+
+/+----------------------------------------------------------------------------*/
+decl PBOND_designKitName = nth(0, designKitRecord);
+decl PBOND_designKitPath = expandenv(nth(1, designKitRecord));
+if( de_version_number_int() < 410 )
+{
+    de_info("ERROR: This design kit is for use with ADS 2014.01 or later: design ael code not loaded");
+}
+else
+{
+fprintf(stderr, "Loading %s design kit\n", PBOND_designKitName);
+
+
+/*--- AEL files to be loaded at boot time ----------------------------------*/
+
+load(strcat(PBOND_designKitPath, "/de/ael/pbondUI"));
+load(strcat(PBOND_designKitPath, "/de/ael/pbond2Dart"));
+load(strcat(PBOND_designKitPath, "/de/ael/pbond3Dart"));
+load(strcat(PBOND_designKitPath, "/de/ael/pbondCreate"));
+load(strcat(PBOND_designKitPath, "/de/ael/pbondPalette"));
+
+load(strcat(PBOND_designKitPath, "/de/ael/pbondArrayCreate"));
+load(strcat(PBOND_designKitPath, "/de/ael/pbondNetlistCb"));
+
+/*------------------------------------palette activation -------------------*/
+PBOND_designKitName_palette_create(PBOND_designKitPath, "PBOND_lib", list("PBOND_lib_library.rec"));
+}
+

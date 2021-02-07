@@ -1,0 +1,634 @@
+// Copyright Keysight Technologies 1998 - 2018  
+// @(#) $Source: /cvs/sr/src/genfun/source/elementary_fun.ael,v $ $Revision: 1.31 $ $Date: 2011/08/23 21:25:20 $
+// constants
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: ripple()
+FUN_DESCRIPTION: This function measures the deviation of x from the average of x
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: a = ripple(pwr_gain(S21)) 
+a1 = ripple(pwr_gain(S21), 1GHz, 3GHz) 
+SYNTAX: y = ripple(x, fstart, fstop) 
+ARGUMENT
+  ARG_NAME: x
+  ARG_DESCRIPTION: can be a gain or group delay data over a given frequency range 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fstart
+  ARG_DESCRIPTION: start frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: fstop
+  ARG_DESCRIPTION: stop frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: dev_lin_phase(), diff(), mean(), phasedeg(), phaserad(), unwrap() 
+NOTES: In order to use this function, the Group Delay option must be enabled in the S-parameter analysis setup. For more information, refer to "Calculating Group Delay" in your "S-Parameter Simulation" documentation.
+
+This function supports data upto four dimensions.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//***************************************************************************
+defun ripple(x, fstart, fstop)
+{
+  decl sweepDim = sweep_dim(x);
+
+  decl freqV = indep(x, 1);
+  decl fSTART, fSTOP, freqS;
+  if (sweepDim == 1)
+    freqS = freqV;
+  else if (sweepDim == 2)
+    freqS = freqV[0,::];
+  else if (sweepDim == 3)
+    freqS = freqV[0,0,::];
+  else if (sweepDim == 4)
+    freqS = freqV[0,0,0,::];
+  else {
+    print_function_error("ripple", " does not support data with dimensions greater than four.");
+    return;
+  } //if
+
+  fSTART = freqS[0];
+  fSTOP = freqS[sweep_size(freqS)-1];
+  decl fStart = if (fstart == NULL) then fSTART else fstart;
+  decl fStop = if (fstop == NULL) then fSTOP else fstop;
+  //find the index for the start and stop frequency
+  decl istart = find_index(freqS, fStart);
+  decl istop = find_index(freqS, fStop);
+
+  decl result;
+  switch (sweepDim) {
+    case 1: result = ripple_1D(x, istart, istop);
+	    break;
+    case 2: result = ripple_2D(x, istart, istop);
+	    break;
+    case 3: result = ripple_3D(x, istart, istop);
+	    break;
+    case 4: result = ripple_4D(x, istart, istop);
+	    break;
+    default: return;
+	     break;
+  } //switch
+  return result;
+} //fun - ripple
+
+defun ripple_1D(x, istart, istop)
+{
+  decl result = x[istart::istop] - mean(x[istart::istop]);
+  return result;
+} //fun - ripple_1D
+
+defun ripple_2D(x, istart, istop)
+{
+  decl result = copy(x[istart::istop]);
+  decl sSize = sweep_size(result);
+  decl numPts = sSize(1);
+  decl iCount;
+
+  for (iCount = 0; iCount < numPts; iCount++)
+    result[iCount,::] = ripple_1D(x[iCount,::], istart, istop);
+  return result;
+}
+
+defun ripple_3D(x, istart, istop)
+{
+  decl result = copy(x[istart::istop]);
+  decl sSize = sweep_size(result);
+  decl numPts = sSize(1);
+  decl iCount;
+
+  for (iCount = 0; iCount < numPts; iCount++)
+    result[iCount,::,::] = ripple_2D(x[iCount,::,::], istart, istop);
+  return result;
+}
+
+defun ripple_4D(x, istart, istop)
+{
+  decl result = copy(x[istart::istop]);
+  decl sSize = sweep_size(result);
+  decl numPts = sSize(1);
+  decl iCount;
+
+  for (iCount = 0; iCount < numPts; iCount++)
+    result[iCount,::,::,::] = ripple_3D(x[iCount,::,::,::], istart, istop);
+  return result;
+}
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: generate()
+FUN_DESCRIPTION: This function generates a sequence of real numbers. The modern way to do this is to use the sweep generator "[ ]."
+RETURNED_VALUE: real
+CATEGORY: Data Access
+SYNTAX: y = generate(start, stop, npts)
+EXAMPLE: 
+a = generate(9, 4, 6) returns the sequence 9., 8., 7., 6., 5., 4
+ARGUMENT
+  ARG_NAME: start
+  ARG_DESCRIPTION: start value of sequence
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: stop
+  ARG_DESCRIPTION: stop value of sequence
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: npts
+  ARG_DESCRIPTION: Numper of points in the sequence
+  ARG_DEFAULT: None
+  ARG_RANGE: [2:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: None
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//***************************************************************************
+defun generate(start,stop,npts)
+{
+    decl a = start+{0::npts-2}*(stop-start)/(npts-1.0);
+    return expand( {a, stop} );
+}
+
+
+defun range(x)
+{
+    return abs(max(x)-min(x));
+}
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: chop()
+FUN_DESCRIPTION: Replace numbers in x with magnitude less than dx with 0
+RETURNED_VALUE: Integer, real, complex
+CATEGORY: Data Access
+SYNTAX: y = chop(x, dx)
+EXAMPLE: 
+chop(1) returns 1 
+
+chop(1e-12) returns 0 
+
+chop(1+1e-12i) returns 1+0i
+ARGUMENT
+  ARG_NAME: x
+  ARG_DESCRIPTION: numbers to replace
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real, complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: dx
+  ARG_DESCRIPTION: value to compare to
+  ARG_DEFAULT: 1e-10
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real, complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: None
+NOTES: Function acts independently on the real and complex components of x, comparing each to mag(dx).
+y= x if mag(x)>=mag(dx) 
+y=0 if mag(x)<mag(dx) 
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//***************************************************************************
+defun chop(x, dx)
+{
+    decl limit = (dx == NULL) ? 1e-10 : abs(dx);
+  
+    if (type(x) != "Complex")
+        return if (abs(x) < limit ) then 0 else x;
+    else
+        return chop(real(x),dx) + j*chop(imag(x),dx);
+}
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: sqr()
+FUN_DESCRIPTION: Returns the square of a number
+RETURNED_VALUE: Integer, real, complex
+CATEGORY: Math
+SYNTAX: y = sqr(x)
+EXAMPLE: 
+y = sqr(2) returns 4 
+ARGUMENT
+  ARG_NAME: x
+  ARG_DESCRIPTION: number to square
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real, complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: None
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//***************************************************************************
+defun sqr(x)
+{
+  return x*x;
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: dbmtow()
+FUN_DESCRIPTION: Converts dBm to watts
+RETURNED_VALUE: Real
+CATEGORY: Math
+SYNTAX: wValue =  dbmtow(P)
+EXAMPLE:
+y = dbmtow(0) returns .001 W 
+
+y = dbmtow(-10) returns 1.000E-4 W 
+ARGUMENT
+  ARG_NAME: P
+  ARG_DESCRIPTION: power expressed in dBm
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: dbm(), wtodbm()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+
+defun dbmtow(power)
+{
+  return pow(10,(power-30.0)/10.0);
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: wtodbm()
+FUN_DESCRIPTION: Converts Watts to dBm and returns a real or complex number
+RETURNED_VALUE: Real, Complex
+CATEGORY: Math
+EXAMPLE: wtodbm01_M=wtodbm(0.01) returns 10
+ wtodbm1_M=wtodbm(1) returns 30
+ wtodbmC_M=wtodbm(complex(10,2)) returns 40.094/1.225
+SYNTAX: dbmVal = wtodbm(Value)
+ARGUMENT
+  ARG_NAME: Value
+  ARG_DESCRIPTION: Value in Watts
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO:  dbmtow
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+
+defun wtodbm(power)
+{
+  return (30 + (10*log(power)));
+}
+
+
+//****************************************************************************
+/* Not for external use or customer documentation */
+/*BEGIN_DOC
+FUN_NAME: dbmtov()
+FUN_DESCRIPTION: Converts dbm into open circuit voltage, given the reference impedance 
+MAKE_PUBLIC: False
+RETURNED_VALUE: real or complex number
+CATEGORY: Math
+SYNTAX: vValue =  dbmtov(Pin_dBm)
+EXAMPLE:
+y = dbmtov(1+j*1, 50)
+returns 0.705+j0.082
+y = dbmtov(10, 50)
+returns 2.0
+y = dbmtov(-30, 1+j*1)
+returns 0.003
+
+ARGUMENT
+  ARG_NAME: Pin_dBm
+  ARG_DESCRIPTION: power expressed in dBm
+  ARG_DEFAULT: None
+  ARG_RANGE: [-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: Reference Impedance
+  ARG_DEFAULT: None
+  ARG_RANGE: [-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: dbm()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 2008 UR1
+END_DOC*/
+//****************************************************************************
+
+//
+// Pin_dBW(Pin_dBm) := Pin_dBm - 30
+// Pin_W ( Pin_dBm) := 10 ** ( Pin_dBW( Pin_dBm )  /10 ) .watt
+//V_rms(Pin_dBm) := sqrt(  8 * Pin_W(Pin_dBm) xLoad )   // CQI EDA00196999
+defun dbmtov(Pin_dBm, Zref)
+{
+  decl load = real(Zref) ;
+  decl vrms = sqrt( 8 * 10 ** ( ( Pin_dBm -30 ) / 10 ) * load ) ;
+  return vrms ;
+}
+
+//****************************************************************************
+defun sweep_size_at_dim(data,dim)
+{
+  decl sweepVector = sweep_size(data);
+  decl sweepDim =  sweep_dim(data);
+  if (dim ==1 && sweepDim <= 1)
+      return sweepVector;
+  if (dim > 0 && dim <= sweepDim)
+    return sweepVector(sweepDim-(dim-1));
+  else
+    return NULL;
+}
+
+defun inner_sweep_size(data)
+{
+  return sweep_size_at_dim(data,1);
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: diff()
+FUN_DESCRIPTION: Calculates the simple numerical first derivative.  Can be used to calculate group delay. 
+RETURNED_VALUE: Real, Complex
+CATEGORY: Math
+SYNTAX: y = diff(data, pad)
+EXAMPLE:
+group_delay = -diff(unwrap(phaserad(S21),pi))/(2*pi)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: data to find numerical derivative
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: pad
+  ARG_DESCRIPTION: pad the differentiated data with an extra value
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:1] dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif If pad is 1, then the differentiated data is padded with an extra value (last value of differentiated data) to make it the same length as the data to be differentiated.  If 0 (default) then the length of the differentiated data is one less than the length of data to be differentiated.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: dev_lin_phase(), integrate(), phasedeg(), phaserad(), ripple(), unwrap()
+NOTES: It calculates the first derivative of the dependent data with respect to the inner independent value i.e. dy/dx. It uses the simple forward finite-divided-difference formulas of 2 values.  The error is O(h), where h is the independent step size.  The error decreases with smaller values of h.
+
+If the data to be differentiated does not have an explicit independent-name, the differentiated data is given an independent name "diffX'.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun diff(dataV, pad)
+{
+  decl x=indep(dataV);
+  if (pad != NULL) {
+    if (pad < 0 || pad > 1) {
+      print_function_error("diff", " second argument should be 0 or 1.");
+      return;
+    }
+  }
+  decl bPad = if (pad == NULL) then 0 else pad;
+
+  // need a regular() call
+  if (regular(dataV) == 0) {
+    print_function_error("diff", " cannot diff() irregular data.");
+    return;
+  }
+  decl len = sweep_size_at_dim(dataV,1)-1;
+
+  decl sIndName = indep_name(dataV);
+  if (sIndName == NULL || sIndName == "__i")
+    sIndName = "diffX";
+  decl dDiff = (dataV[0::len-1]-dataV[1::len])/(x[0::len-1]-x[1::len]);
+  decl dRet = vs(dDiff,(x[0::len-1]+x[1::len])/2, sIndName);
+
+  if (bPad == 1) {
+    decl dRetPad = [dRet,dRet[sweep_size(dRet)-1]];
+    dRet = vs(dRetPad, x, sIndName);
+  } //if
+  return dRet;
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: hypot()
+FUN_DESCRIPTION: Returns the hypotenuse
+RETURNED_VALUE: Real, Complex
+CATEGORY: Math
+SYNTAX: y = hypot(xVal, yVal)
+EXAMPLE:
+y = hypot(2, 1) returns 5
+ARGUMENT
+  ARG_NAME: xVal
+  ARG_DESCRIPTION: Value of X
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: yVal
+  ARG_DESCRIPTION: Value of Y
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun hypot(xVal, yVal)
+{
+  return sqrt(xVal*xVal+yVal*yVal);
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: fmod()
+FUN_DESCRIPTION: Returns the remainder of the division of two real numbers
+RETURNED_VALUE: Integer, Real
+CATEGORY: Math
+SYNTAX: y = fmod(fNum, fDenom)
+EXAMPLE:
+y = fmod(4.2, 2.0) returns 0.2
+ARGUMENT
+  ARG_NAME: fNum
+  ARG_DESCRIPTION: Value of numerator
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fDenom
+  ARG_DESCRIPTION: Value of denominator
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun fmod(fNum, fDenom)
+{
+  if ((is_real(fNum) || is_integer(fNum)) && (is_real(fDenom) || is_integer(fDenom))) {
+    decl iDiv = fNum/fDenom;
+    if (iDiv < 0)
+      iDiv = ceil(iDiv);
+    else
+      iDiv = floor(iDiv);
+    decl rRem = fNum - iDiv * fDenom;
+    return rRem;
+  }
+  else {
+    return NULL;
+  }
+}
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: complex
+FUN_DESCRIPTION: Returns complex number given real and imaginary
+RETURNED_VALUE: Complex Number
+SYNTAX: y = complex(x, y)
+CATEGORY: Math
+EXAMPLE:
+a = complex(2, -1) returns 2 - 1j 
+ARGUMENT
+  ARG_NAME: x
+  ARG_DESCRIPTION: real part of complex number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: y
+  ARG_DESCRIPTION: imaginary part of complex number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: cmplx(),  imag(), real()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: May.2003
+VERSION_CREATED: ADS2003C 
+END_DOC*/
+
+defun complex(Re, Img)
+{
+  return (cmplx(Re, Img));
+}
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: rms
+FUN_DESCRIPTION: Returns the root mean square value
+RETURNED_VALUE: Real, Complex
+CATEGORY: Math
+SYNTAX: y = rms(Value)
+EXAMPLE: rmsR = rms(2) returns 1.414 
+rmsR = rms(complex(3, 10)) returns 7.382/73.301 
+rmsR = rms( [1, 2, 3, 4, 5,] ) returns [0.707, 1.414, 2.121, 2.828, 3.536] 
+ARGUMENT
+  ARG_NAME: Value
+  ARG_DESCRIPTION: Value to find RMS
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/elementary_fun.ael
+SEE ALSO: None
+NOTES: The rms expression calculates the root mean square value. If the data's inner independent is freq, and if frequency equals 0 (DC), returns mag() rather than rms value.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: May.2003
+VERSION_CREATED: ADS2003C 
+END_DOC*/
+
+defun rms(value)
+{
+  decl sInnerIndepName = indep_name(value, 0);
+  decl rmsV;
+
+  //If inner-independent is "freq", then treat DC and AC
+  if (sInnerIndepName == "freq") {
+    decl freqV = indep(value, 1);
+    //Set DC to mag, rather than rms
+    rmsV = freqV > 0 ? sqrt((value.*value)/2) : mag(value);
+  } //if
+  else
+    rmsV = sqrt((value.*value)/2);
+  return (rmsV);
+} //fun - rms
+
+//***************************************************************************
+// NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+//

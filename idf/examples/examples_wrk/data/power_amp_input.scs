@@ -1,0 +1,41 @@
+// Generated for: spectre
+// Generated on: Dec 31 10:37:57 2013
+// Design library name: examples
+// Design cell name: power_amp
+// Design view name: schematic
+simulator lang=spectre
+global 0
+parameters Rout=12 Rcc=10 Remitin=200 Remitout=163
+include "../../models/npnpwa1.scs"
+include "../../models/npnpwa2.scs"
+
+// Library name: examples
+// Cell name: power_amp
+// View name: schematic
+Q0 (net44 Vin net15 0) npnpwa1
+Q1 (net44 net15 net12 0) npnpwa2
+Q2 (net44 net15 net9 0) npnpwa2
+Q3 (net44 net15 net6 0) npnpwa2
+Q4 (net15 Vcc2 net31 0) npnpwa2
+Q5 (net12 Vcc2 net13 0) npnpwa2
+Q6 (net9 Vcc2 net35 0) npnpwa2
+Q7 (net6 Vcc2 net37 0) npnpwa2
+R0 (Vcc1 net44) resistor r=10
+R1 (net12 Vout) resistor r=Rout
+R2 (net9 Vout) resistor r=Rout
+R3 (net6 Vout) resistor r=Rout
+R4 (net37 GND) resistor r=Remitout
+R5 (net35 GND) resistor r=Remitout
+R6 (net13 GND) resistor r=Remitout
+R7 (net31 GND) resistor r=200
+simulatorOptions options reltol=1e-3 vabstol=1e-6 iabstol=1e-12 temp=27 \
+    tnom=27 scalem=1.0 scale=1.0 gmin=1e-12 rforce=1 maxnotes=5 maxwarns=5 \
+    digits=5 cols=80 pivrel=1e-3 sensfile="../psf/sens.output" \
+    checklimitdest=psf 
+modelParameter info what=models where=rawfile
+element info what=inst where=rawfile
+outputParameter info what=output where=rawfile
+designParamVals info what=parameters where=rawfile
+primitives info what=primitives where=rawfile
+subckts info what=subckts  where=rawfile
+saveOptions options save=allpub

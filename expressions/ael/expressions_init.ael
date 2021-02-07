@@ -1,0 +1,83 @@
+// Copyright Keysight Technologies 1997 - 2014  
+// @(#) $Source: /cvs/sr/src/genfun/source/expressions_init.ael,v $ $Revision: 1.23 $ $Date: 2011/08/23 21:25:20 $
+
+// Expressions functions
+load("behavioral_fun.ael");
+load("budget_fun.ael");
+load("circle_fun.ael");
+load("circuit_fun.ael");
+load("elementary_fun.ael");
+load("digital_wireless_fun.ael");
+load("network_fun.ael"); 
+load("rf_system_fun.ael");
+load("rlck_fun.ael");
+load("statistical_fun.ael");
+load("utility_fun.ael");
+load("signal_proc_fun.ael");
+load("spurious_analysis_fun.ael");
+load("special_LP_data_display_fun.ael");
+load("display_fun.ael");
+load("marker_fun.ael");
+load("HDF5_fun");          // ATF Only....
+load("loopgain_probe_fun");
+load("symphony");
+load("user_defined_fun.ael");
+
+//Jitter Analysis functions
+load("JitAnalysis.ael");
+
+//Design Guide functions
+load("DesignGuide_fun.ael");
+
+//Custom AEL expressions for various Signal Integrity (High Speed Digital) applications
+load("hsd_fun");
+
+//Custom AEL expressions for various Power Electronics (PE/PEPro) applications
+load("pe_fun");
+
+//Design Kit functions
+load("dk_defined_fun.ael");
+load("dk_expression_loader.ael");
+
+// Function for Envelope Tracking
+load("Env_Tracking_fun.ael");
+
+// FrontPanel functions
+load("FrontPanel_fun.ael");
+load("FrontPanel_loadpull_fun.ael");
+load("sp_tdr_fun");         // ATF Only
+
+if (filestat(strcat(getsysenv("HPEESOF_DIR"),"/expressions/ael/ptExpr.ael")))
+{
+  // Ptolemy expressions - file maintained in hptolemy-kernel (hptolemy debian)
+  load("ptExpr.ael");
+}
+
+// Load dummy datalink functions so nice error messages can be
+// displayed when datalink is not installed
+load("datalinkInterface");
+
+// Load datalink. By loading it here, the datalink ael functions are
+// visible to both DDS and measurement equations. Note that datalink 
+// version 2.1 or later is needed. Otherwise, datasrv.ael will load it.
+// Also note that Datalink will not be loaded for standalone simulator.
+
+// TODO:  This needs to be changed to 3.0 once rgdevelop gets new conan package.  
+//        If I do it now, rgdevelop will break.
+decl DatalinkMinCompatibleVersion = 2.1;  
+decl DatalinkMaxCompatibleVersion = 3.0;
+
+if (!is_function_defined("IsRunningUnderIPC") || IsRunningUnderIPC())
+{
+    decl datalinkAelPath = getenv("DATALINK_AEL_DIR", "hpeesofdss");
+    if ((datalinkAelPath != NULL) && is_dir(datalinkAelPath))
+    {
+        decl datalinkAel = strcat(datalinkAelPath, "/", "datalink_addon");
+        load(datalinkAel);
+        if (is_function_defined("get_datalink_version_number") && 
+            (get_datalink_version_number() >= DatalinkMinCompatibleVersion) &&
+            (get_datalink_version_number() <= DatalinkMaxCompatibleVersion))
+            load_datalink();
+    }
+}
+

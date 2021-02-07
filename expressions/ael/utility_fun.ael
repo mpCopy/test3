@@ -1,0 +1,3492 @@
+// Copyright Keysight Technologies 1998 - 2017  
+// @(#) $Source: /cvs/sr/src/genfun/source/utility_fun.ael,v $ $Revision: 1.45 $ $Date: 2012/11/01 16:29:59 $
+    
+
+defun print(a)
+{
+    fputs(stderr,identify_value(a));
+}
+
+defun print_function_error(functionName,errorMessage)
+{
+  decl a = strcat("Function \"",functionName,"\" : ",errorMessage);
+  error("EXPR",0, a, "");
+}
+
+defun exists(variable)
+{
+    decl result=evaluate(variable,"ael");
+
+    if ( result == NULL )
+        return 0;
+    else
+        return result;
+}
+
+defun drop_index_offset(data)
+{
+  return set_vector_offset(data,1);
+}
+
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: design_name()
+FUN_DESCRIPTION: Returns design name given by TopDesignName in netlist.log
+RETURNED_VALUE: String
+CATEGORY: Utility
+SYNTAX: design = design_name()
+
+ARGUMENT
+  ARG_NAME: None
+  ARG_DESCRIPTION: None
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: None
+  ARG_REQUIRED: NO
+
+DEFINED IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael 
+
+NOTES: 
+The design_name function returns the value of the TopDesignName parameter in the netlist.log file. It allows the design name to be saved in the dataset for documentation. 
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: October.2010
+VERSION_CREATED: ADS 2011.01
+END_DOC*/
+//***************************************************************************
+
+defun design_name()
+{
+    decl designName="";
+    decl found = FALSE;
+    decl fid = fopen("netlist.log", "R");
+    decl line;
+    decl position;
+
+    if (!fid)
+        fid = fopen("../netlist.log", "R");
+
+    if (fid)
+    {
+        line = fgets(fid);
+        line = fgets(fid);
+
+        while(line != NULL && found == FALSE)
+        {
+            position = index(line,"TopDesignName");
+        if ( position > 1 )
+        {
+            designName = nth(1,parse(line,"\""));
+            found = TRUE;
+        }
+        line = fgets(fid);
+        }
+
+        fclose(fid);
+
+        if (found == FALSE)
+        designName = "Error: failed to find TopDesignName in netlist.log!";
+    }
+    else
+        designName = "Error: failed to open netlist.log!";
+
+    return designName;
+}
+
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: find()
+FUN_DESCRIPTION: Finds the indices of the conditions that are true. Use with all simulation data
+RETURNED_VALUE: Integer
+CATEGORY: Data Access
+SYNTAX: indices = find(condition)
+EXAMPLE:
+Given an S-parameter data swept as a function of frequency, find the value of S11 at 1GHz:
+
+index_1 = find(freq == 1GHz)
+data = S11[index_1] 
+
+Given an S-parameter data swept as a function of frequency, find the values of the frequencies where the
+magnitude of S11 is greater than a given value. 
+
+lookupValue = 0.58
+indices = find(mag(S11) > lookupValue))
+firstPoint = indices[0]
+lastPoint = indices[sweep_size(indices)-1]
+freqDifference = freq[lastPoint]- freq[firstPoint] 
+
+The following examples assume a Harmonic Balance data vtime, and a marker m1.
+Find the dependent value at the marker:
+vVal = find(indep(vtime) >= indep(m1) && indep(vtime) <= indep(m1))
+
+Find all the dependent values less than that of the m1 or the value at m1:
+vVal = find(indep(vtime) < indep(m1) || indep(vtime) == indep(m1))
+
+Find all the dependent values that are not equal to m1:
+vVal = find(indep(vtime) != indep(m1))
+
+ARGUMENT
+  ARG_NAME: condition
+  ARG_DESCRIPTION: condition
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: string
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael 
+SEE ALSO: find_index(), mix()
+NOTES: 
+The find function will return all the indices of the conditions that are true. If none of the conditions are true, then a -1 is returned. The find function performs an exhaustive search on the given data. The supplied data can be an independent or dependent data. In addition, the dimension of the data that is returned will be identical to the dimension of the input data. 
+
+The find function can accept conditionals like ==, !=, >, <, >= and <=, and logical operators like && and ||.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: July.2003
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+defun find(data)
+{
+  decl dataType = type(data);
+
+  if(dataType != "Integer")
+    data = data && 1;
+    
+  return search("linear",data,1);
+
+}
+
+//***************************************************************************
+/*BEGIN_DOC
+FUN_NAME: get_indep_values()
+FUN_DESCRIPTION: Returns the independent values associated with the given dependent value as an array.
+RETURNED_VALUE: Real
+CATEGORY: Data Access
+EXAMPLE:
+We assume that the data is 2-dimensional i.e. 2 independent variables created from a Harmonic Balance Analysis with Pout being the output data.
+
+indepVals = get_indep_values(Pout, max(max(Pout)) returns the values of the indepenent as an array.
+indepVals = get_indep_values(Pout, [m1,m2]) returns the indepenent values of the markers m1 and m2.
+
+SYNTAX: indepVals = get_indep_values(Data, LookupValue)
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION: 1 to 5 dimensional array.
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: LookupValue
+  ARG_DESCRIPTION:  Dependent value for which the corresponding independent values have to be found.
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Tolerance
+  ARG_DESCRIPTION: tolerance to be used while comparing numbers
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: All
+  ARG_DESCRIPTION: Finds all matches of the LookupValue.  Default behavior is to return after the first match.
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:1]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael 
+SEE ALSO: indep
+NOTES: This function can be used only on 1 to 5 dimensional data.  The independent values have to be real.  The dependent value to be looked up can be a single value or multiple values.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: July.2003
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+//***************************************************************************
+//Function extremely slow for large Data.
+defun get_indep_values(Data, InLookupValue, tol, inAll)
+{
+  decl dTol = if (tol == NULL) then 0.0 else tol;
+  if (inAll != NULL)
+    if (inAll < 0 || inAll > 1) {
+      print_function_error("get_indep_values", " 4th argument All can either be 0 or 1.");
+      return NULL;
+    }
+  decl bAll = if (inAll == NULL) then 0 else inAll;
+/*
+  if (type(indep(Data)) != "Real") {
+    print_function_error("get_indep_values", " supports only Real type for independent");
+    return NULL;
+  }
+*/
+  decl Dim = sweep_dim(Data);
+  decl iNumLookUp = sweep_size(InLookupValue);
+
+  //Create the result array:
+  //- dimensionality, Type, Indep Name, Indep Type, rows, columns
+  decl res = create(1, "Real", {"indep"}, {"Real"},1, 1);
+  decl fRes;
+
+  //Get the Independent variable 'indep'
+  decl indep_res = indep(res, "indep");
+    
+  decl swpSz = sweep_size(Data);
+  decl i1C, i2C, i3C, i4C;
+  decl iCount;
+  decl iICount = 0;
+  decl iLUCount = 0;
+  decl LookupValue;
+  for (iLUCount = 0; iLUCount < iNumLookUp; iLUCount++) {
+    decl iMatchCount = 0;
+    decl bFound = 0;
+    if (iNumLookUp == 1)
+      LookupValue = InLookupValue;
+    else
+      LookupValue = InLookupValue[iLUCount];
+    if (Dim == 1) {
+      decl indepVal = get_indep_value_one_dim(Data,LookupValue, dTol);
+      if (indepVal != NULL) {
+	decl iNumIndeps = listlen(indepVal);
+        for (iICount = 0; iICount < iNumIndeps; iICount++) {
+          indep_res[iICount] = iICount+1;
+          res[iICount] = nth(iICount, indepVal);
+	  if (bAll == 0)
+        break;
+	} //for
+      } //if
+    }
+    elseif (Dim == 2) {
+      decl s1 = sweep_size(Data[::,0]);
+      //For each of the second independent (column)
+      //Search through each column of data
+      for ( i1C=0; i1C < s1; i1C++ ) {
+        //Find if the given value has been found in the "i" th column
+        decl indepVal = get_indep_value_one_dim(Data[i1C,::], LookupValue, dTol);
+
+        //"LookupValue" has been found in a particular column
+        if (indepVal != NULL) {
+	  decl iNumIndeps = listlen(indepVal);
+          for (iICount = 0; iICount < iNumIndeps; iICount++) {
+  	    //Set the independent values
+            for (iCount = 0; iCount < 2; iCount++)
+              indep_res[iMatchCount+iCount] = iMatchCount+iCount+1;
+
+            res[iMatchCount] = nth(iICount, indepVal);
+            decl indep_2 = indep(Data,2);
+            res[iMatchCount+1] = indep_2[i1C];
+	    iMatchCount = iMatchCount + 2;
+          }
+	  if (bAll == 0)
+            break;
+        } //if
+      } //for
+    }
+    elseif (Dim == 3) {
+      for (i1C = 0; i1C < swpSz(1); i1C++) {
+	if (bFound == 1 && bAll == 0)
+	  break;
+        for (i2C = 0; i2C < swpSz(2); i2C++) {
+          decl indepVal = get_indep_value_one_dim(Data[i1C,i2C,::], LookupValue, dTol);
+          if (indepVal != NULL) {
+	    decl iNumIndeps = listlen(indepVal);
+            for (iICount = 0; iICount < iNumIndeps; iICount++) {
+              //Set the first independent value
+	      for (iCount = 0; iCount < 3; iCount++)
+                indep_res[iMatchCount+iCount] = iMatchCount+iCount+1;
+              res[iMatchCount] = nth(iICount, indepVal);
+              decl indep_2 = indep(Data,2);
+              res[iMatchCount+1] = indep_2[i1C, i2C]; //Left - 1
+              decl indep_3 = indep(Data,3);
+              res[iMatchCount+2] = indep_3[i1C]; //Left Most
+	      iMatchCount = iMatchCount + 3;
+	      bFound = 1;
+            }
+	    if (bAll == 0)
+              break;
+          } //if
+        } //for
+      } //for
+    }
+    elseif (Dim == 4) {
+      for (i1C = 0; i1C < swpSz(1); i1C++) {
+	if (bFound == 1 && bAll == 0)
+	  break;
+        for (i2C = 0; i2C < swpSz(2); i2C++) {
+	  if (bFound == 1 && bAll == 0)
+	    break;
+          for (i3C = 0; i3C < swpSz(3); i3C++) {
+            decl indepVal = get_indep_value_one_dim(Data[i1C,i2C,i3C,::], LookupValue, dTol);
+            if (indepVal != NULL) {
+	      decl iNumIndeps = listlen(indepVal);
+              for (iICount = 0; iICount < iNumIndeps; iICount++) {
+                //Set the independent values
+	        for (iCount = 0; iCount < 4; iCount++)
+                  indep_res[iMatchCount+iCount] = iMatchCount+iCount+1;
+                res[iMatchCount] = nth(iICount, indepVal);
+                decl indep_2 = indep(Data,2);
+                res[iMatchCount+1] = indep_2[i1C, i2C, i3C]; //Left - 2
+                decl indep_3 = indep(Data,3);
+                res[iMatchCount+2] = indep_3[i1C, i2C]; //Left - 1
+                decl indep_4 = indep(Data,4);
+                res[iMatchCount+3] = indep_4[i1C]; //Left Most
+	        iMatchCount = iMatchCount + 4;
+	        bFound = 1;
+              } //for
+	      if (bAll == 0)
+                break;
+            } //if
+          } //for
+        } //for
+      } //for
+    }
+    elseif (Dim == 5) {
+      for (i1C = 0; i1C < swpSz(1); i1C++) {
+        if (bFound == 1 && bAll == 0)
+	  break;
+        for (i2C = 0; i2C < swpSz(2); i2C++) {
+	  if (bFound == 1 && bAll == 0)
+	    break;
+          for (i3C = 0; i3C < swpSz(3); i3C++) {
+	    if (bFound == 1 && bAll == 0)
+	      break;
+            for (i4C = 0; i4C < swpSz(4); i4C++) {
+              decl indepVal = get_indep_value_one_dim(Data[i1C,i2C,i3C,i4C,::], LookupValue, dTol);
+              if (indepVal != NULL) {
+            decl iNumIndeps = listlen(indepVal);
+            for (iICount = 0; iICount < iNumIndeps; iICount++) {
+                  //Set the independent values
+	          for (iCount = 0; iCount < 5; iCount++)
+                    indep_res[iMatchCount+iCount] = iMatchCount+iCount+1;
+                  res[iMatchCount] = nth(iICount, indepVal);
+                  decl indep_2 = indep(Data,2);
+                  res[iMatchCount+1] = indep_2[i1C, i2C, i3C, i4C]; //Left - 3
+                  decl indep_3 = indep(Data,3);
+                  res[iMatchCount+2] = indep_3[i1C, i2C, i3C]; //Left - 2
+                  decl indep_4 = indep(Data,4);
+                  res[iMatchCount+3] = indep_4[i1C, i2C]; //Left - 1
+                  decl indep_5 = indep(Data,5);
+                  res[iMatchCount+4] = indep_5[i1C]; //Left most index
+	          iMatchCount = iMatchCount + 5;
+	          bFound = 1;
+                } //for
+	        if (bAll == 0)
+                  break;
+              } //if
+            } //for
+          } //for
+        } //for
+      } //for
+    }
+    else
+      print_function_error("get_indep_values", " supports only 1 to 5 dimensional data");
+    if (iLUCount == 0)
+      fRes = {res};
+    else
+      fRes = {fRes, res};
+  } //for
+
+  return fRes;
+} // fun - get_indep_values
+
+//****************************************************************************
+//Data - 1D data
+defun get_indep_value_one_dim(Data, LookupValue, dTol)
+{
+  //check values in column to see if it's equal to LookupValue
+  decl fI = find(LookupValue >= (Data-dTol) && LookupValue <= (Data+dTol));
+  decl isSz = sweep_size(fI);
+  if (isSz != NULL) {
+    decl indepData = indep(Data);
+    decl lRet;
+    if (isSz == 1 && fI != -1)
+      return list(indepData[fI]);
+    else if (isSz > 1) {
+      decl iCount = 0;
+      decl iInd = fI[0];
+      decl IndepV = indepData[iInd];
+      lRet = list(IndepV);
+      for (iCount = 1; iCount < isSz; iCount++) {
+	iInd = fI[iCount];
+	IndepV = indepData[iInd];
+        lRet = append(lRet, list(IndepV));
+      }
+      return lRet;
+    }
+  }
+  return NULL;
+} //fun - get_indep_value_one_dim
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: write_var()
+FUN_DESCRIPTION: Writes dataset variables to a file
+RETURNED_VALUE: Integer
+CATEGORY: Data Access
+EXAMPLE:
+write_var_f=write_var("output_S21.txt","W","! Freq       real(S21)          imag(S21)","  ",, 14, freq, S21)
+writes S21 to the output file output_S21.txt as:
+
+! Freq       real(S21)          imag(S21)
+1000000000  0.60928892074273  -0.10958342264718 
+2000000000  0.52718867597783  -0.13319167002392
+3000000000  0.4769067837712  -0.12080489345341
+
+wv_ib=write_var("output_hbIb.txt","W","! HB Ib.i", " ",,,freq, Ib.i)
+write the Harmonic Balance frequency and current Ib.i to the output file output_hbIb.txt.
+
+SYNTAX: y = write_var(FileName, WriteMode, Comment, Delimiter, Format, Precision, Var1, Var2,...,VarN)
+ARGUMENT
+  ARG_NAME: FileName
+  ARG_DESCRIPTION: Name of the output file
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: WriteMode
+  ARG_DESCRIPTION: Describes the write mode - overwrite or append
+  ARG_DEFAULT: None
+  ARG_RANGE: "W"|"A" dagger.gif
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Comment
+  ARG_DESCRIPTION: Text to be written at the top of the file
+  ARG_DEFAULT: ""
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Delimiter
+  ARG_DESCRIPTION: Delimiter that separates the data
+  ARG_DEFAULT: "\t"
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Format
+  ARG_DESCRIPTION: Format of the data
+  ARG_DEFAULT: "f"
+  ARG_RANGE: "f"|"s" dbldagr.gif
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Precision
+  ARG_DESCRIPTION: precision of the data
+  ARG_DEFAULT: 6
+  ARG_RANGE: [1:64]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Var1,...,VarN
+  ARG_DESCRIPTION: Data variables to be written
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: dataset variable
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif WriteMode: "W" - overwrite the file, "A" - append to the file 
+dbldagr.gif Format: "f" - full notation, "s" - scientific notation
+DEFINED IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael 
+SEE ALSO: indep
+NOTES: This function can be used to write multiple dataset variables to a file.  Currently only 1 dimensional data is supported.  All variables that are to be written must be of the same size.  Each variable data is written in column format.  Complex data type is written in 2 columns as real and imaginary.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: May.2004
+VERSION_CREATED: ADS 2004A
+END_DOC*/
+
+//***************************************************************************
+defun write_var(sFileName, sWriteMode, sHeaderText, sDelimiter, sFormat, iPrecision) 
+{
+  decl iCount;
+  decl fID;
+  // Trim off the first 6 arguments from the argument list
+  decl lVars = arg_list();
+  if (listlen(lVars) <= 6) {
+     print_function_error("write_var()", "Usage: write_var(FileName, WriteMode, Comment, Delimiter, Format, Precision, Var1, Var2, ..., VarN)"); 
+     return 0;
+  } //if
+
+  //Get the list of variables that are to be written out
+  for (iCount = 0; iCount < 6; iCount++)
+    lVars=cdr(lVars);
+
+  //Check the first 6 args to make sure that they are of the right type
+  if (!is_string(sFileName)) {
+    print_function_error("write_var()", "First argument FileName should be of type string"); 
+    return 0;
+  } //if
+  decl WriteMode = if (sWriteMode == NULL) then "W" else sWriteMode;
+  if (!is_string(WriteMode)) {
+    print_function_error("write_var()", "Second argument WriteMode should be of type string"); 
+    return 0;
+  } //if
+  decl sLower = tolower(WriteMode);
+  if (sLower != "w" && sLower != "a") {
+    print_function_error("write_var()", "Second argument WriteMode can be \"W\" or \"A\""); 
+    return 0;
+  } //if
+  decl HeaderText = if (sHeaderText == NULL) then "" else sHeaderText;
+  if (!is_string(HeaderText)) {
+    print_function_error("write_var()", "Third argument Header should be of type string"); 
+    return 0;
+  } //if
+  decl Delimiter = if (sDelimiter == NULL) then "\t" else sDelimiter;
+  if (!is_string(Delimiter)) {
+    print_function_error("write_var()", "Fourth argument Delimiter should be of type string"); 
+    return 0;
+  } //if
+  decl Format = if (sFormat == NULL) then "f" else sFormat;
+  if (!is_string(Format)) {
+    print_function_error("write_var()", "Fifth argument Format should be of type string"); 
+    return 0;
+  } //if
+  Format = tolower(Format);
+  if (Format != "f" && Format != "s") {
+    print_function_error("write_var()", "Fifth argument Format can be \"f - Full\" or \"s- Scientific\""); 
+    return 0;
+  } //if
+
+  if (iPrecision != NULL) {
+    if (! is_integer(iPrecision) || iPrecision < 1 || iPrecision > 64) {
+      print_function_error("write_var()", " Sixth argument Precision should be an integer in the range 1 to 64.");
+      return 0;
+    } //if
+  } //if
+  decl Precision = if (iPrecision == NULL) then 6 else iPrecision;
+
+  decl iNumVars = listlen(lVars);
+  //Check to make sure that the dimensions of the variable are all same
+  //And also the data is 1D
+  if (iNumVars == 1) {
+    if (sweep_dim(nth(0, lVars)) == 0) {
+      if (sweep_size(nth(0, lVars)) == 0) {
+        print_function_error("write_var()", "Data variable is not valid.");
+        return 0;
+      }
+    } //if
+    if (sweep_dim(nth(0, lVars)) > 1) {
+      print_function_error("write_var()", strcat(sweep_dim(nth(0,lVars)), "- Multiple dimension data not supported!")); 
+      return 0;
+    } //if
+  } //if
+  for (iCount = 0; iCount < iNumVars-1; iCount++) {
+    decl var0O = nth(iCount, lVars);
+    decl var1O = nth(iCount+1, lVars);
+    decl iVar0Dim = sweep_dim(var0O);
+    if (iVar0Dim == 0) {
+      print_function_error("write_var()", strcat("Data variable at position \"", iCount+1, "\" is not valid."));
+      return 0;
+    } //if
+    if (iVar0Dim != 1) {
+      print_function_error("write_var()", "Multiple dimension data not supported."); 
+      return 0;
+    }
+    decl iSwpSz0 = sweep_size(var0O);
+    decl iSwpSz1 = sweep_size(var1O);
+    decl bCondt = if (iSwpSz0 == iSwpSz1) then 1 else 0;
+    decl iSz = size(bCondt);
+    decl iCount2 = 0;
+    for (iCount2 = 1; iCount2 <= iSz; iCount2++) {
+      decl bCondtC;
+      if (iSz != 1)
+        bCondtC = bCondt(iCount2);
+      else
+        bCondtC = bCondt;
+      if (bCondtC != 1) {
+        print_function_error("write_var()", "All variables must be of the same dimension and size."); 
+        return 0;
+      } //if
+    } //for
+  } //for
+
+  //Now open the file and write the header info out
+  decl varO = nth(0, lVars);
+  decl vSwpSz = sweep_size(varO);
+  if (vSwpSz != NULL) {
+    fID = fopen(sFileName, WriteMode);
+    if (fID == NULL) {
+      print_function_error("write_var()", strcat(sFileName, " not a valid file."));
+      return 0;
+    } //if
+    if (HeaderText != NULL)
+      if (strlen(HeaderText) > 0)
+        fputs(fID, HeaderText);
+  } //if
+  else {
+    print_function_error("write_var()", " data variable to be written is not valid.  Check the data variable."); 
+    return 0;
+  }
+  write_var_1D(fID, Delimiter, Format, Precision, lVars);
+  fclose(fID);
+  return 1;
+} //fun - write_var
+
+//******************************************************************************
+//Function: write_var_1D
+//Purpose: used in write_var() to write the data corresponding to the different
+//         variables
+//Returns: None
+defun write_var_1D(fID, sDelimiter, Format, Precision, lVars)
+{ 
+    decl iNumVars = listlen(lVars);
+    decl vSwpSz = sweep_size(nth(0, lVars));
+    if (sweep_size(sweep_size(vSwpSz)) != 1) 
+        return;
+
+    //For each sweep point (row of data), write one row
+    decl iCount;
+    for (iCount = 0; iCount < vSwpSz; iCount++) 
+    {
+        decl iVarC = 0;
+        decl valid = TRUE;
+        decl s2Write = "";
+        for (iVarC = 0; iVarC < iNumVars; iVarC++) 
+        {
+            decl realPart = 0;
+            decl varO = nth(iVarC, lVars);
+            decl iSize = size(varO);
+            decl sType = type(varO);
+            decl curData = varO[iCount];
+
+            //Not a matrix
+            if (size(iSize) == 1) 
+            {
+                //Formulate one row of data
+                if (sType == "Complex") {
+                    realPart = real(curData);
+                    if (realPart==-infinity()) { // skip invalid data
+                        valid = FALSE;
+                        continue;
+                    }
+                    s2Write = strcat(s2Write, (0 == iVarC )?"":sDelimiter, 
+                        format_number(realPart, Format, Precision), sDelimiter, 
+                        format_number(imag(curData), Format, Precision));
+                } else {
+                    if (curData==-infinity()) { // skip invalid data
+                        valid = FALSE;
+                        continue;
+                    }
+                    s2Write = strcat(s2Write, (0 == iVarC )?"":sDelimiter, 
+                        format_number(curData, Format, Precision));
+                }
+            }
+            else 
+            {
+                //If data is matrix type - handle individual cells of the matrix
+                decl iNRs = iSize(1);
+                decl iNCs = iSize(2);
+                decl iRC, iCC;
+                for (iRC = 1; (valid == TRUE) && (iRC <= iNRs); iRC++) 
+                {
+                    decl rowData = curData(iRC,::);
+                    decl cDataType = type(rowData);
+                    for (iCC = 1; (valid == TRUE) && (iCC <= iNCs); iCC++) 
+                    {
+                        decl cellData = rowData(iCC);
+                        if (sType == "Complex") 
+                        {
+                            realPart = real(cellData);
+                            if (realPart==-infinity()) { // skip invalid data
+                                valid = FALSE;
+                                continue;
+                            }
+                            s2Write = strcat(s2Write, 
+                                (( 0 == iVarC) &&( 1 == iRC ) && ( 1 == iCC )) ? "" : sDelimiter, 
+                                format_number(realPart, Format, Precision), sDelimiter, 
+                                format_number(imag(cellData), Format, Precision));
+                        } else {
+                            if (curData==-infinity()) { // skip invalid data
+                                valid = FALSE;
+                                continue;
+                            }
+                            s2Write = strcat(s2Write, 
+                                (( 0 == iVarC) &&( 1 == iRC ) && ( 1 == iCC )) ? "" : sDelimiter, 
+                                format_number(cellData, Format, Precision));
+                        }
+                    } //for
+                } //for
+            }
+        } //for
+        //Write one row of data, skip invalid data
+        if (valid == TRUE)
+            fputs(fID, s2Write);
+    } //for
+} //fun - write_var_1D
+
+
+defun format_number(number, format, Precision)
+{
+  return (if (format == "s") then sprintf(strcat("%.", Precision, "e"), number) else sprintf(strcat("%.", Precision, "f"),number));
+}
+
+
+//
+// input is a 1-D data , output is the rms value of the input
+defun dd_rms( data )
+{
+  decl N = sweep_size(data) ;
+  decl sq_sum = 0 ;
+  decl idx = 0;
+  
+  for(idx =0; idx < N; idx++)
+    sq_sum += data[idx] * data[idx] ;
+
+  //fprintf(stderr, " rms function defined by Ram \n ") ;    
+  return sqrt( ( sq_sum/N) ) ;  
+}
+
+
+// lhs and rhs need to be values of comparable types.
+defun dd_compare_S(lhs, relop, rhs )
+{
+  decl relop_type = if ( member ( relop , list(">" , ">=" , "==", "!=" , "<=" ,"<") ) ) then relop else ">=" ;
+  
+  if(!strcmp(">",  relop_type) ) return ( lhs >  rhs ) ;
+  if(!strcmp(">=", relop_type) ) return ( lhs >= rhs ) ;
+  if(!strcmp("==", relop_type) ) return ( lhs == rhs ) ;
+  if(!strcmp("!=", relop_type) ) return ( lhs != rhs ) ;
+  if(!strcmp("<=", relop_type) ) return ( lhs <= rhs ) ;
+  if(!strcmp("<",  relop_type) ) return ( lhs <  rhs ) ;
+}
+
+
+
+// dd_reduce_S applies a function rep_func that accepts 1 dimensional data and returns a single value
+// to each Sij across all frequencies.
+// ie it reduces a 3 dimensional data to 2 dimensions.
+defun dd_reduce_S(modified_S, rep_func)
+{
+  decl size_of_S = size(modified_S) ;
+  if( size(size_of_S) !=2 )  {
+    // error out with good message ;
+    return;
+  }
+  
+  decl M = size_of_S(1) ;
+  decl N = size_of_S(2) ; 
+  
+  decl retmask , mat ; 
+  decl i = 1 ;
+  decl j = 1 ;
+  
+  for( i = 1 ; i <= M; i ++){
+    mat = {0} ;
+    for( j = 1; j <= N ; j++ )
+      mat = {mat, rep_func( modified_S(i,j) ) } ;
+    if( retmask != NULL) 
+      retmask = { retmask , { mat} } ;
+    else
+      retmask = { mat } ;
+   }
+   
+    decl actual_retmask = retmask(1::M, 2::N+1) ; 
+    
+  return actual_retmask  ;
+}
+
+
+
+
+
+
+// S_Filtered = dd_threshold(S, dd_rms,dB ,">=", -30.0,10 Hz, 8GHz).
+
+// S is the S-Parameter matrix.
+// rep_func is a function that reduces linear data to scalar data that can be compared with the threshold eg: dd_rms,min
+// mod_func is a function that is used to modify the Sij data to comparable units with the threshold      eg: dB
+// relop is the relational operator, in double quotes as a string, to compare the Sij statistic and the threshold.: lhs = statistic rhs = threshold
+// low_freq, highfreq specify the range of frequencies to consider for comparison.
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: dd_threshold()
+FUN_DESCRIPTION: Returns the filtered S Parameter matrix
+RETURNED_VALUE: Filtered S-matrx
+CATEGORY: Utility
+SYNTAX: S_Filtered = dd_threshold(S, rep_func, mod_func , relop,threshold,low_freq,high_freq)
+EXAMPLE:S_Filtered = dd_threshold(S, dd_rms,dB ,">=", -30.0,10 Hz, 8GHz).
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: the input S matrix that needs to be filtered
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: rep_func
+  ARG_DESCRIPTION: a function that reduces linear data to scalar data that can be compared with the threshold eg: dd_rms,min
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  function
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: mod_func
+  ARG_DESCRIPTION: a function that is used to modify the Sij data to comparable units with the threshold      eg: dB
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  function
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: relop
+  ARG_DESCRIPTION: the relational operator, in double quotes as a string, to compare the Sij statistic and the threshold.: lhs = statistic rhs = threshold
+  ARG_DEFAULT: ">="
+  ARG_RANGE: (">" , ">=" , "==", "!=" , "<=" ,"<")
+  ARG_TYPE:  String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: threshold
+  ARG_DESCRIPTION: the rhs value for the relational operator
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES  
+ARGUMENT
+  ARG_NAME: low_freq
+  ARG_DESCRIPTION: lower bound for frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: high_freq
+  ARG_DESCRIPTION: higher bound for freq
+  ARG_DEFAULT: None
+  ARG_RANGE: (inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+  
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/<tbd>.ael
+SEE ALSO: dd_reduce_S() 
+NOTES: This function filteres out unwanted S parameters 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Jan 2008
+VERSION_CREATED: ADS 2008 Update1
+END_DOC*/
+//****************************************************************************
+
+
+
+//                 0    1          2         3       4        5         6
+defun dd_threshold(S, rep_func, mod_func , relop,threshold,low_freq,high_freq)
+{
+  
+  decl indep_of_S = indep(S) ;
+  decl lf_idx = 0;
+  if( low_freq != NULL ) {
+    while( indep_of_S[lf_idx] < low_freq ) {
+      lf_idx++ ;
+    } 
+  }
+  decl hf_idx = sweep_size(S) -1;
+  if( high_freq != NULL ) {
+    while ( indep_of_S[hf_idx] > high_freq ) {
+      hf_idx--;
+    }
+  }
+  decl size_of_S = size(S) ;
+  if( size(size_of_S) !=2 )  {
+    // error out with good message ;
+    return;
+  }
+ 
+  decl selected_S = S[lf_idx::hf_idx] ;
+  decl repped_S = dd_reduce_S(mod_func( selected_S) , rep_func);
+  decl retmask = dd_compare_S( repped_S, relop, threshold ) ;
+  
+  
+  decl M = size_of_S(1) ;
+  decl N = size_of_S(2) ; 
+  decl i = 1 ;
+  decl j = 1 ;
+  
+  /*
+  for ( i = 1 ; i <= M; i ++){
+  
+    for ( j = 1; j <= N ; j++ ){
+      if ( retmask(i,j) ==0 ){
+        set_attr(S(i,j),"TraceType" "invisible")
+      }
+      
+       
+    }
+  }
+  */
+  decl retval = retmask .* selected_S ;
+  return retval ;
+
+//  return S ;
+}
+
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: amodelb_snp()  
+FUN_DESCRIPTION: Returns the cartesian difference between Two S Parameter matrices
+RETURNED_VALUE: difference
+CATEGORY: Utility
+SYNTAX: modelGoal = amodelb_snp( measured..S, model..S)
+EXAMPLE:modelGoal = abodelb_snp( measured..S, model..S)
+ARGUMENT
+  ARG_NAME: Target
+  ARG_DESCRIPTION: the input S matrix that needs to be matched
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME:  Model
+  ARG_DESCRIPTION: input S matrix to compare 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+
+  
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael
+SEE ALSO: 
+NOTES: This function  computes the sum of {( mag( Target.S( i, j ) - Model.S( i,j ) ) ) ** 2 } for all values of i,j 
+It can be used as a Goal expression during Optimization in which you are trying to match simulation modeled results to measured data.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Jul 2009
+VERSION_CREATED: ADS 2009 Update1
+END_DOC*/
+//****************************************************************************
+
+// Modified amodelb_s2p to become amodelb_snp by Nilesh, Jun 28 2009
+defun amodelb_snp( Target_S, Model_S )
+{
+    decl tempGoal = 0 ;    
+    //print_function_error("amodelb_snp", "Hello Error");  
+    //  fputs(stderr, "Entered");
+    // figure out How many port S Parameter simulation this is
+    // Can't figure out why these constructs don't work in AEL expression but work in DDS
+    //n = size(Target.S)(1);
+    //n = max(expand(size(Target.S))); You have to do n=n*1 w/o which it doesnt seem to work!!
+
+    decl n = max( expand( size( Target_S ) ) ) ;
+    n = n * 1 ;
+    //  fputs(stderr, strcat("Val n = ", identify_value(n)));
+    decl m = max( expand( size( Model_S ) ) ) ;
+    m = m * 1 ;
+    //  fputs(stderr, strcat("Val m = ", identify_value(m)));
+    if ( m == n && n > 0 ) {
+        decl i, j ;
+        for ( i = 1 ; i <= n ; i++ ) {
+            for ( j = 1 ; j <= n ; j++ ) {
+                tempGoal = tempGoal + ( mag( Target_S( i, j ) - Model_S( i,j ) ) ) ** 2 ;
+                //fputs(stderr, strcat("Val tempGoal = ", identify_value(tempGoal)));
+            }
+        }
+        fputs(stderr, "Hello This is a problem");
+        return tempGoal ;
+    } else
+        return NULL ;
+}    
+
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+// fputs(stderr, " Defining function interpolate_swept_data");
+//***********************************************************************
+/*BEGIN_DOC
+  FUN_NAME: interpolate_swept_data()
+  FUN_DESCRIPTION: Returns a function or trace's y-axis value or values corresponding to a specific x-axis value
+  MAKE_PUBLIC: True
+  RETURNED_VALUE: Real
+  CATEGORY: Statistics
+  SYNTAX: Interpolated_Y_Value=interpolate_swept_data(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+  EXAMPLE:
+  Pdel_W=0.5*real(Vload[1]*conj(Iload.i[1]))
+  Pdel_dBm=10*log(Pdel_W)+30
+  Gain_Transducer=Pdel_dBm-Pavs_dBm
+  Gain_vs_Pdel_dBm=vs(Gain_Transducer,Pdel_dBm)
+  Search_Value=30
+  interpStepSize=0.05
+  interpType="spline"
+  Gain_at_Specified_Pdel_dBm=interpolate_swept_data(Gain_vs_Pdel_dBm, Search_Value, interpStepSize, interpType)
+  ARGUMENT
+  ARG_NAME: original_data_Y_vs_X
+  ARG_DESCRIPTION: up to ten-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: desired_X
+  ARG_DESCRIPTION: X-axis search value, must be a single real or integer number or have the same dimensionality as original_data_Y_vs_X (<=2)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: interpStepSize
+  ARG_DESCRIPTION: interpolation step size, a single real or integer number
+  ARG_DEFAULT: 0.05
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: interpType
+  ARG_DESCRIPTION: type of interpolation
+  ARG_DEFAULT: None
+  ARG_RANGE: "linear", "spline", or "cubic"
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+  DEFINED IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael 
+  SEE ALSO: None
+  NOTES: The interpolate_y_vs_x() function is a better version of this function.  The interpolate_y_vs_x() function gives better 
+  results when the y versus x data has a slope that is near vertical near the region of the desired X value.  
+  This function would be useful for the following application.  You have run a swept input power simulation of an amplifier.
+  You plot a trace that is gain versus output power or gain compression versus output power.  Use this function to find the gain or
+  gain compression at a particular output power.  This function is applicable even if you have run a Monte Carlo analysis or swept
+  some parameter.  It enables you to see the distribution of the gain or gain compression when the amplifier is delivering a 
+  particular output power.
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies (AEH)
+  DATE: June 7 2012
+  VERSION_CREATED: ADS 2009 Update 1
+  END_DOC*/
+  //***********************************************************************
+defun interpolate_swept_data(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    if ((interpType != "linear") && (interpType != "cubic") && (interpType != "spline"))
+    {
+	print_function_error( "interpolate_swept_data", "interpType must be set to \"linear\", \"cubic\", or \"spline\"");
+	return;
+    }
+    decl interpStepSizeChkd = if (interpStepSize == NULL) then 0.05 else interpStepSize;
+    if (sweep_dim(desired_X) > 2)
+    {
+	print_function_error( "interpolate_swept_data", "dimensonality of desired_X must be <=2");
+	return;
+    }
+    if (sweep_dim(desired_X) == 2)
+    {
+        if (sweep_dim(original_data_Y_vs_X) != 2)
+        {
+            print_function_error( "interpolate_swept_data", "desired_X must be a single number or have the same dimensionality as the original_data_Y_vs_X data.");
+            return;
+        }
+        decl j=0;
+        decl Results_array_2d = vs(expand(original_data_Y_vs_X[0]),desired_X);  // Initialize results array.
+        decl numPts_j = sweep_size(desired_X[0]);
+        for (j=0; j < numPts_j; j++)
+        {
+            Results_array_2d[j,::] = interpolate_swept_data_desired_X_1d(original_data_Y_vs_X[j,::], desired_X[j,::], interpStepSizeChkd, interpType);
+        }
+            return Results_array_2d;
+	}
+	
+	if (sweep_dim(desired_X) == 1)              	// desired_X has multiple values, so we call the function once for each value.
+	{
+	    if (sweep_dim(original_data_Y_vs_X) != 1)
+            {
+                print_function_error( "interpolate_swept_data", "desired_X must be a single number or have the same dimensionality as the original_data_Y_vs_X data.");
+                return;
+            }            
+            return interpolate_swept_data_desired_X_1d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);            
+	}
+	return interpolate_swept_data_sub(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	
+} // fun - interpolate_swept_data
+
+defun interpolate_swept_data_desired_X_1d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType)
+{
+	decl i=0;
+	decl Results_array = vs(original_data_Y_vs_X[0],desired_X);  // Initialize results array.
+	decl numPts_i = sweep_size(desired_X);
+	for (i=0; i < numPts_i; i++) 
+	{
+            Results_array[i] = interpolate_swept_data_sub(original_data_Y_vs_X, desired_X[i], interpStepSizeChkd, interpType);
+	}
+	return Results_array;	
+} // fun - interpolate_swept_data_desired_X_1d
+
+defun interpolate_swept_data_sub(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType)
+{
+    decl sweepDim = sweep_dim(original_data_Y_vs_X);
+    decl results = NULL; 
+   
+    switch (sweepDim) {
+    case 0: print_function_error( "interpolate_swept_data", " does not support single number data.");
+	return;
+	break;
+    case 1: results = interpolate_swept_data_1d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	break;
+    case 2: results = interpolate_swept_data_2d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);	 
+	break;
+    case 3: results = interpolate_swept_data_3d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	break;
+	case 4: results = interpolate_swept_data_4d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	break;
+	case 5: results = interpolate_swept_data_5d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	break;
+	case 6: results = interpolate_swept_data_6d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	break;
+    case 7: results = interpolate_swept_data_7d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	break;
+	case 8: results = interpolate_swept_data_8d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	break;
+	case 9: results = interpolate_swept_data_9d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	break;
+	case 10: results = interpolate_swept_data_10d(original_data_Y_vs_X, desired_X, interpStepSizeChkd, interpType);
+	break;
+    default: print_function_error( "interpolate_swept_data", " does not support data with dimensions greater than ten.");
+	return;
+	break;
+    }
+
+    return results;
+} // fun - interpolate_swept_data_sub
+
+defun interpolate_swept_data_1d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_value = original_data_Y_vs_X;                         // initialize output
+    decl X_value = real(indep(original_data_Y_vs_X));     // real() needed to prevent X_values_array being initialized as an integer.
+    decl X_data = indep(original_data_Y_vs_X);
+    decl X_data_interpolated = [min(X_data)::interpStepSize::max(X_data)];
+    decl Y_data_interpolated = interpolate(interpType, original_data_Y_vs_X, 1, X_data_interpolated);
+    decl X_index = mean(find(mag(X_data_interpolated-desired_X)<interpStepSize/2));
+    if (X_index<0)
+    {
+            if (mag(desired_X - min(X_data_interpolated)) < mag(desired_X - max(X_data_interpolated)))
+            {
+            	X_index=min_index(X_data_interpolated);
+            } else
+            {
+            	X_index=max_index(X_data_interpolated);
+            }
+	}	
+
+    Y_value = Y_data_interpolated[X_index];
+    X_value = X_data_interpolated[X_index];
+    return vs(Y_value,X_value);
+} // fun - interpolate_swept_data_1d
+
+defun interpolate_swept_data_2d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_values_array = original_data_Y_vs_X[0];                     // initialize output arrays
+    decl X_values_array = real(indep(original_data_Y_vs_X[0]));   // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array);
+    decl i;      
+    decl X_index;
+    decl X_data;
+    decl X_data_interpolated;
+    decl Y_data_interpolated;
+    for (i=0; i<numPts_i; i++)                       
+    {
+	X_data = indep(original_data_Y_vs_X[i,::]);
+	X_data_interpolated = [min(X_data)::interpStepSize::max(X_data)];
+	Y_data_interpolated = interpolate(interpType, original_data_Y_vs_X[i,::], 1, X_data_interpolated);
+	X_index = mean(find(mag(X_data_interpolated-desired_X)<interpStepSize/2));
+	if (X_index<0)
+    {
+            if (mag(desired_X - min(X_data_interpolated)) < mag(desired_X - max(X_data_interpolated)))
+            {
+            	X_index=min_index(X_data_interpolated);
+            } else
+            {
+            	X_index=max_index(X_data_interpolated);
+            }
+	}
+
+	Y_values_array[i] = Y_data_interpolated[X_index];
+	X_values_array[i] = X_data_interpolated[X_index];
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_swept_data_2d
+
+defun interpolate_swept_data_3d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_values_array = original_data_Y_vs_X[0];                     // initialize output arrays
+    decl X_values_array = real(indep(original_data_Y_vs_X[0]));   // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0]);
+    decl i;      
+    decl temp;
+    for (i=0; i<numPts_i; i++)
+    {
+	temp=interpolate_swept_data_2d(original_data_Y_vs_X[i,::,::], desired_X, interpStepSize, interpType);
+	Y_values_array[i,::]=temp;
+	X_values_array[i,::]=indep(temp);
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_swept_data_3d
+
+defun interpolate_swept_data_4d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_values_array = original_data_Y_vs_X[0];                     // initialize output arrays
+    decl X_values_array = real(indep(original_data_Y_vs_X[0]));   // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0]);
+    decl i;      
+    decl temp;
+    for (i=0; i<numPts_i; i++)
+    {
+	temp=interpolate_swept_data_3d(original_data_Y_vs_X[i,::,::,::], desired_X, interpStepSize, interpType);
+	Y_values_array[i,::,::]=temp;
+	X_values_array[i,::,::]=indep(temp);
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_swept_data_4d
+
+defun interpolate_swept_data_5d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_values_array = original_data_Y_vs_X[0];                     // initialize output arrays
+    decl X_values_array = real(indep(original_data_Y_vs_X[0]));   // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0]);
+    decl i;      
+    decl temp;
+    for (i=0; i<numPts_i; i++)
+    {
+	temp=interpolate_swept_data_4d(original_data_Y_vs_X[i,::,::,::,::], desired_X, interpStepSize, interpType);
+	Y_values_array[i,::,::,::]=temp;
+	X_values_array[i,::,::,::]=indep(temp);
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_swept_data_5d
+
+defun interpolate_swept_data_6d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_values_array = original_data_Y_vs_X[0];                     // initialize output arrays
+    decl X_values_array = real(indep(original_data_Y_vs_X[0]));   // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0]);
+    decl i;      
+    decl temp;
+    for (i=0; i<numPts_i; i++)
+    {
+	temp=interpolate_swept_data_5d(original_data_Y_vs_X[i,::,::,::,::,::], desired_X, interpStepSize, interpType);
+	Y_values_array[i,::,::,::,::]=temp;
+	X_values_array[i,::,::,::,::]=indep(temp);
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_swept_data_6d
+
+defun interpolate_swept_data_7d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_values_array = original_data_Y_vs_X[0];                     // initialize output arrays
+    decl X_values_array = real(indep(original_data_Y_vs_X[0]));   // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0,0]);
+    decl i;      
+    decl temp;
+    for (i=0; i<numPts_i; i++)
+    {
+	temp=interpolate_swept_data_6d(original_data_Y_vs_X[i,::,::,::,::,::,::], desired_X, interpStepSize, interpType);
+	Y_values_array[i,::,::,::,::,::]=temp;
+	X_values_array[i,::,::,::,::,::]=indep(temp);
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_swept_data_7d
+
+defun interpolate_swept_data_8d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_values_array = original_data_Y_vs_X[0];                     // initialize output arrays
+    decl X_values_array = real(indep(original_data_Y_vs_X[0]));   // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0,0,0]);
+    decl i;      
+    decl temp;
+    for (i=0; i<numPts_i; i++)
+    {
+	temp=interpolate_swept_data_7d(original_data_Y_vs_X[i,::,::,::,::,::,::,::], desired_X, interpStepSize, interpType);
+	Y_values_array[i,::,::,::,::,::,::]=temp;
+	X_values_array[i,::,::,::,::,::,::]=indep(temp);
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_swept_data_8d
+
+defun interpolate_swept_data_9d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_values_array = original_data_Y_vs_X[0];                     // initialize output arrays
+    decl X_values_array = real(indep(original_data_Y_vs_X[0]));   // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0,0,0,0]);
+    decl i;      
+    decl temp;
+    for (i=0; i<numPts_i; i++)
+    {
+	temp=interpolate_swept_data_8d(original_data_Y_vs_X[i,::,::,::,::,::,::,::,::], desired_X, interpStepSize, interpType);
+	Y_values_array[i,::,::,::,::,::,::,::]=temp;
+	X_values_array[i,::,::,::,::,::,::,::]=indep(temp);
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_swept_data_9d
+
+defun interpolate_swept_data_10d(original_data_Y_vs_X, desired_X, interpStepSize, interpType)
+{
+    decl Y_values_array = original_data_Y_vs_X[0];                     // initialize output arrays
+    decl X_values_array = real(indep(original_data_Y_vs_X[0]));   // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0,0,0,0,0]);
+    decl i;      
+    decl temp;
+    for (i=0; i<numPts_i; i++)
+    {
+	temp=interpolate_swept_data_9d(original_data_Y_vs_X[i,::,::,::,::,::,::,::,::,::], desired_X, interpStepSize, interpType);
+	Y_values_array[i,::,::,::,::,::,::,::,::]=temp;
+	X_values_array[i,::,::,::,::,::,::,::,::]=indep(temp);
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_swept_data_10d
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+// fputs(stderr, " Defining function interpolate_y_vs_x");
+//***********************************************************************
+/*BEGIN_DOC
+  FUN_NAME: interpolate_y_vs_x()
+  FUN_DESCRIPTION: Returns a trace's y-axis value or values corresponding to a specific x-axis value
+  MAKE_PUBLIC: True
+  RETURNED_VALUE: Real
+  CATEGORY: Statistics
+  SYNTAX: Interpolated_Y_Value=interpolate_y_vs_x(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+  EXAMPLE:
+  Pdel_W=0.5*real(Vload[1]*conj(Iload.i[1]))
+  Pdel_dBm=10*log(Pdel_W)+30
+  Gain_Transducer=Pdel_dBm-Pavs_dBm
+  Search_Value=30
+  interpStepSize=0.05
+  interpType="spline"
+  Gain_at_Specified_Pout=interpolate_y_vs_x(Gain_Transducer, Pdel_dBm, Search_Value, interpStepSize, interpType, "Yes")
+  ARGUMENT
+  ARG_NAME: Y_data
+  ARG_DESCRIPTION: data that may be a function of up to ten different independent variables
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: X_data
+  ARG_DESCRIPTION: data that may be a function of up to ten different independent variables
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: desired_X
+  ARG_DESCRIPTION: X-axis search value, must be a single real or integer number or have the same dimensionality as the Y_data and X_data (<=2)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: interpStepSize
+  ARG_DESCRIPTION: interpolation step size, a single real or integer number
+  ARG_DEFAULT: 0.05
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: interpType
+  ARG_DESCRIPTION: type of interpolation
+  ARG_DEFAULT: None
+  ARG_RANGE: "linear", "spline", or "cubic"
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: use_lowest_index
+  ARG_DESCRIPTION: The X_data is interpolated versus the innermost independent variable.  If multiple values of the interpolated X_data satisfy the desired_X target, this specifies whether to use the corresponding lowest or highest index.
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0, "No", "NO", "no", "Yes", "YES", "yes", 1)
+  ARG_TYPE: Real, Integer, or String
+  ARG_REQUIRED: NO
+  DEFINED IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael 
+  SEE ALSO: None
+  NOTES: This function would be useful for the following application.  You have run a swept input power simulation of an amplifier.
+  You plot a trace that is gain versus output power or gain compression versus output power.  Use this function to find the gain or
+  gain compression at a particular output power.  This function is applicable even if you have run a Monte Carlo analysis or swept
+  some parameter.  It enables you to see the distribution of the gain or gain compression when the amplifier is delivering a 
+  particular output power.
+  This function is nearly identical to interpolate_swept_data().  The differences are: 1) it takes both the Y_data and X_data as inputs, whereas 
+  interpolate_swept_data() takes something like vs(Y_data,X_data) and 2) this function handles the case were the plot of Y_data vs X_data is not 
+  one-to-one.  For example, if you have a plot of Pout versus Pin, and the slope is not always positive, then a plot of gain (Y_data) versus Pout 
+  (X_data) will have multiple values of gain for some range of values of Pout.  The Y_data versus X_data is not one-to-one in this case.
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies (AEH)
+  DATE: June 8 2012
+  VERSION_CREATED: ADS 2012.08
+  END_DOC*/
+  //***********************************************************************
+defun interpolate_y_vs_x(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    if ((Y_data == NULL) || (X_data == NULL))
+    {
+	print_function_error( "interpolate_y_vs_x", "the Y_data and X_data passed parameters are required.");
+	return;
+    }
+	if (sweep_dim(Y_data) != sweep_dim(X_data))
+	{
+            print_function_error( "interpolate_y_vs_x", "Y_data and X_data must have the same dimensionality");
+            return;
+	}
+	if (sweep_dim(Y_data) == 1)
+	{
+            if (sweep_size(Y_data) != sweep_size(X_data))
+            {
+            print_function_error( "interpolate_y_vs_x", "Y_data and X_data must be the same size");
+            return;
+            }
+	}
+    else if (sweep_dim(Y_data) == 2)
+    {
+            if ((sweep_size(Y_data[0]) != sweep_size(X_data[0])) || (sweep_size(Y_data[0,::]) != sweep_size(X_data[0,::])))
+            {
+            print_function_error( "interpolate_y_vs_x", "Y_data and X_data must be the same size");
+            return;
+            }
+	}
+	else if (sweep_dim(Y_data) == 3)
+    {
+            if ((sweep_size(Y_data[0,0,::]) != sweep_size(X_data[0,0,::])) || (sweep_size(Y_data[0,::,0]) != sweep_size(X_data[0,::,0])) || (sweep_size(Y_data[::,0,0]) != sweep_size(X_data[::,0,0])))
+            {
+            print_function_error( "interpolate_y_vs_x", "Y_data and X_data must be the same size");
+            return;
+            }
+	}
+    if ((interpType != "linear") && (interpType != "cubic") && (interpType != "spline"))
+    {
+	print_function_error( "interpolate_y_vs_x", "interpType must be set to \"linear\", \"cubic\", or \"spline\"");
+	return;
+    }
+
+	if ((use_lowest_index != 0) && (use_lowest_index !="No") && (use_lowest_index !="NO") && (use_lowest_index !="no") && (use_lowest_index !=1) && (use_lowest_index !="Yes") && (use_lowest_index !="YES") && (use_lowest_index !="yes") && (use_lowest_index !=NULL))
+    {
+            print_function_error( "interpolate_y_vs_x", "use_lowest_index must be set to 0, \"No\", \"NO\", \"no\", 1, \"Yes\", \"YES\", or \"yes\" ");
+            return;
+    }
+    decl use_lowest_indexChkd = if (use_lowest_index == NULL) then 1 else use_lowest_index; // set this flag to 1 as the default if no parameter passed.
+    use_lowest_indexChkd = if (use_lowest_index == "No" || use_lowest_index == "NO" || use_lowest_index == "no") then 0 else use_lowest_indexChkd;
+    decl interpStepSizeChkd = if (interpStepSize == NULL) then 0.05 else interpStepSize;
+    if (sweep_dim(desired_X) > 2)
+    {
+	print_function_error( "interpolate_y_vs_x", "dimensonality of desired_X must be <=2");
+	return;
+    }
+    if (sweep_dim(desired_X) == 2)
+    {
+        if (sweep_dim(Y_data) != 2)
+        {
+              print_function_error( "interpolate_y_vs_x", "desired_X must be a single number or have the same dimensionality as the X and Y data.");
+              return;
+        }
+        decl j=0;
+        decl Results_array_2d = vs(expand(Y_data[0]),desired_X);  // Initialize results array.  
+        decl numPts_j = sweep_size(desired_X[0]);
+        for (j=0; j < numPts_j; j++)
+        {
+            Results_array_2d[j,::] = interpolate_y_vs_x_desired_X_1d(Y_data[j,::], X_data[j,::], desired_X[j,::], interpStepSizeChkd, interpType, use_lowest_indexChkd);
+        }
+        return Results_array_2d;
+    }
+	
+    if (sweep_dim(desired_X) ==1)              	// desired_X has multiple values, so we call the function once for each value.
+    {
+        if (sweep_dim(Y_data) != 1)
+        {
+            print_function_error( "interpolate_y_vs_x", "desired_X must be a single number or have the same dimensionality as the X and Y data.");
+            return;
+        }            
+        return interpolate_y_vs_x_desired_X_1d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);            
+    }
+    return interpolate_y_vs_x_sub(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	
+}  // fun - interpolate_y_vs_x
+
+defun interpolate_y_vs_x_desired_X_1d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd)
+{
+    decl i=0;
+    decl Results_array = vs(Y_data[0],desired_X);  // Initialize results array.
+    decl numPts_i = sweep_size(desired_X);
+    for (i=0; i < numPts_i; i++) 
+    {
+        Results_array[i] = interpolate_y_vs_x_sub(Y_data, X_data, desired_X[i], interpStepSizeChkd, interpType, use_lowest_indexChkd);
+    }
+    return Results_array;	
+} // fun - interpolate_y_vs_x_desired_X_1d
+
+defun interpolate_y_vs_x_sub(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd)
+{
+    decl sweepDim = sweep_dim(Y_data);
+    decl results = NULL; 
+   
+    switch (sweepDim) {
+    case 0: print_function_error( "interpolate_y_vs_x", " does not support single number data.");
+	return;
+	break;
+    case 1: results = interpolate_y_vs_x_1d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	break;
+    case 2: results = interpolate_y_vs_x_2d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);	 
+	break;
+    case 3: results = interpolate_y_vs_x_3d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	break;
+	case 4: results = interpolate_y_vs_x_4d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	break;
+	case 5: results = interpolate_y_vs_x_5d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	break;
+	case 6: results = interpolate_y_vs_x_6d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	break;
+	case 7: results = interpolate_y_vs_x_7d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	break;
+	case 8: results = interpolate_y_vs_x_8d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	break;
+	case 9: results = interpolate_y_vs_x_9d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	break;
+	case 10: results = interpolate_y_vs_x_10d(Y_data, X_data, desired_X, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+	break;
+    default: print_function_error( "interpolate_y_vs_x", " does not support data with dimensions greater than ten.");
+	return;
+	break;
+    }
+
+    return results;
+} // fun - interpolate_y_vs_x_sub
+
+defun interpolate_y_vs_x_1d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_value = Y_data;                         // initialize output
+    decl X_value = real(X_data);                  // real() needed to prevent X_values_array being initialized as an integer.
+	decl Param_data = indep(Y_data);
+    decl Param_data_interpolated = [min(Param_data)::interpStepSize::max(Param_data)];
+	decl X_data_interpolated = interpolate(interpType, X_data, 1, Param_data_interpolated);
+    decl Y_data_interpolated = interpolate(interpType, Y_data, 1, Param_data_interpolated);
+    decl X_index_0 = find(mag(X_data_interpolated-desired_X)<interpStepSize/2);
+    decl X_index_1 = find(mag(X_data_interpolated-desired_X)<interpStepSize);
+	decl X_index = if (min(X_index_0) >= 0) then (X_index_0) else (X_index_1);
+	if (!use_lowest_index)
+	{
+	    X_index = max(X_index);
+	}
+	else
+	{
+            X_index = min(X_index);
+	}
+    if (X_index<0)
+    {
+            if (mag(desired_X - min(X_data_interpolated)) < mag(desired_X - max(X_data_interpolated)))
+            {
+            	X_index=min_index(X_data_interpolated);
+            } else
+            {
+            	X_index=max_index(X_data_interpolated);
+            }
+	}
+    Y_value = Y_data_interpolated[X_index];
+    X_value = X_data_interpolated[X_index];
+    return vs(Y_value,X_value);
+} // fun - interpolate_y_vs_x_1d
+
+defun interpolate_y_vs_x_2d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_values_array = Y_data[0];                                 	// initialize output arrays
+    decl X_values_array = real(X_data[0]);                           // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array);
+    decl i;      
+    decl X_index;
+    decl Param_data = indep(Y_data);
+	decl Param_data_interpolated;
+    decl X_data_interpolated;
+    decl Y_data_interpolated;
+	if (sweep_dim(desired_X)==0)
+	{
+            for (i=0; i<numPts_i; i++)                       
+            {
+            	Param_data_interpolated = [min(Param_data[i,::])::interpStepSize::max(Param_data[i,::])];
+            	X_data_interpolated = interpolate(interpType, X_data[i,::], 1, Param_data_interpolated);
+            	Y_data_interpolated = interpolate(interpType, Y_data[i,::], 1, Param_data_interpolated);
+            	decl X_index_0 = find(mag(X_data_interpolated-desired_X)<interpStepSize/2);
+            	decl X_index_1 = find(mag(X_data_interpolated-desired_X)<interpStepSize);
+            	decl X_index = if (min(X_index_0) >= 0) then (X_index_0) else (X_index_1);
+
+            	if (!use_lowest_index)
+            	{
+                        X_index = max(X_index);
+            	}
+            	else
+            	{
+                        X_index = min(X_index);
+            	}
+            	if (X_index<0)
+            	{
+                        if (mag(desired_X - min(X_data_interpolated)) < mag(desired_X - max(X_data_interpolated)))
+                        {
+                        	X_index=min_index(X_data_interpolated);
+                        } else
+                        {
+                        	X_index=max_index(X_data_interpolated);
+                        }
+            	}
+            	Y_values_array[i] = Y_data_interpolated[X_index];
+            	X_values_array[i] = X_data_interpolated[X_index];
+            }
+	} else
+	{
+            for (i=0; i<numPts_i; i++)                       
+            {
+            	Param_data_interpolated = [min(Param_data[i,::])::interpStepSize::max(Param_data[i,::])];
+            	X_data_interpolated = interpolate(interpType, X_data[i,::], 1, Param_data_interpolated);
+            	Y_data_interpolated = interpolate(interpType, Y_data[i,::], 1, Param_data_interpolated);
+            	decl X_index_0 = find(mag(X_data_interpolated-desired_X[i])<interpStepSize/2);
+            	decl X_index_1 = find(mag(X_data_interpolated-desired_X[i])<interpStepSize);
+            	decl X_index = if (min(X_index_0) >= 0) then (X_index_0) else (X_index_1);
+
+            	if (!use_lowest_index)
+            	{
+                        X_index = max(X_index);
+            	}
+            	else
+            	{
+                        X_index = min(X_index);
+            	}
+            	if (X_index<0)
+            	{
+                        if (mag(desired_X[i] - min(X_data_interpolated)) < mag(desired_X[i] - max(X_data_interpolated)))
+                        {
+                        	X_index=min_index(X_data_interpolated);
+                        } else
+                        {
+                        	X_index=max_index(X_data_interpolated);
+                        }
+            	}
+            	Y_values_array[i] = Y_data_interpolated[X_index];
+            	X_values_array[i] = X_data_interpolated[X_index];
+            }
+	}
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_y_vs_x_2d
+
+defun interpolate_y_vs_x_3d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_values_array = Y_data[0];                     // initialize output arrays
+    decl X_values_array = real(X_data[0]);            	 // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0]);
+    decl i;      
+    decl temp;
+	if (sweep_dim(desired_X)==0)
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_2d(Y_data[i,::,::], X_data[i,::,::], desired_X, interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::]=temp;
+            	X_values_array[i,::]=indep(temp);
+            }
+	} else
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_2d(Y_data[i,::,::], X_data[i,::,::], desired_X[i,::], interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::]=temp;
+            	X_values_array[i,::]=indep(temp);
+            }
+	}
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_y_vs_x_3d
+
+defun interpolate_y_vs_x_4d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_values_array = Y_data[0];                     // initialize output arrays
+    decl X_values_array = real(X_data[0]);            	 // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0]);
+    decl i;      
+    decl temp;
+	if (sweep_dim(desired_X)==0)
+    {	
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_3d(Y_data[i,::,::,::], X_data[i,::,::,::], desired_X, interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::]=temp;
+            	X_values_array[i,::,::]=indep(temp);
+            }
+	} else
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_3d(Y_data[i,::,::,::], X_data[i,::,::,::], desired_X[i,::,::], interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::]=temp;
+            	X_values_array[i,::,::]=indep(temp);
+            }
+	}
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_y_vs_x_4d
+
+defun interpolate_y_vs_x_5d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_values_array = Y_data[0];                     // initialize output arrays
+    decl X_values_array = real(X_data[0]);            	 // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0]);
+    decl i;      
+    decl temp;
+	if (sweep_dim(desired_X)==0)
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_4d(Y_data[i,::,::,::,::], X_data[i,::,::,::,::], desired_X, interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::]=temp;
+            	X_values_array[i,::,::,::]=indep(temp);
+            }
+	} else
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_4d(Y_data[i,::,::,::,::], X_data[i,::,::,::,::], desired_X[i,::,::,::], interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::]=temp;
+            	X_values_array[i,::,::,::]=indep(temp);
+            }
+	}
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_y_vs_x_5d
+
+defun interpolate_y_vs_x_6d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_values_array = Y_data[0];                     // initialize output arrays
+    decl X_values_array = real(X_data[0]);            	 // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0]);
+    decl i;      
+    decl temp;
+	if (sweep_dim(desired_X)==0)
+	{
+	    for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_5d(Y_data[i,::,::,::,::,::], X_data[i,::,::,::,::,::], desired_X, interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::]=indep(temp);
+            }
+	} else
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_5d(Y_data[i,::,::,::,::,::], X_data[i,::,::,::,::,::], desired_X[i,::,::,::,::], interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::]=indep(temp);	
+            }
+	}
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_y_vs_x_6d
+
+defun interpolate_y_vs_x_7d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_values_array = Y_data[0];                     // initialize output arrays
+    decl X_values_array = real(X_data[0]);            	 // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0,0]);
+    decl i;      
+    decl temp;
+	if (sweep_dim(desired_X)==0)
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_6d(Y_data[i,::,::,::,::,::,::], X_data[i,::,::,::,::,::,::], desired_X, interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::,::]=indep(temp);
+            }
+	} else
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_6d(Y_data[i,::,::,::,::,::,::], X_data[i,::,::,::,::,::,::], desired_X[i,::,::,::,::,::], interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::,::]=indep(temp);
+            }
+	}
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_y_vs_x_7d
+
+defun interpolate_y_vs_x_8d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_values_array = Y_data[0];                     // initialize output arrays
+    decl X_values_array = real(X_data[0]);            	 // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0,0,0]);
+    decl i;      
+    decl temp;
+	if (sweep_dim(desired_X)==0)
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_7d(Y_data[i,::,::,::,::,::,::,::], X_data[i,::,::,::,::,::,::,::], desired_X, interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::,::,::]=indep(temp);
+            }
+	} else
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_7d(Y_data[i,::,::,::,::,::,::,::], X_data[i,::,::,::,::,::,::,::], desired_X[i,::,::,::,::,::,::], interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::,::,::]=indep(temp);
+            }
+	}
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_y_vs_x_8d
+
+defun interpolate_y_vs_x_9d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_values_array = Y_data[0];                     // initialize output arrays
+    decl X_values_array = real(X_data[0]);            	 // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0,0,0,0]);
+    decl i;      
+    decl temp;
+	if (sweep_dim(desired_X)==0)
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_8d(Y_data[i,::,::,::,::,::,::,::,::], X_data[i,::,::,::,::,::,::,::,::], desired_X, interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::,::,::,::]=indep(temp);
+            }
+	} else
+	{
+            for (i=0; i<numPts_i; i++)
+            {
+            	temp=interpolate_y_vs_x_8d(Y_data[i,::,::,::,::,::,::,::,::], X_data[i,::,::,::,::,::,::,::,::], desired_X[i,::,::,::,::,::,::,::], interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::,::,::,::]=indep(temp);
+            }
+	}
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_y_vs_x_9d
+
+defun interpolate_y_vs_x_10d(Y_data, X_data, desired_X, interpStepSize, interpType, use_lowest_index)
+{
+    decl Y_values_array = Y_data[0];                     // initialize output arrays
+    decl X_values_array = real(X_data[0]);            	 // real() needed to prevent X_values_array being initialized as an integer.
+    decl numPts_i = sweep_size(Y_values_array[0,0,0,0,0,0,0,0]);
+    decl i;      
+    decl temp;
+    if (sweep_dim(desired_X)==0)
+    {
+        for (i=0; i<numPts_i; i++)
+        {
+            	temp=interpolate_y_vs_x_9d(Y_data[i,::,::,::,::,::,::,::,::,::], X_data[i,::,::,::,::,::,::,::,::,::], desired_X, interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::,::,::,::,::]=indep(temp);
+        }
+    }
+    else
+    {
+        for (i=0; i<numPts_i; i++)
+        {
+            	temp=interpolate_y_vs_x_9d(Y_data[i,::,::,::,::,::,::,::,::,::], X_data[i,::,::,::,::,::,::,::,::,::], desired_X[i,::,::,::,::,::,::,::,::], interpStepSize, interpType, use_lowest_index);
+            	Y_values_array[i,::,::,::,::,::,::,::,::]=temp;
+            	X_values_array[i,::,::,::,::,::,::,::,::]=indep(temp);
+        }
+    }
+    return vs(Y_values_array,X_values_array);
+} // fun - interpolate_y_vs_x_10d
+
+//***********************************************************************
+/*BEGIN_DOC
+  FUN_NAME: interpolate_swept_data_XdB()
+  FUN_DESCRIPTION: Interpolates swept-power data to find the response at an X-dB gain compression point
+  MAKE_PUBLIC: True
+  RETURNED_VALUE: Real
+  CATEGORY: Statistics
+  SYNTAX: Results=interpolate_swept_data_XdB(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag)
+  EXAMPLE:
+  Gt=Pdel_dBm-Pavs_dBm
+  GComp=1
+  Performance1=Pdel_dBm
+  Results=interpolate_swept_data_XdB(Gt[::,::,::],GComp,Performance1[::,::,::],0.005,"linear","Yes",0)
+  ARGUMENT
+  ARG_NAME: gain
+  ARG_DESCRIPTION: one-, two-, three-, four-, or five-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: desired_XdB_GainComp
+  ARG_DESCRIPTION: desired gain compression value, a single real or integer number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: Response
+  ARG_DESCRIPTION: one-, two-, three-, four-, or five-dimensional data (must have the same dimensionality as the "gain" argument)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: interpStepSize
+  ARG_DESCRIPTION: interpolation step size, a single real or integer number
+  ARG_DEFAULT: 0.005
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: interpType
+  ARG_DESCRIPTION: type of interpolation
+  ARG_DEFAULT: None
+  ARG_RANGE: "linear", "spline", or "cubic"
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: allowextrap
+  ARG_DESCRIPTION: boolean variable that specifies whether extrapolation is allowed or not
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0, "No", "NO", "no", "Yes", "YES", "yes", 1)
+  ARG_TYPE: Real, Integer, or String
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: indepDataFlag
+  ARG_DESCRIPTION: Boolean variable that specifies the order of the independent variables.  If the data is from a measured Maury file, then the order is assumed to be [input power, gamma x, gamma y], which is the default. Otherwise the format is assumed to be [gamma y, gamma x, input power].
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0, 1)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: tolerance
+  ARG_DESCRIPTION: variable that sets how close to the desired XdB gain compression point the computed result will be.  If tolerance is too small, no answer or an erroneous answer may be found.
+  ARG_DEFAULT: 0.01
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+  DEFINED_IN: 
+  SEE ALSO: None
+  NOTES: This function allows you to plot load pull contours at a specified amount of gain compression, and it also works on non-load-pull data.  The function interpolates the gain-versus-input power response
+  and finds the input power that corresponds to the desired level of gain compression.  The response of interest, for example, the output power or PAE, that corresponds 
+  to the interpolated input power, is found, thus giving you the response at the X-dB gain compression point.  The results can then be used to plot contours using the contour_ex() function in the data display. 
+  You may use it to find the output power at the X-dB gain compression point across a band of frequencies.
+  The indepDataFlag is ignored if the gain and response arguments are one- or two-dimensional.
+  The gain compression is found using the maximum gain point as the reference.
+  If the X-dB gain compression point is not found (for example, for some values of the swept variable(s) the highest gain compression point may be less than what you are requesting) and extrapolation is 
+  disallowed, then the function returns 0 for the interpolated response.
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies (AEH)
+  DATE: February 1, 2016
+  VERSION_CREATED: ADS 2016.01 
+  END_DOC*/
+  //***********************************************************************
+defun interpolate_swept_data_XdB(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+    if ((interpType != "linear") && (interpType != "cubic") && (interpType != "spline"))
+    {
+	print_function_error( "interpolate_swept_data_XdB", "interpType must be set to \"linear\", \"cubic\", or \"spline\"");
+	return;
+    }
+    if ((sweep_dim(desired_XdB_GainComp) != 0) || sweep_size(desired_XdB_GainComp) != 1)
+    {
+	print_function_error( "interpolate_swept_data_XdB", "desired_XdB_GainComp must be a single real or integer number");
+	return;
+    }
+    if ((allowextrap != 0) && (allowextrap !="No") && (allowextrap !="NO") && (allowextrap !="no") && (allowextrap !=1) && (allowextrap !="Yes") && (allowextrap !="YES") && (allowextrap !="yes") && (allowextrap !=NULL))
+    {
+	print_function_error( "interpolate_swept_data_XdB", "allowextrap must be set to 0, \"No\", \"NO\", \"no\", 1, \"Yes\", \"YES\", or \"yes\" ");
+	return;
+    }
+    decl allowextrapChkd = if (allowextrap == NULL) then 1 else allowextrap; // allow extrapolation as the default if no parameter passed.
+	allowextrapChkd = if (allowextrap == "No" || allowextrap == "NO" || allowextrap == "no") then 0 else allowextrap;
+	decl indepDataFlagChkd = if (indepDataFlag == NULL) then 1 else indepDataFlag;  // the default flag is set to 1, which is the Maury format: [input power, gamma x, gamma y]
+    decl interpStepSizeChkd = if (interpStepSize == NULL) then 0.005 else interpStepSize;
+	decl toleranceChkd = if (tolerance == NULL) then 0.01 else tolerance;	
+    decl sweepDim = sweep_dim(gain);
+    decl results = NULL; 
+ 
+    switch (sweepDim) {
+    case 0: print_function_error( "interpolate_swept_data_XdB", " does not support single number data.");
+	return;
+	break;
+    case 1: results = interpolate_swept_data_XdB_1d(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);
+	break;
+    case 2: results = interpolate_swept_data_XdB_2d(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);	 
+	break;
+    case 3: results = interpolate_swept_data_XdB_3d(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);
+	break;
+	case 4: results = interpolate_swept_data_XdB_4d(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);
+	break;
+	case 5: results = interpolate_swept_data_XdB_5d(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);
+	break;
+    default: print_function_error( "interpolate_swept_data_XdB", " does not support data with dimensions greater than five.");
+	return;
+	break;
+    }
+
+    return results;
+} // fun - interpolate_swept_data_XdB
+
+defun interpolate_swept_data_XdB_1d(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	decl XdB_GainComp_index;
+	decl max_gain;
+	decl max_gain_index;
+	decl gain_comp_slope;                           // for linear extrapolation
+	decl gain_comp_extrap;
+	decl delta_P_in_extrap;                         // for linear extrapolation
+	decl response_slope;                               // for linear extrapolation
+	decl response_extrap;                             // for linear extrapolation
+	decl last_gain_comp_index;
+	
+	// independent data format is assumed to be only a function of the swept input power
+	
+	decl Response_at_XdB_GainComp;                 // initialize output
+	decl GainComp_Found;                         // initialize output
+	
+	// fprintf(stderr,"%d\n",sweep_var_index);
+	// fprintf(stderr,"%d;value=%s\n",gamma_ld_y_index,identify_value(value));
+	decl P_in = indep(Response[::]);   // moved this here because power sweep is non-uniform
+	decl P_in_limited = P_in;
+	decl gain_limited = gain;
+	decl Response_limited = Response;
+	// This section of code is for finding the maximum valid index of the data, so data that includes non-converged points can still be handled.
+	decl sweep_size_P_in=sweep_size(P_in);
+	decl counter=0;
+	decl num_valid_points=sweep_size(find(gain>-1000));
+	if (num_valid_points < sweep_size_P_in)   // if true, then invalid points exist, and carry out this code to find index of point before first invalid point.
+	{	
+            while (counter<sweep_size_P_in)
+            {
+            	if (gain[counter] < -1000)
+            	{
+                        if (counter < 1)
+                        {
+                        	print_function_error( "interpolate_swept_data_XdB", "First gain value appears to be invalid, perhaps due to nonconvergence.");
+                        	return;	
+                        }
+                        else 
+                        {
+                        	counter=counter-1;
+                        	break;
+                        }	
+            	}
+            	counter=counter+1;
+            }
+            counter = if (counter>=sweep_size_P_in) then counter-1 else counter;
+            P_in_limited = P_in[0::counter];
+            gain_limited = gain[0::counter];
+            Response_limited = Response[0::counter];
+	}
+	decl P_in_interpolated = [min(P_in_limited)::interpStepSize::max(P_in_limited)];
+	decl gain_interpolated = interpolate(interpType, gain_limited[::], 1, P_in_interpolated);
+	decl Response_interpolated = interpolate(interpType, Response_limited[::], 1, P_in_interpolated);            	
+	max_gain = max(gain_interpolated);
+	max_gain_index = max_index(gain_interpolated);
+	decl gain_comp = max_gain-gain_interpolated;
+	last_gain_comp_index = sweep_size(gain_comp)-1;
+	XdB_GainComp_index = max(find(mag(gain_comp-desired_XdB_GainComp)<tolerance));
+	if (XdB_GainComp_index < max_gain_index)             // this handles erroneous case where XdB_GainComp_index is found to be below the max_gain_index 
+	 {
+            if (allowextrap)
+            {
+              decl gain_comp_at_last_index = gain_comp[last_gain_comp_index];
+              decl P_in_interpolated_at_last_index = P_in_interpolated[last_gain_comp_index];
+              decl P_in_interpolated_at_last_index_m1 = P_in_interpolated[last_gain_comp_index-1];
+              decl Response_interpolated_at_last_index = Response_interpolated[last_gain_comp_index];
+              decl gain_comp_slope_denom = (P_in_interpolated_at_last_index - P_in_interpolated_at_last_index_m1);
+              if (mag(gain_comp_slope_denom) < 1e-9) // this conditional is to avoid a divide-by-0.
+              {
+            	  gain_comp_slope_denom = 1e-9;
+              }	
+              gain_comp_slope = (gain_comp_at_last_index - gain_comp[last_gain_comp_index-1])/(gain_comp_slope_denom);
+              if (gain_comp_slope < 0)  // this is an attempt to deal with the case where the last few data points are really noisy, leading to erroneous results
+              {
+              if (mag(P_in_interpolated_at_last_index - P_in_interpolated[max_gain_index]) < 1e-9) // this conditional is to avoid a divide-by-0.
+            	{
+                        gain_comp_slope = (gain_comp_at_last_index - gain_comp[max_gain_index])/(1e-9);
+            	}
+            	else
+            	{
+                        gain_comp_slope = (gain_comp_at_last_index - gain_comp[max_gain_index])/(P_in_interpolated_at_last_index - P_in_interpolated[max_gain_index]);
+            	}
+              }
+              if (mag(gain_comp_slope) < 1e-9)  // this conditional is to avoid a divide-by-0.
+              {
+            	gain_comp_slope = 1e-9;
+              }
+              delta_P_in_extrap = (desired_XdB_GainComp - gain_comp_at_last_index)/gain_comp_slope;
+              gain_comp_extrap = gain_comp_slope*delta_P_in_extrap + gain_comp_at_last_index;
+              if (mag(P_in_interpolated_at_last_index - P_in_interpolated_at_last_index_m1) < 1e-9)  // this conditional is to avoid a divide-by-0.
+              {
+            	  response_slope = (Response_interpolated_at_last_index - Response_interpolated[last_gain_comp_index-1])/(1e-9);
+              }
+              else
+              {
+            	  response_slope = (Response_interpolated_at_last_index - Response_interpolated[last_gain_comp_index-1])/(P_in_interpolated_at_last_index - P_in_interpolated_at_last_index_m1);
+              } 
+              response_extrap = response_slope*delta_P_in_extrap + Response_interpolated_at_last_index;
+              Response_at_XdB_GainComp = response_extrap;
+              GainComp_Found = gain_comp_extrap;
+            }
+            else
+            {
+            // if extrapolation not allowed, set the interpolated response =0
+	    Response_at_XdB_GainComp = 0;
+            GainComp_Found = gain_comp[last_gain_comp_index];
+            }
+	 }
+	else
+	 {
+            Response_at_XdB_GainComp = Response_interpolated[XdB_GainComp_index];
+            GainComp_Found = gain_comp[XdB_GainComp_index];
+	 }
+            
+	return list(Response_at_XdB_GainComp,GainComp_Found);
+	
+} // fun - interpolate_swept_data_XdB_1d
+
+defun interpolate_swept_data_XdB_2d(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	// independent data format is assumed to be [some arbitrary swept variable, input power]
+	decl Response_at_XdB_GainComp = 0*Response[::,0];                 // initialize output
+	decl GainComp_Found = 0*Response[::,0];                         // initialize output
+	decl numPts = sweep_size(Response_at_XdB_GainComp[::]);	
+	decl i;
+	
+	for (i=0; i<numPts; i++)                       
+	{
+            decl temp = interpolate_swept_data_XdB_1d(gain[i,::], desired_XdB_GainComp, Response[i,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            Response_at_XdB_GainComp[i] = temp[0];
+            GainComp_Found[i] = temp[1];
+	}
+	return list(Response_at_XdB_GainComp,GainComp_Found);	
+} // fun - interpolate_swept_data_XdB_2d
+
+
+defun interpolate_swept_data_XdB_3d(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	decl gamma_ld_x_index;
+	decl temp_sweep_size;
+	decl i;
+
+	if (indepDataFlag)   // this assumes independent data format is [input power, gamma x, gamma y]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[0,::,::];                 // initialize output
+            decl GainComp_Found = 0*Response[0,::,::];                         // initialize output
+            decl numPts_x = sweep_size(Response_at_XdB_GainComp[::,0]);
+	  
+	    for (gamma_ld_x_index=0; gamma_ld_x_index<numPts_x; gamma_ld_x_index++)                       
+        {
+            	decl temp = interpolate_swept_data_XdB_2d(permute(gain[::,gamma_ld_x_index,::]), desired_XdB_GainComp, permute(Response[::,gamma_ld_x_index,::]), interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size=sweep_size(temp[0]);
+            	for (i=0; i<temp_sweep_size; i++)
+            	{
+                        Response_at_XdB_GainComp[gamma_ld_x_index,i] = temp[0][i];
+                        GainComp_Found[gamma_ld_x_index,i] = temp[1][i];
+            	}	
+            }  
+            return list(Response_at_XdB_GainComp,GainComp_Found);
+	}  // closes case where independent data format is [input power, gamma x, gamma y]
+            	
+	else  // if independent data format is [gamma y, gamma x, input power]
+	{
+	  	decl Response_at_XdB_GainComp = 0*Response[::,::,0];                 // initialize output
+	    decl GainComp_Found = 0*Response[::,::,0];                         // initialize output
+        decl numPts_x = sweep_size(Response_at_XdB_GainComp[0,::]);
+            
+            for (gamma_ld_x_index=0; gamma_ld_x_index<numPts_x; gamma_ld_x_index++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_2d(gain[::,gamma_ld_x_index,::], desired_XdB_GainComp, Response[::,gamma_ld_x_index,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size=sweep_size(temp[0]);
+            	for (i=0; i<temp_sweep_size; i++)
+            	{
+                        Response_at_XdB_GainComp[i,gamma_ld_x_index] = temp[0][i];
+                        GainComp_Found[i,gamma_ld_x_index] = temp[1][i];
+            	}	
+            }  
+            return list(Response_at_XdB_GainComp,GainComp_Found);
+	}  // closes case where independent data format is [gamma y, gamma x, input power]
+} // fun - interpolate_swept_data_XdB_3d
+
+defun interpolate_swept_data_XdB_4d(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	decl i,j,k;
+	decl temp_sweep_size_outer;
+	decl temp_sweep_size_inner;
+	if (indepDataFlag)   // this assumes independent data format is [swept outer variable, input power, gamma x, gamma y]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[::,0,::,::];                         // initialize output
+            decl GainComp_Found = 0*Response[::,0,::,::];                                 // initialize output
+            decl numPts = sweep_size(Response_at_XdB_GainComp[::,0,0]);
+            for (i=0; i<numPts; i++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_3d(gain[i,::,::,::], desired_XdB_GainComp, Response[i,::,::,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size_outer=sweep_size(temp[0][::,0]);
+            	for (j=0; j<temp_sweep_size_outer; j++)
+            	{
+                        temp_sweep_size_inner=sweep_size(temp[0][j,::]);
+                        for (k=0; k<temp_sweep_size_inner; k++)
+                        {
+                        	Response_at_XdB_GainComp[i,j,k] = temp[0][j,k];
+                        	GainComp_Found[i,j,k] = temp[1][j,k];
+                        }
+            	}
+            }
+            return list(Response_at_XdB_GainComp,GainComp_Found);	
+    }
+	else                 // this assumes independent data format is [swept outer variable, gamma y, gamma x, input power]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[::,::,::,0];                         // initialize output
+            decl GainComp_Found = 0*Response[::,::,::,0];                                 // initialize output
+            decl numPts = sweep_size(Response_at_XdB_GainComp[::,0,0]);
+            for (i=0; i<numPts; i++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_3d(gain[i,::,::,::], desired_XdB_GainComp, Response[i,::,::,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size_outer=sweep_size(temp[0][::,0]);
+            	for (j=0; j<temp_sweep_size_outer; j++)
+            	{
+                        temp_sweep_size_inner=sweep_size(temp[0][j,::]);
+                        for (k=0; k<temp_sweep_size_inner; k++)
+                        {
+                        	Response_at_XdB_GainComp[i,j,k] = temp[0][j,k];
+                        	GainComp_Found[i,j,k] = temp[1][j,k];
+                        }
+            	}
+            }
+            return list(Response_at_XdB_GainComp,GainComp_Found);	
+	}
+} // fun - interpolate_swept_data_XdB_4d
+
+defun interpolate_swept_data_XdB_5d(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	decl i,j,k,l;
+	decl temp_sweep_size_outer;
+	decl temp_sweep_size_inner;
+	decl temp_sweep_size_innermost;
+	if (indepDataFlag)   // this assumes independent data format is [swept outer variable, swept inner variable, input power, gamma x, gamma y]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[::,::,0,::,::];                         // initialize output
+            decl GainComp_Found = 0*Response[::,::,0,::,::];                                 // initialize output
+            decl numPtsOuter = sweep_size(Response_at_XdB_GainComp[::,0,0,0]);
+            for (i=0; i<numPtsOuter; i++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_4d(gain[i,::,::,::,::], desired_XdB_GainComp, Response[i,::,::,::,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size_outer=sweep_size(temp[0][::,0,0]);
+            	for (j=0; j<temp_sweep_size_outer; j++)
+            	{
+                        temp_sweep_size_inner=sweep_size(temp[0][j,::,0]);
+                        for (k=0; k<temp_sweep_size_inner; k++)
+                        {
+                        	temp_sweep_size_innermost=sweep_size(temp[0][j,k,::]);
+                        	for (l=0; l<temp_sweep_size_innermost; l++)
+                        	{
+                                    Response_at_XdB_GainComp[i,j,k,l] = temp[0][j,k,l];	
+                                    GainComp_Found[i,j,k,l] = temp[1][j,k,l];
+                        	}
+                        }
+            	}            	
+            }
+            return list(Response_at_XdB_GainComp,GainComp_Found);	
+    }
+	else                 // this assumes independent data format is [swept outer variable, swept_inner variable, gamma y, gamma x, input power]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[::,::,::,::,0];                         // initialize output
+            decl GainComp_Found = 0*Response[::,::,::,::,0];                                 // initialize output
+            decl numPtsOuter = sweep_size(Response_at_XdB_GainComp[::,0,0,0]);
+            for (i=0; i < numPtsOuter; i++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_4d(gain[i,::,::,::,::], desired_XdB_GainComp, Response[i,::,::,::,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size_outer=sweep_size(temp[0][::,0,0]);
+            	for (j=0; j<temp_sweep_size_outer; j++)
+            	{
+                        temp_sweep_size_inner=sweep_size(temp[0][j,::,0]);
+                        for (k=0; k<temp_sweep_size_inner; k++)
+                        {
+                        	temp_sweep_size_innermost = sweep_size(temp[0][j,k,::]);
+                        	for (l=0; l<temp_sweep_size_innermost; l++)
+                        	{
+                                    Response_at_XdB_GainComp[i,j,k,l] = temp[0][j,k,l];
+                                    GainComp_Found[i,j,k,l] = temp[1][j,k,l];
+                        	}
+                        }
+            	}
+            }
+            return list(Response_at_XdB_GainComp,GainComp_Found);	
+	}
+} // fun - interpolate_swept_data_XdB_5d
+
+//***********************************************************************
+/*BEGIN_DOC
+  FUN_NAME: interpolate_swept_data_XdB_r1()
+  FUN_DESCRIPTION: Interpolates swept-power data to find the response at an X-dB gain compression point
+  MAKE_PUBLIC: True
+  RETURNED_VALUE: Real
+  CATEGORY: Statistics
+  SYNTAX: Results=interpolate_swept_data_XdB_r1(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag)
+  EXAMPLE:
+  Gt=Pdel_dBm-Pavs_dBm
+  GComp=1
+  Performance1=Pdel_dBm
+  Results=interpolate_swept_data_XdB_r1(Gt[::,::,::],GComp,Performance1[::,::,::],0.005,"linear","Yes",0)
+  ARGUMENT
+  ARG_NAME: gain
+  ARG_DESCRIPTION: one-, two-, three-, four-, or five-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: desired_XdB_GainComp
+  ARG_DESCRIPTION: desired gain compression value, a single real or integer number
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: Response
+  ARG_DESCRIPTION: one-, two-, three-, four-, or five-dimensional data (must have the same dimensionality as the "gain" argument)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: interpStepSize
+  ARG_DESCRIPTION: interpolation step size, a single real or integer number
+  ARG_DEFAULT: 0.005
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: interpType
+  ARG_DESCRIPTION: type of interpolation
+  ARG_DEFAULT: None
+  ARG_RANGE: "linear", "spline", or "cubic"
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: allowextrap
+  ARG_DESCRIPTION: boolean variable that specifies whether extrapolation is allowed or not
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0, "No", "NO", "no", "Yes", "YES", "yes", 1)
+  ARG_TYPE: Real, Integer, or String
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: indepDataFlag
+  ARG_DESCRIPTION: Boolean variable that specifies the order of the independent variables.  If the data is from a measured Maury file, then the order is assumed to be [input power, gamma x, gamma y], which in the default. Otherwise the format is assumed to be [gamma y, gamma x, input power].
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0, 1)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: tolerance
+  ARG_DESCRIPTION: variable that sets how close to the desired XdB gain compression point the computed result will be.  If tolerance is too small, no answer or an erroneous answer may be found.
+  ARG_DEFAULT: 0.01
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+  DEFINED_IN: 
+  SEE ALSO: None
+  NOTES: This function is the same as interpolate_swept_data_XdB(), except that it just returns the response at the X-dB gain compression point. This allows you to use it in MeasEqns on schematics.
+  (The interpolate_swept_data_XdB() function returns both the response at the X-dB gain compression point and the amount of gain compression found.)
+  This function allows you to plot load pull contours at a specified amount of gain compression, and it also works on non-load-pull data.  The function interpolates the gain-versus-input power response
+  and finds the input power that corresponds to the desired level of gain compression.  The response of interest, for example, the output power or PAE, that corresponds 
+  to the interpolated input power, is found, thus giving you the response at the X-dB gain compression point.  The results can then be used to plot contours using the contour_ex() function in the data display. 
+  You may use it to find the output power at the X-dB gain compression point across a band of frequencies.
+  The indepDataFlag is ignored if the gain and response arguments are one- or two-dimensional.
+  The gain compression is found using the maximum gain point as the reference.
+  If the X-dB gain compression point is not found (for example, for some values of the swept variable(s) the highest gain compression point may be less than what you are requesting) and extrapolation is 
+  disallowed, then the function returns 0 for the interpolated response.
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies (AEH)
+  DATE: February 1, 2016
+  VERSION_CREATED: ADS 2016.01 
+  END_DOC*/
+  //***********************************************************************
+defun interpolate_swept_data_XdB_r1(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	if ((interpType != "linear") && (interpType != "cubic") && (interpType != "spline"))
+    {
+	print_function_error( "interpolate_swept_data_XdB_r1", "interpType must be set to \"linear\", \"cubic\", or \"spline\"");
+	return;
+    }
+    if ((sweep_dim(desired_XdB_GainComp) != 0) || sweep_size(desired_XdB_GainComp) != 1)
+    {
+	print_function_error( "interpolate_swept_data_XdB_r1", "desired_XdB_GainComp must be a single real or integer number");
+	return;
+    }
+	if ((allowextrap != 0) && (allowextrap !="No") && (allowextrap !="NO") && (allowextrap !="no") && (allowextrap !=1) && (allowextrap !="Yes") && (allowextrap !="YES") && (allowextrap !="yes") && (allowextrap !=NULL))
+    {
+	print_function_error( "interpolate_swept_data_XdB_r1", "allowextrap must be set to 0, \"No\", \"NO\", \"no\", 1, \"Yes\", \"YES\", or \"yes\" ");
+	return;
+    }
+    decl allowextrapChkd = if (allowextrap == NULL) then 1 else allowextrap; // allow extrapolation as the default if no parameter passed.
+	allowextrapChkd = if (allowextrap == "No" || allowextrap == "NO" || allowextrap == "no") then 0 else allowextrap;
+	decl indepDataFlagChkd = if (indepDataFlag == NULL) then 1 else indepDataFlag;  // the default flag is set to 1, which is the Maury format: [input power, gamma x, gamma y]
+    decl interpStepSizeChkd = if (interpStepSize == NULL) then 0.005 else interpStepSize;
+	decl toleranceChkd = if (tolerance == NULL) then 0.01 else tolerance;            	// sets how close to the X dB point we want to get, but if this is too small, the XdB point will not be found.              	
+    decl sweepDim = sweep_dim(gain);
+    decl results = NULL; 
+ 
+    switch (sweepDim) {
+    case 0: print_function_error( "interpolate_swept_data_XdB_r1", " does not support single number data.");
+	return;
+	break;
+    case 1: results = interpolate_swept_data_XdB_1d_r1(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);
+	break;
+    case 2: results = interpolate_swept_data_XdB_2d_r1(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);	 
+	break;
+    case 3: results = interpolate_swept_data_XdB_3d_r1(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);
+	break;
+	case 4: results = interpolate_swept_data_XdB_4d_r1(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);
+	break;
+	case 5: results = interpolate_swept_data_XdB_5d_r1(gain, desired_XdB_GainComp, Response, interpStepSizeChkd, interpType, allowextrapChkd, indepDataFlagChkd, toleranceChkd);
+	break;
+    default: print_function_error( "interpolate_swept_data_XdB_r1", " does not support data with dimensions greater than five.");
+	return;
+	break;
+    }
+
+    return results;
+} // fun - interpolate_swept_data_XdB_r1
+
+defun interpolate_swept_data_XdB_1d_r1(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	decl XdB_GainComp_index;
+	decl max_gain;
+	decl max_gain_index;
+	decl gain_comp_slope;                           // for linear extrapolation
+	decl delta_P_in_extrap;                         // for linear extrapolation
+	decl response_slope;                               // for linear extrapolation
+	decl response_extrap;                             // for linear extrapolation
+	decl last_gain_comp_index;
+	
+	// independent data format is assumed to be only a function of the swept input power
+	
+	decl Response_at_XdB_GainComp;                 // initialize output
+	
+	// fprintf(stderr,"%d\n",sweep_var_index);
+	// fprintf(stderr,"%d;value=%s\n",gamma_ld_y_index,identify_value(value));
+	decl P_in = indep(Response[::]);   // moved this here because power sweep is non-uniform
+	decl P_in_limited = P_in;
+	decl gain_limited = gain;
+	decl Response_limited = Response;
+	// This section of code is for finding the maximum valid index of the data, so data that includes non-converged points can still be handled.
+	decl sweep_size_P_in=sweep_size(P_in);
+	decl counter=0;
+	decl num_valid_points=sweep_size(find(gain>-1000));
+	if (num_valid_points < sweep_size_P_in)   // if true, then invalid points exist, and carry out this code to find index of point before first invalid point.
+	{	
+            while (counter<sweep_size_P_in)
+            {
+            	if (gain[counter] < -1000)
+            	{
+                        if (counter < 1)
+                        {
+                        	print_function_error( "interpolate_swept_data_XdB_r1", "First gain value appears to be invalid, perhaps due to nonconvergence.");
+                        	return;	
+                        }
+                        else 
+                        {
+                        	counter=counter-1;
+                        	break;
+                        }	
+            	}
+            	counter=counter+1;
+            }
+            counter = if (counter>=sweep_size_P_in) then counter-1 else counter;
+            P_in_limited = P_in[0::counter];
+            gain_limited = gain[0::counter];
+            Response_limited = Response[0::counter];
+	}
+	decl P_in_interpolated = [min(P_in_limited)::interpStepSize::max(P_in_limited)];
+	decl gain_interpolated = interpolate(interpType, gain_limited[::], 1, P_in_interpolated);
+	decl Response_interpolated = interpolate(interpType, Response_limited[::], 1, P_in_interpolated);            	
+	max_gain = max(gain_interpolated);
+	max_gain_index = max_index(gain_interpolated);
+	decl gain_comp = max_gain-gain_interpolated;
+	last_gain_comp_index = sweep_size(gain_comp)-1;
+	XdB_GainComp_index = max(find(mag(gain_comp-desired_XdB_GainComp)<tolerance));
+	if (XdB_GainComp_index < max_gain_index)             // this handles erroneous case where XdB_GainComp_index is found to be below the max_gain_index 
+	 {
+            if (allowextrap)
+            {
+              decl gain_comp_at_last_index = gain_comp[last_gain_comp_index];
+              decl P_in_interpolated_at_last_index = P_in_interpolated[last_gain_comp_index];
+              decl P_in_interpolated_at_last_index_m1 = P_in_interpolated[last_gain_comp_index-1];
+              decl Response_interpolated_at_last_index = Response_interpolated[last_gain_comp_index];
+              decl gain_comp_slope_denom = (P_in_interpolated_at_last_index - P_in_interpolated_at_last_index_m1);
+              if (mag(gain_comp_slope_denom) < 1e-9) // this conditional is to avoid a divide-by-0.
+              {
+            	  gain_comp_slope_denom = 1e-9;
+              }	
+              gain_comp_slope = (gain_comp_at_last_index - gain_comp[last_gain_comp_index-1])/(gain_comp_slope_denom);
+              if (gain_comp_slope < 0)  // this is an attempt to deal with the case where the last few data points are really noisy, leading to erroneous results
+              {
+              if (mag(P_in_interpolated_at_last_index - P_in_interpolated[max_gain_index]) < 1e-9) // this conditional is to avoid a divide-by-0.
+            	{
+                        gain_comp_slope = (gain_comp_at_last_index - gain_comp[max_gain_index])/(1e-9);
+            	}
+            	else
+            	{
+                        gain_comp_slope = (gain_comp_at_last_index - gain_comp[max_gain_index])/(P_in_interpolated_at_last_index - P_in_interpolated[max_gain_index]);
+            	}
+              }
+              if (mag(gain_comp_slope) < 1e-9)  // this conditional is to avoid a divide-by-0.
+              {
+            	gain_comp_slope = 1e-9;
+              }
+              delta_P_in_extrap = (desired_XdB_GainComp - gain_comp_at_last_index)/gain_comp_slope;
+              if (mag(P_in_interpolated_at_last_index - P_in_interpolated_at_last_index_m1) < 1e-9)  // this conditional is to avoid a divide-by-0.
+              {
+            	  response_slope = (Response_interpolated_at_last_index - Response_interpolated[last_gain_comp_index-1])/(1e-9);
+              }
+              else
+              {
+            	  response_slope = (Response_interpolated_at_last_index - Response_interpolated[last_gain_comp_index-1])/(P_in_interpolated_at_last_index - P_in_interpolated_at_last_index_m1);
+              } 
+              response_extrap = response_slope*delta_P_in_extrap + Response_interpolated_at_last_index;
+              Response_at_XdB_GainComp = response_extrap;
+            }
+            else
+            {
+            // if extrapolation not allowed, set the interpolated response =0
+	    Response_at_XdB_GainComp = 0;
+            }
+	 }
+	else
+	 {
+            Response_at_XdB_GainComp = Response_interpolated[XdB_GainComp_index];
+	 }
+            
+	return Response_at_XdB_GainComp;
+	
+} // fun - interpolate_swept_data_XdB_1d_r1
+
+defun interpolate_swept_data_XdB_2d_r1(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	// independent data format is assumed to be [some arbitrary swept variable, input power]
+	decl Response_at_XdB_GainComp = 0*Response[::,0];                 // initialize output
+	decl numPts = sweep_size(Response_at_XdB_GainComp[::]);	
+	decl i;
+	
+	for (i=0; i<numPts; i++)                       
+	{
+            decl temp = interpolate_swept_data_XdB_1d_r1(gain[i,::], desired_XdB_GainComp, Response[i,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            Response_at_XdB_GainComp[i] = temp;
+	}
+	return Response_at_XdB_GainComp;	
+} // fun - interpolate_swept_data_XdB_2d_r1
+
+defun interpolate_swept_data_XdB_3d_r1(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	decl gamma_ld_x_index;
+	decl temp_sweep_size;
+	decl i;
+	
+	if (indepDataFlag)   // this assumes independent data format is [input power, gamma x, gamma y]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[0,::,::];                 // initialize output
+            decl numPts_x = sweep_size(Response_at_XdB_GainComp[::,0]);
+  
+	    for (gamma_ld_x_index=0; gamma_ld_x_index<numPts_x; gamma_ld_x_index++)                       
+        {
+            	decl temp = interpolate_swept_data_XdB_2d_r1(permute(gain[::,gamma_ld_x_index,::]), desired_XdB_GainComp, permute(Response[::,gamma_ld_x_index,::]), interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size=sweep_size(temp);
+            	for (i=0; i<temp_sweep_size; i++)
+            	{
+                        Response_at_XdB_GainComp[gamma_ld_x_index,i] = temp[i];
+            	}	
+            }  
+            return Response_at_XdB_GainComp;
+	}  // closes case where independent data format is [input power, gamma x, gamma y]
+	
+	else  // if independent data format is [gamma y, gamma x, input power]
+	{
+	  	decl Response_at_XdB_GainComp = 0*Response[::,::,0];                 // initialize output
+            decl numPts_x = sweep_size(Response_at_XdB_GainComp[0,::]);
+            
+            for (gamma_ld_x_index=0; gamma_ld_x_index<numPts_x; gamma_ld_x_index++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_2d_r1(gain[::,gamma_ld_x_index,::], desired_XdB_GainComp, Response[::,gamma_ld_x_index,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size=sweep_size(temp);
+            	for (i=0; i<temp_sweep_size; i++)
+            	{
+                        Response_at_XdB_GainComp[i,gamma_ld_x_index] = temp[i];
+            	}	
+            }  
+            return Response_at_XdB_GainComp;
+	}  // closes case where independent data format is [gamma y, gamma x, input power]
+} // fun - interpolate_swept_data_XdB_3d_r1
+
+defun interpolate_swept_data_XdB_4d_r1(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	decl i,j,k;
+	decl temp_sweep_size_outer;
+	decl temp_sweep_size_inner;
+	if (indepDataFlag)   // this assumes independent data format is [swept outer variable, input power, gamma x, gamma y]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[::,0,::,::];                         // initialize output
+            decl numPts = sweep_size(Response_at_XdB_GainComp[::,0,0]);
+            for (i=0; i<numPts; i++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_3d_r1(gain[i,::,::,::], desired_XdB_GainComp, Response[i,::,::,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size_outer=sweep_size(temp[::,0]);
+            	for (j=0; j<temp_sweep_size_outer; j++)
+            	{
+                        temp_sweep_size_inner=sweep_size(temp[j,::]);
+                        for (k=0; k<temp_sweep_size_inner; k++)
+                        {
+                        	Response_at_XdB_GainComp[i,j,k] = temp[j,k];
+                        }
+            	}            	
+            }
+            return Response_at_XdB_GainComp;	
+    }
+	else                 // this assumes independent data format is [swept outer variable, gamma y, gamma x, input power]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[::,::,::,0];                         // initialize output
+            decl numPts = sweep_size(Response_at_XdB_GainComp[::,0,0]);
+            for (i=0; i<numPts; i++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_3d_r1(gain[i,::,::,::], desired_XdB_GainComp, Response[i,::,::,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size_outer=sweep_size(temp[::,0]);
+            	for (j=0; j<temp_sweep_size_outer; j++)
+            	{
+                        temp_sweep_size_inner=sweep_size(temp[j,::]);
+                        for (k=0; k<temp_sweep_size_inner; k++)
+                        {
+                        	Response_at_XdB_GainComp[i,j,k] = temp[j,k];
+                        }
+            	}
+            }
+            return Response_at_XdB_GainComp;	
+	}
+} // fun - interpolate_swept_data_XdB_4d_r1
+
+defun interpolate_swept_data_XdB_5d_r1(gain, desired_XdB_GainComp, Response, interpStepSize, interpType, allowextrap, indepDataFlag, tolerance)
+{
+	decl i,j,k,l;
+	decl temp_sweep_size_outer;
+	decl temp_sweep_size_inner;
+	decl temp_sweep_size_innermost;
+	if (indepDataFlag)   // this assumes independent data format is [swept outer variable, swept inner variable, input power, gamma x, gamma y]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[::,::,0,::,::];                         // initialize output
+            decl numPtsOuter = sweep_size(Response_at_XdB_GainComp[::,0,0,0]);
+            for (i=0; i<numPtsOuter; i++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_4d_r1(gain[i,::,::,::,::], desired_XdB_GainComp, Response[i,::,::,::,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size_outer=sweep_size(temp[::,0,0]);
+            	for (j=0; j<temp_sweep_size_outer; j++)
+            	{
+                        temp_sweep_size_inner=sweep_size(temp[j,::,0]);
+                        for (k=0; k < temp_sweep_size_inner; k++)
+                        {
+                        	temp_sweep_size_innermost=sweep_size(temp[j,k,::]);
+                        	for (l=0; l<temp_sweep_size_innermost; l++)
+                        	{
+                                    Response_at_XdB_GainComp[i,j,k,l] = temp[j,k,l];	
+                        	}
+                        }
+            	}            	
+            }
+            return Response_at_XdB_GainComp;	
+    }
+	else                 // this assumes independent data format is [swept outer variable, swept_inner variable, gamma y, gamma x, input power]
+	{
+            decl Response_at_XdB_GainComp = 0*Response[::,::,::,::,0];                         // initialize output
+            decl numPtsOuter = sweep_size(Response_at_XdB_GainComp[::,0,0,0]);
+            for (i=0; i<numPtsOuter; i++)                       
+            {
+            	decl temp = interpolate_swept_data_XdB_4d_r1(gain[i,::,::,::,::], desired_XdB_GainComp, Response[i,::,::,::,::], interpStepSize, interpType, allowextrap, indepDataFlag, tolerance);
+            	temp_sweep_size_outer=sweep_size(temp[::,0,0]);
+            	for (j=0; j<temp_sweep_size_outer; j++)
+            	{
+                        temp_sweep_size_inner=sweep_size(temp[j,::,0]);
+                        for (k=0; k<temp_sweep_size_inner; k++)
+                        {
+                        	temp_sweep_size_innermost = sweep_size(temp[j,k,::]);
+                        	for (l=0; l<temp_sweep_size_innermost; l++)
+                        	{
+                                    Response_at_XdB_GainComp[i,j,k,l] = temp[j,k,l];
+                        	}
+                        }
+            	}
+            }
+            return Response_at_XdB_GainComp;	
+	}
+} // fun - interpolate_swept_data_XdB_5d_r1
+
+//***********************************************************************
+/*BEGIN_DOC
+  FUN_NAME: max_within_x_domain()
+  FUN_DESCRIPTION: Finds the maximum value of a response, while some other variable (could be the independent variable of the response) is within specified limits.
+  MAKE_PUBLIC: True
+  RETURNED_VALUE: Real
+  CATEGORY: Statistics
+  SYNTAX: Results=max_within_x_domain(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType)
+  EXAMPLE:
+  Pdel_dBm_low=40
+  Pdel_dBm_high=50
+  interpStepSize=0.05
+  interpType="spline"
+  Max_Gain=max_within_x_domain(Gain_Transducer, Pdel_dBm, Pdel_dBm_low, Pdel_dBm_high, interpStepSize, interpType, use_lowest_index)
+  ARGUMENT
+  ARG_NAME: Response
+  ARG_DESCRIPTION: one-, two-, or three-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: x_variable
+  ARG_DESCRIPTION: one-, two-, or three-dimensional data
+  ARG_DEFAULT: indep(Response)
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: x_limit1
+  ARG_DESCRIPTION: lower limit of the x_variable argument
+  ARG_DEFAULT: none
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: x_limit2
+  ARG_DESCRIPTION: upper limit of the x_variable argument
+  ARG_DEFAULT: none
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: interpStepSize
+  ARG_DESCRIPTION: interpolation step size, a single real or integer number
+  ARG_DEFAULT: 0.05
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: interpType
+  ARG_DESCRIPTION: type of interpolation
+  ARG_DEFAULT: "linear"
+  ARG_RANGE: "linear", "spline", or "cubic"
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: use_lowest_index
+  ARG_DESCRIPTION: The x_variable is interpolated versus the innermost independent variable.  If multiple values of the interpolated x_variable satisfy the x_limit1 target, this specifies whether to use the corresponding lowest or highest index.  The same thing is done for the x_limit2 target.
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0, "No", "NO", "no", "Yes", "YES", "yes", 1)
+  ARG_TYPE: Real, Integer, or String
+  ARG_REQUIRED: NO
+  DEFINED_IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael
+  SEE ALSO: None
+  NOTES: Say you have run a swept-input-power simulation of an amplifier.  You want to know the amplifier's maximum gain while it is delivering an output power that 
+  is between two values.  This function determines this maximum gain.  This function does utilize interpolation at the lower and upper limits of the x-axis variable.
+  The use_lowest_index parameter should only matter in cases where a plot of Response versus the x_variable is not one-to-one.
+
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies (AEH)
+  DATE: May 14, 2012  
+  VERSION_CREATED: post ADS 2011.10
+  END_DOC*/
+  //***********************************************************************
+defun max_within_x_domain(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType, use_lowest_index)
+{
+    if (Response == NULL)
+    {
+        print_function_error( "max_within_x_domain", "Response (the first passed parameter) is required.");
+        return;
+    }
+    if ((interpType != "linear") && (interpType != "cubic") && (interpType != "spline"))
+    {
+        // print_function_error( "max_within_x_domain", "interpType must be set to \"linear\", \"cubic\", or \"spline\". Setting to \"linear\".");
+        interpType = "linear";
+    }
+    if (x_limit1 == NULL)
+    {
+        print_function_error( "max_within_x_domain", "x_limit1 (the 3rd passed parameter) is required.");
+        return;
+    }
+    if (x_limit2 == NULL)
+    {
+        print_function_error( "max_within_x_domain", "x_limit2 (the 4th passed parameter) is required.");
+        return;
+    }
+    decl interpStepSizeChkd = if (interpStepSize == NULL) then 0.05 else interpStepSize;
+    decl x_variable_Chkd = if (x_variable == NULL) then indep(Response) else x_variable; // use the indep of Response if no parameter passed for x_variable.
+    decl x_limit1_Chkd = if (x_limit1 > x_limit2) then x_limit2 else x_limit1;
+    decl x_limit2_Chkd = if (x_limit1 > x_limit2) then x_limit1 else x_limit2;
+    if ((use_lowest_index != 0) && (use_lowest_index !="No") && (use_lowest_index !="NO") && (use_lowest_index !="no") && (use_lowest_index !=1) && (use_lowest_index !="Yes") && (use_lowest_index !="YES") && (use_lowest_index !="yes") && (use_lowest_index !=NULL))
+    {
+        print_function_error( "max_within_x_domain", "use_lowest_index must be set to 0, \"No\", \"NO\", \"no\", 1, \"Yes\", \"YES\", or \"yes\" ");
+        return;
+    }
+    decl use_lowest_indexChkd = if (use_lowest_index == NULL) then 1 else use_lowest_index; // set this flag to 1 as the default if no parameter passed.
+	use_lowest_indexChkd = if (use_lowest_index == "No" || use_lowest_index == "NO" || use_lowest_index == "no") then 0 else use_lowest_indexChkd;
+    decl sweepDim = sweep_dim(Response);
+    decl results = NULL; 
+ 
+    switch (sweepDim) {
+    case 0: results = Response;
+	break;
+    case 1: 
+            if ((sweep_dim(Response) != sweep_dim(x_variable_Chkd)) || (sweep_size(Response) != sweep_size(x_variable_Chkd)))
+            {
+            	print_function_error( "max_within_x_domain", "Response and x_variable must have the same dimensionality");
+            	return;
+            }
+            results = max_within_x_domain_1d(Response, x_variable_Chkd, x_limit1_Chkd, x_limit2_Chkd, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+            break;
+    case 2: 
+            if ((sweep_dim(Response) != sweep_dim(x_variable_Chkd)) || (sweep_size(Response[::,0]) != sweep_size(x_variable_Chkd[::,0])) || (sweep_size(Response[0,::]) != sweep_size(x_variable_Chkd[0,::])))	
+            {
+            	print_function_error( "max_within_x_domain", "Response and x_variable must have the same dimensionality");
+            	return;
+            }
+            results = max_within_x_domain_2d(Response, x_variable_Chkd, x_limit1_Chkd, x_limit2_Chkd, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+            break;
+	case 3: 
+            if ((sweep_dim(Response) != sweep_dim(x_variable_Chkd)) || (sweep_size(Response[::,0,0]) != sweep_size(x_variable_Chkd[::,0,0])) || (sweep_size(Response[0,::,0]) != sweep_size(x_variable_Chkd[0,::,0])) || (sweep_size(Response[0,0,::]) != sweep_size(x_variable_Chkd[0,0,::])))	
+            {
+            	print_function_error( "max_within_x_domain", "Response and x_variable must have the same dimensionality");
+            	return;
+            }	
+            results = max_within_x_domain_3d(Response, x_variable_Chkd, x_limit1_Chkd, x_limit2_Chkd, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+            break;
+    default: print_function_error( "max_within_x_domain", " does not support data with dimensions greater than three.");
+	return;
+	break;
+    }
+
+    return results;
+} // fun - max_within_x_domain
+
+defun max_within_x_domain_3d(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType, use_lowest_index)
+{
+	decl results = Response[::,::,0];     // initialize the results variable
+	decl outer_index;
+	decl numPts_outer = sweep_size(Response[::,0,0]);
+	for (outer_index=0; outer_index<numPts_outer; outer_index++)
+	{
+            results[outer_index,::] = max_within_x_domain_2d(Response[outer_index,::,::],x_variable[outer_index,::,::],x_limit1,x_limit2, interpStepSize, interpType, use_lowest_index);
+	}
+	return results;
+}	// fun - max_within_x_domain_3d
+
+defun max_within_x_domain_2d(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType, use_lowest_index)
+{
+	decl results = Response[::,0];     // initialize the results variable
+	decl outer_index;
+	decl numPts_outer = sweep_size(Response[::,0]);
+	for (outer_index=0; outer_index<numPts_outer; outer_index++)
+	{
+            results[outer_index] = max_within_x_domain_1d(Response[outer_index,::],x_variable[outer_index,::],x_limit1,x_limit2, interpStepSize, interpType, use_lowest_index);
+	}
+	return results;
+}	// fun - max_within_x_domain_2d
+
+defun max_within_x_domain_1d(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType, use_lowest_index)
+{
+    decl Max_value = Response;                         // initialize output
+    decl X_value = real(x_variable);                  // real() needed to prevent X_values_array being initialized as an integer.
+	decl Param_data = indep(Response);
+    decl Param_data_interpolated = [min(Param_data)::interpStepSize::max(Param_data)];
+	 decl X_data_interpolated = [min(Param_data)::interpStepSize::max(Param_data)]; // TFS127210
+    decl Response_interpolated = interpolate(interpType, Response, 1, Param_data_interpolated);
+    decl X_index_1_0 = find(mag(X_data_interpolated-x_limit1)<interpStepSize/2);
+	decl X_index_1_1 = find(mag(X_data_interpolated-x_limit1)<interpStepSize);
+	decl X_index_1 = if (min(X_index_1_0) >= 0) then (X_index_1_0) else (X_index_1_1);
+	decl X_index_2_0 = find(mag(X_data_interpolated-x_limit2)<interpStepSize/2);
+	decl X_index_2_1 = find(mag(X_data_interpolated-x_limit2)<interpStepSize);
+	decl X_index_2 = if (min(X_index_2_0) >= 0) then (X_index_2_0) else (X_index_2_1);
+	
+	if (use_lowest_index !=0)
+	{
+	    X_index_1 = min(X_index_1);
+            X_index_2 = min(X_index_2);
+	}
+	else
+	{
+            X_index_1 = max(X_index_1);
+            X_index_2 = max(X_index_2);
+	}
+    if (X_index_1<0)
+    {
+        if (mag(x_limit1 - min(x_variable)) < mag(x_limit1 - max(x_variable)))
+        {
+            X_index_1=min_index(X_data_interpolated);
+        } 
+        else
+        {
+            X_index_1=max_index(X_data_interpolated);
+        }
+    }	
+    if (X_index_2<0)
+    {
+        if (mag(x_limit2 - min(x_variable)) < mag(x_limit2 - max(x_variable)))
+        {
+            X_index_2=min_index(X_data_interpolated);
+        } 
+        else
+        {
+            X_index_2=max_index(X_data_interpolated);
+        }
+    }
+
+    Max_value = max(Response_interpolated[X_index_1::X_index_2]);
+    decl Max_index_interpolated = X_index_1+max_index(Response_interpolated[X_index_1::X_index_2]);
+    X_value = X_data_interpolated[Max_index_interpolated];
+    return vs(Max_value,X_value);
+}	// fun - max_within_x_domain_1d
+
+//***********************************************************************
+/*BEGIN_DOC
+  FUN_NAME: min_within_x_domain()
+  FUN_DESCRIPTION: Finds the minimum value of a response, while some other variable (could be the independent variable of the response) is within specified limits.
+  MAKE_PUBLIC: True
+  RETURNED_VALUE: Real
+  CATEGORY: Statistics
+  SYNTAX: Results=min_within_x_domain(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType, use_lowest_index)
+  EXAMPLE:
+  Pdel_dBm_low=40
+  Pdel_dBm_high=50
+  interpStepSize=0.05
+  interpType="spline"
+  Min_Gain=min_within_x_domain(Gain_Transducer, Pdel_dBm, Pdel_dBm_low, Pdel_dBm_high, interpStepSize, interpType, use_lowest_index)
+  ARGUMENT
+  ARG_NAME: Response
+  ARG_DESCRIPTION: one-, two-, or three-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: x_variable
+  ARG_DESCRIPTION: one-, two-, or three-dimensional data
+  ARG_DEFAULT: indep(Response)
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: x_limit1
+  ARG_DESCRIPTION: lower limit of the x_variable argument
+  ARG_DEFAULT: 
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: x_limit2
+  ARG_DESCRIPTION: upper limit of the x_variable argument
+  ARG_DEFAULT: none
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: interpStepSize
+  ARG_DESCRIPTION: interpolation step size, a single real or integer number
+  ARG_DEFAULT: 0.05
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: interpType
+  ARG_DESCRIPTION: type of interpolation
+  ARG_DEFAULT: "linear"
+  ARG_RANGE: "linear", "spline", or "cubic"
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: use_lowest_index
+  ARG_DESCRIPTION: The x_variable is interpolated versus the innermost independent variable.  If multiple values of the interpolated x_variable satisfy the x_limit1 target, this specifies whether to use the corresponding lowest or highest index.  The same thing is done for the x_limit2 target.
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0, "No", "NO", "no", "Yes", "YES", "yes", 1)
+  ARG_TYPE: Real, Integer, or String
+  ARG_REQUIRED: NO
+  DEFINED_IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael
+  SEE ALSO: None
+  NOTES: Say you have run a swept-input-power simulation of an amplifier.  You want to know the amplifier's minimum gain while it is delivering an output power that 
+  is between two values.  This function determines this minimum gain.  This function does utilize interpolation at the lower and upper limits of the x-axis variable.
+  The use_lowest_index parameter should only matter in cases where a plot of Response versus the x_variable is not one-to-one.
+  
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies (AEH)
+  DATE: May 14, 2012  
+  VERSION_CREATED: post ADS 2011.10
+  END_DOC*/
+  //***********************************************************************
+defun min_within_x_domain(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType, use_lowest_index)
+{
+    if (Response == NULL)
+    {
+	print_function_error( "min_within_x_domain", "Response (the first passed parameter) is required.");
+	return;
+    }
+	if ((interpType != "linear") && (interpType != "cubic") && (interpType != "spline"))
+	{
+            interpType = "linear";
+    }
+    if (x_limit1 == NULL)
+    {
+        print_function_error( "max_within_x_domain", "x_limit1 (the 3rd passed parameter) is required.");
+        return;
+    }
+    if (x_limit2 == NULL)
+    {
+        print_function_error( "max_within_x_domain", "x_limit2 (the 4th passed parameter) is required.");
+        return;
+    }
+    decl interpStepSizeChkd = if (interpStepSize == NULL) then 0.05 else interpStepSize;
+    decl x_variable_Chkd = if (x_variable == NULL) then indep(Response) else x_variable; // use the indep of Response if no parameter passed for x_variable.
+    decl x_limit1_Chkd = if (x_limit1 > x_limit2) then x_limit2 else x_limit1;
+    decl x_limit2_Chkd = if (x_limit1 > x_limit2) then x_limit1 else x_limit2;
+    if ((use_lowest_index != 0) && (use_lowest_index !="No") && (use_lowest_index !="NO") && (use_lowest_index !="no") && (use_lowest_index !=1) && (use_lowest_index !="Yes") && (use_lowest_index !="YES") && (use_lowest_index !="yes") && (use_lowest_index !=NULL))
+    {
+            print_function_error( "max_within_x_domain", "use_lowest_index must be set to 0, \"No\", \"NO\", \"no\", 1, \"Yes\", \"YES\", or \"yes\" ");
+            return;
+    }
+    decl use_lowest_indexChkd = if (use_lowest_index == NULL) then 1 else use_lowest_index; // set this flag to 1 as the default if no parameter passed.
+    use_lowest_indexChkd = if (use_lowest_index == "No" || use_lowest_index == "NO" || use_lowest_index == "no") then 0 else use_lowest_indexChkd;
+    decl sweepDim = sweep_dim(Response);
+    decl results = NULL; 
+ 
+    switch (sweepDim) {
+    case 0: results = Response;
+	break;
+    case 1: 
+            if ((sweep_dim(Response) != sweep_dim(x_variable_Chkd)) || (sweep_size(Response) != sweep_size(x_variable_Chkd)))
+            {
+            	print_function_error( "min_within_x_domain", "Response and x_variable must have the same dimensionality");
+            	return;
+            }
+            results = min_within_x_domain_1d(Response, x_variable_Chkd, x_limit1, x_limit2, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+            break;
+    case 2: 
+            if ((sweep_dim(Response) != sweep_dim(x_variable_Chkd)) || (sweep_size(Response[::,0]) != sweep_size(x_variable_Chkd[::,0])) || (sweep_size(Response[0,::]) != sweep_size(x_variable_Chkd[0,::])))	
+            {
+            	print_function_error( "min_within_x_domain", "Response and x_variable must have the same dimensionality");
+            	return;
+            }
+            results = min_within_x_domain_2d(Response, x_variable_Chkd, x_limit1, x_limit2, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+            break;
+	case 3: 
+            if ((sweep_dim(Response) != sweep_dim(x_variable_Chkd)) || (sweep_size(Response[::,0,0]) != sweep_size(x_variable_Chkd[::,0,0])) || (sweep_size(Response[0,::,0]) != sweep_size(x_variable_Chkd[0,::,0])) || (sweep_size(Response[0,0,::]) != sweep_size(x_variable_Chkd[0,0,::])))	
+            {
+            	print_function_error( "min_within_x_domain", "Response and x_variable must have the same dimensionality");
+            	return;
+            }	
+            results = min_within_x_domain_3d(Response, x_variable_Chkd, x_limit1, x_limit2, interpStepSizeChkd, interpType, use_lowest_indexChkd);
+            break;
+    default: print_function_error( "min_within_x_domain", " does not support data with dimensions greater than three.");
+	return;
+	break;
+    }
+
+    return results;
+} // fun - min_within_x_domain
+
+defun min_within_x_domain_3d(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType, use_lowest_index)
+{
+	decl results = Response[::,::,0];     // initialize the results variable
+	decl outer_index;
+	decl numPts_outer = sweep_size(Response[::,0,0]);
+	for (outer_index=0; outer_index<numPts_outer; outer_index++)
+	{
+            results[outer_index,::] = min_within_x_domain_2d(Response[outer_index,::,::],x_variable[outer_index,::,::],x_limit1,x_limit2, interpStepSize, interpType, use_lowest_index);
+	}
+	return results;
+}	// fun - min_within_x_domain_3d
+
+defun min_within_x_domain_2d(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType, use_lowest_index)
+{
+	decl results = Response[::,0];     // initialize the results variable
+	decl outer_index;
+	decl numPts_outer = sweep_size(Response[::,0]);
+	for (outer_index=0; outer_index<numPts_outer; outer_index++)
+	{
+            results[outer_index] = min_within_x_domain_1d(Response[outer_index,::],x_variable[outer_index,::],x_limit1,x_limit2, interpStepSize, interpType, use_lowest_index);
+	}
+	return results;
+}	// fun - min_within_x_domain_2d
+
+defun min_within_x_domain_1d(Response, x_variable, x_limit1, x_limit2, interpStepSize, interpType, use_lowest_index)
+{
+    decl Min_value = Response;                         // initialize output
+    decl X_value = real(x_variable);                  // real() needed to prevent X_values_array being initialized as an integer.
+    decl Param_data = indep(Response);
+    decl Param_data_interpolated = [min(Param_data)::interpStepSize::max(Param_data)];
+    decl X_data_interpolated = [min(Param_data)::interpStepSize::max(Param_data)]; // TFS127210
+    decl Response_interpolated = interpolate(interpType, Response, 1, Param_data_interpolated);
+    decl X_index_1_0 = find(mag(X_data_interpolated-x_limit1)<interpStepSize/2);
+    decl X_index_1_1 = find(mag(X_data_interpolated-x_limit1)<interpStepSize);
+    decl X_index_1 = if (min(X_index_1_0) >= 0) then (X_index_1_0) else (X_index_1_1);
+    decl X_index_2_0 = find(mag(X_data_interpolated-x_limit2)<interpStepSize/2);
+    decl X_index_2_1 = find(mag(X_data_interpolated-x_limit2)<interpStepSize);
+    decl X_index_2 = if (min(X_index_2_0) >= 0) then (X_index_2_0) else (X_index_2_1);    
+
+    if (use_lowest_index !=0)
+    {
+        X_index_1 = min(X_index_1);
+        X_index_2 = min(X_index_2);
+    }
+    else
+    {
+        X_index_1 = max(X_index_1);
+        X_index_2 = max(X_index_2);
+    }
+    if (X_index_1<0)
+    {
+        if (mag(x_limit1 - min(x_variable)) < mag(x_limit1 - max(x_variable)))
+        {
+            X_index_1=min_index(X_data_interpolated);
+        } 
+        else
+        {
+            X_index_1=max_index(X_data_interpolated);
+        }
+    }    
+    if (X_index_2<0)
+    {
+        if (mag(x_limit2 - min(x_variable)) < mag(x_limit2 - max(x_variable)))
+        {
+            X_index_2=min_index(X_data_interpolated);
+        } 
+        else
+        {
+            X_index_2=max_index(X_data_interpolated);
+        }
+    }
+
+    Min_value = min(Response_interpolated[X_index_1::X_index_2]);
+    decl Min_index_interpolated = X_index_1+min_index(Response_interpolated[X_index_1::X_index_2]);
+    X_value = X_data_interpolated[Min_index_interpolated];
+    return vs(Min_value,X_value);
+}	// fun - min_within_x_domain_1d
+
+//****************************************************************************
+//  swap_column
+//  Function: Swap column1 and colum2 of the input matrix. 
+//  Returns: Matrix with column1 and column2 swapped.
+//  
+//
+/*
+EXAMPLE:
+  swap_column( identity(4,4), 1,3 ) wil result in
+  {{0,0,1,0},{0,1,0,0},{1,0,0,0},{0,0,0,1}}
+
+ARGUMENT
+  ARG_NAME: matrix
+  ARG_DESCRIPTION:  input matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: N/A
+  ARG_TYPE: 2D matrix
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: column1
+  ARG_DESCRIPTION:  column index for swap operation
+  ARG_DEFAULT: None
+  ARG_RANGE: N/A
+  ARG_TYPE: integer larger than 0
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: column2
+  ARG_DESCRIPTION:  column index for swap operation
+  ARG_DEFAULT: None
+  ARG_RANGE: N/A
+  ARG_TYPE: integer larger than 0
+  ARG_REQUIRED: YES
+*/
+defun swap_column( matrix, column1, column2 )
+{
+  decl matSize = size(matrix);
+  
+  if( size(matSize) != 2 )
+  {
+    print_function_error("This function supports 2 dimensional matrix only");
+    return 0;
+  }
+
+  decl matSizeN = matSize(2);
+  
+  if( column1 <= 0 || column1 > matSizeN)
+  {
+    print_function_error("column1 should be a integer and between 1 and size of column of the input matrix");
+    return 0;
+  }
+
+  if( column2 <= 0 || column2 > matSizeN)
+  {
+    print_function_error("column2 should be a integer and between 1 and size of column of the input matrix");
+    return 0;
+  }
+  
+  decl swapM = identity_column_swap( matSizeN, column1, column2 );
+  return matrix*swapM;
+}
+
+// generate a square matrix which can be used to swap column of the matrix
+//
+// n = matrix size
+// column1 and 2 are target column index to swap
+//
+// e.g ) identity_column_swap( 4, 1, 3 )
+// will result in 
+//{{0,0,1,0},{0,1,0,0},{1,0,0,0},{0,0,0,1}}
+defun identity_column_swap(n, column1, column2)
+{
+  decl i,j;
+  decl str = "";
+  decl row1 = column2;
+  decl row2 = column1;
+  
+  for( i = 1 ; i <= n ; i++ ) // row
+  {
+    if( i == 1 )
+      str = strcat(str, "{");
+    str = strcat(str, "{");
+    
+    for( j = 1 ; j <= n ; j++ ) // column
+    {
+      if( j == column1 || j == column2 )
+      {
+        if( i == row1 && j == column1 || i == row2 && j == column2 )
+          str = strcat(str, 1);
+        else
+          str = strcat(str, 0 );
+      }
+      else
+      {
+        if( i == j )
+          str = strcat(str, 1 );
+        else
+          str = strcat(str, 0 );
+      }
+      
+      if( j != n  )
+        str = strcat( str, "," );
+      else
+        str = strcat( str, "}" );
+    }
+
+    if( i != n  )
+      str = strcat( str, "," );
+    else
+      str = strcat( str, "}" );
+  }
+  return evaluate(str);
+}
+
+// generate a square identity matrix but a element is 0 at specified column
+//
+// n = matrix size
+// column is target column index to be 0
+//
+// e.g ) identity_column_zero( 4, 3 )
+// will result in 
+//{{1,0,0,0},{0,1,0,0},{0,0,0,0},{0,0,0,1}}
+defun identity_column_zero(n, column)
+{
+  decl i,j;
+  decl str = "";
+  
+  for( i = 1 ; i <= n ; i++ ) // row
+  {
+    if( i == 1 )
+      str = strcat(str, "{");
+    str = strcat(str, "{");
+    
+    for( j = 1 ; j <= n ; j++ ) // column
+    {
+      if( i == j && i != column )
+        str = strcat(str, 1 );
+      else
+        str = strcat(str, 0 );
+      
+      if( j != n  )
+        str = strcat( str, "," );
+      else
+        str = strcat( str, "}" );
+    }
+
+    if( i != n  )
+      str = strcat( str, "," );
+    else
+      str = strcat( str, "}" );
+  }
+  return evaluate(str);
+}
+
+//***********************************************************************
+/*BEGIN_DOC
+  FUN_NAME: Make_Linear()
+  FUN_DESCRIPTION: Returns the output voltage that would result if an amplifier or device's power gain and/or phase response were made linear.
+  MAKE_PUBLIC: True
+  RETURNED_VALUE: Complex
+  CATEGORY: Utility
+  SYNTAX: Vload_fundHB_Lin=Make_Linear(Vload_FundHB, Iload_FundHB, Linearize_Gain_Flag, Linearize_Phase_Flag)
+  EXAMPLE:
+  Linearize_Gain=1
+  Linearize_Phase=0
+  Vload_fundHB_Lin=Make_Linear(Vload[1], Iload.i[1], Linearize_Gain, Linearize_Phase)
+  ARGUMENT
+  ARG_NAME: Vload_FundHB
+  ARG_DESCRIPTION: one-, two-, or three-dimensional data, the voltage across a load, from a swept-power harmonic balance simulation
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: Iload_FundHB
+  ARG_DESCRIPTION: one-, two-, or three-dimensional data, the current into the same load, from a swept-power harmonic balance simulation
+  ARG_DEFAULT: indep(Response)
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+  ARGUMENT
+  ARG_NAME: Linearize_Gain
+  ARG_DESCRIPTION: flag indicating whether you want to linearize the gain or not
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0, "No", "NO", "no", "Yes", "YES", "yes", 1)
+  ARG_TYPE: Real, Integer, or String
+  ARG_REQUIRED: NO
+  ARGUMENT
+  ARG_NAME: Linearize_Phase
+  ARG_DESCRIPTION: flag indicating whether you want to linearize the phase or not
+  ARG_DEFAULT: 0
+  ARG_RANGE: (0, "No", "NO", "no", "Yes", "YES", "yes", 1)
+  ARG_TYPE: Real, Integer, or String
+  ARG_REQUIRED: NO
+  DEFINED_IN: $HPEESOF_DIR/expressions/ael/utility_fun.ael
+  SEE ALSO: None
+  NOTES: Say you have run a swept-input-power simulation of an amplifier or device.  You are carrying out post-processing on the resulting data and want to know how 
+  the results would change if the the amplifier or device's gain and/or phase were made linear.  This function returns the corresponding voltage from a 
+  harmonic balance simulation if you could make the amplifier or device have a linear power gain and/or eliminate phase distortion.  The function operates on 
+  up to three-dimensional data, and the innermost variable must be the input power.
+  
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies (AEH)
+  DATE: Aug. 22, 2013  
+  VERSION_CREATED: post ADS 2012.08
+  END_DOC*/
+
+defun Make_Linear(Vload_Fund, Iload_Fund, Linearize_Gain_Flag, Linearize_Phase_Flag)
+{
+    if ((Vload_Fund == NULL) || (Iload_Fund == NULL))
+    {
+	print_function_error( "Make_Linear", "Vload_Fund and Iload_Fund passed parameters are required.");
+	return;
+    }
+    if (sweep_dim(Vload_Fund) != sweep_dim(Iload_Fund))
+    {
+        print_function_error( "Make_Linear", "Vload_Fund and Iload_Fund must have the same dimensionality");
+        return;
+    }
+    if (sweep_dim(Vload_Fund) == 1)
+    {
+        if (sweep_size(Vload_Fund) != sweep_size(Iload_Fund))
+        {
+        print_function_error( "Make_Linear", "Vload_Fund and Iload_Fund must be the same size");
+        return;
+        }
+    }
+    else if (sweep_dim(Vload_Fund) == 2)
+    {
+        if ((sweep_size(Vload_Fund[0]) != sweep_size(Iload_Fund[0])) || (sweep_size(Vload_Fund[0,::]) != sweep_size(Iload_Fund[0,::])))
+        {
+            print_function_error( "Make_Linear", "Vload_Fund and Iload_Fund must be the same size");
+            return;
+        }
+    }
+    else if (sweep_dim(Vload_Fund) == 3)
+    {
+        if ((sweep_size(Vload_Fund[0,0,::]) != sweep_size(Iload_Fund[0,0,::])) || (sweep_size(Vload_Fund[0,::,0]) != sweep_size(Iload_Fund[0,::,0])) || (sweep_size(Vload_Fund[::,0,0]) != sweep_size(Iload_Fund[::,0,0])))
+        {
+            print_function_error( "Make_Linear", "Vload_Fund and Iload_Fund must be the same size");
+            return;
+        }
+    }
+    if ((Linearize_Gain_Flag != 0) && (Linearize_Gain_Flag !="No") && (Linearize_Gain_Flag !="NO") && (Linearize_Gain_Flag !="no") && (Linearize_Gain_Flag !=1) && (Linearize_Gain_Flag !="Yes") && (Linearize_Gain_Flag !="YES") && (Linearize_Gain_Flag !="yes") && (Linearize_Gain_Flag !=NULL))
+    {
+        print_function_error( "Make_Linear", "Linearize_Gain_Flag must be set to 0, \"No\", \"NO\", \"no\", 1, \"Yes\", \"YES\", or \"yes\" ");
+        return;
+    }
+    decl Linearize_Gain_FlagChkd = if (Linearize_Gain_Flag == NULL) then 1 else Linearize_Gain_Flag; // set this flag to 1 as the default if no parameter passed.
+    Linearize_Gain_FlagChkd = if (Linearize_Gain_Flag == "No" || Linearize_Gain_Flag == "NO" || Linearize_Gain_Flag == "no") then 0 else Linearize_Gain_FlagChkd;
+    if ((Linearize_Phase_Flag != 0) && (Linearize_Phase_Flag !="No") && (Linearize_Phase_Flag !="NO") && (Linearize_Phase_Flag !="no") && (Linearize_Phase_Flag !=1) && (Linearize_Phase_Flag !="Yes") && (Linearize_Phase_Flag !="YES") && (Linearize_Phase_Flag !="yes") && (Linearize_Phase_Flag !=NULL))
+    {
+        print_function_error( "Make_Linear", "Linearize_Phase_Flag must be set to 0, \"No\", \"NO\", \"no\", 1, \"Yes\", \"YES\", or \"yes\" ");
+        return;
+    }
+    decl Linearize_Phase_FlagChkd = if (Linearize_Phase_Flag == NULL) then 1 else Linearize_Phase_Flag; // set this flag to 1 as the default if no parameter passed.
+    Linearize_Phase_FlagChkd = if (Linearize_Phase_Flag == "No" || Linearize_Phase_Flag == "NO" || Linearize_Phase_Flag == "no") then 0 else Linearize_Phase_FlagChkd;
+
+    decl sweepDim = sweep_dim(Vload_Fund);
+    decl results = NULL; 
+   
+    switch (sweepDim) {
+    case 0: print_function_error( "Make_Linear", " does not support single number data.");
+	return;
+	break;
+    case 1: results = Make_Linear_1d(Vload_Fund, Iload_Fund, Linearize_Gain_FlagChkd, Linearize_Phase_FlagChkd);
+	break;
+    case 2: results = Make_Linear_2d(Vload_Fund, Iload_Fund, Linearize_Gain_FlagChkd, Linearize_Phase_FlagChkd);     
+	break;
+    case 3: results = Make_Linear_3d(Vload_Fund, Iload_Fund, Linearize_Gain_FlagChkd, Linearize_Phase_FlagChkd);
+	break;
+    default: print_function_error( "Make_Linear", " does not support data with dimensions greater than three.");
+	return;
+	break;
+    }
+
+    return results;
+} // fun - Make_Linear
+
+defun Make_Linear_1d(Vload_Fund, Iload_Fund, Linearize_Gain_Flag, Linearize_Phase_Flag)
+{
+    decl Vload_Fund_Linearized = Vload_Fund;                         // initialize output
+    if (Linearize_Gain_Flag)
+    {
+        decl Pdel_W=0.5*real(Vload_Fund*conj(Iload_Fund));
+        decl Pdel_dBm=if (Pdel_W>0) then 10*log(Pdel_W)+30 else -200;
+        decl Gain=Pdel_dBm-indep(Pdel_dBm);
+        decl Gain_Delta=Gain[0]-Gain;
+        decl Gain_Delta_lin=10**(-Gain_Delta/20);
+        Vload_Fund_Linearized = Vload_Fund_Linearized/Gain_Delta_lin;
+    }
+    if (Linearize_Phase_Flag)
+    {
+        decl Phase_Delta=phaserad(Vload_Fund_Linearized)-phaserad(Vload_Fund_Linearized[0]);
+        Vload_Fund_Linearized = Vload_Fund_Linearized*exp(-j*Phase_Delta);
+    }
+    return Vload_Fund_Linearized;
+} // fun - Make_Linear_1d
+
+defun Make_Linear_2d(Vload_Fund, Iload_Fund, Linearize_Gain_Flag, Linearize_Phase_Flag)
+{
+    decl Vload_Fund_Linearized = Vload_Fund;                 // initialize output
+    decl numPts_i = sweep_size(Vload_Fund_Linearized[0]);
+    decl i;      
+
+    for (i=0; i<numPts_i; i++)                       
+    {
+        Vload_Fund_Linearized[i,::] = Make_Linear_1d(Vload_Fund[i,::], Iload_Fund[i,::], Linearize_Gain_Flag, Linearize_Phase_Flag);
+    }
+    return Vload_Fund_Linearized;
+} // fun - Make_Linear_2d
+
+defun Make_Linear_3d(Vload_Fund, Iload_Fund, Linearize_Gain_Flag, Linearize_Phase_Flag)
+{
+    decl Vload_Fund_Linearized = Vload_Fund;                         // initialize output
+    decl numPts_i = sweep_size(Vload_Fund_Linearized[0,0]);
+    decl i;      
+
+    for (i=0; i<numPts_i; i++)                       
+    {
+        Vload_Fund_Linearized[i,::,::] = Make_Linear_2d(Vload_Fund[i,::,::], Iload_Fund[i,::,::], Linearize_Gain_Flag, Linearize_Phase_Flag);
+    }
+    return Vload_Fund_Linearized;
+} // fun - Make_Linear_3d
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+
+
+
+// NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+//

@@ -1,0 +1,175 @@
+// Copyright Keysight Technologies 2014 - 2014  
+
+
+// fputs(stderr, " Defining function Bias_Mod_from_Shaping_Table");
+//
+// This function returns the bias modulation signal, given a modulated RF input signal envelope and a shaping table.
+// In an envelope tracking simulation, when the RF input signal envelope is applied to the amplifier's input, 
+// simultaneously, the bias modulation signal obtained from this function would be applied to the amplifier's drain or collector.
+
+/*BEGIN_DOC  
+	FUN_NAME: Bias_Mod_from_Shaping_Table()
+    FUN_DESCRIPTION: Returns the bias modulation signal from applying a modulated RF input signal envelope to a shaping table.
+    RETURNED_VALUE: Real
+    CATEGORY: Envelope
+    SYNTAX: Bias_Mod_from_Shaping_Table(shapingTable, sourceZ, modulatedInput, interpStepSize, interpType, extrapFlag)
+    EXAMPLE:
+	RF_Modulated_Signal=LTE_UL_TxSpectrum..Waveform
+	ScaleFactor=0.2
+	Desired_Gain=25
+	Interpolated_Pout_at_Desired_Gain=interpolate_y_vs_x(Power_Delivered_dBm,Trans_Power_Gain_dB,Desired_Gain,0.05,"linear","No")
+	Interpolated_Iso_Gain_Values=indep(Interpolated_Pout_at_Desired_Gain)
+	Interpolated_Pout_at_Desired_Gain=interpolate_y_vs_x(Power_Delivered_dBm,Trans_Power_Gain_dB,Desired_Gain,0.05,"linear","No")
+	Interpolated_Pavs_dBm_at_Desired_Gain=Interpolated_Pout_at_Desired_Gain-Interpolated_Iso_Gain_Values
+	ShapingTable=vs(Swept_Bias_Voltage,Interpolated_Pavs_dBm_at_Desired_Gain)
+	Extrapolation_Index=1
+	Bias_Modulation_Sig=Bias_Mod_from_Shaping_Table(ShapingTable,50,RF_Modulated_Signal*ScaleFactor,0.05,"spline",Extrapolation_Index)
+
+    ARGUMENT
+    ARG_NAME: shapingTable
+    ARG_DESCRIPTION: Bias voltages in Volts versus available source powers in dBm.
+    ARG_DEFAULT: None
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE: Real
+    ARG_REQUIRED: YES
+    ARGUMENT
+    ARG_NAME: sourceZ
+    ARG_DESCRIPTION: Source impedance.
+    ARG_DEFAULT: 50
+    ARG_RANGE: (0:inf)
+    ARG_TYPE: Complex
+    ARG_REQUIRED: NO
+    ARGUMENT
+    ARG_NAME: modulatedInput
+    ARG_DESCRIPTION: Modulated input signal envelope versus time, usually from a dataset.  This signal should be a function of time, only.
+    ARG_DEFAULT: None
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE: Complex
+    ARG_REQUIRED: YES
+    ARGUMENT
+    ARG_NAME: interpStepSize
+    ARG_DESCRIPTION: Step size for interpolating the available source power in dBm (shaping table x-axis value.)
+    ARG_DEFAULT: 0.05
+    ARG_RANGE: (0:inf)
+    ARG_TYPE: Real
+    ARG_REQUIRED: NO
+    ARGUMENT
+    ARG_NAME: interpType
+    ARG_DESCRIPTION: Type of interpolation.  
+    ARG_DEFAULT: None
+    ARG_RANGE: dagger.gif
+    ARG_TYPE: String
+    ARG_REQUIRED: YES
+    ARGUMENT
+    ARG_NAME: extrapFlag
+    ARG_DESCRIPTION: Determines type of extrapolation
+    ARG_DEFAULT: 0
+    ARG_RANGE: dagger.gif dagger.gif
+    ARG_TYPE: Integer
+    ARG_REQUIRED: NO
+ 
+    FOOTNOTES: dagger.gif interpType can be: "linear", "cubic", or "spline"
+	dagger.gif dagger.gif extrapFlag (6th passed parameter) must be set to 0 (constant extrapolation), 1 (low levels: constant extrapolation; high levels linear extrap.), 
+	2 (low levels: linear extrap.; high levels: constant extrap.), or 3 (linear extrap. for both)
+    DEFINED_IN: 
+    SEE ALSO: 
+    NOTES:  This function returns the bias modulation signal, given a modulated RF input signal envelope and a shaping table.
+	In an envelope tracking simulation, when the RF input signal envelope is applied to the amplifier's input, 
+	simultaneously, the bias modulation signal obtained from this function would be applied to the amplifier's drain or collector.
+	
+    EXTERNAL: yes
+    AUTHOR: Keysight Technologies (AEH)
+    DATE: April 15 2013
+    VERSION_CREATED: ADS 2012.08
+END_DOC*/
+//***********************************************************************
+
+defun Bias_Mod_from_Shaping_Table(shapingTable, sourceZ, modulatedInput, interpStepSize, interpType, extrapFlag)
+{
+    if ((shapingTable == NULL) || (modulatedInput == NULL))
+    {
+		print_function_error( "Bias_Mod_from_Shaping_Table", "the shapingTable (1st passed parameter) and modulatedInput (3rd) are required.");
+		return;
+    }
+    if ((interpType != "linear") && (interpType != "cubic") && (interpType != "spline"))
+    {
+		print_function_error( "Bias_Mod_from_Shaping_Table", "interpType (5th passed parameter) must be set to \"linear\", \"cubic\", or \"spline\"");
+		return;
+    }
+	decl interpStepSizeChkd = if (interpStepSize == NULL) then 0.05 else interpStepSize;
+	decl sourceZ_Chkd = if (sourceZ == NULL) then 50 else sourceZ;
+	if ((extrapFlag != 0) && (extrapFlag !=1) && (extrapFlag !=2) && (extrapFlag !=3) && (extrapFlag !=NULL))
+    {
+		print_function_error( "Bias_Mod_from_Shaping_Table", "extrapFlag (6th passed parameter) must be set to 0 (constant extrapolation), 1 (low levels: const. extrap.; high levels linear extrap.), 2 (low levels: linear extrap.; high levels: const. extrap.), or 3 (linear extrap. for both) ");
+		return;
+    }
+	decl extrapFlag_Chkd = if (extrapFlag == NULL) then 0 else extrapFlag;
+	
+    decl shapingTablePower=indep(shapingTable);
+    decl minPwr=min(shapingTablePower);
+    decl maxPwr=max(shapingTablePower);
+	decl maxInputSig=max(mag(modulatedInput));
+	decl time=indep(modulatedInput);
+	decl timeSwpSize=sweep_size(time);
+	
+	decl InputSigPwr=dBm(modulatedInput,conj(sourceZ_Chkd));
+	decl Vout=real(modulatedInput);						// Initialize the output variable
+	decl k=0;
+	decl indexVal=0;
+	decl Pavs_data = indep(shapingTable);
+	decl Pavs_data_interpolated = [min(Pavs_data)::interpStepSizeChkd::max(Pavs_data)];
+	decl V_Bias_interpolated = interpolate(interpType, shapingTable, 1, Pavs_data_interpolated);
+	decl interpSwpSize=sweep_size(Pavs_data_interpolated);
+	decl interpSwpSize_m1=interpSwpSize-1;
+	decl interpSwpSize_m2=interpSwpSize-2;
+	decl slopeLower=(V_Bias_interpolated[1]-V_Bias_interpolated[0])/(Pavs_data_interpolated[1]-Pavs_data_interpolated[0]);
+	decl slopeHigher=(V_Bias_interpolated[interpSwpSize_m1]-V_Bias_interpolated[interpSwpSize_m2])/(Pavs_data_interpolated[interpSwpSize_m1]-Pavs_data_interpolated[interpSwpSize_m2]);
+	decl temp_InputSigPwr_k=0;
+	decl temp_Vout_k = 0;
+	
+	for (k=0; k<timeSwpSize; k++)
+	{
+		temp_InputSigPwr_k = InputSigPwr[k];
+		
+		if ((temp_InputSigPwr_k<Pavs_data_interpolated[0]) && (extrapFlag_Chkd == 0 || extrapFlag_Chkd == 1))
+		{ 
+		    temp_Vout_k=V_Bias_interpolated[0];																	// carry out constant extrapolation at the low end
+		}
+		else if ((temp_InputSigPwr_k<Pavs_data_interpolated[0]) && (extrapFlag_Chkd == 2 || extrapFlag_Chkd == 3))
+		{
+			temp_Vout_k=slopeLower*(temp_InputSigPwr_k-Pavs_data_interpolated[0])+V_Bias_interpolated[0];		// carry out linear extrapolation at the low end
+		}
+		else if ((temp_InputSigPwr_k>Pavs_data_interpolated[interpSwpSize_m1]) && (extrapFlag_Chkd == 0 || extrapFlag_Chkd == 2))
+		{
+			temp_Vout_k = V_Bias_interpolated[interpSwpSize_m1];												// carry out constant extrapolation at the high end
+		}
+		else if ((temp_InputSigPwr_k>Pavs_data_interpolated[interpSwpSize_m1]) && (extrapFlag_Chkd == 1 || extrapFlag_Chkd == 3))
+		{
+			temp_Vout_k=slopeHigher*(temp_InputSigPwr_k-Pavs_data_interpolated[interpSwpSize_m1])+V_Bias_interpolated[interpSwpSize_m1];		// carry out linear extapolation at the high end
+		}
+		else
+		{
+		    indexVal=min(find((Pavs_data_interpolated-InputSigPwr[k])>0));
+		    temp_Vout_k=V_Bias_interpolated[indexVal];
+		}  
+		Vout[k]=temp_Vout_k;
+	}
+
+	return Vout;
+}  
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+//
+// ***** PLEASE DO NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//

@@ -1,0 +1,2530 @@
+// Copyright Keysight Technologies 1998 - 2015  
+// @(#) $Source: /cvs/sr/src/genfun/source/budget_fun.ael,v $ $Revision: 1.69 $ $Date: 2011/08/23 21:25:20 $
+
+
+
+
+//****************************************************************************
+//  BudFreq
+//  Function: Budget fundamental frequency is based on small-signal AC or HB. 
+//  Returns: Operating frequency at terminal(s) of each component.
+//  Options: OutputBudgetIV,  FreqConversion
+/*BEGIN_DOC
+FUN_NAME: bud_freq()
+FUN_DESCRIPTION: Returns the frequency plan of a network
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_freq(freqIn, pinNumber, "simName") for AC analysis or y = bud_freq(planNumber, pinNumber) for HB analysis
+EXAMPLE:
+x = bud_freq()
+Returns frequency plan for AC analysis.
+
+x = bud_freq(1MHz)
+Returns frequency plan for frequency swept AC analysis. By passing the value of 1MHz the plan is returned for the subset of the sweep, when the source value is 1MHz 
+
+x = bud_freq(2)
+For HB, returns a selected frequency plan, 2, with respect to pin 1 of every network element. 
+
+ARGUMENT
+  ARG_NAME: freqIn
+  ARG_DESCRIPTION: input source frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: planNumber
+  ARG_DESCRIPTION: represents the chosen frequency plan and is required when using the bud_freq() function with HB data.
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: used to choose which pins of each network element are referenced dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif If 1 is passed as the pinNumber, the frequency plan displayed references pin 1 of each element; otherwise, the frequency plan is displayed for all pins of each element. (Note that this means it is not possible to select only pin 2 of each element, for example.) By default, the frequency plan is displayed for pin 1 of each element. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: None
+NOTES:
+This function is used in AC and HB simulations with the budget parameter turned on. For AC, the options are to pass no parameters, or the input source frequency (freqIn), for the first parameter if a frequency sweep is performed. freqIn can still be passed if no sweep is performed, table data is just formatted differently. The first argument must be a real number for AC data and the second argument is an integer, used optionally to choose pin references. 
+
+Used in AC and harmonic balance simulations 
+
+When a frequency sweep is performed in conjunction with AC, the frequency plan of a particular sweep point can be chosen. 
+
+For HB, this function determines the fundamental frequencies at the terminal(s) of each component, thereby given the entire frequency plan for a network. Sometimes more than one frequency plan exists in a network. For example when double sideband mixers are used. This function gives the user the option of choosing the frequency plan of interest. 
+
+Note that a negative frequency at a terminal means that a spectral inversion has occurred at the terminal. For example, in frequency-converting AC analysis, where vIn and vOut are the voltages at the input and output ports, respectively, the relation may be either vOut=alpha*vIn if no spectral inversion has occurred, or vOut=alpha*conj(vIn) if there was an inversion. Inversions may or may not occur depending on which mixer sidebands one is looking at. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun bud_freq(path,pin,simName)
+{
+  decl term, f_freq, freqs, freq_index, signal_path;
+
+  if (pin == NULL)
+    term = 1;
+  else
+    {
+      term = pin;
+      if (!strcmp(type(pin),"String"))
+	{
+	  signal_path = pin;
+	  term = 2;
+	}
+    }
+ 
+  if (path==NULL || is_real(path))
+    {
+      if (term == 1 && signal_path == NULL)
+	f_freq = collect("(\.t1)+\.fss$","Component",,simName);
+      else 
+	{
+	  f_freq = collect("t[0-9]+(\.fss$)","Component",,simName);
+	  if (signal_path != NULL)
+	    f_freq = select_outer_indep(f_freq,signal_path);
+	}
+
+      if (is_real(path))
+	{
+	   if(simName)
+	     freqs =  evaluate(strcat(simName,"..freq"),"ael");
+	   else
+	     freqs = evaluate("AC.freq","ael");
+	  if (freqs != NULL) 
+	    freq_index = find_index(freqs,path);
+	  if (is_integer(freq_index))
+	    f_freq = f_freq[freq_index]; 
+        }
+    }
+  else 
+    {   
+      if (is_integer(path) && path > 0)
+	{
+	  decl strg = strcat("[",path,"]");
+	  if (term == 1  && signal_path == NULL)
+	    freqs = collect("(\.t1)+\.f","Component",strg,simName);
+	  else
+	    {
+	      freqs = collect("t[0-9]+(\.f)","Component",strg,simName);
+
+	      if (signal_path != NULL)
+		freqs = select_outer_indep(freqs,signal_path);
+	     }
+	  
+	  //if an integer type (harmindex) is inner indep, then replace it with HB.freq
+	  if(type(indep(freqs,1)) == "Integer")
+	    {
+	      if(simName)
+		f_freq =  evaluate(strcat(simName,"..freq"),"ael");
+	      else
+		f_freq =  evaluate("HB.freq","ael");
+	      freqs = vs(freqs,f_freq);
+	    }
+
+	  if (freqs != NULL)
+	    f_freq = select_fund(freqs,freqs,"indep"); 
+	}     
+    } 
+
+  if (f_freq != NULL && signal_path == NULL)
+    return sort(f_freq,"ascending","Component");
+  else
+    return f_freq;  
+}
+
+
+//****************************************************************************
+//  BudGain
+//  Function: Budget power gain (operating) is based on small-signal AC or HB. 
+//  Returns: power gain in dB 
+//  Options: OutputBudgetIV
+
+/*BEGIN_DOC
+FUN_NAME: bud_gain() 
+FUN_DESCRIPTION: Returns budget transducer-power gain
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_gain(vIn, iIn, Zs, Plan, pinNumber, "simName") or y = bud_gain("SourceName", SrcIndx, Zs, Plan, budgetPath) 
+EXAMPLE:
+x = bud_gain(PORT1.t1.v, PORT1.t1.i) 
+or
+x = bud_gain("PORT1") 
+
+y= bud_gain(PORT1.t1.v, PORT1.t1.i, 75)
+or
+y= bud_gain("PORT1", , 75., 1) 
+
+z = bud_gain(PORT1.t1.v[3], PORT1.t1.i[3], , 1)
+or
+z= bud_gain("PORT1", 3, , 1) 
+
+ARGUMENT
+  ARG_NAME: vIn
+  ARG_DESCRIPTION:  voltage flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iIn
+  ARG_DESCRIPTION:  current flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: SourceName
+  ARG_DESCRIPTION: component name at the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: SrcIndx dagger.gif
+  ARG_DESCRIPTION: frequency index that corresponds to the source frequency to determine which frequency to use from a multitone source as the reference signal
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Plan dagger.gif
+  ARG_DESCRIPTION: number of the selected frequency plan(needed only for HB)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dbldagr.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: budgetPath
+  ARG_DESCRIPTION: Selects the budget path, specified as an array eg. ["PORT1.t1","Tee1.t3","Term3.t1"] 
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String Array
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Note that for AC simulation, both the SrcIndx and Plan arguments must not be specified; these are for HB only. 
+dbldagr.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_gain_comp() 
+NOTES:
+Used in AC and harmonic balance simulations 
+
+This is the power gain (in dB) from the input port to the terminal(s) of each component, looking into that component. Power gain is defined as power delivered to the resistive load minus the power available from the source. Note that the fundamental frequency at different pins can be different. If vIn and iIn are passed directly, one may want to use the index of the frequency sweep explicitly to reference the input source frequency. 
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun bud_gain(vIn,iIn,zRef,path,pin,simName)
+{
+  decl strg;
+  decl term = if (pin == NULL) then 1 else pin;
+   
+  if (vIn == NULL || is_string(vIn))
+    {  
+       if ( !strcmp(type(term),"String"))
+	 return bud_gain_eqn_path(term,iIn,zRef,path,simName);
+
+      decl argList =  arg_list();
+      decl elem = car(argList);
+
+      if (is_string(simName))
+	elem = strcat(simName,"..",elem);
+
+      argList = cdr(argList);
+      decl elemI = car(argList);
+      argList = cdr(argList);
+
+      if (elemI != NULL && elemI > 0)
+	  strg = strcat(elem,".t1.v","[",elemI,"]",",",elem,".t1.i","[",elemI,"]");
+      else
+	strg = strcat(elem,".t1.v",",",elem,".t1.i");
+	
+	while (argList != NULL)
+	  {       
+	    elem = car(argList);
+	    argList = cdr(argList);
+	    if (is_string(elem))
+	      elem=strcat("\"",elem,"\"");
+	    strg = strcat(strg,",",elem);
+	  }
+ 
+	decl eqn = strcat("bud_gain_eqn(",strg,")");
+	return evaluate(eqn,"ael");
+    }
+  else
+    if ( !strcmp(type(vIn),"String"))
+      return bud_gain_eqn_path(vIn,iIn,zRef,path,simName);
+  else
+    return  bud_gain_eqn(vIn,iIn,zRef,path,term,simName);
+}
+
+
+
+
+defun bud_gain_eqn(vIn,iIn,zRef,path,pin,simName)
+{
+  decl vOut, iOut; 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl term = if (pin == NULL) then 1 else pin;
+
+  if (path == NULL || path < 0)
+    {
+      if (term == 1)
+	{
+	  vOut = collect("(\.t1)+\.v$","Component",,simName);
+	  iOut = collect("(\.t1)+\.i$","Component",,simName);
+	}
+      else 
+	{
+	 vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+	 iOut = collect("t[0-9]+(\.i$)","Component",,simName);  
+	 
+	}
+    }
+  else
+    { 
+      decl v, i, f, strg = strcat("[",path,"]");
+      if ( term == 1 )
+	{
+	  v = collect("(\.t1)+\.v$","Component",,simName);
+	  i = collect("(\.t1)+\.i$","Component",,simName);
+	  f = collect("(\.t1)+\.f","Component",strg,simName); 
+	}
+	else 
+	{
+	  v = collect("t[0-9]+(\.v$)","Component",,simName);
+	  i = collect("t[0-9]+(\.i$)","Component",,simName);
+	  f = collect("t[0-9]+(\.f)","Component",strg,simName);
+	}
+
+      if (f == NULL)
+	{
+	  print_function_error("bud_gain_eqn","Invalid frequency plan");
+	  return;
+	}
+
+      vOut = select_fund(v,f);
+      iOut = select_fund(i,f);	
+	
+    }
+
+  if (sweep_dim(vIn) == sweep_dim(iIn))
+    {
+      decl a = 0.5*(vIn - z0*iIn)/sqrt(z0);
+
+      decl pwrSource = if ((path == NULL && sweep_dim(a)!= 0) && (sweep_dim(a)+2) == sweep_dim(vOut)) 
+	then expand(real(a*conj(a))) else real(a*conj(a));
+
+      decl pwrLoad = if (sweep_dim(a) == sweep_dim(vOut) && (path != NULL && sweep_dim(a) != 0)) 
+	then expand(real(vOut*conj(iOut))) else  real(vOut*conj(iOut)); 
+           
+      decl gain = abs(pwrLoad/pwrSource);
+      gain = (gain >= 1e-304)*gain + (gain < 1e-304)*1e-304; 
+      decl gaindB = 10.0*log(gain);
+      
+      if (gaindB != NULL)
+	return sort(gaindB,"ascending","Component"); 
+    }
+  print_function_error("bud_gain_eqn","Input signal are incompatible");
+  return;
+}
+
+
+defun bud_gain_eqn_path(signal_path,indx,zRef,path,simName)
+{
+  decl vOut, iOut, inputV, inputI; 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+ 
+  if (path == NULL || path < 0)
+    {
+      vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+      iOut = collect("t[0-9]+(\.i$)","Component",,simName);  
+      vOut = select_outer_indep(vOut,signal_path);
+      iOut = select_outer_indep(iOut,signal_path);
+      inputV = permute(vOut);
+      inputI = permute(iOut);
+      inputV =  permute(inputV[0]);
+      inputI =  permute(inputI[0]);
+    }
+  else
+    { 
+      decl v, i, f, strg = strcat("[",path,"]");  
+      v = collect("t[0-9]+(\.v$)","Component",,simName);
+      i = collect("t[0-9]+(\.i$)","Component",,simName);
+      f = collect("t[0-9]+(\.f)","Component",strg,simName);
+      v = select_outer_indep(v,signal_path);
+      i = select_outer_indep(i,signal_path);
+      f = select_outer_indep(f,signal_path);
+      
+      if (f == NULL)
+	{
+	  print_function_error("bud_gain_eqn_path","Invalid frequency plan");
+	  return;
+	}
+
+      if(indx != NULL && indx > 0)
+	{
+	  inputV = permute(v[indx]);
+	  inputI = permute(i[indx]);
+	  inputV = permute(inputV[0]);
+	  inputI = permute(inputI[0]);
+	}
+       else
+	 {inputV = permute(v);
+	  inputI = permute(i); 
+	  inputV = permute(inputV[0]);
+	  inputI = permute(inputI[0]);
+	 }
+
+      vOut = select_fund(v,f); 
+      iOut = select_fund(i,f); 	
+    }
+if (sweep_dim(vOut) > 0)  
+    {
+      decl a = 0.5*(inputV - z0*inputI)/sqrt(z0);
+      decl  pwrSource = if ((path == NULL && sweep_dim(a) != 0) && (sweep_dim(a)+2) == sweep_dim(vOut)) 
+	then expand(real(a*conj(a))) else real(a*conj(a));
+      decl pwrLoad = if (sweep_dim(a) == sweep_dim(vOut) && (path != NULL && sweep_dim(a) != 0)) 
+	then expand(real(vOut*conj(iOut))) else  real(vOut*conj(iOut));
+      decl gain = abs(pwrLoad/pwrSource);
+      gain = (gain >= 1e-304)*gain + (gain < 1e-304)*1e-304; 
+      decl gaindB = 10.0*log(gain);
+
+      if (gaindB != NULL)
+	return (gaindB);
+    }
+  else
+    return;
+}
+
+
+
+
+//****************************************************************************
+// BudGainComp
+// Function: Budget gain compression is based on Harmonic Balance analysis. 
+// The first power point (assumed to be small) is used to calulate 
+// the small-signal gain. (dB)    
+// Returns: Gain compression in dB. 
+// Options: OutputBudgetIV
+/*BEGIN_DOC
+FUN_NAME: bud_gain_comp() 
+FUN_DESCRIPTION: Returns budget gain compression at fundamental frequencies as a function of power.
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_gain_comp(vIn, iIn, Zs, Plan, freqIndex, pinNumber, "simName")  or y = bud_gain_comp("SourceName", SrcIndx, Zs, Plan, freqIndex, pinNumber, "simName") 
+EXAMPLE:
+x = bud_gain_comp(PORT1.t1.v[3], PORT1.t1.i[3], , 1)
+x = bud_gain_comp("PORT1", 3, , 1)
+returns the gain compression at the fundamental frequencies as a function of power. 
+
+y= bud_gain_comp(PORT1.t1.v[3], PORT1.t1.i[3], , , 1)
+y= bud_gain_comp("PORT1", 3, , , 1)
+returns the gain compression at the second harmonic frequency as a function of power. 
+ARGUMENT
+  ARG_NAME: vIn
+  ARG_DESCRIPTION:  voltage flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iIn
+  ARG_DESCRIPTION:  current flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: SourceName
+  ARG_DESCRIPTION: component name at the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: SrcIndx dagger.gif
+  ARG_DESCRIPTION: frequency index that corresponds to the source frequency to determine which frequency to use from a multitone source as the reference signal
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: freqIndex dagger.gif
+  ARG_DESCRIPTION: index of harmonic frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Plan dbldagr.gif
+  ARG_DESCRIPTION: number of the selected frequency plan(needed only for HB)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dagger.gif dbldagr.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Used if Plan is not selected.
+dbldagr.gif Note that for AC simulation, both the SrcIndx and Plan arguments must not be specified; these are for HB only. 
+dagger.gif dbldagr.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_gain() 
+NOTES:
+Used in Harmonic balance simulation with sweep 
+
+This is the gain compression (in dB) at the given input frequency from the input port to the terminal(s) of each component, looking into that component. Gain compression is defined as the small signal linear gain minus the large signal gain. Note that the fundamental frequency at each element pin can be different by referencing the frequency plan. A power sweep of the input source must be used in conjunction with HB. The first power sweep point is assumed to be in the linear region of operation. 
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun bud_gain_comp(vIn,iIn,zRef,path,harmIndex,pin,simName)
+{   
+  decl strg;
+  decl term = if(pin == NULL) then 1 else pin;
+
+  if (vIn == NULL || is_string(vIn))
+    {  
+      if ( !strcmp(type(term),"String"))
+	return  bud_gain_comp_eqn_path(term,iIn,zRef,path,harmIndex,simName);
+
+      decl argList =  arg_list();
+      decl elem = car(argList);
+      if (is_string(simName))
+	elem = strcat(simName,"..",elem);
+      argList = cdr(argList);
+      decl elemI = car(argList);
+      argList = cdr(argList);
+      if (elemI != NULL && elemI > 0)
+	strg = strcat(elem,".t1.v","[",elemI,"]",",",elem,".t1.i","[",elemI,"]");
+      else
+	strg = strcat(elem,".t1.v",",",elem,".t1.i");
+
+    while (argList != NULL)
+      {       
+	elem = car(argList);
+        argList = cdr(argList);
+	if (is_string(elem))
+	  elem=strcat("\"",elem,"\"");
+        strg = strcat(strg,",",elem);
+      }
+    decl eqn = strcat("bud_gain_comp_eqn(",strg,")");
+    return evaluate(eqn,"ael");
+    }
+  else
+    if ( !strcmp(type(vIn),"String"))
+       return bud_gain_comp_eqn_path(vIn,iIn,zRef,path,harmIndex,simName);
+    else
+      return  bud_gain_comp_eqn(vIn,iIn,zRef,path,harmIndex,pin,simName);
+}
+
+
+
+
+defun bud_gain_comp_eqn(vIn,iIn,zRef,path,harmIndex,pin,simName)
+{
+  decl v, i, vOut, iOut; 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl term = if (pin == NULL) then 1 else pin;
+  
+  if (term == 1 )
+    {
+      v = collect("(\.t1)+\.v$","Component",,simName);
+      i = collect("(\.t1)+\.i$","Component",,simName);
+    }
+  else
+    {
+      v = collect("t[0-9]+(\.v$)","Component",,simName);
+      i = collect("t[0-9]+(\.i$)","Component",,simName);
+    }
+
+  vOut = v;
+  iOut = i;
+
+  if (path != NULL && path > 0)
+    {
+      decl f;
+      decl strg = strcat("[",path,"]");
+      if (term == 1)
+	f = collect("(\.t1)+\.f","Component",strg,simName); 
+      else
+	f = collect("t[0-9]+(\.f)","Component",strg,simName);
+       
+      if (f == NULL)
+	{
+	  print_function_error("bud_gain_comp_eqn","Invalid frequency plan");
+	return;     
+	} 
+      vOut = select_fund(v,f);
+      iOut = select_fund(i,f);
+    }
+  else
+    {    
+      if (harmIndex != NULL)
+	{
+	  vOut = v[harmIndex];
+	  iOut = i[harmIndex];
+	}  
+    }
+  if (sweep_dim(vOut) > 1)  
+    {
+      if (sweep_dim(vIn) == sweep_dim(iIn))
+	{
+	decl a = 0.5*(vIn - z0*iIn)/sqrt(z0);
+
+	decl  pwrSource = if (path == NULL && (sweep_dim(a)+2) == sweep_dim(vOut)) 
+	  then expand(real(a*conj(a))) else real(a*conj(a));
+
+	decl pwrLoad = if ((sweep_dim(a)) == sweep_dim(vOut) && path != NULL) 
+	  then expand(real(vOut*conj(iOut))) else  real(vOut*conj(iOut));
+
+	decl gainVsPwr = pwrLoad/pwrSource;
+        decl gain = abs(1/(gainVsPwr/expand(gainVsPwr[0])));
+	gain = (gain >= 1e-304)*gain + (gain < 1e-304)*1e-304; 
+	decl gaindB = 10.0*log(gain);
+	if (gaindB != NULL && signal_path == NULL)
+	  return sort(gaindB, "ascending","Component");
+	else
+	  return gaindB;
+      }
+      print_function_error("bud_gain_comp_eqn","Input signals are incompatible"); 
+      return;
+    }
+  print_function_error("bud_gain_comp_eqn","Is only available for power and frequency sweeps");
+  return;   
+}
+
+
+defun bud_gain_comp_eqn_path(signal_path,indx,zRef,path,harmIndex,simName)
+{
+  decl v, i, vOut, iOut; 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+ 
+  v = collect("t[0-9]+(\.v$)","Component",,simName);
+  i = collect("t[0-9]+(\.i$)","Component",,simName);
+
+  if (signal_path != NULL)
+    {
+      v = select_outer_indep(v,signal_path);
+      i = select_outer_indep(i,signal_path);
+    }
+  vOut = v;
+  iOut = i;
+	    
+  
+  if (path != NULL && path > 0)
+    {
+      decl f;
+      decl strg = strcat("[",path,"]");      
+      f = collect("t[0-9]+(\.f)","Component",strg,simName);
+ 
+      if (signal_path != NULL)
+	{
+	  f = select_outer_indep(f,signal_path);
+	}  
+       
+      if (f == NULL)
+	{
+	print_function_error("bud_gain_comp_eqn_path","Invalid frequency plan");
+	return;     
+	} 
+
+      vOut = select_fund(v,f);
+      iOut = select_fund(i,f);
+    }
+  else
+    {    
+      if (harmIndex != NULL)
+	{    
+	  vOut = v[harmIndex];
+	  iOut = i[harmIndex];
+	} 
+    }
+
+  if (sweep_dim(vOut) > 1)  
+    {
+      decl inputV, inputI;
+      
+
+      if(indx != NULL && indx > 0)
+	{
+	  inputV = permute(v[indx]);
+	  inputI = permute(i[indx]);
+	  inputV = permute(inputV[0]);
+	  inputI = permute(inputI[0]);
+	}
+       else
+	 {
+	   inputV = permute(v);
+	   inputI = permute(i); 
+	   inputV = permute(inputV[0]);
+	   inputI = permute(inputI[0]);
+	 } 	
+      
+      decl a = 0.5*(inputV - z0*inputI)/sqrt(z0);
+
+      decl  pwrSource = if (path == NULL && (sweep_dim(a)+2) == sweep_dim(vOut)) 
+	then expand(real(a*conj(a))) else real(a*conj(a));
+      decl pwrLoad = if ((sweep_dim(a)) == sweep_dim(vOut) && path != NULL) 
+	then expand(real(vOut*conj(iOut))) else  real(vOut*conj(iOut));
+     
+      decl gainVsPwr = pwrLoad/pwrSource;
+      decl gain = abs(1/(gainVsPwr/expand(gainVsPwr[0])));
+      gain = (gain >= 1e-304)*gain + (gain < 1e-304)*1e-304; 
+      decl gaindB = 10.0*log(gain);
+
+      if (gaindB != NULL)
+	return (gaindB);    
+    }
+  print_function_error("bud_gain_comp_eqn_path","Is only available for power and frequency sweeps"); 
+  return;   
+}
+
+
+
+//****************************************************************************
+// BudGamma
+// Function: Budget reflection coefficient is based on small-signal AC or HB.
+// Returns: reflection coefficient.
+// Options: OutputBudgetIV
+/*BEGIN_DOC
+FUN_NAME: bud_gamma() 
+FUN_DESCRIPTION: Returns the budget reflection coefficient. 
+RETURNED_VALUE: Complex
+CATEGORY: Budget
+SYNTAX: y = bud_gamma(Zref, Plan, pinNumber, "simName") 
+EXAMPLE:
+x = bud_gamma() 
+returns reflection coefficient at all frequencies. 
+
+y = bud_gamma(75, 1)
+returns reflection coefficient at reference frequencies in plan 1 
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Plan dagger.gif
+  ARG_DESCRIPTION: number of the selected frequency plan(needed only for HB)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dbldagr.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Note that for AC simulation, both the SrcIndx and Plan arguments must not be specified; these are for HB only. 
+dbldagr.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_vswr() 
+NOTES:
+Used in AC and harmonic balance simulations 
+
+This is the complex reflection coefficient looking into the terminal(s) of each component. Note that the fundamental frequency at different pins can in general be different, and therefore values are given for all frequencies unless a Plan is referenced. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun bud_gamma(zRef,path,pin,simName)			
+{ 
+  decl vOut, iOut, term, signal_path; 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+
+  if (pin == NULL)
+    term = 1;
+  else
+    {
+      term = pin;
+      if (!strcmp(type(pin),"String"))
+	{
+	  signal_path = pin;
+	  term = 2;
+	}
+    }
+  
+  if (path == NULL || path < 0)
+    {
+      if (term == 1 && signal_path == NULL )
+	{
+	  vOut = collect("(\.t1)+\.v$","Component",,simName);
+	  iOut = collect("(\.t1)+\.i$","Component",,simName);
+	}
+      else
+	{
+	  vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+	  iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+
+	  if (signal_path != NULL)
+	    {
+	      vOut = select_outer_indep(vOut,signal_path);
+	      iOut = select_outer_indep(iOut,signal_path);
+	    }
+	}
+    }
+  else
+    {
+      decl v, i, f, strg = strcat("[",path,"]");
+
+      if (term ==1 && signal_path == NULL)
+	{
+	  v = collect("(\.t1)+\.v$","Component",,simName);
+	  i = collect("(\.t1)+\.i$","Component",,simName);
+	  f = collect("(\.t1)+\.f","Component",strg,simName); 
+	}
+      else
+	{
+	  v = collect("t[0-9]+(\.v$)","Component",,simName);
+	  i = collect("t[0-9]+(\.i$)","Component",,simName); 
+	  f = collect("t[0-9]+(\.f)","Component",strg,simName); 
+
+	   if (signal_path != NULL)
+	    {
+	      v = select_outer_indep(v,signal_path);
+	      i = select_outer_indep(i,signal_path);
+	      f = select_outer_indep(f,signal_path);
+	    }
+	}
+
+      if (f == NULL)
+	{  
+	  print_function_error("bud_gamma","Invalid frequency plan");
+	  return;
+	}
+
+      vOut = select_fund(v,f);
+      iOut = select_fund(i,f);
+    }
+
+  decl z = vOut / iOut;  
+  decl gamma =  if(z==-z0) then ((z-conj(z0))/1e-304) else ((z-conj(z0))/(z+z0));
+  decl gamma1 = if(z==z0) then (((-z)-conj(z0))/1e-304) else (((-z)-conj(z0))/((-z)+z0));
+  gamma = if (abs(gamma) < 1.0) then gamma else gamma1;
+
+  if (gamma != NULL && signal_path == NULL)
+    return sort(gamma, "ascending","Component");
+  else
+    return gamma;
+}
+
+
+
+//****************************************************************************
+// BudIP3Deg
+// Function : Budget third-order intercept point is based on HB simulation. 
+// Returns : IP3 degradation in dBm.
+// Options : OutputBudgetIV and Budlinearization
+/*BEGIN_DOC
+FUN_NAME: bud_ip3_deg() 
+FUN_DESCRIPTION: Returns the budget third-order intercept point degradation
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_ip3_deg(vOut, LinearizedElement, fundFreq, imFreq, zRef) 
+EXAMPLE:
+y = bud_ip3_deg(vOut, LinearizedElement, {1, 0}, {2, -1})
+returns the budget third-order intercept point degradation 
+
+ARGUMENT
+  ARG_NAME: vOut
+  ARG_DESCRIPTION: signal voltage at the output
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: LinearizedElement
+  ARG_DESCRIPTION: variable containing the names of the linearized components
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION:  harmonic frequency indices for the fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: imFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the intermodulation frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO:  ip3_out(), ipn() 
+NOTES:
+Used in Harmonic balance simulation with the BudLinearization Controller 
+
+This measurement returns the budget third-order intercept point degradation from the input port to any given output port. It does this by setting to linear each component in the top-level design, one at a time. 
+
+For the components that are linear to begin with, this measurement will not yield any useful information. For the nonlinear components, however, this measurement will indicate how the nonlinearity of a certain component degrades the overall system IP3. To perform this measurement, the BudLinearization Controller needs to be placed in the schematic window. If no component is specified in this controller, all components on the top level of the design are linearized one at a time, and the budget IP3 degradation is computed. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun bud_ip3_deg(vOut,name,fundFreq,imFreq,zRef,Mix)
+{
+  decl toi = ip3_out(vOut,fundFreq,imFreq,zRef,Mix);
+  decl devName  = name[0];
+  decl toiDeg;
+
+  if (sweep_dim(toi) > 1)
+    toiDeg = if (indep(toi) == 1) then toi else toi  - expand(toi[0]);
+  else
+    toiDeg = if (indep(toi) == 1) then toi else toi  - toi[0];
+
+  // removed very small negative numbers and negative mixer values
+  toiDeg  = if (toiDeg > 0.0) then toiDeg else 0.0;
+  return vs(toiDeg,devName);
+}
+
+
+
+//****************************************************************************
+// BudNF
+// Function: Budget noise figure is based on small-signal AC and noise analyses. 
+// Returns: Noise figure in dB.  
+// Options: CalcNoise, OutputBudgetIV, IncludePortNoise, FreqConversion
+/*BEGIN_DOC
+FUN_NAME: bud_nf() 
+FUN_DESCRIPTION: Returns the budget noise figure
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_nf(vIn, iIn, noisevIn) or y=bud_nf("SourceName",Zs,BW,pinNumber,"simName")
+EXAMPLE:
+x = bud_nf(PORT1.t1.v, PORT1.t1.i, PORT1.t1.v.noise) 
+x = bud_nf("PORT1") 
+
+In an AC analysis, bud_nf() can be used as below:
+BudNF1=bud_nf("PORT1")
+BudNF2=bud_nf("PORT1",50.0,1 Hz,2,"AC1")
+BudNF3=bud_nf("PORT1",,,,,budget_path)
+BudNF4=bud_nf(,,,,,budget_path)
+
+where budget_path could be defined as:
+budget_path = ["PORT1.t1","b2_AMP1.t2","b3_MIX1.t2","b4_AMP2.t2","b5_BPF2.t2","b6.t1"]
+
+ARGUMENT
+  ARG_NAME: vIn
+  ARG_DESCRIPTION: voltage flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iIn
+  ARG_DESCRIPTION:  current flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: noisevIn
+  ARG_DESCRIPTION: noise input at the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: SourceName
+  ARG_DESCRIPTION: component name at the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: BW dagger.gif
+  ARG_DESCRIPTION: bandwidth
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dbldagr.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif BW must be set as the value of Bandwidth used on the noise page of the AC controller
+dbldagr.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_nf_deg(), bud_tn()
+NOTES:
+Used in AC simulation 
+
+This is the noise figure (in dB) from the input port to the terminal(s) of each component, looking into that component. The noise analysis control parameters in the AC Simulation component must be selected: "Calculate Noise" and "Include port noise". For the source, the parameter "Noise" should be set to yes. The noise figure is always calculated per IEEE standard definition with the input termination at 290 K. 
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun bud_nf(vIn,iIn,noiseIn,zRef,BW,pin,simName)
+{   
+  decl term = if (pin == NULL) then 1 else pin;
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+
+  if (vIn == NULL || is_string(vIn))
+  {  
+// LSA 06/08/01 - z0 -> term two times
+    if ( !strcmp(type(term),"String"))
+      return bud_nf_eqn_path(term,iIn,noiseIn,BW);
+
+    decl argList =  arg_list();
+    decl elem = car(argList);
+    if (is_string(BW))
+      elem = strcat(BW,"..",elem);
+    decl strg = strcat(elem,".t1.v",",",elem,".t1.i",",",elem,".t1.v.noise");
+           argList = cdr(argList);
+    while (argList != NULL)
+    {       
+        elem = car(argList);
+        argList = cdr(argList);
+	if (is_string(elem))
+	  elem=strcat("\"",elem,"\"");
+        strg = strcat(strg,",",elem);
+    }
+    decl eqn = strcat("bud_nf_eqn(",strg,")");
+    return evaluate(eqn,"ael");
+  }
+  else
+    if ( !strcmp(type(vIn),"String"))
+      return bud_nf_eqn_path(vIn,iIn,noiseIn,BW);
+    else 
+      return bud_nf_eqn(vIn,iIn,noiseIn,zRef,BW,pin,simName);
+}
+
+      
+
+defun bud_nf_eqn(vIn,iIn,noiseIn,zRef,BW,pin,simName)
+{ 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl term = if (pin == NULL) then 1 else pin;
+  decl B = if (BW == NULL) then 1 Hz else BW;
+  decl temp = 290;
+  decl noiseVin = if (noiseIn == NULL) then 0.0 else noiseIn;
+  decl vOut, iOut, noiseTotal;
+ 
+  if ( term == 1)
+    {
+      vOut = collect("(\.t1)+\.v$","Component",,simName);
+      iOut = collect("(\.t1)+\.i$","Component",,simName);
+      noiseTotal = collect("(\.t1)+\.v\.noise$","Component",,simName);
+    }
+  else
+    {
+      vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+      iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+      noiseTotal = collect("t[0-9]+(\.v\.noise$)","Component",,simName);
+    }
+  
+  if (sweep_dim(vIn) == sweep_dim(iIn)) 
+    { 
+     decl port_noise = (boltzmann)*B*temp; 
+     decl zOut = vOut / iOut ;
+     zOut = pow(abs(zOut),2)/real(zOut);
+     decl noiseVout = (!((noiseTotal == noiseVin) && (vOut == vIn)))*noiseTotal;
+     decl a = 0.5*(vIn - z0*iIn)/sqrt(z0);
+     decl pwrSource = real(a*conj(a));
+// LSA 06/05/01 - added abs()
+     decl ga = abs( real(vOut*conj(iOut)) / pwrSource ); 
+     ga = (ga >= 1e-304)*ga + (ga < 1e-304)*1e-304; 
+     decl noiseFigure  = abs((pow(noiseVout,2))/(ga*zOut*port_noise));
+     noiseFigure  =  ( noiseFigure >= 1e-304)*noiseFigure + ( noiseFigure < 1e-304)*1e-304; 
+     decl nfdB = 10.0*log(noiseFigure);
+     if (nfdB != NULL)
+       {
+	 nfdB = if (nfdB > 0.0) then nfdB else 0.0;
+	 return sort(nfdB, "ascending","Component");
+       }
+     else
+       return nfdB;
+    }
+  print_function_error("bud_nf_eqn","Input signals are incompatible"); 
+  return; 
+}
+
+
+
+
+defun bud_nf_eqn_path(signal_path,zRef,BW,simName)
+{ 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl B = if (BW == NULL) then 1 Hz else BW;
+  decl temp = 290;
+
+  decl vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+  decl iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+  decl noiseTotal = collect("t[0-9]+(\.v\.noise$)","Component",,simName);
+     
+  vOut = select_outer_indep(vOut,signal_path);
+  iOut = select_outer_indep(iOut,signal_path);
+  noiseTotal = select_outer_indep(noiseTotal,signal_path);  
+  
+  if (sweep_dim(vOut) > 0) 
+    { 
+      vOut = permute(vOut);
+      iOut = permute(iOut); 
+      noiseTotal = permute(noiseTotal); 
+
+     decl port_noise = (boltzmann)*B*temp; 
+     decl zOut = vOut / iOut ; 
+     zOut = pow(abs(zOut),2)/real(zOut);
+     decl noiseVout = (!((noiseTotal == noiseTotal[0]) && (vOut == vOut[0])))*noiseTotal;
+     decl a = 0.5*(vOut[0] - z0*iOut[0])/sqrt(z0);
+     decl pwrSource = real(a*conj(a));
+     decl ga = abs(real(vOut*conj(iOut)) / pwrSource); 
+     ga = (ga >= 1e-304)*ga + (ga < 1e-304)*1e-304; 
+     decl noiseFigure  = abs((pow(noiseVout,2))/(ga*zOut*port_noise));
+     noiseFigure  =  ( noiseFigure >= 1e-304)*noiseFigure + ( noiseFigure < 1e-304)*1e-304; 
+     decl nfdB = 10.0*log(noiseFigure);
+
+     if (nfdB != NULL)
+       {
+	 nfdB = if (nfdB > 0.0) then nfdB else 0.0;
+	 return permute(nfdB);    
+       }
+     else
+       return nfdB;
+    }
+  return; 
+}
+
+
+
+
+
+
+//****************************************************************************
+// BudNFDeg
+// Function: Budget noise figure degradation is based on small-signal AC and 
+// noise analyses.
+// Returns: noise figure degradation in dB at an output. 
+// Options: CalcNoise, SortNoise, NoiseNode, FreqConversion
+/*BEGIN_DOC
+FUN_NAME: bud_nf_deg() 
+FUN_DESCRIPTION: Returns budget noise figure degradation
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_nf_deg(vIn, iIn, vOut, iOut, vOut.NC.vnc, vOut.NC.name, Zs, BW)
+y = bud_nf_deg("PORT1", "Term1", "vOut")
+EXAMPLE:
+x = bud_nf_deg(PORT1.t1.v, PORT1.t1.i, Term1.t1.v, Term1.t1.i, vOut.NC.vnc, vOut.NC.name) 
+
+x = bud_nf_deg("PORT1", "Term1", "vOut") 
+ARGUMENT
+  ARG_NAME: vIn
+  ARG_DESCRIPTION: voltage flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iIn
+  ARG_DESCRIPTION: current flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vOut
+  ARG_DESCRIPTION: voltage flowing into the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current flowing into the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vOut.NC.vnc
+  ARG_DESCRIPTION: noise contributions at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vOut.NC.name
+  ARG_DESCRIPTION: noise contributions component names at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: BW dagger.gif
+  ARG_DESCRIPTION: bandwidth
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif BW must be set as the value of Bandwidth used on the noise page of the AC controller
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_nf(), bud_tn() 
+NOTES:
+Used in AC simulation 
+
+The improvement of system noise figure is given when each element is made noiseless. This is the noise figure (in dB) from the source port to a specified output port, obtained while setting each component noiseless, one at a time. The noise analysis and noise contribution control parameters in the AC Simulation component must be selected. For noise contribution, the output network node must be labeled and referenced on the noise page in the AC Controller. Noise contributors mode should be set to "Sort by Name." The option "Include port noise "on the AC Controller should be selected. For the source, the parameter "Noise" should be set to yes. For this particular budget measurement the AC controller parameter "OutputBudgetIV" can be set to no. The noise figure is always calculated per IEEE standard definition with the input termination at 290 K. 
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun bud_nf_deg(vIn,iIn,vOut,iOut,ncrVout,nameVout,zRef,BW)
+{   
+if (is_string(vIn))
+  {  
+    decl argList =  arg_list();
+    decl elem1 = car(argList);
+         argList = cdr(argList);
+    decl elem2 = car(argList);
+        argList = cdr(argList);
+    decl elem3 = car(argList);
+    if (is_string(nameVout))
+      {
+	elem1 = strcat(nameVout,"..",elem1);
+	elem2 = strcat(nameVout,"..",elem2);
+	elem3 = strcat(nameVout,"..",elem3);
+      }
+    decl strg = strcat(elem1,".t1.v,",elem1,".t1.i,",elem2,".t1.v,",elem2,".t1.i,",elem3,".NC.vnc,",elem3,".NC.name");
+         argList = cdr(argList);
+    while (argList != NULL)
+    {       
+        elem1 = car(argList);
+        argList = cdr(argList);
+	if (!is_string(elem1))
+	  strg = strcat(strg,",",elem1);
+    }
+    decl eqn = strcat("bud_nf_deg_eqn(",strg,")");
+    return evaluate(eqn,"ael");
+  }
+ else
+   /*
+   if ( !strcmp(type(vIn),"String"))
+     if(is_string(iIn))
+       {
+	 noiseNC_vnc =  evaluate(strcat(iIn,".NC.vnc","ael"));
+	 noiseNC_name =  evaluate(strcat(iIn,".NC.name","ael"));	
+	 bud_nf_deg_eqn_path(signal_path,noiseNC_vnc,noiseNC_name,vOut,iOut);
+	 } */
+   return bud_nf_deg_eqn(vIn,iIn,vOut,iOut,ncrVout,nameVout,zRef,BW);
+}
+
+
+
+defun bud_nf_deg_eqn(vIn,iIn,vOut,iOut,ncrVout,nameVout,zRef,BW)
+{ 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl B = if (BW == NULL) then 1 Hz else BW;
+  decl temp = 290;
+
+  decl port_noise = (boltzmann)*B*temp;
+  decl a = 0.5*(vIn - z0*iIn)/sqrt(z0);
+  decl pwrSource = real(a*conj(a));
+// LSA 06/05/01 - added abs()
+  decl ga = expand(abs(real(vOut*conj(iOut)) / pwrSource)); 
+  ga = (ga >= 1e-304)*ga + (ga < 1e-304)*1e-304; 
+  decl noiseMax = expand(max(ncrVout));
+  decl noiseDeg = (ncrVout < noiseMax)*
+    (sqrt(pow(noiseMax,2) - pow(ncrVout,2))) + (ncrVout == noiseMax)*noiseMax;
+  decl noiseFigure = abs((pow(noiseDeg,2))/(ga*z0*port_noise));
+  noiseFigure = (noiseFigure >= 1e-304)*noiseFigure + ( noiseFigure < 1e-304)*1e-304; 
+  decl noiseFiguredB = 10.0*log(noiseFigure);
+  decl noiseFigureMaxdB = expand(10.0*log(max(noiseFigure)));
+  decl noiseFigureDeg = (noiseFiguredB <  noiseFigureMaxdB)*(noiseFigureMaxdB - noiseFiguredB) +
+    (noiseFiguredB == noiseFigureMaxdB)*noiseFigureMaxdB;
+  decl nfDeg = vs(noiseFigureDeg,nameVout);
+  return nfDeg;
+}
+
+
+
+/*
+defun bud_nf_deg_eqn_path(budget_path,ncrVout,nameVout,zRef,BW)
+{ 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl B = if (BW == NULL) then 1 Hz else BW;
+  decl temp = 290;
+  decl signal_path = get_comp_ID_from_budget_path(budget_path);
+
+  decl vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+  decl iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+  decl noiseTotal = collect("t[0-9]+(\.v\.noise$)","Component",,simName);
+     
+  vOut = select_outer_indep(vOut,budget_path);
+  iOut = select_outer_indep(iOut,budget_path);
+
+  vOut = permute(vOut);
+  iOut = permute(iOut);
+  decl indexOut = sweep_size(budget_path) - 1;
+
+  decl port_noise = (boltzmann)*B*temp;
+  decl a = 0.5*(vOut[0] - z0*iOut[0])/sqrt(z0);
+  decl pwrSource = real(a*conj(a));
+// LSA 06/05/01 - added abs()
+  decl ga = expand(abs(real(vOut[indexOut]*conj(iOut[indexOut])) / pwrSource)); 
+  ga = (ga >= 1e-304)*ga + (ga < 1e-304)*1e-304; 
+  decl noiseMax = expand(max(ncrVout));
+  decl noiseDeg = (ncrVout < noiseMax)*
+    (sqrt(pow(noiseMax,2) - pow(ncrVout,2))) + (ncrVout == noiseMax)*noiseMax;
+  decl noiseFigure = abs((pow(noiseDeg,2))/(ga*z0*port_noise));
+  noiseFigure = (noiseFigure >= 1e-304)*noiseFigure + ( noiseFigure < 1e-304)*1e-304; 
+  decl noiseFiguredB = 10.0*log(noiseFigure);
+  decl noiseFigureMaxdB = expand(10.0*log(max(noiseFigure)));
+  decl noiseFigureDeg = (noiseFiguredB <  noiseFigureMaxdB)*(noiseFigureMaxdB - noiseFiguredB) +
+    (noiseFiguredB == noiseFigureMaxdB)*noiseFigureMaxdB;
+  decl nfDeg = vs(noiseFigureDeg,nameVout);
+  return nfDeg;
+}
+*/
+
+
+defun get_comp_ID_from_budget_path(budget_path)
+{
+  decl i, numOfComp = sweep_size(budget_path);
+  decl result = copy(budget_path);
+  for(i =0; i < numOfComp; i++)
+    result[i]= drop_term_number(budget_path[i]);
+  return result;
+}
+
+defun drop_term_number(strg)
+{
+  decl termNum, compName, subLen = 3;
+  decl strgLen = strlen(strg);
+  // start from the end to avoid subcircuit names
+  decl subStrg = rightstr(strg,subLen);
+  decl indx = index(subStrg,".t");
+  
+  while(indx == -1  && subLen < strgLen)
+    {
+      subLen = subLen + 2;
+      subStrg = rightstr(strg,subLen);
+      indx = index(subStrg,".t");
+    }
+
+  if(indx >= 0 && indx < subLen-1)
+    {
+    termNum = rightstr(subStrg,subLen-(indx+2));
+    compName = leftstr(strg,strgLen - subLen);
+    }
+  //return list(compName,termNum);
+  if (compName == NULL)
+    return strg;
+  else
+    return compName;
+}
+
+
+
+
+//****************************************************************************
+// BudTN
+// Function: Budget equivalent output noise temperature is based on small-signal 
+// AC and noise analyses. 
+// Returns : noise temperatur in Kelvin.
+// Options: CalcNoise, OutputBudgetIV,  IncludePortNoise, FreqConversion
+/*BEGIN_DOC
+FUN_NAME: bud_tn() 
+FUN_DESCRIPTION: Returns the budget equivalent output-noise temperature
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_tn(vIn, iIn, noisevIn, Zs, BW, pinNumber, "simName") or y = bud_tn("SourceName")
+EXAMPLE:
+x = bud_tn(PORT1.t1.v, PORT1.t1.i, PORT1.t1.v.noise) 
+
+x = bud_tn("PORT1") 
+
+ARGUMENT
+  ARG_NAME: vIn
+  ARG_DESCRIPTION:  voltage flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iIn
+  ARG_DESCRIPTION:  current flowing into the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: noisevIn
+  ARG_DESCRIPTION: noise input at the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: BW dagger.gif
+  ARG_DESCRIPTION: bandwidth
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dbldagr.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: SourceName
+  ARG_DESCRIPTION: component name at the input port
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+FOOTNOTES: dagger.gif BW must be set as the value of Bandwidth used on the noise page of the AC controller
+dbldagr.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_nf(), bud_nf_deg() 
+NOTES:
+Used in AC simulation 
+
+This is an equivalent output-noise temperature (in degrees Kelvin) from the input port to the terminal(s) of each component, looking into that component. The noise analysis and noise contribution control parameters in the AC Simulation component must be selected: "Calculate Noise" and "Include port noise." For the source, the parameter "Noise" should be set to yes. The output-noise temperature is always calculated per IEEE standard definition with the input termination at 290 K. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun bud_tn(vIn,iIn,noiseIn,zRef,BW,pin,simName)
+{   
+  decl term = if(pin == NULL) then 1 else pin;
+  decl z0 = if(zRef == NULL) then 50.0 else zRef;
+
+  if (vIn == NULL || is_string(vIn))
+  { 
+// LSA 06/08/01 - z0 -> term two times
+    if ( !strcmp(type(term),"String"))
+      return bud_tn_eqn_path(term,iIn,noiseIn,BW);
+
+    decl argList =  arg_list();
+    decl elem = car(argList);
+    if (is_string(BW))
+	elem = strcat(BW,"..",elem);
+    decl strg = strcat(elem,".t1.v",",",elem,".t1.i",",",elem,".t1.v.noise");
+           argList = cdr(argList);
+    while (argList != NULL)
+    {       
+        elem = car(argList);
+        argList = cdr(argList);
+	if (is_string(elem))
+	  elem=strcat("\"",elem,"\"");
+        strg = strcat(strg,",",elem);
+    }
+    decl eqn = strcat("bud_tn_eqn(",strg,")");
+    return evaluate(eqn,"ael");
+  }
+ else
+   if ( !strcmp(type(vIn),"String"))
+      return bud_tn_eqn_path(vIn,iIn,noiseIn,BW);
+else 
+  return bud_tn_eqn(vIn,iIn,noiseIn,zRef,BW,pin,simName);
+}
+
+
+
+defun bud_tn_eqn(vIn,iIn,noiseIn,zRef,BW,pin,simName)
+{
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl term = if (pin == NULL) then 1 else pin;
+  decl B = if (BW == NULL) then 1 Hz else BW;
+  decl temp = 290;
+  decl noiseVin = if (noiseIn == NULL) then 0.0 else noiseIn;
+  decl vOut, iOut, noiseTotal;
+  
+  if (term == 1)
+    {
+      vOut = collect("(\.t1)+\.v$","Component",,simName);
+      iOut = collect("(\.t1)+\.i$","Component",,simName);
+      noiseTotal = collect("(\.t1)+\.v\.noise$","Component",,simName);
+    }
+  else
+    {
+      vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+      iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+      noiseTotal = collect("t[0-9]+(\.v\.noise$)","Component",,simName);
+    }
+
+  if (sweep_dim(vIn) == sweep_dim(iIn)) 
+    { 
+     decl thermalNoise = 10.0*log(temp*boltzmann*1000);
+     decl port_noise = (boltzmann)*B*temp;
+     decl zOut = vOut / iOut;
+     zOut = pow(abs(zOut),2)/real(zOut);
+     decl noiseVout = (!((noiseTotal == noiseVin) && (vOut == vIn)))*noiseTotal;
+     decl a = 0.5*(vIn - z0*iIn)/sqrt(z0);
+     decl pwrSource =real(a*conj(a));
+// LSA 06/05/01 - added abs()
+     decl ga = abs( real(vOut*conj(iOut)) / pwrSource );  
+     ga = (ga >= 1e-304)*ga + (ga < 1e-304)*1e-304; 
+     decl noiseFigure  = abs((pow(noiseVout,2))/(ga*zOut*port_noise));
+     noiseFigure  =  ( noiseFigure >= 1e-304)*noiseFigure + ( noiseFigure < 1e-304)*1e-304; 
+     decl nfdB =  10.0*log(noiseFigure);
+     nfdB = if (nfdB > 0.0) then nfdB else 0.0;
+     decl noiseDensity = thermalNoise + nfdB + 10.0*log(ga);
+     decl noiseTemp = (noiseDensity - 10.0*log(boltzmann*1000.0))/10.0;
+     decl tn = pow(10,noiseTemp);
+     if (tn != NULL)
+       {
+	 return sort(tn, "ascending","Component");
+       }
+     else
+       return tn;
+    }
+  print_function_error("bud_tn_eqn","Signal and noise voltages are incompatible"); 
+  return;
+}
+
+
+defun bud_tn_eqn_path(signal_path,zRef,BW,simName)
+{
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl B = if (BW == NULL) then 1 Hz else BW;
+  decl temp = 290;
+ 
+  decl vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+  decl iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+  decl noiseTotal = collect("t[0-9]+(\.v\.noise$)","Component",,simName);
+      
+  vOut = select_outer_indep(vOut,signal_path); 
+  iOut = select_outer_indep(iOut,signal_path);
+  noiseTotal = select_outer_indep(noiseTotal,signal_path); 
+	
+  if (sweep_dim(vOut)>0) 
+    { 
+      vOut = permute(vOut);
+      iOut = permute(iOut);
+      noiseTotal = permute(noiseTotal);
+
+      decl thermalNoise = 10.0*log(temp*boltzmann*1000);
+      decl port_noise = (boltzmann)*B*temp;
+      decl zOut = vOut / iOut;
+      zOut = pow(abs(zOut),2)/real(zOut); 
+      decl noiseVout = (!((noiseTotal == noiseTotal[0]) && (vOut == vOut[0])))*noiseTotal;  
+      decl a = 0.5*(vOut[0] - z0*iOut[0])/sqrt(z0);
+      decl pwrSource =real(a*conj(a)); 
+      decl ga = abs(real(vOut*conj(iOut)) / pwrSource);  
+      ga = (ga >= 1e-304)*ga + (ga < 1e-304)*1e-304; 
+      decl noiseFigure  = abs((pow(noiseVout,2))/(ga*zOut*port_noise)); 
+      noiseFigure  =  ( noiseFigure >= 1e-304)*noiseFigure + ( noiseFigure < 1e-304)*1e-304; 
+      decl nfdB =  10.0*log(noiseFigure);
+      nfdB = if (nfdB > 0.0) then nfdB else 0.0;
+      decl noiseDensity = thermalNoise + nfdB + 10.0*log(ga);  
+      decl noiseTemp = (noiseDensity - 10.0*log(boltzmann*1000.0))/10.0; 
+      decl tn = pow(10,noiseTemp);
+
+      if (tn != NULL )
+       return permute(tn);
+     else
+       return tn;
+    }
+  return;
+}
+
+
+
+//****************************************************************************
+// BudPwrInc
+// Function: Budget incident power is based on HB analysis. 
+// Returns: Incident in dBm.
+// Options: OutputBudgetIV
+/*BEGIN_DOC
+FUN_NAME: bud_pwr_inc() 
+FUN_DESCRIPTION: Returns the budget incident power. 
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_pwr_inc(Zref, Plan, pinNumber, "simName")
+EXAMPLE:
+x = bud_pwr_inc() returns incident power at all frequencies 
+
+y = bud_pwr_inc(75, 1) returns incident power at reference frequencies in plan 1
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Plan
+  ARG_DESCRIPTION: number of the selected frequency plan(needed only for HB)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dagger.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_pwr_refl() 
+NOTES:
+Used in AC and harmonic balance simulations 
+
+This is the incident power (in dBm) at the terminal(s) of each component, looking into the component. Note that the fundamental frequency at different pins can be different, and therefore values are given for all frequencies unless a Plan is referenced.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun bud_pwr_inc(zRef,path,pin,simName)
+{
+  decl vOut, iOut, term, signal_path; 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+
+  if (pin == NULL)
+    term = 1;
+  else
+    {
+      term = pin;
+      if (!strcmp(type(pin),"String"))
+	{
+	  signal_path = pin;
+	  term = 2;
+	}
+    }
+  
+  if (path == NULL ||  path < 0)
+    {
+      if (term == 1 && signal_path == NULL )
+	{
+	  vOut = collect("(\.t1)+\.v$","Component",,simName);
+	  iOut = collect("(\.t1)+\.i$","Component",,simName);
+	}
+      else
+	{
+	  vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+	  iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+
+	  if (signal_path != NULL)
+	    {
+	      vOut = select_outer_indep(vOut,signal_path);
+	      iOut = select_outer_indep(iOut,signal_path);
+	    }
+	}
+    }
+  else
+    {
+      decl v, i, f, strg = strcat("[",path,"]");
+
+      if (term == 1)
+	{
+	  v = collect("(\.t1)+\.v$","Component",,simName);
+	  i = collect("(\.t1)+\.i$","Component",,simName);
+	  f = collect("(\.t1)+\.f","Component",strg,simName); 
+	}
+      else
+	{
+	  v = collect("t[0-9]+(\.v$)","Component",,simName);
+	  i = collect("t[0-9]+(\.i$)","Component",,simName);
+	  f = collect("t[0-9]+(\.f)","Component",strg,simName);
+
+	  if (signal_path != NULL)
+	    {
+	      v = select_outer_indep(v,signal_path);
+	      i = select_outer_indep(i,signal_path);
+	      f = select_outer_indep(f,signal_path);
+	    }
+	}
+ 
+      if (f == NULL)
+	{  
+	print_function_error("bud_pwr_inc","Invalid frequency plan");
+	return;
+	}  
+
+      vOut = select_fund(v,f);
+      iOut = select_fund(i,f); 
+    }
+  
+  decl a = 0.5*(vOut + z0*iOut)/sqrt(z0);
+  decl pwrInc = 0.5*real(a*conj(a));
+  pwrInc = (pwrInc >= 1e-304)*pwrInc + (pwrInc < 1e-304)*1e-304; 
+  decl pwrIncdB = 10.0*log(abs(pwrInc))+30.0;
+
+  if (pwrIncdB != NULL && signal_path == NULL)
+    return sort(pwrIncdB, "ascending", "Component"); 
+  else
+    return pwrIncdB;
+}
+
+
+
+//****************************************************************************
+// BudPwrRefl
+// Function: Budget reflected power is based on Harmonic Balance analysis. 
+// Returns: Reflected power in dBm.
+// Options: OutputBudgetIV
+/*BEGIN_DOC
+FUN_NAME: bud_pwr_refl() 
+FUN_DESCRIPTION: Returns the budget reflected power
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_pwr_refl(Zref, Plan, pinNumber, "simName") 
+EXAMPLE:
+x = bud_pwr_refl() returns reflected power at all frequencies 
+
+y = bud_pwr_refl(75, 1) returns reflected power at reference frequencies in plan 1
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Plan
+  ARG_DESCRIPTION: number of the selected frequency plan(needed only for HB)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dagger.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_pwr_inc() 
+NOTES:
+Used in AC and harmonic balance simulations 
+
+This is the reflected power (in dBm) at the terminal(s) of each component, looking into the component. Note that the fundamental frequency at different pins can be different, and therefore values are given for all frequencies unless a Plan is referenced. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun bud_pwr_refl(zRef,path,pin,simName)
+{
+  decl vOut, iOut, term, signal_path; 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+
+  if (pin == NULL)
+    term = 1;
+  else
+    {
+      term = pin;
+      if (!strcmp(type(pin),"String"))
+	{
+	  signal_path = pin;
+	  term = 2;
+	}
+    }
+ 
+  if (path == NULL || path < 0)
+    {
+      if (term == 1 && signal_path == NULL)
+	{
+	  vOut = collect("(\.t1)+\.v$","Component",,simName);
+	  iOut = collect("(\.t1)+\.i$","Component",,simName);
+	}
+      else
+	{
+	  vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+	  iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+
+	  if (signal_path != NULL)
+	    {
+	      vOut = select_outer_indep(vOut,signal_path);
+	      iOut = select_outer_indep(iOut,signal_path);
+	    }
+	}
+    }
+  else
+    {
+      decl v, i, f, strg = strcat("[",path,"]");
+
+      if (term == 1)
+	{
+	  v = collect("(\.t1)+\.v$","Component",,simName);
+	  i = collect("(\.t1)+\.i$","Component",,simName);
+	  f = collect("(\.t1)+\.f","Component",strg,simName); 
+	}
+      else
+	{
+	  v = collect("t[0-9]+(\.v$)","Component",,simName);
+	  i = collect("t[0-9]+(\.i$)","Component",,simName);
+	  f = collect("t[0-9]+(\.f)","Component",strg,simName); 
+
+	  if (signal_path != NULL)
+	    {
+	      v = select_outer_indep(v,signal_path);
+	      i = select_outer_indep(i,signal_path);
+	      f = select_outer_indep(f,signal_path);
+	    }
+	}
+
+      if (f == NULL)
+	{
+	  print_function_error("bud_pwr_refl","Invalid frequency plan");
+	  return;
+	}	
+
+      vOut = select_fund(v,f);
+      iOut = select_fund(i,f);	
+    }
+
+  decl b = 0.5*(vOut - z0*iOut)/sqrt(z0);
+  decl pwrRefl = 0.5*real(b*conj(b));
+  pwrRefl = (pwrRefl >= 1e-304)*pwrRefl + (pwrRefl < 1e-304)*1e-304; 
+  decl pwrRefldB = 10.0*log(abs(pwrRefl))+30.0;
+
+  if (pwrRefldB != NULL && signal_path == NULL )
+    return sort(pwrRefldB,  "ascending","Component");
+  else
+    return pwrRefldB;
+}
+
+
+
+
+//****************************************************************************
+// BudSNR
+// Function: Budget signal to power noise ratio is based on Harmonic Balance and noise analyses. 
+// Returns: SNR in dB
+// Options: CalcNoise, OutputBudgetIV
+/*BEGIN_DOC
+FUN_NAME: bud_snr() 
+FUN_DESCRIPTION: Returns the budget signal-to-noise-power ratio
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_snr(Plan, pinNumber, "simName")
+EXAMPLE:
+x = bud_snr() returns the SNR at all frequencies 
+
+y = bud_snr(1) returns the SNR at reference frequencies in plan 1
+ARGUMENT
+  ARG_NAME: Plan
+  ARG_DESCRIPTION: number of the selected frequency plan(needed only for HB)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dagger.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_pwr_inc() 
+NOTES:
+Used in AC and harmonic balance simulations 
+
+This is the SNR (in dB) at the terminal(s) of each component, looking into that component. Note that the fundamental frequency at different pins can in general be different, and therefore values are given for all frequencies unless a Plan is referenced. The noise analysis control parameter in the AC and Harmonic Balance Simulation components must be selected. For the AC Simulation component select: "Calculate Noise" and "Include port noise." For the source, the parameter "Noise" should be set to yes. In Harmonic Balance select the "Nonlinear noise" option. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun bud_snr(path, pin, simName)
+{  
+  decl vOut, noiseVout, budSNR, term, signal_path;
+
+  if (pin == NULL)
+    term = 1;
+  else
+    {
+      term = pin;
+      if (!strcmp(type(pin),"String"))
+	{
+	  signal_path = pin;
+	  term = 2;
+	}
+    }
+  
+  if (term == 1  && signal_path == NULL)
+    noiseVout = collect("(\.t1)+\.v\.noise$","Component",,simName);
+  else
+    {
+    noiseVout = collect("t[0-9]+(\.v\.noise$)","Component",,simName);
+   if (signal_path != NULL)
+	noiseVout = select_outer_indep(noiseVout,signal_path);
+    }
+
+  if (path==NULL || path < 0)
+    {
+      if (term == 1  && signal_path == NULL)
+	vOut = collect("(\.t1)+\.v$","Component",,simName);
+      else
+	{
+	vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+	if (signal_path != NULL)
+	   vOut = select_outer_indep(vOut,signal_path);
+	}
+
+       budSNR = abs(vOut/(sqrt(2.0)*expand(noiseVout[0])));
+    }
+  else
+    {
+      decl v, f, strg = strcat("[",path,"]");
+
+      if (term == 1 && signal_path == NULL)
+	{
+	  v = collect("(\.t1)+\.v$","Component",,simName);
+	  f = collect("(\.t1)+\.f","Component",strg,simName);
+	}
+      else
+	{
+	  v = collect("t[0-9]+(\.v$)","Component",,simName);
+	  f = collect("t[0-9]+(\.f)","Component",strg,simName); 
+	  if (signal_path != NULL)
+	    {
+	     v = select_outer_indep(v,signal_path);
+	     f = select_outer_indep(f,signal_path);
+	    }
+	}
+ 
+      if (f == NULL)
+	{
+	  print_function_error("bud_snr","Invalid frequency plan");
+	  return;
+	}	
+
+      vOut = select_fund(v,f);	
+      budSNR = abs(vOut/(sqrt(2.0)*noiseVout[path - 1]));    
+    }
+
+  budSNR = ( budSNR >= 1e-304)* budSNR + ( budSNR < 1e-304)*1e-304; 
+  decl budSNRdB = 20.0*log(budSNR);
+
+  if (budSNRdB != NULL && signal_path == NULL)
+    return sort(budSNRdB, "ascending","Component");
+  else
+    return budSNRdB;
+}
+
+
+
+ 
+//****************************************************************************
+// BudVSWR
+// Function: Budget port input voltage standig wave ratio is based on small-signal AC 
+// or Harmonic Balance analysis.
+// Returns: VSWR 
+// Options: OutputBudgetIV
+/*BEGIN_DOC
+FUN_NAME: bud_vswr() 
+FUN_DESCRIPTION: Returns the budget voltage-standing-wave ratio
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_vswr(Zref, Plan, pinNumber, "simName")
+EXAMPLE:
+x = bud_vswr() returns the vswr at all frequencies 
+
+y = bud_vswr(75, 1) returns the vswr at reference frequencies in plan 1
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Plan
+  ARG_DESCRIPTION: number of the selected frequency plan(needed only for HB)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dagger.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_gamma() 
+NOTES:
+Used in AC and harmonic balance simulations.
+
+This is the VSWR looking into the terminal(s) of each component. Note that the fundamental frequency at different pins can be different, and therefore values are given for all frequencies unless a Plan is referenced.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun bud_vswr(zRef,path,pin,simName)
+{
+  decl vOut, iOut, term, signal_path; 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+
+  if (pin == NULL)
+    term = 1;
+  else
+    {
+      term = pin;
+      if (!strcmp(type(pin),"String"))
+	{
+	  signal_path = pin;
+	  term = 2;
+	}
+    }
+
+  if (path == NULL || path < 0)
+    {
+      if (term == 1 && signal_path == NULL)
+	{
+	  vOut = collect("(\.t1)+\.v$","Component",,simName);
+	  iOut = collect("(\.t1)+\.i$","Component",,simName);
+	}
+      else
+	{
+	  vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+	  iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+
+	  if (signal_path != NULL)
+	    {
+	      vOut = select_outer_indep(vOut,signal_path);
+	      iOut = select_outer_indep(iOut,signal_path);
+	    }
+	  
+	}
+    }
+  else
+    {
+      decl v, i, f, strg = strcat("[",path,"]");
+
+      if (term == 1 && signal_path == NULL)
+	{
+	  v = collect("(\.t1)+\.v$","Component",,simName);
+	  i = collect("(\.t1)+\.i$","Component",,simName);
+	  f = collect("(\.t1)+\.f","Component",strg,simName); 
+	}
+      else
+	{
+	  v = collect("t[0-9]+(\.v$)","Component",,simName);
+	  i = collect("t[0-9]+(\.i$)","Component",,simName);
+	  f = collect("t[0-9]+(\.f)","Component",strg,simName); 
+
+	  if (signal_path != NULL)
+	    {
+	      v = select_outer_indep(v,signal_path);
+	      i = select_outer_indep(i,signal_path);
+	      f = select_outer_indep(f,signal_path);
+	    }
+	}
+
+      if (f == NULL)
+	{
+	  print_function_error("bud_vswr","Invalid frequency plan");
+	  return;
+	}	
+      vOut = select_fund(v,f);
+      iOut = select_fund(i,f);	
+    }
+
+  decl z = vOut/iOut;
+  decl magRefCoef =  if(z==-z0) then abs((z-conj(z0))/1e-304) else abs((z-conj(z0))/(z+z0));
+  decl magRefCoef1 = if(z==z0) then abs(((-z)-conj(z0))/1e-304) else abs(((-z)-conj(z0))/((-z)+z0));
+  magRefCoef = if (abs(magRefCoef)<1) then magRefCoef else magRefCoef1;
+  decl vswr = ((1.0 + magRefCoef) / (1.0 - magRefCoef));
+  
+  if(vswr != NULL && signal_path == NULL)
+    return sort(vswr, "ascending","Component"); 
+  else
+    return vswr;
+}
+
+
+
+//****************************************************************************
+// BudNoisePwr
+// Function: Budget noise power noise is based on noise analyses. 
+// Returns: Noise power in dBm.
+// Options: CalcNoise (FreqForNoise), OutputBudgetIV
+/*BEGIN_DOC
+FUN_NAME: bud_noise_pwr() 
+FUN_DESCRIPTION: Returns the budget noise power
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_noise_pwr(Zref, Plan, pinNumber, "simName")
+EXAMPLE:
+x = bud_noise_pwr() returns the noise power at all frequencies 
+
+y = bud_noise_pwr(75, 1) returns the noise power at reference frequencies in plan 1 
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: input source port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Plan
+  ARG_DESCRIPTION: number of the selected frequency plan(needed only for HB)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dagger.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_pwr() 
+NOTES:
+Used in AC and harmonic balance simulations 
+
+This is the noise power (in dBm) at the terminal(s) of each component, looking into the component. If Zref is not specified, the impedance that relates the signal voltage and current is used to calculate the noise power. Note that the fundamental frequency at different pins can be different, and therefore values are given for all frequencies unless a Plan is referenced. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun bud_noise_pwr(zRef,path,pin,simName)
+{  
+  decl term, signal_path;
+  decl zOut = if(zRef == NULL) then 0.0 else zRef;
+
+  if (pin == NULL)
+    term = 1;
+  else
+    {
+      term = pin;
+      if (!strcmp(type(pin),"String"))
+	{
+	  signal_path = pin;
+	  term = 2;
+	}
+    }
+  
+  decl noiseVout;
+
+  if (term == 1 && signal_path == NULL)
+      noiseVout = collect("(\.t1)+\.v\.noise$","Component",,simName);
+  else
+    {
+    noiseVout = collect("t[0-9]+(\.v\.noise$)","Component",,simName);
+
+  if (signal_path != NULL)
+	noiseVout = select_outer_indep(noiseVout,signal_path);
+    }
+  if (zOut == 0)
+    {  
+      decl vOut, iOut;
+
+      if (path == NULL || path < 0)
+	{ 
+	  if (term == 1 && signal_path == NULL)
+	    {
+	      vOut = collect("(\.t1)+\.v$","Component",,simName);
+	      iOut = collect("(\.t1)+\.i$","Component",,simName);
+	    }
+	  else
+	    {
+	      vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+	      iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+
+	      if (signal_path != NULL)
+		{
+		  vOut = select_outer_indep(vOut,signal_path);
+		  iOut = select_outer_indep(iOut,signal_path);
+		}
+	    }
+	}
+      else
+	{
+	  decl v, i, f, strg = strcat("[",path,"]");
+
+	  if (term == 1 && signal_path == NULL)
+	    {
+	      v = collect("(\.t1)+\.v$","Component",,simName);
+	      i = collect("(\.t1)+\.i$","Component",,simName);
+	      f = collect("(\.t1)+\.f","Component",strg,simName); 
+	    }
+	  else
+	    {
+	      v = collect("t[0-9]+(\.v$)","Component",,simName);
+	      i = collect("t[0-9]+(\.i$)","Component",,simName);
+	      f = collect("t[0-9]+(\.f)","Component",strg,simName);
+
+	      if (signal_path != NULL)
+		{
+		  v = select_outer_indep(v,signal_path);
+		  i = select_outer_indep(i,signal_path);
+		  f = select_outer_indep(f,signal_path);
+		}
+	    }
+
+	  if (f == NULL)
+	    {
+	      print_function_error("bud_noise_pwr","Invalid frequency plan");
+	      return;
+	    }	
+
+	  vOut = select_fund(v,f);
+	  iOut = select_fund(i,f);	
+	}
+
+      iOut = ( abs(iOut) >= 1e-304)* iOut + ( abs(iOut) < 1e-304)*1e-304; 
+      zOut = vOut / iOut;
+      zOut =  (abs(zOut) >= 1e-304)* zOut  + ( abs(zOut) < 1e-304)*1e-304;
+    }
+
+  noiseVout = if (path==NULL || path < 0) then noiseVout else noiseVout[path - 1];
+  zOut = pow(abs(zOut),2)/real(zOut);
+  decl noisePwr = abs(noiseVout*noiseVout/zOut);
+  noisePwr  = ( noisePwr  >= 1e-304)* noisePwr  + ( noisePwr < 1e-304)*1e-304; 
+  decl noisePwrdB = 10.0*log(abs(noisePwr)) + 30;
+
+  if (noisePwrdB != NULL && signal_path == NULL)
+    return sort(noisePwrdB, "ascending","Component");
+  else
+    return noisePwrdB;
+}
+
+
+
+
+//****************************************************************************
+// BudPwr
+// Function: Budget power is based on AC and HB analysis
+// Returns: power in dBm.
+// Options: OutputBudgetIV
+/*BEGIN_DOC
+FUN_NAME: bud_pwr() 
+FUN_DESCRIPTION: Returns the budget signal power in dBm
+RETURNED_VALUE: Real
+CATEGORY: Budget
+SYNTAX: y = bud_pwr(Plan, pinNumber, "simName") 
+EXAMPLE:
+x = bud_pwr() returns the signal power at all frequencies when used in AC or HB simulations 
+
+y = bud_pwr(50, 1) returns the signal power at reference frequencies in plan 1 when used for HB simulations 
+ARGUMENT
+  ARG_NAME: Plan
+  ARG_DESCRIPTION: number of the selected frequency plan(needed only for HB)
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: pinNumber
+  ARG_DESCRIPTION: Used to choose which pins of each network element are referenced dagger.gif
+  ARG_DEFAULT: 1
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: simName
+  ARG_DESCRIPTION: simulation instance name, such as "AC1" or "HB1", used to qualify the data when multiple simulations are performed.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif If 1 is passed as the pinNumber, the results at pin 1 of each element are returned; otherwise, the results for all pins of each element are returned. By default, the pinNumber is set to 1. 
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/budget_fun.ael
+SEE ALSO: bud_noise_pwr() 
+NOTES:
+Used in AC and harmonic balance simulations. 
+
+This is the signal power (in dBm) at the terminal(s) of each component, looking into the component. Note that the fundamental frequency at different pins can be different, and therefore values are given for all frequencies unless a Plan is referenced. 
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun bud_pwr(path,pin,simName)
+{  
+  decl term, signal_path;
+
+  if (pin == NULL)
+    term = 1;
+  else
+    {
+      term = pin;
+      if (!strcmp(type(pin),"String"))
+	{
+	  signal_path = pin;
+	  term = 2;
+	}
+    }
+  
+  decl vOut, iOut;
+
+  if (path == NULL || path < 0)
+    { 
+      if (term == 1 && signal_path == NULL)
+	{
+	  vOut = collect("(\.t1)+\.v$","Component",,simName);
+	  iOut = collect("(\.t1)+\.i$","Component",,simName);
+	}
+      else
+	{
+	  vOut = collect("t[0-9]+(\.v$)","Component",,simName);
+	  iOut = collect("t[0-9]+(\.i$)","Component",,simName);
+
+	  if (signal_path != NULL)
+	    {
+	      vOut = select_outer_indep(vOut,signal_path);
+	      iOut = select_outer_indep(iOut,signal_path);
+	    }
+	}
+    }
+  else
+    {
+      decl v, i, f, strg = strcat("[",path,"]");
+
+      if (term == 1 && signal_path == NULL)
+	{
+	  v = collect("(\.t1)+\.v$","Component",,simName);
+	  i = collect("(\.t1)+\.i$","Component",,simName);
+	  f = collect("(\.t1)+\.f","Component",strg,simName); 
+	}
+      else
+	{
+	  v = collect("t[0-9]+(\.v$)","Component",,simName);
+	  i = collect("t[0-9]+(\.i$)","Component",,simName);
+	  f = collect("t[0-9]+(\.f)","Component",strg,simName); 
+
+	  if (signal_path != NULL)
+	    {
+	      v = select_outer_indep(v,signal_path);
+	      i = select_outer_indep(i,signal_path);
+	      f = select_outer_indep(f,signal_path);
+	    }
+	}
+
+      if (f == NULL)
+	{
+	  print_function_error("bud_pwr","Invalid frequency plan");
+	  return;
+	}	
+
+      vOut = select_fund(v,f);
+      iOut = select_fund(i,f);	
+    }
+
+  iOut = ( abs(iOut) >= 1e-304)* iOut + ( abs(iOut) < 1e-304)*1e-304; 
+  vOut =  (abs(vOut) >= 1e-304)* vOut + ( abs(vOut) < 1e-304)*1e-304;
+  decl pwr = real(0.5*vOut*conj(iOut));
+  decl pwrdB = 10.0*log(abs(pwr)) + 30;
+
+  if (pwrdB != NULL && signal_path == NULL)
+    return sort(pwrdB, "ascending","Component");
+  else
+    return pwrdB;
+}
+
+
+
+
+
+// NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+
+
+
+
+
+
+
+

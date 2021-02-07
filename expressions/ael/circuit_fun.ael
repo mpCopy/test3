@@ -1,0 +1,2501 @@
+// Copyright Keysight Technologies 1998 - 2014  
+// @(#) $Source: /cvs/sr/src/genfun/source/circuit_fun.ael,v $ $Revision: 1.53 $ $Date: 2012/01/05 18:00:28 $  
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: dc_to_rf()
+FUN_DESCRIPTION:  This measurement computes the DC-to-RF efficiency of any part of the network
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+SYNTAX: y = dc_to_rf(vPlusRF, vMinusRF, vPlusDC, vMinusDC, currentRF, currentDC, harm_freq_index, Mix) 
+EXAMPLE: a = dc_to_rf(vrf, 0, vDC, 0, I_Probe1.i, SRC1.i, {1,0}) 
+ARGUMENT
+  ARG_NAME: vPlusRF
+  ARG_DESCRIPTION:  voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinusRF
+  ARG_DESCRIPTION: voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vPlusDC
+  ARG_DESCRIPTION: DC voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinusDC
+  ARG_DESCRIPTION: DC voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: currentRF
+  ARG_DESCRIPTION: RF current for power calculation
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: currentDC
+  ARG_DESCRIPTION: DC current for power calculation
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: harm_freq_index
+  ARG_DESCRIPTION: harmonic index of the RF frequency at the output por
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Matrix
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif It is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+  SEE ALSO: None
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies
+  DATE: Unknown
+  VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun dc_to_rf(vPlusRF,vMinusRF,vPlusDC,vMinusDC,currentRF,currentDC,rfFreq,Mix)
+{
+   decl vDCplus = ith(vPlusDC,0);
+   decl vDCminus = ith(vMinusDC,0);
+   decl iDC = ith(currentDC,0);
+   decl vRFplus = mix(vPlusRF,rfFreq,Mix);
+   decl vRFminus = mix(vMinusRF,rfFreq,Mix);
+   decl iRF = mix(currentRF,rfFreq,Mix);
+   decl dcPwr = real((vDCplus-vDCminus)*conj(iDC));
+   decl rfPwr = real(0.5*(vRFplus-vRFminus)*conj(iRF));
+   return 100.0*abs(rfPwr / dcPwr);
+}
+
+//****************************************************************************
+// Ifc
+// Frequency selective current in Harmonic Balance analysis
+/*BEGIN_DOC
+FUN_NAME: ifc()
+FUN_DESCRIPTION: This measurement gives the RMS current value of one frequency-component of a harmonic balance waveform
+RETURNED_VALUE: Real, Complex
+CATEGORY: Harmonic Balance
+SYNTAX: y = ifc(iOut, harm_freq_index, Mix) 
+EXAMPLE: The following example is for two tones in the harmonic balance controller: 
+y = ifc(I_Probe1.i, {1, 0}) 
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: harm_freq_index
+  ARG_DESCRIPTION:  harmonic index of the desired frequency dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Matrix
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif  Note that the harm_freq_index argument's entry should reflect the number of tones in the harmonic balance controller. For example, if one tone is used in the controller, there should be one number inside the braces; two tones would require two numbers separated by a comma. 
+dagger.gif dagger.gif Mix is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: pfc(), vfc() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ifc(current, desFreq, Mix)
+{
+   decl notDC = sum(expand(abs(desFreq)));
+   decl coef = if (notDC > 0) then sqrt(2.0) else 1.0;
+   decl Current =  mix(current,desFreq,Mix)/coef;
+   return Current;
+}
+
+
+//****************************************************************************
+// IfcTran
+// Frequency-selective current in Transient analysis
+/*BEGIN_DOC
+FUN_NAME: ifc_tran()
+FUN_DESCRIPTION: Returns frequency-selective current in Transient analysis
+RETURNED_VALUE: complex
+CATEGORY: Transient
+SYNTAX: y = ifc_tran(iOut, fundFreq, harmNum)
+EXAMPLE: y = ifc_tran(I_Probe1.i, 1GHz, 1) 
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: harmNum
+  ARG_DESCRIPTION: harmonic number of the fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Integer
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: pfc_tran(), vfc_tran() 
+NOTES:
+This measurement gives RMS current, in current units, for a specified branch at a particular frequency of interest. fundFreq determines the portion of the time-domain waveform to be converted to the frequency domain. This is typically one full period corresponding to the lowest frequency in the waveform. harmNum is the harmonic number of the fundamental frequency at which the current is requested. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ifc_tran(current,fundFreq,harmNum)
+{
+  decl iSingleSpectrum = fspot(current,fundFreq,harmNum)/sqrt(2.0);
+  return iSingleSpectrum;
+}
+
+//****************************************************************************
+// IPn
+// nth-order intercept point is based on Harmonic Balance analysis. 
+// (returns in dBm)
+/*BEGIN_DOC
+FUN_NAME: ipn()
+FUN_DESCRIPTION: This measurement determines the output nth-order intercept point (in dBm) at the system output port
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+SYNTAX: y = ipn(vPlus, vMinus, iOut, fundFreq, imFreq, n, Mix)
+EXAMPLE: y = ipn(vOut, 0, I_Probe1.i, {1, 0}, {2, -1}, 3) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive output terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative output terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION:  harmonic indices of the fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: imFreq
+  ARG_DESCRIPTION: harmonic indices of the intermodulation frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: n
+  ARG_DESCRIPTION: order of the intercept
+  ARG_DEFAULT: None
+  ARG_RANGE: [1:inf)
+  ARG_TYPE:  Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Matrix
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif It is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: ip3_in(), ip3_out() 
+NOTES: To measure the third-order intercept point, you must setup a Harmonic Balance simulation with the input signal driving the circuit in the linear range. Input power is typically set 10 dB below the 1 dB gain compression point. If you simulate the circuit in the nonlinear region, the calculated results will be incorrect. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ipn(vPlus,vMinus,current,carrFreq,imFreq,order,Mix)
+{
+  decl vCplus = mix(vPlus,carrFreq,Mix);
+  decl vCminus = mix(vMinus,carrFreq,Mix);
+  decl iC = mix(current,carrFreq,Mix);
+  decl vIMplus = mix(vPlus,imFreq,Mix);
+  decl vIMminus = mix(vMinus,imFreq,Mix);
+  decl iIM = mix(current,imFreq,Mix);
+  decl carrPwr = real((vCplus-vCminus)*conj(iC))/2;
+  decl imPwrx = real((vIMplus-vIMminus)*conj(iIM))/2;
+  decl imPwr = ( imPwrx >= 1e-304)* imPwrx + ( imPwrx < 1e-304)*1e-304;
+  decl noi = pow(carrPwr,order)/imPwr;
+  noi= if(order > 1) then (10.0*log(noi)/(order-1))+30.0 else 0.0;
+  return noi;
+}
+
+//****************************************************************************
+// Ispec
+// Current frequency spectrum in HB analysis.
+/*BEGIN_DOC
+FUN_NAME: ispec()
+FUN_DESCRIPTION: Returns the current frequency spectrum
+RETURNED_VALUE: Real array
+CATEGORY: Harmonic Balance
+SYNTAX: y = ispec(current)
+EXAMPLE: a = ispec(i1) 
+ARGUMENT
+  ARG_NAME: current
+  ARG_DESCRIPTION: current 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: pspec(), vspec() 
+NOTES: This measurement gives a current frequency spectrum. The measurement gives a set of RMS currents at each frequency. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ispec(current)
+{
+  decl iSpectrum = current;
+  decl indepSpectrum = indep(iSpectrum,1);
+  iSpectrum = if(indepSpectrum==0) then  sqrt(2.0)*iSpectrum else iSpectrum;
+  set_attr(iSpectrum,"TraceType","Spectral");
+  return iSpectrum;
+}  
+
+//****************************************************************************
+// IspecTran
+// Current frequency spectrum in transient analysis
+/*BEGIN_DOC
+FUN_NAME: ispec_tran()
+FUN_DESCRIPTION: Returns current spectrum
+RETURNED_VALUE: complex
+CATEGORY: Transient
+SYNTAX: y = ispec_tran(iOut, fundFreq, numHarm, windowType, windowConst)
+EXAMPLE: y = ispec_tran(I_Probe1.i, 1GHz, 8)
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numHarm
+  ARG_DESCRIPTION: number of harmonics of fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: windowType
+  ARG_DESCRIPTION: type of window to be applied to the data
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:9] dagger.gif
+  ARG_TYPE: Integer, string
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: windowConst
+  ARG_DESCRIPTION: window constant dbldagr.gif dagger.gif
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif The window types and their default constants are:
+0 = None
+1 = Hamming 0.54
+2 = Hanning 0.50
+3 = Gaussian 0.75
+4 = Kaiser 7.865
+5 = 8510 6.0 (This is equivalent to the time-to-frequency transformation with normalgate shape setting in the 8510 series network analyzer.)
+6 = Blackman
+7 = Blackman-Harris
+8 = 8510-Minimum 0
+9 = 8510-Maximum 13
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: pspec_tran(), vspec_tran() 
+NOTES: This measurement gives a current spectrum for a specified branch. The measurement gives a set of RMS current values at each frequency. fundFreq determines the portion of the time-domain waveform to be converted to frequency domain. This is typically one full period corresponding to the lowest frequency in the waveform. numHarm is the number of harmonics of fundamental frequency to be included in the currents spectrum. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ispec_tran(current, fundFreq, numOfHarm, winType,winConst)
+{
+   decl time = indep(current,1);
+   decl tStop = max(time);
+   decl iSpectrum = fs(current, 0.0, fundFreq*numOfHarm,
+              numOfHarm+1,,winType,winConst,tStop-1.0/fundFreq, tStop)/sqrt(2.0);
+   decl indepSpectrum = indep(iSpectrum,1);
+   iSpectrum = if(indepSpectrum==0) then sqrt(2.0)*iSpectrum else iSpectrum;
+   set_attr(iSpectrum,"TraceType","Spectral");
+   return iSpectrum;
+}
+
+
+//****************************************************************************
+// It
+// Time-domain current waveform in HB analysis
+/*BEGIN_DOC
+FUN_NAME: it()
+FUN_DESCRIPTION: This measurement converts a harmonic-balance current frequency spectrum to a time-domain current waveform.
+RETURNED_VALUE: Real array
+CATEGORY: Harmonic Balance
+SYNTAX: it(iOut, tmin, tmax, numOfPnts) 
+EXAMPLE: y = it(I_Probe1.i, 0, 10nsec, 201) 
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: tmin
+  ARG_DESCRIPTION: start time
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: tmax
+  ARG_DESCRIPTION: stop time
+  ARG_DEFAULT: 2*cycle time
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numOfPnts
+  ARG_DESCRIPTION: number of points
+  ARG_DEFAULT: 101
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: vt()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun it(current, tMin, tMax, numOfPts)
+{
+   decl waveform = ts(current, tMin, tMax, numOfPts);
+   return waveform;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: mu()
+FUN_DESCRIPTION: Returns the geometrically derived stability factor for the load. 
+RETURNED_VALUE: real
+CATEGORY: S-Parameter
+SYNTAX: y = mu(S) 
+EXAMPLE: x=mu(S)
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION:  scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: mu_prime() 
+NOTES: This measurement gives the distance from the center of the Smith chart to the nearest output (load) stability circle. 
+
+This stability factor is given by 
+
+mu = {1-|S11|**2} / {|S22 - conj(S11)*Delta | + |S12*S21| } 
+
+where Delta is the determinant of the S-parameter matrix. Having mu > 1 is the
+single necessary and sufficient condition for unconditional stability of the
+2-port network. 
+
+Reference [1] M. L. Edwards and J. H. Sinsky, "A new criterion for linear 2-port stability using geometrically derived parameters", IEEE Transactions on Microwave Theory and Techniques, Vol. 40, No. 12, pp.  2303-2311, Dec. 1992.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun mu(sParam)
+{	
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 ) 
+   {
+   decl det = sParam(1,1)*sParam(2,2)-sParam(1,2)*sParam(2,1);
+   decl s11MagSq = pow(abs(sParam(1,1)),2);
+   decl s21s12Mag = abs(sParam(2,1)*sParam(1,2));
+   decl denom = abs(sParam(2,2)-conj(sParam(1,1))*det) + s21s12Mag;
+   return (1 - s11MagSq)/denom;
+   }
+  print_function_error("mu","Geometrically derived stability factor (load) is only available for 2-port networks");
+  return;
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: mu_prime()
+FUN_DESCRIPTION: Returns the geometrically derived stability factor for the source. 
+RETURNED_VALUE: real
+CATEGORY: S-Parameter
+SYNTAX: y = mu_prime(S) 
+EXAMPLE: x=mu_prime(S)
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION:  scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: mu() 
+NOTES:
+This measurement gives the distance from the center of the Smith chart to the nearest unstable-input (source) stability circle. 
+
+This stability factor is given by 
+
+mu_prime = {1-|S22|**2} / {|S11 - conj(S22)*Delta | + |S21*S12| } 
+
+where Delta is the determinant of the S-parameter matrix. Having mu_prime > 1 is
+the single necessary and sufficient condition for unconditional stability of the
+2-port network. 
+
+Reference 
+
+M. L. Edwards and J. H. Sinsky, "A new criterion for linear 2-port stability using
+geometrically derived parameters", IEEE Transactions on Microwave Theory and
+Techniques, Vol. 40, No. 12, pp. 2303-2311, Dec. 1992. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+END_DOC*/
+//****************************************************************************
+defun mu_prime(sParam)
+{
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 ) 
+   {
+   decl det = sParam(1,1)*sParam(2,2)-sParam(1,2)*sParam(2,1);
+   decl s22MagSq = pow(abs(sParam(2,2)),2);
+   decl s21s12Mag = abs(sParam(2,1)*sParam(1,2));
+   decl denom = abs(sParam(1,1)-conj(sParam(2,2))*det) + s21s12Mag;
+   return (1 - s22MagSq)/denom;
+   }
+  print_function_error("mu_prime","Geometrically derived stability factor (source) is only available for 2-port networks");
+  return;
+}
+
+
+//****************************************************************************
+// PAE
+// Power_added efficiency is based on HB analysis.
+/*BEGIN_DOC
+FUN_NAME: pae()
+FUN_DESCRIPTION: This measurement computes the power-added efficiency (in percent) of any part of the circuit
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+SYNTAX: y = pae(vPlusOut, vMinusOut, vPlusIn, vMinusIn, vPlusDC, vMinusDC, iOut, iIn, iDC, outFreq, inFreq)
+EXAMPLE: y = pae(vOut, 0, vIn, 0, v1, 0, I_Probe1.i, I_Probe2.i, I_Probe3.i, 1, 1) 
+ARGUMENT
+  ARG_NAME: vPlusOut
+  ARG_DESCRIPTION: output voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinusOut
+  ARG_DESCRIPTION: output voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vPlusIn
+  ARG_DESCRIPTION: input voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinusIn
+  ARG_DESCRIPTION: input voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vPlusDC
+  ARG_DESCRIPTION: DC voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinusDC
+  ARG_DESCRIPTION: DC voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: output current
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iIn
+  ARG_DESCRIPTION: input current
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iDC
+  ARG_DESCRIPTION: DC current
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: outFreq
+  ARG_DESCRIPTION: harmonic indices of the fundamental frequency at the output  port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: inFreq
+  ARG_DESCRIPTION: harmonic indices of the fundamental frequency at the input  port
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Matrix
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif It is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: db(), dbm() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun pae(vPlusOut,vMinusOut,vPlusIn,vMinusIn,vPlusDC,vMinusDC,currentOut,currentIn,currentDC,outFreq,inFreq,Mix)
+{
+   decl VplusDC = ith(vPlusDC,0);
+   decl VminusDC = ith(vMinusDC,0);
+   decl CurrentDC = ith(currentDC,0);
+   decl VplusIn = mix(vPlusIn,inFreq,Mix);
+   decl VminusIn = mix(vMinusIn,inFreq,Mix);
+   decl VplusOut = mix(vPlusOut,outFreq,Mix);
+   decl VminusOut = mix(vMinusOut,outFreq,Mix);
+   decl CurrentIn = mix(currentIn,inFreq,Mix);
+   decl CurrentOut =  mix(currentOut,outFreq,Mix);
+   decl dcPwr = real((VplusDC-VminusDC) * conj(CurrentDC));
+   decl inPwr = real(0.5* (VplusIn-VminusIn) * conj(CurrentIn));
+   decl outPwr = real(0.5* (VplusOut-VminusOut) * conj(CurrentOut));
+   return 100.0*abs((outPwr - inPwr)/dcPwr);
+}
+
+
+//****************************************************************************
+// Pfc
+// Frequency selective power in Harmonic Balance analysis.
+/*BEGIN_DOC
+FUN_NAME: pfc()
+FUN_DESCRIPTION: This measurement gives the RMS power value of one frequency component of a harmonic balance waveform
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+SYNTAX: y = pfc(vPlus, vMinus, iOut, harm_freq_index)
+EXAMPLE: y = pfc(vOut, 0, I_Probe1.i, {1, 0}) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive output terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative output terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: harm_freq_index
+  ARG_DESCRIPTION: harmonic index of the desired frequency dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Matrix
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Note that the harm_freq_index argument's entry should reflect the number of tones in the harmonic balance controller. For example, if one tone is used in the controller, there should be one number inside the braces; two tones would require two numbers separated by a comma. 
+dagger.gif dagger.gif Mix is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: ifc(), vfc() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun pfc(vPlus, vMinus, current, desFreq, Mix)
+{ 
+   decl notDC = sum(expand(abs(desFreq)));
+   decl coef = if (notDC > 0) then 0.5 else 1.0;
+   decl Vplus = mix(vPlus,desFreq,Mix);
+   decl Vminus = mix(vMinus,desFreq,Mix);
+   decl Current =  mix(current,desFreq,Mix);
+   decl pwr = coef*((Vplus - Vminus))*conj(Current);
+   return real(pwr);
+}
+
+
+//****************************************************************************
+// PfcTran  
+// Frequency-selective power in Transient analysis.
+/*BEGIN_DOC
+FUN_NAME: pfc_tran()
+FUN_DESCRIPTION: Returns frequency-selective power
+RETURNED_VALUE: complex
+CATEGORY: Transient
+SYNTAX: y = pfc_tran(vPlus, vMinus, iOut, fundFreq, harmNum) 
+EXAMPLE: a = pfc_tran(v1, v2, I_Probe1.i, 1GHz, 1)
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch measured for power calculation
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: harmNum
+  ARG_DESCRIPTION: harmonic number of the fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Integer
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: ifc_tran(), vfc_tran() 
+NOTES:
+This measurement gives RMS power, delivered to any part of the circuit at a particular frequency of interest. fundFreq determines the portion of the time-domain waveform to be converted to frequency domain. This is typically one full period corresponding to the lowest frequency in the waveform. harmNum is the harmonic number of the fundamental frequency at which the power is requested. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun pfc_tran(vPlus, vMinus, current, fundFreq, harmNum)
+{
+  decl vSingleSpectrum = fspot(vPlus - vMinus, fundFreq, harmNum);
+  decl iSingleSpectrum = fspot(current, fundFreq, harmNum);
+  return 0.5*real(vSingleSpectrum*conj(iSingleSpectrum));
+}
+
+
+//****************************************************************************
+// Pspec
+// Power frequency spectrum in HB analysis
+/*BEGIN_DOC
+FUN_NAME: pspec()
+FUN_DESCRIPTION: This measurement gives a power frequency spectrum in harmonic balance analyses
+RETURNED_VALUE: Real array
+CATEGORY: Harmonic Balance
+SYNTAX: y = pspec(vPlus, vMinus, iOut) 
+EXAMPLE: a = pspec(vOut, 0, I_Probe1.i) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive node
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative node
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch
+  ARG_DEFAULT: 0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: pt(), vspec(), ispec()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun pspec(vPlus,vMinus,current)
+{
+   decl pSpectrum = 0.5*real((vPlus - vMinus)*conj(current));
+   decl indepSpectrum = indep(pSpectrum,1);
+   pSpectrum = if(indepSpectrum == 0) then 2*pSpectrum else pSpectrum;
+   set_attr(pSpectrum,"TraceType","Spectral");
+   return pSpectrum;
+}
+
+
+//****************************************************************************
+// PspecTran
+// Power frequency spectrum in transient analysis.
+/*BEGIN_DOC
+FUN_NAME: pspec_tran()
+FUN_DESCRIPTION: Returns transient power spectrum
+RETURNED_VALUE: complex
+CATEGORY: Transient
+SYNTAX: y = pspec_tran(vPlus, vMinus, iOut, fundFreq, numHarm, windowType, windowConst) 
+EXAMPLE: a = pspec_tran(v1, v2, I_Probe1.i, 1GHz, 8) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch measured for power calculation
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numHarm
+  ARG_DESCRIPTION: number of harmonics of fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: windowType
+  ARG_DESCRIPTION: type of window to be applied to the data
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:9] dagger.gif
+  ARG_TYPE: Integer, string
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: windowConst
+  ARG_DESCRIPTION: window constant dbldagr.gif dagger.gif
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif The window types and their default constants are:
+0 = None
+1 = Hamming 0.54
+2 = Hanning 0.50
+3 = Gaussian 0.75
+4 = Kaiser 7.865
+5 = 8510 6.0 (This is equivalent to the time-to-frequency transformation with normalgate shape setting in the 8510 series network analyzer.)
+6 = Blackman
+7 = Blackman-Harris
+8 = 8510-Minimum 0
+9 = 8510-Maximum 13
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: ispec_tran(), vspec_tran() 
+NOTES: This measurement gives a power spectrum, delivered to any part of the circuit. The measurement gives a set of RMS power values at each frequency. fundFreq is the fundamental frequency determines the portion of the time-domain waveform to be converted to frequency domain (typically one full period corresponding to the lowest frequency in the waveform). numHarm is the number of harmonics of the fundamental frequency to be included in the power spectrum. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun pspec_tran(vPlus, vMinus, current, fundFreq, numOfHarm, winType,winConst)
+{
+   decl time = indep(vPlus,1);
+   decl tStop = max(time);
+   decl vSpectrum = fs(vPlus - vMinus, 0.0, fundFreq*numOfHarm,
+                      numOfHarm+1,,winType,winConst,tStop-1.0/fundFreq, tStop);
+   decl iSpectrum = fs(current, 0.0, fundFreq*numOfHarm,
+                      numOfHarm+1,,winType,winConst,tStop-1.0/fundFreq, tStop);
+   decl pSpectrum = 0.5*real(vSpectrum*conj(iSpectrum));
+   decl indepSpectrum = indep(pSpectrum,1);
+   pSpectrum = if(indepSpectrum==0) then 2*pSpectrum else pSpectrum;
+   set_attr(pSpectrum,"TraceType","Spectral");
+   return pSpectrum;
+}
+
+
+//****************************************************************************
+// Pt
+// Total power of a harmonic balance waveform.
+/*BEGIN_DOC
+FUN_NAME: pt()
+FUN_DESCRIPTION: This measurement calculates the total RMS power of a harmonic balance frequency spectrum.
+RETURNED_VALUE: Real array
+CATEGORY: Harmonic Balance
+SYNTAX: y = pt(vPlus, vMinus, iOut)
+EXAMPLE: y = pt(vOut, 0, I_Probe1.i) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive node
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative node
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: iOut
+  ARG_DESCRIPTION: current through a branch
+  ARG_DEFAULT: 0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: pspec() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun pt(vPlus, vMinus, current)
+{
+   return sum(pspec(vPlus,vMinus,current));
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+  FUN_NAME: sm_gamma1()
+  FUN_DESCRIPTION: Returns the simultaneous-match input-reflection coefficient.
+  RETURNED_VALUE: Complex
+  CATEGORY: S-Parameter
+  SYNTAX: y = sm_gamma1(S)
+  EXAMPLE: a = sm_gamma1(S)
+  ARGUMENT
+    ARG_NAME: S
+    ARG_DESCRIPTION: scattering matrix of 2-port network
+    ARG_DEFAULT: None
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE:  Complex
+    ARG_REQUIRED: YES
+  DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+  SEE ALSO: max_gain(), sm_gamma2(), stab_fact(), stab_meas() 
+  NOTES:
+  This complex measurement determines the reflection coefficient that must be
+  presented to the input (port 1) of the network to achieve simultaneous input
+  and output reflections. If the Rollett stability factor stab_fact(S) is less
+  than unity for the analyzed circuit, then sm_gamma1(S) returns 1+j*0.
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies
+  DATE: Unknown
+  VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun sm_gamma1(sParam)
+{ 
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 )  {
+    decl det = sParam(1,1)*sParam(2,2)-sParam(1,2)*sParam(2,1);
+    decl detMagSq = pow(abs(det),2);
+    decl s11MagSq = pow(abs(sParam(1,1)),2);
+    decl s22MagSq = pow(abs(sParam(2,2)),2);
+    decl b = 1 + s11MagSq - s22MagSq - detMagSq;
+    decl c = sParam(1,1) - det * conj(sParam(2,2)); 
+    decl gamma1 = (b>0).*(b - sqrt(b*b - 4.0*pow(abs(c),2)))/(2.0*c); 
+    decl gamma2 = (b<=0).*(b + sqrt(b*b - 4.0*pow(abs(c),2)))/(2.0*c); 
+    decl fK = stab_fact(sParam);
+    decl dVal = (fK > 1.0) ? (gamma1+gamma2): 1+j*0;
+    return (dVal);
+  } //if
+  print_function_error("sm_gamma1","Simultaneous match input reflection coefficient is only available for 2-port networks");
+  return;
+ } //fun - sm_gamma1
+
+
+//****************************************************************************
+/*BEGIN_DOC
+  FUN_NAME: sm_gamma2()
+  FUN_DESCRIPTION: Returns the simultaneous-match output-reflection coefficient.
+  RETURNED_VALUE: Complex
+  CATEGORY: S-Parameter
+  SYNTAX: y = sm_gamma2(S)
+  EXAMPLE: a = sm_gamma2(S)
+  ARGUMENT
+    ARG_NAME: S
+    ARG_DESCRIPTION: scattering matrix of 2-port network
+    ARG_DEFAULT: None
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE:  Complex
+    ARG_REQUIRED: YES
+  DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+  SEE ALSO: max_gain(), sm_gamma1(), stab_fact(), stab_meas() 
+  NOTES:
+  This complex measurement determines the reflection coefficient that must be
+  presented to the output (port 2) of the network to achieve simultaneous input
+  and output reflections. If the Rollett stability factor stab_fact(S) is less
+  than unity for the analyzed circuit, then sm_gamma2(S) returns 1+j*0.
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies
+  DATE: Unknown
+  VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun sm_gamma2(sParam)
+{
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 ) {
+    decl det = sParam(1,1)*sParam(2,2)-sParam(1,2)*sParam(2,1);
+    decl detMagSq = pow(abs(det),2);
+    decl s11MagSq = pow(abs(sParam(1,1)),2);
+    decl s22MagSq = pow(abs(sParam(2,2)),2);
+    decl b = 1 + s22MagSq - s11MagSq - detMagSq;
+    decl c = sParam(2,2) - det * conj(sParam(1,1));  
+    decl gamma1 = (b>0).*(b - sqrt(b*b - 4.0*pow(abs(c),2)))/(2.0*c); 
+    decl gamma2 = (b<=0).*(b + sqrt(b*b - 4.0*pow(abs(c),2)))/(2.0*c);  
+    decl fK = stab_fact(sParam);
+    decl dVal = (fK > 1.0) ? (gamma1+gamma2): 1+j*0;
+    return (dVal);
+  }
+ print_function_error("sm_gamma2","Simultaneous match input reflection coefficient is only available for 2-port networks");
+  return;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+  FUN_NAME: sm_y1()
+  FUN_DESCRIPTION: This complex measurement determines the admittance that must be presented to the input (port 1) of the network to achieve simultaneous input and output reflections. 
+  RETURNED_VALUE: Complex
+  CATEGORY: S-Parameter
+  SYNTAX: y = sm_y1(S, Z) 
+  EXAMPLE:
+  a = sm_y1(S, 50) 
+  ARGUMENT
+    ARG_NAME: S
+    ARG_DESCRIPTION: scattering matrix of a 2-port network
+    ARG_DEFAULT: None
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE:  Complex
+    ARG_REQUIRED: YES
+  ARGUMENT
+    ARG_NAME: Z
+    ARG_DESCRIPTION: port impedance
+    ARG_DEFAULT: 50.0
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE:  Integer, real or Complex
+    ARG_REQUIRED: YES
+  DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+  SEE ALSO: sm_y2() 
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies
+  DATE: Unknown
+  VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun sm_y1(sParam,z0)
+{
+  decl zRef = if (z0 == NULL) then 50.0 else z0;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 ) 
+   {
+   decl gamma1 = sm_gamma1(sParam); 
+   decl y1 = (1.0 - gamma1)/(conj(zRef) + zRef*gamma1);
+   return ((stab_fact(sParam) > 1) && (stab_meas(sParam) > 0))*y1;
+    }
+ print_function_error("sm_y1","Simultaneous match input admittance is only available for 2-port networks");
+  return;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: sm_y2()
+FUN_DESCRIPTION: This complex measurement determines the admittance that must be presented to the input (port 1) of the network to achieve simultaneous input and output reflections. 
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX: y = sm_y2(S, Z) 
+EXAMPLE:
+a = sm_y2(S, 50) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Z
+  ARG_DESCRIPTION: port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer, real or Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: sm_y1() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun sm_y2(sParam,z0)
+{
+  decl zRef = if (z0 == NULL) then 50.0 else z0;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 ) 
+   {
+   decl gamma2 = sm_gamma2(sParam); 
+   decl y2 = (1.0 - gamma2)/(conj(zRef) + zRef*gamma2);
+   return ((stab_fact(sParam) > 1) && (stab_meas(sParam) > 0))*y2;
+    }
+ print_function_error("sm_y2","Simultaneous match output admittance is only available for 2-port networks");
+  return;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: sm_z1()
+FUN_DESCRIPTION: This complex measurement determines the impedance that must be presented to the input (port 1) of the network to achieve simultaneous input and output reflections. 
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX: y = sm_z1(S, Z) 
+EXAMPLE:
+a = sm_z1(S, 50) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Z
+  ARG_DESCRIPTION: port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer, real or Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: sm_z2() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun sm_z1(sParam,z0)
+{
+  decl zRef = if (z0 == NULL) then 50.0 else z0;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 ) {
+    decl gamma1 = sm_gamma1(sParam);
+    decl fK = stab_fact(sParam);
+    decl fM = stab_meas(sParam);
+    decl z1 = (fK > 1.0 && fM > 0) ? (conj(zRef) + zRef*gamma1)/(1 - gamma1): 50.0;
+    return z1;
+  } //if
+  print_function_error("sm_z1","Simultaneous match input impedance is only available for 2-port networks");
+  return;
+} //fun - sm_z1
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: sm_z2()
+FUN_DESCRIPTION: This complex measurement determines the impedance that must be presented to the output (port 2) of the network to achieve simultaneous input and output reflections. 
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX: y = sm_z2(S, Z) 
+EXAMPLE:
+a = sm_z2(S, 50) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Z
+  ARG_DESCRIPTION: port impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer, real or Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: sm_z1() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun sm_z2(sParam,z0)
+{
+  decl zRef = if (z0 == NULL) then 50.0 else z0;
+  decl size_s = size(sParam);
+  if ( size_s(1) == 2 && size_s(2) == 2 ) {
+    decl gamma2 = sm_gamma2(sParam); 
+    decl fK = stab_fact(sParam);
+    decl fM = stab_meas(sParam);
+    decl z2 = (fK > 1.0 && fM > 0) ? (conj(zRef) + zRef*gamma2)/(1 - gamma2): 50.0;
+    return z2;
+  } //if
+ print_function_error("sm_z2","Simultaneous match output impedance is only available for 2-port networks");
+  return;
+}
+
+//****************************************************************************
+// VDC
+// DC branch/pin voltage in DC analysis.
+/*BEGIN_DOC
+  FUN_NAME: v_dc()
+  FUN_DESCRIPTION: Returns the voltage difference.
+  RETURNED_VALUE: Real, Complex
+  CATEGORY: Harmonic Balance
+  SYNTAX: y = v_dc(vPlus, vMinus)
+  EXAMPLE: y = v_dc(vp, vm)
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive output terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative output terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+  DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+  SEE ALSO: None
+  NOTES: None
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies
+  DATE: Unknown
+  VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun v_dc(vPlus, vMinus)
+{
+   return vPlus - vMinus;
+}
+
+//****************************************************************************
+// Vfc
+// Frequency selective voltage in Harmonic Balance analysis.
+/*BEGIN_DOC
+FUN_NAME: vfc()
+FUN_DESCRIPTION: This measurement gives the RMS voltage value of one frequency-component of a harmonic balance waveform
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+SYNTAX: y = vfc(vPlus, vMinus, harm_freq_index) 
+EXAMPLE: a = vfc(vOut, 0, {1, 0})
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive output terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative output terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: harm_freq_index
+  ARG_DESCRIPTION: harmonic index of the desired frequency dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Matrix
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Note that the harm_freq_index argument's entry should reflect the number of tones in the harmonic balance controller. For example, if one tone is used in the controller, there should be one number inside the braces; two tones would require two numbers separated by a comma. 
+dagger.gif dagger.gif Mix is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: ifc(), pfc() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun vfc(vPlus, vMinus, desFreq,Mix)
+{  
+   decl notDC = sum(expand(abs(desFreq)));
+   decl coef = if (notDC > 0) then sqrt(2.0) else 1.0;
+   decl Vplus = mix(vPlus,desFreq,Mix);
+   decl Vminus = mix(vMinus,desFreq,Mix);
+   return (Vplus - Vminus)/coef;
+}
+
+
+//****************************************************************************
+// VfcTran
+// Frequency-selective voltage in Trasient analysis.
+/*BEGIN_DOC
+FUN_NAME: vfc_tran()
+FUN_DESCRIPTION: Returns the transient frequency-selective voltage
+RETURNED_VALUE: complex
+CATEGORY: Transient
+SYNTAX: y = vfc_tran(vPlus, vMinus, fundFreq, harmNum) 
+EXAMPLE: a = vfc_tran(vOut, 0, 1GHz, 1) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: harmNum
+  ARG_DESCRIPTION: harmonic number of the fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Integer
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: ifc_tran(), pfc_tran() 
+NOTES:
+This measurement gives the RMS voltage across any two nodes at a particular frequency of interest. The fundamental frequency determines the portion of the time-domain waveform to be converted to frequency domain. This is typically one full period corresponding to the lowest frequency in the waveform. The harmonic number is the fundamental frequency at which the voltage is requested (positive integer value only). 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun vfc_tran(vPlus, vMinus, fundFreq, harmNum)
+{
+   decl vSingleSpectrum =  fspot(vPlus - vMinus, fundFreq, harmNum)/sqrt(2.0);
+   return vSingleSpectrum;
+}
+
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: volt_gain()
+FUN_DESCRIPTION: Returns the voltage gain
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+SYNTAX: y= volt_gain(S, Zs, Zl, Zref) 
+EXAMPLE: a = volt_gain(S, 50, 75) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: 2  2 scattering matrix measured with equal terminations of Zref
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: input impedance
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zl
+  ARG_DESCRIPTION: Output impedance
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+  SEE ALSO: pwr_gain(), volt_gain_max()
+  NOTES: This function calculates the ratio of the voltage across the load
+  impedance to the voltage applied at the input port of the network. The
+  network-parameter transformation function "stos" can be used to change the
+  normalizing impedance of the scattering matrix. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun volt_gain(S,zIn,zOut,zRef)
+{
+  decl gammaS = 0;
+  decl gammaL = 0;
+  decl zs = if (zIn == NULL) then 50.0 else zIn;
+  decl zl = if (zOut == NULL) then 50.0 else zOut;
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  if (z0 != NULL)
+  {
+    gammaS = (zs - z0)/(zs +z0);
+    gammaL = (zl - z0)/(zl +z0);
+  }
+  decl numer = (1 - gammaS)*(1 + gammaL);
+  decl denom = (S(1,1)*gammaS - 1)*(S(2,2)*gammaL - 1) - S(1,2)*S(2,1)*gammaS*gammaL;
+  return (numer/denom)*S(2,1)/2;
+}
+
+
+//****************************************************************************
+// Vspec
+// Voltage frequency spectrum in HB analysis.
+/*BEGIN_DOC
+FUN_NAME: vspec()
+FUN_DESCRIPTION: Returns the voltage frequency spectrum
+RETURNED_VALUE: Real array
+CATEGORY: Harmonic Balance
+SYNTAX: y = vspec(vPlus, vMinus)
+EXAMPLE: a = vspec(v1, v2) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive node
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative node
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: ispec(), pspec() 
+NOTES: This measurement gives a voltage frequency spectrum across any two nodes. The measurement gives a set of RMS voltages at each frequency. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun vspec(vPlus, vMinus)
+{
+   decl vSpectrum = (vPlus - vMinus)/sqrt(2.0);
+   decl indepSpectrum = indep(vSpectrum,1);
+   vSpectrum = if(indepSpectrum==0) then sqrt(2.0)*vSpectrum else vSpectrum;
+   set_attr(vSpectrum,"TraceType","Spectral");
+   return vSpectrum;
+}  
+
+//****************************************************************************
+// VspecTran
+// Voltage frequency spectrum in transient analysis.
+/*BEGIN_DOC
+FUN_NAME: vspec_tran()
+FUN_DESCRIPTION: Returns the transient voltage spectrum
+RETURNED_VALUE: complex
+CATEGORY: Transient
+SYNTAX: y = vspec_tran(vPlus, vMinus, fundFreq, numHarm, windowType, windowConst) 
+EXAMPLE: a = vspec_tran(v1, v2, 1GHz, 8) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: numHarm
+  ARG_DESCRIPTION: number of harmonics of fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Integer
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: windowType
+  ARG_DESCRIPTION: type of window to be applied to the data
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:9] dagger.gif
+  ARG_TYPE: Integer, string
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: windowConst
+  ARG_DESCRIPTION: window constant
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif The window types and their default constants are:
+0 = None
+1 = Hamming 0.54
+2 = Hanning 0.50
+3 = Gaussian 0.75
+4 = Kaiser 7.865
+5 = 8510 6.0 (This is equivalent to the time-to-frequency transformation with normalgate shape setting in the 8510 series network analyzer.)
+6 = Blackman
+7 = Blackman-Harris
+8 = 8510-Minimum 0
+9 = 8510-Maximum 13
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: ispec_tran(), pspec_tran() 
+NOTES: This measurement gives a voltage spectrum across any two nodes. The measurement gives a set of RMS voltages at each frequency. The fundamental frequency determines the portion of the time-domain waveform to be converted to the frequency domain. This is typically one full period corresponding to the lowest frequency in the waveform. numHarm is the number of harmonics of the fundamental frequency to be included in the voltage spectrum. 
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun vspec_tran(vPlus, vMinus, fundFreq, numOfHarm, winType,winConst)
+{
+   decl time = indep(vPlus,1);
+   decl tStop = max(time);
+   decl vSpectrum = fs(vPlus - vMinus, 0.0, fundFreq*numOfHarm,
+		       numOfHarm+1,,winType,winConst,tStop-1.0/fundFreq, tStop)/sqrt(2.0);
+   decl indepSpectrum = indep(vSpectrum,1);
+   vSpectrum = if(indepSpectrum==0) then sqrt(2.0)*vSpectrum else vSpectrum;
+   set_attr(vSpectrum,"TraceType","Spectral");
+   return vSpectrum;
+}
+
+//****************************************************************************
+// Vt
+// Time-domain voltage waveform in HB analysis.
+/*BEGIN_DOC
+FUN_NAME: vt()
+FUN_DESCRIPTION: This measurement converts a harmonic-balance voltage frequency spectrum to a time-domain voltage waveform.
+RETURNED_VALUE: Real array
+CATEGORY: Harmonic Balance
+SYNTAX: y = vt(vPlus, vMinus, tmin, tmax, numOfPnts) 
+EXAMPLE: a = vt(vOut, 0, 0, 10nsec, 201)
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive node
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative node
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: tmin
+  ARG_DESCRIPTION: start time
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: tmax
+  ARG_DESCRIPTION: stop time
+  ARG_DEFAULT: 2*cycle time
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: numOfPnts
+  ARG_DESCRIPTION: number of points
+  ARG_DEFAULT: 101
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: it()
+NOTES: The expression vt() originated in SIV and just calls the frequency to time domain transofmr function, ts(). In some cases if default values are used for tmin, tmax, numOfPnts the proper results may not be obtained due to insufficient number of points. In such cases the appropriate values for tmin, tmax and numOfPntsSince need to be used. This function uses default values for window type and window constant, and in certain cases the correct results may not be obtained due to this fact. In such cases use the ts() function instead with the proper windowing.  See ts() notes for more information.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun vt(vPlus, vMinus, tMin, tMax, numOfPts)
+{
+   decl waveform = ts(vPlus - vMinus, tMin, tMax, numOfPts);
+   return waveform;
+}
+
+
+//****************************************************************************
+// VtTran
+// Time-domain voltage in Transient analysis.
+/*BEGIN_DOC
+FUN_NAME: vt_tran()
+FUN_DESCRIPTION: This measurement produces a transient time-domain voltage waveform for specified nodes. vPlus and vMinus are the nodes across which the voltage is measured. 
+RETURNED_VALUE: complex
+CATEGORY: Transient
+SYNTAX: y = vt_tran(vPlus, vMinus) 
+EXAMPLE: a = vt_tran(v1, v2) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: vt()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun vt_tran(vPlus, vMinus)
+{
+    return vPlus - vMinus;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+  FUN_NAME: yopt()
+  FUN_DESCRIPTION: Returns optimum admittance for noise match
+  RETURNED_VALUE: Complex
+  CATEGORY: S-Parameter
+  SYNTAX: y = yopt(gammaOpt, zRef)
+  EXAMPLE: a = yopt(Sopt, 50)
+  ARGUMENT
+    ARG_NAME: gammaOpt
+    ARG_DESCRIPTION: optimum reflection coefficient
+    ARG_DEFAULT: None
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE:  Complex
+    ARG_REQUIRED: YES
+  ARGUMENT
+    ARG_NAME: zRef
+    ARG_DESCRIPTION: reference impedance
+    ARG_DEFAULT: 50.0
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE:  Real, Complex
+    ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+  SEE ALSO: zopt() 
+  NOTES: Used in Small-signal S-parameter simulations.
+
+This complex measurement produces the optimum source admittance for noise matching. gammaOpt is the optimum reflection coefficient that must be presented at the input of the network to realize the minimum noise figure (NFmin). 
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies
+  DATE: Unknown
+  VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun yopt(gammaOpt,zRef)
+{
+    return (1-gammaOpt)/(conj(zRef)+zRef*gammaOpt);
+}
+
+
+//****************************************************************************
+// Zopt
+// Optimum impedance for noise match is based on small-signal scattering parameters.
+/*BEGIN_DOC
+FUN_NAME: zopt()
+FUN_DESCRIPTION: Returns optimum impedance for noise match
+RETURNED_VALUE: Complex
+CATEGORY: S-Parameter
+SYNTAX: y = zopt(gammaOpt, zRef)
+EXAMPLE: a = zopt(Sopt, 50)
+ARGUMENT
+  ARG_NAME: gammaOpt
+  ARG_DESCRIPTION: optimum reflection coefficient
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: yopt() 
+NOTES: Used in Small-signal S-parameter simulations.
+
+This complex measurement produces the optimum source impedance for noise
+matching. gammaOpt is the optimum reflection coefficient that must be presented
+at the input of the network to realize the minimum noise figure (NFmin). 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+END_DOC*/
+//****************************************************************************
+defun zopt(gammaOpt,zRef)
+{
+    return (conj(zRef)+zRef*gammaOpt)/(1-gammaOpt);
+}
+
+
+//****************************************************************************
+// Utilities
+// Returns the ith element of a sweept variable, works also for constants
+//****************************************************************************
+defun ith(x,i)
+{
+  decl y; 
+ if(sweep_dim(x) == 0) {
+     y = x;
+   }   
+   else {
+     y = x[i];
+   }
+ return y;
+}
+
+
+
+//****************************************************************************
+// PtTran
+// Total power in Transient analysis (may change)
+/*BEGIN_DOC
+FUN_NAME: pt_tran()
+FUN_DESCRIPTION: This measurement produces a transient time-domain power waveform for specified nodes.
+RETURNED_VALUE: complex
+CATEGORY: Transient
+SYNTAX: y = pt_tran(vPlus, vMinus, current, fundFreq)
+EXAMPLE: a = pt_tran(v1, v2, i1, 1GHz) 
+ARGUMENT
+  ARG_NAME: vPlus
+  ARG_DESCRIPTION: voltage at the positive terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vMinus
+  ARG_DESCRIPTION: voltage at the negative terminal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: current
+  ARG_DESCRIPTION: current
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE:  Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE:  Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: vt(), vt_tran()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun pt_tran(vPlus, vMinus, current, fundFreq)
+{
+  decl pwr = (vPlus - vMinus)*current;
+  decl  timeStart;
+  decl sweepDim = sweep_dim(pwr);
+  if (sweepDim  == 0)
+    return 0;  
+  decl x = indep(pwr,1);
+  
+  decl timeStop = max(x);
+  decl timeMin = min(x);
+  
+  timeMin = if (sweepDim == 1) then  timeMin else  timeMin[0];   
+  timeStop =  if (sweepDim == 1) then  timeStop else timeStop[0];
+  
+  if (fundFreq) 
+    timeStart =  timeStop-(1/fundFreq);
+  else
+    return 0;
+   
+  decl pwrPeriod = if(timeStart < timeMin) then 0 else fundFreq * integrate(pwr,timeStart,timeStop);
+  
+  return pwrPeriod;
+}
+
+//****************************************************************************
+//integrate
+//currently composite trapezoidal rule is used
+/*BEGIN_DOC
+  FUN_NAME: integrate()
+  FUN_DESCRIPTION: Returns the integral of data
+  RETURNED_VALUE: Real
+  CATEGORY: Math
+  SYNTAX: y = integrate(data, start, stop, incr) 
+  EXAMPLE:
+  x = [0::0.01::1.0]
+  y = vs(2*exp(-x*x) / sqrt(pi), x) 
+  z= integrate(y, 0.1, 0.6, 0.001) returns 0.491
+
+  xx=[1::0.1::2]
+  yy=vs(sin(xx),xx)
+  Stop=[1.9,2.0]
+  intgYY=integrate(yy,1,Stop,0.1) returns [0.767, 0.958]
+
+  ARGUMENT
+    ARG_NAME: data
+    ARG_DESCRIPTION: data to be intergated
+    ARG_DEFAULT: None
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE: Integer, real
+    ARG_REQUIRED: YES
+  ARGUMENT
+    ARG_NAME: start
+    ARG_DESCRIPTION: starting value of the integration
+    ARG_DEFAULT: first point in the data
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE: Integer, real
+    ARG_REQUIRED: NO
+  ARGUMENT
+    ARG_NAME: stop
+    ARG_DESCRIPTION: stop value of the integration
+    ARG_DEFAULT: last point in the data
+    ARG_RANGE: (-inf:inf)
+    ARG_TYPE: Integer, real dagger.gif
+    ARG_REQUIRED: NO
+  ARGUMENT
+    ARG_NAME: incr
+    ARG_DESCRIPTION: increment
+    ARG_DEFAULT: (stop - start)/(# data points - 1)
+    ARG_RANGE: [0:inf)
+    ARG_TYPE: Integer, real
+    ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif stop can be an array.
+  DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+  SEE ALSO: diff()
+  NOTES:
+  Returns the integral of data from start to stop with increment incr using the composite trapezoidal rule on uniform subintervals.  The Stop limit can be an array of values.  In this case, the function returns integration for limits [start, stop[0]], [start, stop[1]], etc.
+  EXTERNAL: yes
+  AUTHOR: Keysight Technologies
+  DATE: Unknown
+  VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun integrate(y,Start,Stop,Incr)
+{
+  decl iStopSz  = 0 ;
+  decl iStartSz = 0 ;
+  decl iIncrSz  = 0 ;
+  decl iCount   = 0 ;
+  decl retval   = NULL ;
+  
+  if ( y == NULL )
+  {
+    print_function_error("integrate","first parameter, data,  cannot be NULL");
+    return NULL;
+  }
+  
+  if ( Stop != NULL ) 
+    iStopSz  = sweep_size( Stop ) ;
+
+  if ( Start != NULL ) 
+    iStartSz = sweep_size( Start ) ;
+
+  if (  Incr != NULL ) 
+    iIncrSz = sweep_size( Incr ) ;
+
+// this case handles both Start and Stop being NULL   
+  if( ( 1 >= iStartSz )  && ( 1 >= iStopSz ) )
+      return integrate_SS( y , Start , Stop , Incr ) ; 
+      
+  if( ( 1 >= iStartSz )  && ( 1 < iStopSz ) )  
+      return integrate_SV( y , Start , Stop , Incr ) ; 
+
+  if( ( 1 < iStartSz )  && ( 1 >= iStopSz ) )
+      return integrate_VS( y , Start , Stop , Incr ) ; 
+  
+  if( ( 1 < iStartSz )  && ( 1 < iStopSz ) )      
+      return integrate_VV( y , Start , Stop , Incr ) ;   
+
+return NULL ;
+} //fun - integrate
+
+
+defun integrate_SS( y , Start , Stop , Incr  )
+{
+  decl iCount   = 0 ;
+  decl retval   = NULL ;
+  decl iIncrSz  = 0 ;
+  
+    
+  if ( y == NULL )
+  {
+    print_function_error("integrate","first parameter, data,  cannot be NULL");
+    return NULL;
+  }
+
+  if( Incr == NULL )
+  {
+        return integrate___( y , Start , Stop , Incr ) ; 
+  }
+  else
+  {
+      iIncrSz = sweep_size( Incr ) ;
+  }
+
+  if ( 1 == iIncrSz )
+  {
+     if( ( Start != NULL ) && ( Stop != NULL ) && ( Incr > abs( Start - Stop ) / 2 ) )
+     {
+       print_function_error("integrate","value of Increment too large(> abs( Start - Stop ) / 2 ) ");
+       return NULL ;
+     }  
+     else
+        return integrate___( y , Start , Stop , Incr ) ; 
+  }
+  else 
+  {
+     iCount = 0 ; 
+     if ( ( Start != NULL ) && ( Stop != NULL ) && ( Incr[ iCount ] > abs( Start - Stop ) / 2 ) )
+     {
+       print_function_error("integrate","value of an element of the Increment array is too large");
+       return NULL ;
+     }  
+     else 
+       retval =  integrate___( y , Start , Stop , Incr[ iCount ] ) ; 
+
+     for ( iCount = 1 ; iCount < iIncrSz ; iCount++ )
+     {
+       if( ( Start != NULL ) && ( Stop != NULL ) && ( Incr[ iCount ] > abs( Start - Stop ) / 2 ) )
+         print_function_error("integrate","value of one element of the Increment array is too large");
+       else 
+         retval = { retval , integrate___( y , Start , Stop , Incr[ iCount ] ) } ;         
+     }
+     return retval ;        
+  }
+}
+
+defun integrate_SV( y , Start , Stop , Incr ) 
+{
+  decl iStopSz  = 0 ;
+  decl iStartSz = 0 ;
+  decl iIncrSz  = 0 ;
+  decl iCount   = 0 ;
+  decl retval   = NULL ;
+  
+  if ( y == NULL )
+  {
+    print_function_error("integrate","first parameter, data,  cannot be NULL");
+    return NULL;
+  }
+  
+  if ( Stop != NULL ) 
+    iStopSz  = sweep_size( Stop ) ;
+
+  if ( Start != NULL ) 
+    iStartSz = sweep_size( Start ) ;
+
+  if (  Incr != NULL ) 
+    iIncrSz = sweep_size( Incr ) ;
+
+
+     if( Incr == NULL )
+     {
+       retval =  integrate___( y , Start , Stop[ 0 ] , Incr ) ; 
+       
+       for ( iCount = 1 ; iCount < iStopSz ; iCount++ )
+       {
+          retval = { retval , integrate___( y , Start , Stop[ iCount ] , Incr ) }  ;
+       }
+       return retval ;              
+     }
+
+     if ( 1 == iIncrSz ) 
+     {
+        iCount = 0 ; 
+        if ( ( Start != NULL ) && ( Incr > abs( Start - Stop[ iCount ] ) / 2 ) )
+        {
+          print_function_error("integrate","value of Increment too large ( > abs( stop - start) /2 )");
+          return NULL ;
+        }  
+        retval =  integrate___( y , Start , Stop[ iCount ] , Incr ) ; 
+
+        for ( iCount = 0 ; iCount < iStopSz ; iCount++ )
+        {
+          if ( ( Start != NULL ) && ( Incr > abs( Start - Stop[ iCount ] ) / 2 ) )
+          {
+            print_function_error("integrate","value of Increment too large ( > abs( stop - start) /2 )");
+            return NULL ;
+          } 
+          else 
+            retval = { retval , integrate___( y , Start , Stop[ iCount ] , Incr ) }  ;         
+        }
+        return retval ;       
+     }
+     else
+     { // expect same number of elements in all arrays
+        if ( iIncrSz != iStopSz )
+        {
+          print_function_error("integrate","number of elements in Stop and Increment arrays is not equal");
+          return NULL ;
+        }
+        
+        iCount = 0 ; 
+        if ( ( Start != NULL ) && ( Incr[ iCount ] > abs( Start - Stop[ iCount ] ) / 2 ) )
+        {
+          print_function_error("integrate","value of one element of the Increment array is too large");
+          return NULL ;
+        }
+        else 
+          retval =  integrate___( y , Start , Stop[ iCount ] , Incr[ iCount ] ) ; 
+
+        for ( iCount = 1 ; iCount < iIncrSz ; iCount++ )
+        {
+        if ( ( Start != NULL ) && ( Incr[ iCount] > abs( Start - Stop[ iCount ] ) / 2 ) )
+          {
+            print_function_error("integrate","value of one element of the Increment array is too large");
+            return NULL ;
+          } 
+          else 
+            retval = { retval , integrate___( y , Start , Stop[ iCount ] , Incr[ iCount ] ) } ;         
+        }
+        return retval ;        
+     }
+}
+
+
+defun integrate_VS( y , Start , Stop , Incr ) 
+{
+  decl iStopSz  = 0 ;
+  decl iStartSz = 0 ;
+  decl iIncrSz  = 0 ;
+  decl iCount   = 0 ;
+  decl retval   = NULL ;
+  
+  if ( y == NULL )
+  {
+    print_function_error("integrate","first parameter, data,  cannot be NULL");
+    return NULL;
+  }
+  
+  if ( Stop != NULL ) 
+    iStopSz  = sweep_size( Stop ) ;
+
+  if ( Start != NULL ) 
+    iStartSz = sweep_size( Start ) ;
+
+  if (  Incr != NULL ) 
+    iIncrSz = sweep_size( Incr ) ;
+
+     if( Incr == NULL )
+     {
+       retval =  integrate___( y , Start[ 0 ] , Stop , Incr ) ; 
+       
+       for ( iCount = 1 ; iCount < iStartSz ; iCount++ )
+       {
+          retval = { retval , integrate___( y , Start[ iCount ] , Stop , Incr ) }  ;
+       }
+       return retval ;              
+     }
+     
+     if ( 1 == iIncrSz )
+     {
+      
+        iCount = 0 ; 
+        if ( ( Stop != NULL ) && ( Incr > abs( Start[ iCount ] - Stop ) / 2 ) )
+        {
+          print_function_error("integrate","value of increment (4th parameter) is too large");
+          return NULL ;
+        }
+        else 
+          retval =  integrate___( y , Start[ iCount ] , Stop , Incr ) ; 
+
+        for ( iCount = 1 ; iCount < iStartSz ; iCount++ )
+        {
+          if ( ( Stop != NULL ) && ( Incr > abs( Start[ iCount ] - Stop ) / 2 ) )
+            print_function_error("integrate","value of one element of the Increment array (4th parameter) is too large");
+          else 
+            retval = { retval , integrate___( y , Start[ iCount ] , Stop , Incr ) }  ;
+        }
+        return retval ;       
+     }
+     else
+     { // expect same number of elements in all arrays
+        if ( iIncrSz != iStartSz )
+        {
+          print_function_error("integrate","number of elements in Start and Increment arrays is not equal");
+          return NULL ;
+        }
+   
+
+        iCount = 0 ; 
+        if ( ( Stop != NULL ) && ( Incr[ iCount ] > abs( Start[ iCount ] - Stop ) / 2 ) )
+          print_function_error("integrate","value of one element of the Increment array is too large");
+        else 
+          retval =  integrate___( y , Start[ iCount ] , Stop , Incr[ iCount ] ) ; 
+
+        for ( iCount = 1 ; iCount < iIncrSz ; iCount++ )
+        {
+          if ( ( Stop != NULL ) && ( Incr[ iCount ] > abs( Start[ iCount ] - Stop ) / 2 ) )
+            print_function_error("integrate","value of one element of the Increment array is too large");
+          else 
+            retval = { retval , integrate___( y , Start[ iCount ] , Stop , Incr[ iCount ] ) } ;
+        }
+        return retval ;        
+     }
+}
+
+defun integrate_VV( y , Start , Stop , Incr ) 
+{
+  decl iStopSz  = 0 ;
+  decl iStartSz = 0 ;
+  decl iIncrSz  = 0 ;
+  decl iCount   = 0 ;
+  decl retval   = NULL ;
+  
+  if ( y == NULL )
+  {
+    print_function_error("integrate","first parameter, data,  cannot be NULL");
+    return NULL;
+  }
+  
+  if ( Stop != NULL ) 
+    iStopSz  = sweep_size( Stop ) ;
+
+  if ( Start != NULL ) 
+    iStartSz = sweep_size( Start ) ;
+
+  if (  Incr != NULL ) 
+    iIncrSz = sweep_size( Incr ) ;
+
+     if( Incr == NULL )
+     {
+       retval =  integrate___( y , Start[ 0 ] , Stop[ 0 ] , Incr ) ; 
+       
+       for ( iCount = 1 ; iCount < iStartSz ; iCount++ )
+       {
+          retval = { retval , integrate___( y , Start[ iCount ] , Stop[ iCount ] , Incr ) }  ;
+       }
+       return retval ;              
+     }
+
+     if ( 1 == iIncrSz )
+     {
+        
+        iCount = 0 ; 
+        if( Incr > abs( Start[ iCount ] - Stop[ iCount ] ) / 2 )
+        {
+          print_function_error("integrate","value of one element of the Increment array is too large");
+          return NULL ;
+        }
+
+        retval =  integrate___( y , Start[ iCount ] , Stop[ iCount ] , Incr ) ; 
+
+        for ( iCount = 0 ; iCount < iStartSz ; iCount++ )
+        {
+          if ( Incr > abs( Start[ iCount ] - Stop[ iCount ] ) / 2 ) 
+          {
+            print_function_error("integrate","value of one element of the Increment array is too large, > abs(start - stop) /2");
+            return NULL ;
+          }
+          else 
+            retval = { retval , integrate___( y , Start[ iCount ] , Stop[ iCount ] , Incr ) } ;
+        }
+        return retval ;       
+     }
+     else
+     { // expect same number of elements in all arrays
+        if ( ( iIncrSz != iStopSz ) || ( iIncrSz != iStartSz ) )
+        {
+          print_function_error("integrate","number of elements in Start, Stop and Increment arrays is not equal");
+          return NULL ;
+        }
+        
+        iCount = 0 ; 
+        if ( Incr[ iCount ] > abs( Start[ iCount ] - Stop[ iCount ] ) / 2 )
+        {
+          print_function_error("integrate","value of one element of the Increment array is too large");
+          return NULL ;
+        }
+        else 
+          retval =  integrate___( y , Start[ iCount ] , Stop[ iCount ] , Incr[ iCount ] ) ; 
+
+        for ( iCount = 0 ; iCount < iIncrSz ; iCount++ )
+        {
+          if ( Incr[ iCount ] > abs( Start[ iCount ] - Stop[ iCount ] ) / 2 )
+          {
+            print_function_error("integrate","value of one element of the Increment array is too large");
+            return NULL ;
+          }
+          else 
+            retval = { retval , integrate___( y , Start[ iCount ] , Stop[ iCount ] , Incr[ iCount ] ) } ;          
+        }
+        return retval ;        
+     }
+}
+
+defun integrate___(y,start,stop,incr)
+{ 
+  decl z, sweepDim = sweep_dim(y);
+  
+  switch(sweepDim) {
+    case 0:
+      z = y;
+      break;
+    case 1:
+      z = integrate_1d(y,start,stop,incr);
+      break;
+    case 2: 
+      z = integrate_2d(y,start,stop,incr);
+      break;
+    case 3: 
+      z = integrate_3d(y,start,stop,incr);
+      break;
+    case 4: 
+      z = integrate_4d(y,start,stop,incr);
+      break;
+    default:
+      print_function_error("integrate"," does not support variables with dimensions greater than four.");
+      return; 
+      break;
+  } //switch
+  return z;
+} //fun - integrate___
+
+
+defun integrate_1d(y,start,stop,incr)
+{ 
+  decl x, xStart, xStop, yNew, deltaX, numPts_1;
+  if (incr == NULL) {
+    x = indep(y,1);
+    if (start == NULL)
+      xStart = 0;
+    else
+      xStart = find_index(x,start);
+    if (stop == NULL)
+      xStop = sweep_size(y)-1;
+    else
+      xStop = find_index(x,stop); 
+    deltaX = x[xStart+1::xStop] - x[xStart::xStop-1];
+    yNew = y[xStart::xStop];
+    numPts_1 = xStop - xStart;
+  }
+  else {
+    yNew = interp(real(y),start,stop,incr);
+// fprintf(stderr,"DEBUG:  sweep dim of ynew is %d \n",sweep_dim(yNew) );    
+    if (sum(abs(imag(y))) > 0)
+      yNew = yNew + j* interp(imag(y),start,stop,incr);
+ 
+    x = indep(yNew,1);
+    numPts_1 = sweep_size(yNew)-1; 
+    
+//    fprintf(stderr,"DEBUG: sweep dim of x is %d \t numpts is : %d \n",sweep_dim(x) , numPts_1 );    
+    if(numPts_1 > 0 )
+      deltaX =x[1::numPts_1] - x[0::numPts_1-1];
+    else
+      print_function_error("integrate_1d","could not compute deltaX");
+    
+    
+  }
+  
+//  decl z = sum(yNew[1::numPts_1]*deltaX);
+  decl z = 0.5*sum((yNew[1::numPts_1]+yNew[0::numPts_1-1])*deltaX);
+  // The following may give better approximation to the integral, but
+  // raises confunsion when the approx. integral is applied to subregions
+  // z = z + 0.5*(yNew[0]*deltaX[0] - yNew[numPts_1]*deltaX[numPts_1-1]);
+  
+  return z;
+}
+
+
+defun integrate_2d(y,start,stop,incr)
+{ 
+  decl z, i;
+
+  decl z = y[::,0];
+  decl numPts = sweep_size(z);
+  decl startDim = sweep_dim(start);
+  decl stopDim = sweep_dim(stop);
+  
+  for(i=0; i< numPts; i++) {
+    if (startDim == 1 && stopDim == 1)
+    {
+      z[i] = integrate_1d(y[i,::],start[i],stop[i],incr);
+    }
+    else
+      z[i] = integrate_1d(y[i,::],start,stop,incr);
+  }
+  
+  return z;
+}
+
+defun integrate_3d(y,start,stop,incr)
+{ 
+  decl z, i;
+  
+  decl z = y[::,::,0];
+  decl numPts = sweep_size(z[::,0]);
+  decl startDim = sweep_dim(start);
+  decl stopDim = sweep_dim(stop);
+  for(i=0; i< numPts; i++)
+    {
+    if (startDim == 2 && stopDim == 2)
+      z[i,::] = integrate_2d(y[i,::,::],start[i,::],stop[i,::],incr); 
+    else
+    z[i,::] = integrate_2d(y[i,::,::],start,stop,incr);
+    }
+  
+  return z;
+}
+
+defun integrate_4d(y,start,stop,incr)
+{ 
+  decl z, i;
+  
+  decl z = y[::,::,::,0];
+  decl numPts = sweep_size(z[::,0,0]);
+  decl startDim = sweep_dim(start);
+  decl stopDim = sweep_dim(stop);
+  for(i=0; i< numPts; i++)
+    {
+     if (startDim == 3 && stopDim == 3)
+       z[i,::,::] = integrate_3d(y[i,::,::,::],start[i,::,::],stop[i,::,::],incr);
+     else
+       z[i,::,::] = integrate_3d(y[i,::,::,::],start,stop,incr);
+    }
+  
+  return z;
+}
+
+//****************************************************************************
+// Unilateral Figure of Merit used in small-signal scattering parameters
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: unilateral_figure()
+FUN_DESCRIPTION: Returns the unilateral figure as a real number
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+SYNTAX: U = uniltaeral_figure(SParam)
+EXAMPLE: sMat={{polar(0.55,-50), polar(0.02,10)}, {polar(3.82,80),polar(0.15,-20)}}
+U=uniltaeral_figure(sMat) returns 0.009
+U_plus=10*log(1/(1-U)**2) returns 0.081
+U_minus=10*log(1/(1+U)**2) returns -0.08
+ARGUMENT
+  ARG_NAME: SParam
+  ARG_DESCRIPTION: 2-Port S-Parameters
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE:  Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/circuit_fun.ael
+SEE ALSO: None
+NOTES: This function is used to calculate the Unilateral Figure of Merit, which determines whether the simplification can be made in neglecting the effect of S12 (unilateral behavior of device).  It's calculated as:
+
+U = (|S11||S12||S21||S22|) / (1-|S11|**2)(1-|S22|**2)
+
+The error limit on unilateral figure or merit, U is: 1/(1+U)**2 < GT/GTU < 1/(1-U)**2
+
+Where GT is Transducer Gain, and GTU is Unilateral Transducer Gain.
+
+This function can be used only with 2-Port S-Parameters.  And works only on 1-dimensional or single swept parameter data.
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: June.03
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+//****************************************************************************
+defun unilateral_figure(sParam)
+{ 
+  decl size_s = size(sParam);
+  //Check to see that it works only for 2-Ports (2 rows & 2 columns)
+  if ( size_s(1) == 2 && size_s(2) == 2 ) {
+    decl U_num = abs(sParam(1,1)) * abs(sParam(1,2)) * abs(sParam(2,1)) * abs(sParam(2,2));
+    decl U_denom = (1-sqr(abs(sParam(1,1)))) * (1-sqr(abs(sParam(2,2))));
+    return (U_num/U_denom);
+  } //if
+  print_function_error("unilateral_figure","Unilateral Figure of Merit is only available for 2-port networks");
+  return;
+} //fun - unilateral_figure
+
+
+//
+// ***** DO NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+//

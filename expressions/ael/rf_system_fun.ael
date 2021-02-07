@@ -1,0 +1,2554 @@
+// Copyright Keysight Technologies 1998 - 2018  
+// @(#) $Source: /cvs/sr/src/genfun/source/rf_system_fun.ael,v $ $Revision: 1.58 $ $Date: 2012/01/06 01:27:05 $
+
+
+
+//****************************************************************************
+// CarrToIM
+// Carrier signal to 3rd-Order-Intermodulation power ratio is based on Harmonic Balance analysis. 
+// (returns in dB)
+/*BEGIN_DOC
+FUN_NAME: carr_to_im()
+FUN_DESCRIPTION: This measurement gives the suppression (in dB) of a specified IMD product below the fundamental power at the output port. 
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+EXAMPLE: a = carr_to_im(out, {1, 0}, {2, -1}) 
+SYNTAX: y = carr_to_im(vOut, fundFreq, imFreq, Mix)
+ARGUMENT
+  ARG_NAME: vOut
+  ARG_DESCRIPTION: signal voltage at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: imFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the IMD product of interest
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif It is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: ip3_out()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun carr_to_im(vOut,carrFreq,imFreq,Mix)
+{
+  decl vFund = mix(vOut,carrFreq,Mix);
+  decl vIM = mix(vOut,imFreq,Mix);
+  decl carrPwr = real(vFund*conj(vFund));
+  decl imPwr = real(vIM*conj(vIM));
+  decl carrToIMx =  abs(carrPwr/imPwr);
+  decl carrToIM = (carrToIMx >= 1e-304)*carrToIMx + (carrToIMx < 1e-304)*1e-304;
+  return 10*log(carrToIM);
+}
+
+
+//****************************************************************************
+// CDR
+// Compressive dynamic range is based on gain compressions and noise analyses. 
+// (returns in dB)
+// Options: FreqForNoise, NoiseNode, BandwidthForNoise = 1Hz
+/*BEGIN_DOC
+FUN_NAME: cdrange()
+FUN_DESCRIPTION: Returns compression dynamic range
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+EXAMPLE: a = cdrange(nf2, inpwr_lin, outpwr_lin, outpwr) 
+SYNTAX: y = cdrange(nf, inpwr_lin, outpwr_lin, outpwr) 
+ARGUMENT
+  ARG_NAME: nf
+  ARG_DESCRIPTION: noise figure at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: inpwr_lin
+  ARG_DESCRIPTION: input power in the linear region
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: outpwr_lin
+  ARG_DESCRIPTION: output power in the linear region
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: outpwr
+  ARG_DESCRIPTION: output power at 1 dB compression
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: sfdr()
+NOTES: Used in XDB simulation. 
+
+The compressive dynamic range ratio identifies the dynamic range from the noise floor to the 1-dB gain-compression point. The noise floor is the noise power with respect to the reference bandwidth. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun cdrange(noiseFigure,inPwrLin,outPwrLin,outPwr)
+{
+  decl pwrGain = outPwrLin - inPwrLin;
+  decl noiseDensity = -174 + noiseFigure + pwrGain; 
+  return (outPwr + 1 - noiseDensity);
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: dev_lin_phase()
+FUN_DESCRIPTION: Given a variable sweep over a frequency range, a linear least-squares fit is performed on the phase of the variable, and the deviation from this linear fit is calculated at each frequency point. 
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+SYNTAX: y = dev_lin_phase(voltGain) 
+EXAMPLE: a = dev_lin_phase(S21) 
+ARGUMENT
+  ARG_NAME: voltGain
+  ARG_DESCRIPTION: function of frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: diff(), phasedeg(), phaserad(), pwr_gain(), ripple(), unwrap(), volt_gain()
+NOTES: In order to use this function, the Group Delay option must be enabled in the S-parameter analysis setup. For more information, refer to "Calculating Group Delay" in your "S-Parameter Simulation" documentation.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//****************************************************************************
+defun dev_lin_phase(gainVsFreq)
+{
+  decl result;
+  decl x = indep(gainVsFreq,1);
+  decl y = unwrap(phase(gainVsFreq));
+
+  //Find the constants in y= mx + b
+  // slope - m and offset - b
+  decl meanX = mean(x);
+  decl meanY = mean(y);
+  decl meanX2 = mean(x*x);
+  decl meanXY = mean(x*y);
+  decl slope = (meanXY - meanX*meanY)/(meanX2 - meanX*meanX);
+  decl offset = meanY - slope*meanX;
+
+  //Deviation of point (xi,yi) from that calculated from linear eqn
+  if (sweep_dim(gainVsFreq) == 1)
+    result = (y - (slope * x + offset));
+  else
+    result = y - (expand(slope) * x + expand(offset));
+  return result;
+} //fun - dev_lin_phase
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: dev_lin_gain()
+FUN_DESCRIPTION: Given a variable sweep over a frequency range, a linear least-squares fit is performed on the gain of the variable, and the deviation from this linear fit is calculated at each frequency point. 
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+SYNTAX: y = dev_lin_gain(voltGain) 
+EXAMPLE: a = dev_lin_gain(volt_gain(S,PortZ(1),PortZ(2))) 
+ARGUMENT
+  ARG_NAME: voltGain
+  ARG_DESCRIPTION: gain as a function of frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: diff(), phasedeg(), phaserad(), pwr_gain(), ripple(), unwrap(), volt_gain(), dev_lin_phase()
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 2004A
+END_DOC*/
+
+//****************************************************************************
+defun dev_lin_gain(gainVsFreq)
+{
+  decl result;
+  decl x = indep(gainVsFreq,1);
+  decl sType = type(gainVsFreq);
+  decl y;
+  if (sType == "Complex")
+    y = mag(gainVsFreq);
+  else
+    y = gainVsFreq;
+
+  //Find the constants in y= mx + b
+  // slope - m and offset - b
+  decl meanX = mean(x);
+  decl meanY = mean(y);
+  decl meanX2 = mean(x*x);
+  decl meanXY = mean(x*y);
+  decl slope = (meanXY - meanX*meanY)/(meanX2 - meanX*meanX);
+  decl offset = meanY - slope*meanX;
+
+  //Deviation of point (xi,yi) from that calculated from linear eqn
+  if (sweep_dim(gainVsFreq) == 1)
+    result = (y - (slope * x + offset));
+  else
+    result = y - (expand(slope) * x + expand(offset));
+  return result;
+} //fun - dev_lin_gain
+
+//****************************************************************************
+// GainComp
+/*BEGIN_DOC
+FUN_NAME: gain_comp()
+FUN_DESCRIPTION: Returns gain compression
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: gc = gain_comp(S21[::, 0]) 
+
+SYNTAX:  y = gain_comp(Sji)
+ARGUMENT
+  ARG_NAME: Sji
+  ARG_DESCRIPTION: Sji is a power-dependent complex transmission coefficient obtained from large-signal S-parameter simulation. 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: phase_comp() 
+NOTES: 
+Used in Large-signal S-parameter simulations.
+
+This measurement calculates the small-signal minus the large-signal power gain,
+in dB. The first power point (assumed to be small) is used to calculate the
+small-signal power gain. 
+
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun gain_comp(sji)
+{
+  if (sweep_dim(sji) == 1)
+    {
+      decl freqSweep = indep(sji);
+      decl ssGain = sji[0]*conj(sji[0]);
+      decl lsGain = sji*conj(sji);  
+      decl gainCompx = abs(ssGain/lsGain);
+      decl  gainComp = ( gainCompx >= 1e-304)* gainCompx + ( gainCompx < 1e-304)*1e-304;
+      return 10.0*log(gainComp);
+    }
+  print_function_error("gain_comp","Gain compression is only available for 1-D power sweep");
+  return;
+}
+   
+//****************************************************************************
+// Gamma1
+/*BEGIN_DOC
+FUN_NAME: gamma1()
+FUN_DESCRIPTION: Given an NxN or NxM scattering matrix, this measurement operates on a user-specified 2x2 sub matrix and returns the input reflection coefficient with an arbitrary load impedance connected at the output port. 
+RETURNED_VALUE: Complex 
+CATEGORY: S-Parameter
+EXAMPLE: Gamma_in = gamma1(S, 50, 10+j*5, 2, 1) 
+
+SYNTAX:  y = gamma1(sParam_NxN, zRef, zLoad, out_port_j, in_port_i) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix (could be NxN or NxM, where N and M are >2)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: zLoad
+  ARG_DESCRIPTION: Load impedance
+  ARG_DEFAULT: 50.0 
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: out_port_j
+  ARG_DESCRIPTION: output port number
+  ARG_DEFAULT: 2
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: in_port_i
+  ARG_DESCRIPTION: input port number
+  ARG_DEFAULT: 1
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: sm_gamma1(), sm_gamma2() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: April 25, 2018
+VERSION_CREATED: ADS 2017 Update0.2
+END_DOC*/
+//****************************************************************************
+
+defun gamma1(sParam_NxN, zRef, zLoad, out_port_j, in_port_i)
+{
+  decl in_port = if (in_port_i == NULL) then 1 else in_port_i;
+  decl out_port = if (out_port_j == NULL) then 2 else out_port_j;
+  decl size_s = size(sParam_NxN);
+  decl zRef_checked = if (zRef == NULL) then 50.0 else zRef;
+  decl zLoad_checked = if (zLoad == NULL) then 50.0 else zLoad;
+
+  if (size(size_s)==1)
+    {
+      return sParam_NxN;
+    }
+  if (size(size_s)==2)
+    {
+      if ( (size_s(1) >= 2) && (size_s(2) >= 2))  
+      { 
+      if ((in_port>size_s(1)) || (out_port>size_s(2)))
+       {
+        print_function_error("gamma1","Specified input port number or specified output port number is too large");
+        return;   
+       }
+      else
+       {    
+        decl sParam ={{sParam_NxN(in_port,in_port),sParam_NxN(in_port,out_port)},{sParam_NxN(out_port,in_port),sParam_NxN(out_port,out_port)}};
+        decl reflCoef = ztos(zLoad_checked,zRef_checked);
+        decl gamma;
+        gamma = sParam(1,1)+(sParam(1,2)*sParam(2,1)*reflCoef)/(1-sParam(2,2)*reflCoef);
+        return gamma;
+        }
+      }
+    }
+  print_function_error("gamma1","Function does not work for 3 or higher dimension matrices");
+  return;
+ }
+   
+//****************************************************************************
+// Gamma2
+/*BEGIN_DOC
+FUN_NAME: gamma2()
+FUN_DESCRIPTION: Given an NxN or NxM scattering matrix, this measurement operates on a user-specified 2x2 sub matrix and returns the output reflection coefficient with an arbitrary source impedance connected at the input port. 
+RETURNED_VALUE: Complex 
+CATEGORY: S-Parameter
+EXAMPLE: Gamma_out = gamma2(S, 50, 10+j*5, 2, 1) 
+
+SYNTAX:  y = gamma2(sParam_NxN, zRef, zSource, out_port_j, in_port_i) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix (could be NxN or NxM, where N and M are >2)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: zSource
+  ARG_DESCRIPTION: Source impedance
+  ARG_DEFAULT: 50.0 
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: out_port_j
+  ARG_DESCRIPTION: output port number
+  ARG_DEFAULT: 2
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: in_port_i
+  ARG_DESCRIPTION: input port number
+  ARG_DEFAULT: 1
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: sm_gamma1(), sm_gamma2() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: April 25, 2018
+VERSION_CREATED: ADS 2017 Update0.2
+END_DOC*/
+//****************************************************************************
+
+defun gamma2(sParam_NxN, zRef, zSource, out_port_j, in_port_i)
+{
+  decl in_port = if (in_port_i == NULL) then 1 else in_port_i;
+  decl out_port = if (out_port_j == NULL) then 2 else out_port_j;
+  decl size_s = size(sParam_NxN);
+  decl zRef_checked = if (zRef == NULL) then 50.0 else zRef;
+  decl zSource_checked = if (zSource == NULL) then 50.0 else zSource;
+
+  if (size(size_s)==1)
+    {
+      return sParam_NxN;
+    }
+  if (size(size_s)==2)
+    {
+      if ( (size_s(1) >= 2) && (size_s(2) >= 2))  
+      { 
+      if ((in_port>size_s(1)) || (out_port>size_s(2)))
+       {
+        print_function_error("gamma2","Specified input port number or specified output port number is too large");
+        return;   
+       }
+      else
+       {    
+        decl sParam ={{sParam_NxN(in_port,in_port),sParam_NxN(in_port,out_port)},{sParam_NxN(out_port,in_port),sParam_NxN(out_port,out_port)}};
+        decl reflCoef = ztos(zSource_checked,zRef_checked);
+        decl gamma;
+        gamma = sParam(2,2)+(sParam(1,2)*sParam(2,1)*reflCoef)/(1-sParam(1,1)*reflCoef);
+        return gamma;
+        }
+      }
+    }
+  print_function_error("gamma2","Function does not work for 3 or higher dimension matrices");
+  return;
+}
+
+//****************************************************************************
+// IP3in
+// Input third-order intercept point is based on Harmonic Balance. 
+// (returns in dBm)
+/*BEGIN_DOC
+FUN_NAME: ip3_in()
+FUN_DESCRIPTION: This measurement determines the input third-order intercept point (in dBm) at the input port with reference to a system output port. 
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+EXAMPLE: y = ip3_in(vOut, 22, {1, 0}, {2, -1}, 50) 
+
+SYNTAX: y = ip3_in(vOut, ssGain, fundFreq, imFreq, zRef, Mix)
+ARGUMENT
+  ARG_NAME: vOut
+  ARG_DESCRIPTION: signal voltage at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: ssGain
+  ARG_DESCRIPTION: small signal gain in dB
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: imFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the intermodulation frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif It is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: ip3_out(), ipn() 
+NOTES: To measure the third-order intercept point, you must setup a Harmonic Balance simulation with the input signal driving the circuit in the linear range. Input power is typically set 10 dB below the 1 dB gain compression point. If you simulate the circuit in the nonlinear region, the calculated results will be incorrect. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ip3_in(vOut,ssGain,fundFreq,imFreq,zRef,Mix)
+{
+  decl toiOut = ip3_out(vOut,fundFreq,imFreq,zRef,Mix);
+  return (toiOut - ssGain);
+}
+
+//****************************************************************************
+// IP3out
+// Output third-order intercept point is based on Harmonic Balance analysis. 
+// (returns in dBm)
+/*BEGIN_DOC
+FUN_NAME: ip3_out()
+FUN_DESCRIPTION: This measurement determines the output third-order intercept point (in dBm) at the system output port.
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+EXAMPLE: y = ip3_out(vOut, {1, 0}, {2, -1}, 50) 
+
+SYNTAX: y = ip3_out(vOut, fundFreq, imFreq, zRef, Mix)
+ARGUMENT
+  ARG_NAME: vOut
+  ARG_DESCRIPTION: signal voltage at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: imFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the intermodulation frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif It is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: ip3_in(), ipn() 
+NOTES: To measure the third-order intercept point, you must setup a Harmonic Balance simulation with the input signal driving the circuit in the linear range. Input power is typically set 10 dB below the 1 dB gain compression point. If you simulate the circuit in the nonlinear region, the calculated results will be incorrect. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ip3_out(vOut,fundFreq,imFreq,zRef,Mix)
+{ 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl vFund  =abs(mix(vOut,fundFreq,Mix)); //v1st
+  decl vIMx  = abs(mix(vOut,imFreq,Mix));
+  decl vIM = (vIMx >= 1e-304)*vIMx + (vIMx < 1e-304)*1e-304; //v3rd
+
+  decl fund = 10 * log(0.5*real(vFund * conj(vFund)/conj(z0)))+30;
+  decl third = 10 * log(0.5*real(vIM * conj(vIM)/conj(z0)))+30;
+  return 0.5*(3*fund-third);
+
+/*
+  decl vFund3 = pow(vFund,3);
+  decl toi = 10*log(vFund3/(2*z0*vIM)); 
+  return toi + 30;
+*/
+} //fun - ip3_out()
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: thd_func()
+FUN_DESCRIPTION: This measurement returns the Total Harmonic Distortion percentage.
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+SYNTAX: y = thd_func(v)
+EXAMPLE: y = thd_func(Vload) 
+ARGUMENT
+  ARG_NAME: v
+  ARG_DESCRIPTION: voltage
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: None 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+defun thd_func(v)
+{
+  decl iSz = sweep_size(v);
+  decl iDim = sweep_dim(v);
+  decl iNumHarm = iSz;
+  //If there are no 2nd order harmonic and so on
+  if (iDim != 1)
+    iNumHarm = iSz(iDim);
+  if (iNumHarm <= 2)
+    return 0.0;
+  decl fundV = mag(v[1]);
+  decl harmV = sqrt(sum(mag(v[2::iNumHarm-1])**2));
+  decl thdV = 100 * harmV/fundV;
+  return thdV;
+} //fun - thd_func
+
+
+//****************************************************************************
+// MaxGain
+/*BEGIN_DOC
+FUN_NAME: max_gain()
+FUN_DESCRIPTION: Given an NxN or NxM scattering matrix, this measurement operates on a user-specified 2x2 sub matrix and returns the maximum available and stable gain (in dB) between the input and the measurement ports. 
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: y = max_gain(S, 2, 1) 
+
+SYNTAX:  y = max_gain(S, out_port_j, in_port_i) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix (could be NxN or NxM, where N and M are >2)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: out_port_j
+  ARG_DESCRIPTION: output port number
+  ARG_DEFAULT: 2
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: in_port_i
+  ARG_DESCRIPTION: input port number
+  ARG_DEFAULT: 1
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: sm_gamma1(), sm_gamma2(), stab_fact(), stab_meas() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: April 25, 2018
+VERSION_CREATED: ADS 2017 Update0.2
+END_DOC*/
+//****************************************************************************
+defun max_gain(s_NxN, out_port_j, in_port_i)
+{
+    decl in_port = if (in_port_i == NULL) then 1 else in_port_i;
+    decl out_port = if (out_port_j == NULL) then 2 else out_port_j;
+    decl size_s = size(s_NxN);
+    if ( size_s(1) >= 2 && size_s(2) >= 2 ) 
+    {
+      if ((in_port>size_s(1)) || (out_port>size_s(2)))
+       {
+        print_function_error("max_gain","Specified input port number or specified output port number is too large");
+        return;   
+       } 
+      else
+       { 
+        decl s_2x2 ={{s_NxN(in_port,in_port),s_NxN(in_port,out_port)},{s_NxN(out_port,in_port),s_NxN(out_port,out_port)}};
+        decl magS21=abs(s_2x2(2,1));
+        decl magS12=abs(s_2x2(1,2));
+        decl magSqS11=abs(s_2x2(1,1))*abs(s_2x2(1,1));
+        decl magSqS22=abs(s_2x2(2,2))*abs(s_2x2(2,2));
+        decl stabMeas = stab_meas(s_2x2);
+        decl k = stab_fact(s_2x2);
+        decl stabFact = ((k > 1).* k)+(k<=1);                              // if k>1 stabFact=k. Otherwise stabFact=1
+        decl gain0 = (magS21*magS21)/((1.0 - magSqS11)*(1.0 - magSqS22));  // Max unilateral transducer power gain
+        decl gain1 = (magS21 / magS12)*(stabFact - sqrt(stabFact.*stabFact - 1));  // Max available power gain
+        decl gain2 = (magS21 / magS12)*(stabFact + sqrt(stabFact*stabFact - 1));
+        decl gainMSG = magS21 / magS12;                                    // Max stable power gain
+        // if magS12>0 and stabMeas>0 then maxGainx is gain1
+        // if magS12>0 and stabMeas<=0 then maxGainx is gain2
+        // if magS12==0 (the unilateral case) maxGainx is gain0
+        decl maxGainx = ((magS12 > 0).*(((stabMeas>0).* gain1) + ((stabMeas<=0).* gain2)))+((magS12==0).*gain0);
+        decl maxGain = ( maxGainx >= 1e-304)* maxGainx + ( maxGainx < 1e-304)*1e-304;
+        return 10.0*log(maxGain);  
+       }
+    } 
+     print_function_error("max_gain","This function only operates on a 2x2 (sub)matrix from NxN or NxM data");
+     return;   
+}
+
+//****************************************************************************
+// NsPwrInt
+// Options: CalcNoise
+/*BEGIN_DOC
+FUN_NAME: ns_pwr_int()
+FUN_DESCRIPTION: Returns the integrated noise power
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: Y = ns_pwr_int(S21, nf2, 1MHz)
+
+SYNTAX: y = ns_pwr_int(Sji, nf, resBW, stop) 
+ARGUMENT
+  ARG_NAME: Sji
+  ARG_DESCRIPTION: complex transmission coefficient
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: nf
+  ARG_DESCRIPTION: noise figure at the output port (in dB)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: resBW
+  ARG_DESCRIPTION: user-defined resolution bandwidth
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: stop
+  ARG_DESCRIPTION: stop value (works for nonuniform delta frequency)
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: ns_pwr_ref_bw(), snr() 
+NOTES: Used in Small-signal S-parameter simulation.
+
+This is the integrated noise power (in dBm) calculated by integrating the noise
+power over the entire frequency sweep. The noise power at each frequency point
+is calculated by multiplying the noise spectral density by a user-defined
+resolution bandwidth. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ns_pwr_int(sji,noiseFigure,resBW,stop)
+{
+  decl noiseInt;
+  
+  if (size(noiseFigure) == 1 )
+    {
+      if(stop == NULL && resBW != NULL)
+    {
+      decl noiseBW = ns_pwr_ref_bw(sji,noiseFigure,resBW);
+      noiseInt = sum(pow(10.0,noiseBW/10.0));
+      return( 10.0*log(abs(noiseInt)));
+    }
+      else   // integrate over start and stop, works for nonuniform delta freq.
+    {
+      decl pwrGain = 10*log(abs(sji*conj(sji)));
+      decl noiseDensity = -174 + noiseFigure + pwrGain;
+      noiseDensity = pow(10.0,noiseDensity);
+      noiseInt = integrate(noiseDensity,resBW,stop);
+      return( 10.0*log(abs(noiseInt)));
+    }
+    }
+  print_function_error("ns_pwr_int","Incompatible inputs");
+  return;
+}
+
+
+//****************************************************************************
+// NsPwrRefBW
+// Options: CalcNoise
+/*BEGIN_DOC
+FUN_NAME: ns_pwr_ref_bw()
+FUN_DESCRIPTION: Returns noise power in a reference bandwidth
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: Y = ns_pwr_ref_bw(S21, nf2, 1MHz) returns the noise power with respect to the reference bandwidth. 
+
+SYNTAX: y = ns_pwr_ref_bw(Sji, nf, resBW)
+ARGUMENT
+  ARG_NAME: Sji
+  ARG_DESCRIPTION: complex transmission coefficient
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: nf
+  ARG_DESCRIPTION: noise figure at the output port (in dB)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: resBW
+  ARG_DESCRIPTION: user-defined resolution bandwidth
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: ns_pwr_int(), snr() 
+NOTES: Used in Small-signal S-parameter simulation.
+
+This is the noise power calculated by multiplying the noise spectral density
+at a frequency point by a user-defined resolution bandwidth. Unlike NsPwrInt,
+this gives the noise power (in dB) at each frequency sweep.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ns_pwr_ref_bw(sji,noiseFigure,resBW)
+{
+   if (size(noiseFigure) == 1 && sweep_dim(resBW) == 0)
+    {
+      decl pwrGain = 10*log(abs(sji*conj(sji)));
+      decl noiseDensity = -174 + noiseFigure + pwrGain;
+      decl noisePwr = (noiseDensity + 10.0*log(resBW));
+      return(noisePwr);
+    }
+   print_function_error("ns_pwr_ref_bw","Incompatible inputs");
+  return;
+}
+
+
+//****************************************************************************
+// PhaseComp
+// Phase change is based on large-signal scattering parameter analysis, 
+// the first power point (assumed to be small) is used to calculate the small-signal gain. 
+// (returns in degree)
+//****************************************************************************
+
+/*BEGIN_DOC
+FUN_NAME: phase_comp()
+FUN_DESCRIPTION: Returns the phase compression (phase change)
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+SYNTAX: y = phase_comp(Sji)
+EXAMPLE:
+a = phase_comp(S21[::, 0])
+ARGUMENT
+  ARG_NAME: Sji
+  ARG_DESCRIPTION: power-dependent parameter obtained from large-signal S-parameters simulation
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real, complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: gain_comp() 
+NOTES: Used in Large-signal S-parameter simulations 
+
+This measurement calculates the small-signal minus the large-signal phase, in degrees. The first power point (assumed to be small) is used to calculate the small-signal phase.  Phase compression (change) is only available for 1-D power sweep.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS
+END_DOC*/
+
+defun phase_comp(sji)
+{
+  if (sweep_dim(sji) == 1) {
+    return (phase(sji[0]) - phase(sji));  
+  }
+  print_function_error("phase_comp","Phase compression (change) is only available for 1-D power sweep");
+  return;
+      
+} //fun - phase_comp
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: pwr_gain()
+FUN_DESCRIPTION: Given an NxN or NxM scattering matrix, this measurement operates on a user-specified 2x2 sub matrix and returns the transducer power gain (in dB), defined as the ratio of the power delivered to the load, to the power available from the source. (where power is in dBm). 
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: 
+pGain = pwr_gain(S,50,75) - Zref defaults to 50 ohms 
+
+pGain1 = pwr_gain(S, 50, 75, 75) - Zref = 75 ohms 
+
+SYNTAX: y = pwr_gain(S, Zs, Zl, Zref, out_port_j, in_port_i) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION:  N X N or N X M scattering matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: input impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zl
+  ARG_DESCRIPTION: Output impedance
+  ARG_DEFAULT: 50.0 
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: out_port_j
+  ARG_DESCRIPTION: output port number
+  ARG_DEFAULT: 2
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: in_port_i
+  ARG_DESCRIPTION: input port number
+  ARG_DEFAULT: 1
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: stos(), volt_gain(), volt_gain_max() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Updated April 25, 2018
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun pwr_gain(S_NxN,zIn,zOut,zRef, out_port_j, in_port_i)
+{
+  decl in_port = if (in_port_i == NULL) then 1 else in_port_i;
+  decl out_port = if (out_port_j == NULL) then 2 else out_port_j;
+  decl size_s = size(S_NxN);
+  
+  decl gammaS = 0;
+  decl gammaL = 0;
+  decl zs = if (zIn == NULL) then 50.0 else zIn;
+  decl zl = if (zOut == NULL) then 50.0 else zOut;
+  if (zRef != NULL) {
+    gammaS = (zs - conj(zRef))/(zs + zRef);
+    gammaL = (zl - conj(zRef))/(zl + zRef);
+  }
+  else {
+    gammaS = (zs - 50.0)/(zs + 50.0);
+    gammaL = (zl - 50.0)/(zl + 50.0);
+  }
+  if (size(size_s)==2)
+    {
+      if ( (size_s(1) >= 2) && (size_s(2) >= 2))  
+      { 
+      if ((in_port>size_s(1)) || (out_port>size_s(2)))
+       {
+        print_function_error("pwr_gain","Specified input port number or specified output port number is too large");
+        return;   
+       }
+      else
+       {    
+        decl S_2x2 ={{S_NxN(in_port,in_port),S_NxN(in_port,out_port)},{S_NxN(out_port,in_port),S_NxN(out_port,out_port)}};  
+        decl numer = pow(abs(S_2x2(2,1)),2)*(1 - pow(abs(gammaS),2))*(1 - pow(abs(gammaL),2));
+        decl denomx = pow(abs((1 -S_2x2(1,1)*gammaS)*(1 - S_2x2(2,2)*gammaL) - (S_2x2(1,2)*S_2x2(2,1)*gammaS*gammaL)),2);
+        decl denom = (denomx >= 1e-304)*denomx + (denomx < 1e-304)*1e-304;
+        return 10.0*log(numer/denom);
+       }
+      }
+    }
+    print_function_error("pwr_gain","Function does not work for 3 or higher dimension matrices");
+    return;    
+  } //fun - pwr_gain
+  
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: pwr_gain_input_matched()
+FUN_DESCRIPTION: Same as pwr_gain() function except that it calculates the transducer power gain (in dB) when the source impedance is the complex conjugate of the input impedance with the specified load impedance connected at the output port.
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: 
+pGain = pwr_gain_input_matched(S,10-j*8) - Zref defaults to 50 ohms 
+
+pGain1 = pwr_gain(S, 10-j*8, 75) - Zref = 75 ohms 
+
+SYNTAX: y = pwr_gain(S, Zl, Zref, out_port_j, in_port_i) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION:  N X N or N X M scattering matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zl
+  ARG_DESCRIPTION: Output impedance
+  ARG_DEFAULT: 50.0 
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: out_port_j
+  ARG_DESCRIPTION: output port number
+  ARG_DEFAULT: 2
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: in_port_i
+  ARG_DESCRIPTION: input port number
+  ARG_DEFAULT: 1
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: stos(), volt_gain(), volt_gain_max() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: April 25, 2018
+VERSION_CREATED: post ADS 2017
+END_DOC*/
+//****************************************************************************
+defun pwr_gain_input_matched(S_NxN,zOut,zRef, out_port_j, in_port_i)
+{
+  decl in_port = if (in_port_i == NULL) then 1 else in_port_i;
+  decl out_port = if (out_port_j == NULL) then 2 else out_port_j;
+  decl size_s = size(S_NxN);
+  if (size(size_s)==2)
+    {
+      if ( (size_s(1) >= 2) && (size_s(2) >= 2))  
+      { 
+      if ((in_port>size_s(1)) || (out_port>size_s(2)))
+       {
+        print_function_error("pwr_gain_input_matched","Specified input port number or specified output port number is too large");
+        return;   
+       }
+      else
+       {    
+        decl S_2x2 ={{S_NxN(in_port,in_port),S_NxN(in_port,out_port)},{S_NxN(out_port,in_port),S_NxN(out_port,out_port)}};   
+        decl gammaS = 0;
+        decl gammaL = 0;
+        decl zl = if (zOut == NULL) then 50.0 else zOut;
+        if (zRef != NULL) {
+            gammaS = conj(gamma1(S_2x2, zRef, zl));
+            gammaL = (zl - conj(zRef))/(zl + zRef);
+            }
+        else {
+            gammaS = conj(gamma1(S_2x2, 50.0, zl));
+            gammaL = (zl - 50.0)/(zl + 50.0);
+            }
+        decl numer = pow(abs(S_2x2(2,1)),2)*(1 - pow(abs(gammaS),2))*(1 - pow(abs(gammaL),2));
+        decl denomx = pow(abs((1 -S_2x2(1,1)*gammaS)*(1 - S_2x2(2,2)*gammaL) - (S_2x2(1,2)*S_2x2(2,1)*gammaS*gammaL)),2);
+        decl denom = (denomx >= 1e-304)*denomx + (denomx < 1e-304)*1e-304;
+        return 10.0*log(numer/denom);
+       }
+      }
+    } 
+    print_function_error("pwr_gain_input_matched","Function does not work for 3 or higher dimension matrices");
+    return;
+  } //fun - pwr_gain_input_matched
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: pwr_gain_output_matched()
+FUN_DESCRIPTION: Same as pwr_gain() function except that it calculates the transducer power gain (in dB) when the load impedance is the complex conjugate of the output impedance with the specified source impedance connected at the input port.
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: 
+pGain = pwr_gain_output_matched(S,10-j*8) - Zref defaults to 50 ohms 
+
+pGain1 = pwr_gain(S, 10-j*8, 75) - Zref = 75 ohms 
+
+SYNTAX: y = pwr_gain(S, Zs, Zref, out_port_j, in_port_i) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION:  N X N or N X M scattering matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: Input impedance
+  ARG_DEFAULT: 50.0 
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: out_port_j
+  ARG_DESCRIPTION: output port number
+  ARG_DEFAULT: 2
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: in_port_i
+  ARG_DESCRIPTION: input port number
+  ARG_DEFAULT: 1
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: stos(), volt_gain(), volt_gain_max() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: April 25, 2018
+VERSION_CREATED: post ADS 2017
+END_DOC*/
+//****************************************************************************
+defun pwr_gain_output_matched(S_NxN,zIn,zRef, out_port_j, in_port_i)
+{
+  decl in_port = if (in_port_i == NULL) then 1 else in_port_i;
+  decl out_port = if (out_port_j == NULL) then 2 else out_port_j;
+  decl size_s = size(S_NxN);
+  if (size(size_s)==2)
+    {
+      if ( (size_s(1) >= 2) && (size_s(2) >= 2))  
+      { 
+      if ((in_port>size_s(1)) || (out_port>size_s(2)))
+       {
+        print_function_error("pwr_gain_output_matched","Specified input port number or specified output port number is too large");
+        return;   
+       }
+      else
+       {    
+        decl S_2x2 ={{S_NxN(in_port,in_port),S_NxN(in_port,out_port)},{S_NxN(out_port,in_port),S_NxN(out_port,out_port)}};   
+        decl gammaS = 0;
+        decl gammaL = 0;
+        decl zs = if (zIn == NULL) then 50.0 else zIn;
+        if (zRef != NULL) {
+            gammaS = (zs - conj(zRef))/(zs + zRef);
+            gammaL = conj(gamma2(S_2x2, zRef, zs));
+            }
+        else {
+            gammaS = (zs - 50.0)/(zs + 50.0);
+            gammaL = conj(gamma2(S_2x2, 50.0, zs));
+            }
+        decl numer = pow(abs(S_2x2(2,1)),2)*(1 - pow(abs(gammaS),2))*(1 - pow(abs(gammaL),2));
+        decl denomx = pow(abs((1 -S_2x2(1,1)*gammaS)*(1 - S_2x2(2,2)*gammaL) - (S_2x2(1,2)*S_2x2(2,1)*gammaS*gammaL)),2);
+        decl denom = (denomx >= 1e-304)*denomx + (denomx < 1e-304)*1e-304;
+        return 10.0*log(numer/denom);
+       }
+      }
+    } 
+    print_function_error("pwr_gain_output_matched","Function does not work for 3 or higher dimension matrices");
+    return;
+  } //fun - pwr_gain_output_matched
+  
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: pwr_gain_uni()
+FUN_DESCRIPTION: Similar to the pwr_gain() function except that it computes the unilateral power gain (in dB).  
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: 
+pGain = pwr_gain_uni(S,50,75) - Zref defaults to 50 ohms 
+
+pGain1 = pwr_gain_uni(S, 50, 75, 75) - Zref = 75 ohms 
+
+SYNTAX: y = pwr_gain_uni(S, Zs, Zl, Zref, out_port_j, in_port_i) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION:  N X N or N X M scattering matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: input impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zl
+  ARG_DESCRIPTION: Output impedance
+  ARG_DEFAULT: 50.0 
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: out_port_j
+  ARG_DESCRIPTION: output port number
+  ARG_DEFAULT: 2
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: in_port_i
+  ARG_DESCRIPTION: input port number
+  ARG_DEFAULT: 1
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: stos(), volt_gain(), volt_gain_max() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: April 25, 2018
+VERSION_CREATED: post ADS 2017
+END_DOC*/
+//****************************************************************************
+defun pwr_gain_uni(S_NxN,zIn,zOut,zRef, out_port_j, in_port_i)
+{
+  decl in_port = if (in_port_i == NULL) then 1 else in_port_i;
+  decl out_port = if (out_port_j == NULL) then 2 else out_port_j;
+  decl size_s = size(S_NxN);
+  
+  decl gammaS = 0;
+  decl gammaL = 0;
+  decl zs = if (zIn == NULL) then 50.0 else zIn;
+  decl zl = if (zOut == NULL) then 50.0 else zOut;
+  if (zRef != NULL) {
+    gammaS = (zs - conj(zRef))/(zs + zRef);
+    gammaL = (zl - conj(zRef))/(zl + zRef);
+  }
+  else {
+    gammaS = (zs - 50.0)/(zs + 50.0);
+    gammaL = (zl - 50.0)/(zl + 50.0);
+  }
+  if (size(size_s)==2)
+    {
+      if ( (size_s(1) >= 2) && (size_s(2) >= 2))  
+      { 
+      if ((in_port>size_s(1)) || (out_port>size_s(2)))
+       {
+        print_function_error("pwr_gain_uni","Specified input port number or specified output port number is too large");
+        return;   
+       }
+      else
+       {    
+        decl S_2x2 ={{S_NxN(in_port,in_port),0*S_NxN(in_port,out_port)},{S_NxN(out_port,in_port),S_NxN(out_port,out_port)}};  
+        decl numer = pow(abs(S_2x2(2,1)),2)*(1 - pow(abs(gammaS),2))*(1 - pow(abs(gammaL),2));
+        decl denomx = pow(abs(1 -S_2x2(1,1)*gammaS),2)*pow(abs(1 - S_2x2(2,2)*gammaL),2);
+        decl denom = (denomx >= 1e-304)*denomx + (denomx < 1e-304)*1e-304;
+        return 10.0*log(numer/denom);
+       }
+      }
+    } 
+    print_function_error("pwr_gain_uni","Function does not work for 3 or higher dimension matrices");
+    return;  
+  } //fun - pwr_gain_uni
+  
+
+//****************************************************************************
+// SFDR
+// Spurious-free dynamic range is based on Harmonic Balance  and noise analyses. 
+// The small-siganl gain is calculated at the first power level. 
+// (returns in dB)
+// Options: FreqForNoise, NoiseNode, BandwidthForNoise = 1Hz
+/*BEGIN_DOC
+FUN_NAME: sfdr()
+FUN_DESCRIPTION: Returns the spurious-free dynamic range
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+EXAMPLE: a = sfdr(vIn, 12, nf2, , {1, 0}, {2, -1}, 50)
+SYNTAX: y = sfdr(vOut, ssGain, nf, noiseBW, fundFreq, imFreq, zRef{, Mix})
+ARGUMENT
+  ARG_NAME: vOut
+  ARG_DESCRIPTION: signal voltage at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: ssGain
+  ARG_DESCRIPTION: small signal gain in dB
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: nf
+  ARG_DESCRIPTION:  noise figure at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the fundamental frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: imFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the intermodulation frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Mix is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: ip3_out() 
+NOTES: Used in a Harmonic Balance and Small-signal S-parameter. It appears in the HB Simulation palette. 
+
+This measurement determines the spurious-free dynamic-range ratio for noise power with respect to the reference bandwidth.
+
+To measure the third-order intercept point, you must setup a Harmonic Balance simulation with the input signal driving the circuit in the linear range. Input power is typically set 10 dB below the 1 dB gain compression point. If you simulate the circuit in the nonlinear region, the calculated results will be incorrect. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun sfdr(vOut,ssGain,noiseFigure,noiseBW,fundFreq,imFreq,zRef,Mix)
+{
+  decl noiseDensity  =  -174 + ssGain + noiseFigure;
+  decl noiseFloor = noiseDensity  + 10.0*log(noiseBW);
+  decl toi = ip3_out(vOut,fundFreq,imFreq,zRef,Mix);
+  return (2.0/3.0) * (toi - noiseFloor);
+}
+
+
+//****************************************************************************
+// SNR
+// Signal to power noise ratio is based on Harmonic Balance and noise analyses. 
+// (returns in dB).
+// Options: FreqForNoise, NoiseNode
+/*BEGIN_DOC
+FUN_NAME: snr()
+FUN_DESCRIPTION: This measurement gives the ratio of the output signal power (at the fundamental frequency for a harmonic balance simulation) to the total noise power (in dB). 
+RETURNED_VALUE: Real
+CATEGORY: Harmonic Balance
+EXAMPLE: a = snr(vOut, vOut.noise, {1, 0})
+returns the signal-to-power noise ratio for a harmonic balance simulation. 
+
+a = snr(vOut, vOut.noise)
+returns the signal-to-power noise ratio for an AC simulation. 
+SYNTAX: y = snr(vOut, vOut.noise, fundFreq, Mix) 
+ARGUMENT
+  ARG_NAME: vOut
+  ARG_DESCRIPTION: signal voltage at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: vOut.noise
+  ARG_DESCRIPTION: noise voltage at the output port
+  ARG_DEFAULT: None
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fundFreq
+  ARG_DESCRIPTION: harmonic frequency indices for the fundamental frequency dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Mix
+  ARG_DESCRIPTION: consists of all possible vectors of harmonic frequency (mixing terms) in the analysis dagger.gif dagger.gif
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer array
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif  Note that fundFreq is not optional; it is required for harmonic balance simulations, but it is not applicable in AC simulations.
+dagger.gif dagger.gif Mix is required whenever the first argument is a spectrum obtained from an expression that operates on the voltage and/or current spectrums.
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: ns_pwr_int(), ns_pwr_ref_bw() 
+NOTES: If the second argument is of higher dimension than the first, the noise bandwidth used for the purpose of computing snr will be equal to the frequency spacing of the innermost dimension of the noise data, instead of the standard value of 1 Hz. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun snr(vOut,nsVout,fundFreq,Mix)
+{
+  decl pwrNoisex;
+  decl resBW = 1;
+  decl vout = vOut;  
+  if (fundFreq != NULL) 
+    vout = mix(vOut,fundFreq,Mix);
+  decl pwrSig = vout*conj(vout)/2;
+  decl noiseFreq = indep(nsVout,"noisefreq");
+  if(noiseFreq !=NULL)
+    {
+     if (sweep_dim(noiseFreq)>1)
+    {
+    resBW = if (inner_sweep_size(noiseFreq) > 1 ) then expand(noiseFreq[1] - noiseFreq[0]) else 1.0;
+    }
+      else 
+    {
+    if (inner_sweep_size(noiseFreq) > 1 ) then (noiseFreq[1] - noiseFreq[0]) else 1.0;
+    }
+     pwrNoisex = sum(nsVout*nsVout*resBW);
+    }
+  else
+    {
+      pwrNoisex = nsVout*nsVout*resBW;
+    }
+  decl pwrNoise =  ( pwrNoisex >= 1e-304)* pwrNoisex + ( pwrNoisex < 1e-304)*1e-304;
+  return 10*log(abs(pwrSig/pwrNoise));
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: stab_fact()
+FUN_DESCRIPTION: Returns the Rollett stability factor. 
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: k = stab_fact(S) 
+
+SYNTAX: k = stab_fact(S) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: max_gain(), sm_gamma1(), sm_gamma2(), stab_meas() 
+NOTES: Given a 2 x 2 scattering matrix between the input and measurement ports,
+this function calculates the stability factor. 
+
+The Rollett stability factor is given by 
+
+k = {1- |S11|**2 - |S22|**2 + |S11*S22 - S12*S21| **2} / {2*|S12*S21|} 
+The necessary and sufficient conditions for unconditional stability are that
+the stability factor is greater than unity and the stability measure is positive. 
+Reference 
+
+[1] Guillermo Gonzales, Microwave Transistor Amplifiers, second edition, Prentice-Hall, 1997.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+//****************************************************************************
+defun stab_fact(s)
+{    
+    decl size_s = size(s);
+
+    if ( size_s(1) == 2 && size_s(2) == 2 )
+    {
+     decl a1 = abs(s(1,1))*abs(s(1,1)) + abs(s(2,2))*abs(s(2,2));
+     decl a2 = abs(s(1,1)*s(2,2)-s(1,2)* s(2,1))*abs(s(1,1)*s(2,2)-s(1,2)* s(2,1));
+     decl numer = 1 - a1 + a2;
+     decl denom = 2 * abs(s(1,2) * s(2,1));
+     return(numer/denom);
+    }
+  
+   print_function_error("stab_fact","This function only accepts a 2x2 (sub)matrix");
+   return;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: stab_meas()
+FUN_DESCRIPTION: Returns the stability measure
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: k = stab_meas(S) 
+
+SYNTAX: k = stab_meas(S) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: max_gain(), sm_gamma1(), sm_gamma2(), stab_fact()
+NOTES: Given a 2 x 2 scattering matrix between the input and measurement ports,
+this function calculates the stability measure. 
+
+The stability measure is given by 
+
+b = 1+ |S11|**2 - |S22|**2 - |S11*S22 - S12*S21| **2 
+The necessary and sufficient conditions for unconditional stability are that
+the stability factor is greater than unity and the stability measure is positive. 
+
+Reference 
+
+Guillermo Gonzales, Microwave Transistor Amplifiers, second edition, Prentice-Hall, 1997. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun stab_meas(s)
+{
+    decl size_s = size(s);
+
+    if ( size_s(1) == 2 && size_s(2) == 2 )
+    {
+     decl a1 = abs(s(1,1))*abs(s(1,1)) - abs(s(2,2))*abs(s(2,2));
+     decl a2 = abs(s(1,1)*s(2,2)-s(1,2)*s(2,1))* abs(s(1,1)*s(2,2)-s(1,2)*s(2,1)); 
+     return(1+a1-a2);
+    }
+    print_function_error("stab_meas","This function only accepts a 2x2 (sub)matrix"); 
+  return;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: volt_gain_max()
+FUN_DESCRIPTION: Given an NxN or NxM scattering matrix, this measurement operates on a user-specified 2x2 sub matrix and returns the ratio of the voltage across the load to the voltage available from the source at maximum power transfer.
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: 
+vGain = volt_gain_max(S,50,75) - Zref defaults to 50 ohms 
+
+vGain1 = volt_gain(S, 50, 75, 75) - Zref = 75 ohms
+
+SYNTAX: y = volt_gain_max(S, Zs, Zl, Zref, out_port_j, in_port_i) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION:  N X N or N X M scattering matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zs
+  ARG_DESCRIPTION: input impedance
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zl
+  ARG_DESCRIPTION: Output impedance
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: out_port_j
+  ARG_DESCRIPTION: output port number
+  ARG_DEFAULT: 2
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: in_port_i
+  ARG_DESCRIPTION: input port number
+  ARG_DEFAULT: 1
+  ARG_RANGE: (1:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: pwr_gain(), volt_gain() 
+NOTES: The network-parameter transformation function stos() can be used to change the normalizing impedance of the scattering matrix. 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Updated April 25, 2018
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun volt_gain_max(S_NxN,zIn,zOut,zRef, out_port_j, in_port_i)
+{
+  decl in_port = if (in_port_i == NULL) then 1 else in_port_i;
+  decl out_port = if (out_port_j == NULL) then 2 else out_port_j;
+  decl size_s = size(S_NxN);
+      
+  decl gammaL = 0;
+  decl gammaS = 0;
+  decl zs = if (zIn == NULL) then 50.0 else zIn;
+  decl zl = if (zOut == NULL) then 50.0 else zOut;
+  if (zRef != NULL) {  
+    gammaS = (zs - conj(zRef))/(zs +zRef); 
+    gammaL = (zl - conj(zRef))/(zl +zRef);
+  }
+  else {
+    gammaS = (zs - 50.0)/(zs + 50.0); 
+    gammaL = (zl - 50.0)/(zl + 50.0);
+  }
+  if (size(size_s)==2)
+    {
+      if ( (size_s(1) >= 2) && (size_s(2) >= 2))  
+      { 
+      if ((in_port>size_s(1)) || (out_port>size_s(2)))
+       {
+        print_function_error("volt_gain_max","Specified input port number or specified output port number is too large");
+        return;   
+       }
+      else
+       {    
+        decl S_21 =S_NxN(out_port,in_port);  
+        decl S_22 =S_NxN(out_port,out_port);
+        decl numer = S_21*sqrt((1 - pow(abs(gammaL),2))*zl/zs);
+        return (numer/(1-gammaL*S_22));
+       }
+      }
+    }
+    print_function_error("volt_gain_max","Function does not work for 3 or higher dimension matrices");
+    return;     
+} //volt_gain_max
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: vswr()
+FUN_DESCRIPTION: Given a complex reflection coefficient, this measurement returns the voltage standing wave ratio.
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE: y = vswr(S11) 
+
+SYNTAX: y = vswr(Sii) 
+ARGUMENT
+  ARG_NAME: Sii
+  ARG_DESCRIPTION: complex reflection coefficient
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: yin(), zin() 
+NOTES: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun vswr(sjj)
+{
+  return ((1.0 + abs(sjj)) / (1.0 - abs(sjj)));
+}
+
+defun reduce_2d_data(data2d, myGoal)
+{ 
+//data[pin,G], G has variable number of values depending on pin value.
+
+  decl indepInner, indepOuter = indep(data2d[::,0]);
+  decl newData = create(1, "Real", {"pin"},  {"Real"},1, 1);
+  decl x2Data = create(1, "Real", {"pin"},  {"Real"},1, 1);
+  decl indep_pin_newData = indep(newData,"pin");
+  decl indep_pin_x2 = indep(x2Data,"pin");     
+
+  decl lastVal = 1.0e30;
+  decl i1, i2, lastX2, lastData;
+  decl dimInner, dimOuter;
+
+  dimOuter=sweep_size(indepOuter);
+  for(i1=0; i1<dimOuter; i1++)
+  {
+    indepInner=indep(data2d[i1,::]);
+    dimInner=sweep_size(indepInner);
+    for(i2=0; i2<dimInner; i2++)
+    {
+      decl tempVal = mag(myGoal-data2d[i1,i2]);
+      if(tempVal<lastVal)
+      {
+    lastVal = tempVal;
+        lastData = data2d[i1,i2];
+    lastX2 = indepInner[i2];
+      }
+    }
+
+    newData[i1] = lastData;
+    indep_pin_newData[i1]=indepOuter[i1];
+    x2Data[i1] = lastX2;
+    indep_pin_x2[i1]=indepOuter[i1];     
+  }
+  return {newData,x2Data};
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: phase_gain()
+FUN_DESCRIPTION: Returns the gain associated with the phase (normally zero) 
+crossing at associated power.  Can be used in Harmonic Balance Analysis of
+an oscillator to get the loop-gain.  Returns an array of gains.
+RETURNED_VALUE: Real Array
+CATEGORY: Harmonic Balance
+EXAMPLE:
+We assume that a Harmonic Balance analysis has been performed at different power.
+
+gainAtZeroPhase = phase_gain(Vout/Vin, 0) returns the gain at zero phase.
+
+SYNTAX: y = phase_gain(Gain, DesiredPhase)
+ARGUMENT
+  ARG_NAME: Gain
+  ARG_DESCRIPTION: Two dimensional data representing gain.  E.g. Loop-gain of an oscillator.
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: DesiredPhase
+  ARG_DESCRIPTION:  A single value representing the desired phase.
+  ARG_DEFAULT: 0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: None
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: July.2003
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+defun phase_gain(Gain, DesiredPhase)
+{
+  decl Phase = if (DesiredPhase == NULL) then 0.0 else DesiredPhase;
+
+  //Gain data has to be 2-D
+  decl swpDim = sweep_dim(Gain);
+  if (swpDim == 1)
+    return mag(Gain[find_index(phase(Gain),Phase)]);
+
+  if (swpDim == 2) {
+    //Find the Size & Form the phase-array
+    decl iSize = sweep_size(Gain[0]);
+    decl aGain = real(Gain[0]);
+
+    //For each index value, get the associated gain at the DesiredPhase
+    decl iCount = 0;
+    for (iCount = 0; iCount < iSize; iCount++)
+      aGain[iCount]= mag(Gain[iCount,find_index(phase(Gain[iCount,::]),Phase)]);
+    return aGain;
+  } //if
+  print_function_error("phase_gain","Gain at desired phase is available only for 1 or 2-D data");
+} //fun - phase_gain
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: bandwidth_func()
+FUN_DESCRIPTION: Returns the bandwidth at the specified level as a real number.  Typically used in filter application to calculate the 1, 3 dB bandwidth.
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+SYNTAX: bw = bandwidth_func(Data, DesiredValue, Type)
+EXAMPLE:
+We assume that a S-Parameter analysis has been performed.
+
+bw3dB = bandwidth_func(db(S21), 3) returns the 3dB bandwidth
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION: data (usually gain) to find the bandwidth
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: DesiredValue
+  ARG_DESCRIPTION:  A single value representing the desired bandwidth level.
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Type
+  ARG_DESCRIPTION: Type of response
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:3] dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif Type:
+0 - Band-pass
+1 - Band-stop
+2 - Low-pass
+3 - High-pass
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: None
+NOTES:  This function returns the bandwidth of a filter response.  Bandwidth is defined as the difference between the upper and lower frequency at which the amplitude response is "DesiredValue" dB below the maximum amplitude.  It uses an iterative process to find the bandwith on non-ideal responses for the band limited resposnes.
+
+Data can be from 1 to 4 dimensions.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: July.2003
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+defun bandwidth_func(data, bw_value, inType)
+{
+  decl iSweepDim = sweep_dim(data);
+  if (iSweepDim <= 0 || iSweepDim > 4) {
+    print_function_error("bandwidth_func"," does not support data with dimensions greater than four.");
+    return;
+  } //if
+
+  //Make sure that Type of response is valid
+  decl Type = if (inType == NULL) then 0 else inType;
+  if (Type) {
+    if (Type < 0 || Type > 3) {
+      print_function_error("bandwidth_func"," Third argument, Type valid range is [0:3]");
+      return;
+    } //if
+    //For Bandstop
+    if (Type == 1)
+      data = -data;
+  } //if
+
+  decl retval;
+  decl s_size_all, i;
+
+  if (iSweepDim == 1 )
+    retval=__calculate_bandwidth(data, bw_value, Type);
+
+  if (iSweepDim == 2 ) {
+    s_size_all=sweep_size(data);
+    decl ssize=s_size_all(1);
+    decl x=data[::,0];
+    for (i = 0; i < ssize ; i++)
+      x[i]=__calculate_bandwidth(data[i,::],bw_value, Type);
+    retval=x;
+  } //if
+
+  if (iSweepDim == 3) {
+    s_size_all=sweep_size(data);
+    decl ssize_1=s_size_all(1);
+    decl ssize_2=s_size_all(2);
+    decl x=data[::,::,0];
+    decl p1,p2;
+    for( p1 = 0; p1 < ssize_1 ; p1++ ) {
+      for( p2 = 0; p2 < ssize_2 ; p2++ )
+        x[p1,p2]=__calculate_bandwidth(data[p1,p2,::],bw_value, Type);
+    } //for
+    retval=x;
+  } //if
+
+  if (iSweepDim == 4) {
+    s_size_all=sweep_size(data);
+    decl ssize_1=s_size_all(1);
+    decl ssize_2=s_size_all(2);
+    decl ssize_3=s_size_all(3);
+    decl x=data[::,::,::,0];
+    decl p1,p2,p3;
+    for( p1 = 0; p1 < ssize_1 ; p1++ ) {
+      for( p2 = 0; p2 < ssize_2 ; p2++ ) {
+        for(p3 = 0; p3 < ssize_3 ; p3++)
+          x[p1,p2,p3]=__calculate_bandwidth(data[p1,p2,p3,::],bw_value, Type);
+      } //for
+    } //for
+    retval=x;
+  } //if
+  return retval;
+} //fun - bandwidth
+
+//************************************************************************************
+//Find the bandwidth for a single dimension
+defun __calculate_bandwidth(data, bw_value, Type)
+{
+  decl MaxValue=max(data);
+  decl SearchValue=MaxValue-abs(bw_value);
+  //For HP response
+  if (Type == 3)
+    SearchValue = MaxValue;
+  decl LowerFreqIdx;
+  decl NrPoints=sweep_size(data);
+  decl i, above_limit;
+  decl UpperFreqIdx;
+  decl idep=indep(data); //freq
+
+  decl deltaValue, deltaIndep;
+  decl LowerIndep,UpperIndep;
+  decl iteration;
+
+  // First iteration starts with the maximum value and backs off bw_value to find
+  // the lower/upper point. Second iteration uses the linear center frequency
+  // between the lower and upper point as the new search value.
+  // This method works better for non-ideal filters where you might have a peak
+  // not at the center frequency.
+  
+  for (iteration = 0; iteration < 2 ; iteration++ ) {
+    // Find the first data point that is above the SearchValue
+    // starting from the first point in the dataset.
+    above_limit=0;
+    LowerFreqIdx=0;
+    if (Type >= 0 && Type <= 2) {
+      for (i = 0; i < NrPoints ; i++) {
+        if (data[i] > SearchValue && above_limit == 0) {
+          LowerFreqIdx=i;
+          break;
+        } //if
+      } //for
+    }
+    else {
+      for (i = 0; i < NrPoints ; i++) {
+        if (data[i] >= SearchValue && above_limit == 0) {
+          LowerFreqIdx=i;
+          break;
+        } //if
+      } //for
+    }
+
+    // Linear interpolation of the lower independent value - LowerIndep
+    decl bStat = 0;
+    if (Type == 3) {
+      if (data[LowerFreqIdx] >= SearchValue)
+        bStat = 1;
+    }
+    else {
+      if (data[LowerFreqIdx] > SearchValue)
+    bStat = 1;
+    }
+    if (bStat == 1) {
+      if (LowerFreqIdx > 0) {
+        deltaValue = data[LowerFreqIdx] - data[LowerFreqIdx - 1];
+        deltaIndep = idep[LowerFreqIdx] - idep[LowerFreqIdx - 1];
+        LowerIndep = idep[LowerFreqIdx] - ((data[LowerFreqIdx]-SearchValue)/deltaValue * deltaIndep);
+      }
+      //If data point is the first in the list
+      else
+        LowerIndep = idep[LowerFreqIdx];
+    } //if
+    else
+      LowerIndep=0;
+
+    above_limit=0;
+    UpperFreqIdx=LowerFreqIdx;
+    if (Type == 3)
+      SearchValue -= abs(bw_value);
+
+    // Find the first point that is below the SearchValue
+    // starting from the lower limit.
+    if (Type >= 0 && Type <= 2) {
+      for(i = LowerFreqIdx + 1; i < NrPoints ; i++) {
+        if ( data[i] < SearchValue && above_limit == 0) {
+          UpperFreqIdx=i;
+          break;
+        } //if
+      } //for
+    }
+    //For HP, find the fL
+    else {
+      for (i = LowerFreqIdx; i >= 0 ;i--) {
+        if ( data[i] <= SearchValue && above_limit == 0) {
+          UpperFreqIdx=i;
+          break;
+        } //if
+      } //for
+    }
+
+    // Linear interpolation of the upper independent value
+    if (data[UpperFreqIdx] < SearchValue) {
+      deltaValue=data[UpperFreqIdx - 1]- data[UpperFreqIdx];
+      deltaIndep=idep[UpperFreqIdx]-idep[UpperFreqIdx - 1];
+      UpperIndep=idep[UpperFreqIdx - 1] + ((data[UpperFreqIdx - 1]-SearchValue)/deltaValue * deltaIndep);
+    }
+    else
+       UpperIndep=idep[UpperFreqIdx];
+
+    // Set the centerpoint value as the new search value for
+    // the iterative loop
+    SearchValue=data[LowerFreqIdx + int((UpperFreqIdx-LowerFreqIdx)/2)] - abs(bw_value);
+
+    //For LP || HP response, don't do another iteration
+//    if (Type == 2 || Type == 3)
+      break;
+  } //for
+
+  return abs(UpperIndep-LowerIndep);
+} ///fun - __calculate_bandwidth
+
+//************************************************************************************
+/*BEGIN_DOC
+FUN_NAME: center_freq()
+FUN_DESCRIPTION: Returns the center frequency at the specified level as a real number. 
+Typically used in filter application to calculate the center frequency at 1, 3 dB bandwidth.
+RETURNED_VALUE: Real
+CATEGORY: S-Parameter
+EXAMPLE:
+We assume that a S-Parameter analysis has been performed.
+
+fc3 = center_freq(db(S21), 3) returns the center frequency using the 3dB point as reference
+
+SYNTAX: fc = center_freq(Data, ReferenceBW)
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION: data (usually gain) to find the center frequency
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: ReferenceBW
+  ARG_DESCRIPTION: a single value representing the reference bandwidth
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: None
+NOTES:  This function returns the center frequency of a filter response.
+
+Linear interpolation is done between data points. It uses an iterative
+process to find the bandwith on non-ideal responses.  
+
+Data can be from 1 to 4 dimensions.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: July.2003
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+defun center_freq(data, bw_value)
+{
+  decl iSweepDim = sweep_dim(data);
+  if (iSweepDim <= 0 || iSweepDim > 4) {
+    print_function_error("center_freq"," does not support data with dimensions greater than four.");
+    return;
+  } //if
+
+  decl retval;
+  decl s_size_all, i;
+
+  if (iSweepDim == 1)
+     retval=__calculate_center_freq(data, bw_value);
+
+  if (iSweepDim == 2) {
+    s_size_all=sweep_size(data);
+    decl ssize=s_size_all(1);
+    decl x=data[::,0];
+    for( i = 0; i < ssize ; i++ )
+      x[i]=__calculate_center_freq(data[i,::],bw_value);
+    retval=x;
+  } //if
+
+  if (iSweepDim == 3) {
+    s_size_all=sweep_size(data);
+    decl ssize_1=s_size_all(1);
+    decl ssize_2=s_size_all(2);
+    decl x=data[::,::,0];
+    decl p1,p2;
+    for( p1 = 0; p1 < ssize_1 ; p1++ ) {
+      for( p2 = 0; p2 < ssize_2 ; p2++ )
+        x[p1,p2]=__calculate_center_freq(data[p1,p2,::],bw_value);
+    } //for
+    retval=x;
+  } //if
+
+  if (iSweepDim == 4) {
+    s_size_all=sweep_size(data);
+    decl ssize_1=s_size_all(1);
+    decl ssize_2=s_size_all(2);
+    decl ssize_3=s_size_all(3);
+    decl x=data[::,::,::,0];
+    decl p1,p2,p3;
+    for( p1 = 0; p1 < ssize_1 ; p1++ ) {
+      for( p2 = 0; p2 < ssize_2 ; p2++ ) {
+        for( p3 = 0; p3 < ssize_3 ; p3++ )
+          x[p1,p2,p3]=__calculate_center_freq(data[p1,p2,p3,::],bw_value);
+      } //for
+    } //for
+     retval=x;
+  } //if
+  return retval;
+} //fun - center_freq
+
+//Find the center frequency for a single dimension
+defun __calculate_center_freq(data, bw_value)
+{
+  decl MaxValue=max(data);
+  decl SearchValue=MaxValue-abs(bw_value);
+  decl LowerFreqIdx;
+  decl NrPoints=sweep_size(data);
+  decl i, above_limit;
+  decl UpperFreqIdx;
+  decl idep=indep(data);
+
+  decl deltaValue, deltaIndep;
+  decl LowerIndep,UpperIndep;
+
+  decl iteration;
+
+  // First iteration starts with the maximum value
+  // and backs off bw_value to find the lower/upper
+  // point. Second iteration uses the linear center
+  // frequency between the lower and upper point as
+  // the new search value.
+  //
+  // This method works better for no ideal filters
+  // where you might have a peak not at the center
+  // frequency.
+  //
+  for( iteration = 0; iteration < 2 ; iteration++ ) {
+    // Find the first point that is above the SearchValue
+    // starting from the first point in the dataset.
+    above_limit=0;
+    LowerFreqIdx=0;
+    for( i = 0; i < NrPoints ; i++ ) {
+      if ( data[i] > SearchValue && above_limit == 0) {
+        LowerFreqIdx=i;
+        i=NrPoints; // Bail out of the loop
+      } //if
+    } //for
+
+    // Linear interpolation of the lower independent value
+    if ( data[LowerFreqIdx] > SearchValue ) {
+      if (LowerFreqIdx > 0) {
+        deltaValue=data[LowerFreqIdx]-data[LowerFreqIdx - 1];
+        deltaIndep=idep[LowerFreqIdx]-idep[LowerFreqIdx - 1];
+        LowerIndep = idep[LowerFreqIdx] - ((data[LowerFreqIdx]-SearchValue)/deltaValue * deltaIndep);
+      }
+      //If data point is the first in the list
+      else
+        LowerIndep = idep[LowerFreqIdx];
+    }
+    else
+      LowerIndep=0;
+
+    above_limit=0;
+    UpperFreqIdx=LowerFreqIdx;
+
+    // Find the first point that is below the SearchValue
+    // starting from the lower limit.
+    for( i = LowerFreqIdx + 1; i < NrPoints ; i++ ) {
+      if ( data[i] < SearchValue && above_limit == 0) {
+        UpperFreqIdx=i;
+        i=NrPoints; // Bail out of the loop
+      } //if
+    } //for
+
+    // Linear interpolation of the upper independent value
+    if ( data[UpperFreqIdx] < SearchValue ) {
+      deltaValue=data[UpperFreqIdx - 1]- data[UpperFreqIdx];
+      deltaIndep=idep[UpperFreqIdx]-idep[UpperFreqIdx - 1];
+      UpperIndep=idep[UpperFreqIdx - 1] + ((data[UpperFreqIdx - 1]-SearchValue)/deltaValue * deltaIndep);
+    }
+    else
+       UpperIndep=idep[UpperFreqIdx];
+
+    // Set the centerpoint value as the new search value for
+    // the iterative loop
+    SearchValue=data[LowerFreqIdx + int((UpperFreqIdx-LowerFreqIdx)/2)] - abs(bw_value);
+    break;
+  } //for
+  return (LowerIndep + (UpperIndep-LowerIndep)/2);
+} //fun - __calculate_center_freq
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: remove_noise()
+FUN_DESCRIPTION: Removes noise floor data from noise data and returns an array. 
+RETURNED_VALUE: Array
+CATEGORY: Harmonic Balance
+EXAMPLE: nd = remove_noise(vnoise, noiseFloor) returns the noise data with the noise floor removed
+
+SYNTAX: nd = remove_noise(NoiseData, NoiseFloor)
+ARGUMENT
+  ARG_NAME: NoiseData
+  ARG_DESCRIPTION: Two dimensional array representing noise data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: NoiseFloor
+  ARG_DESCRIPTION: Single dimensional array representing noise floor
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: None
+NOTES: NoiseData is [m,n] where m is receive frequency and n is
+interference offset frequency. If NoiseData is [m,n], NoiseFloor must be [m].
+If NoiseData minus NoiseFloor is less than zero, then -200 dBm is used.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies (initial source from Customer)
+DATE: July.2003
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+defun remove_noise(NoiseData, NoiseFloor)
+{
+  decl iSweepDim = sweep_dim(NoiseData);
+  if (iSweepDim != 2) {
+    print_function_error("remove_noise"," NoiseData must be of 2 dimensions.");
+    return;
+  } //if
+  if (sweep_dim(NoiseFloor) != 1) {
+    print_function_error("remove_noise"," NoiseFloor must be of 1 dimension.");
+    return;
+  } //if
+  decl index = sweep_size(NoiseData[0]);
+  decl offsets = sweep_size(NoiseData[0,::]);
+  decl array = NoiseData;
+  decl i, j ;
+
+  for (i=0; i<=(index - 1); i++) {
+    for (j=0;j<=(offsets - 1);j++) {
+      array[i,j] = NoiseData[i,j]-NoiseFloor[i];
+      // If (NoiseData) < 0, set very small number
+      if (array[i,j] < 0)
+        array[i,j] = 1e-23;
+    } //for
+  } //for
+  return array;
+} //fun - remove_noise
+
+//***************************************************************************
+/* Not for external use or customer documentation */
+/*BEGIN_DOC
+FUN_NAME: phase_margin()
+FUN_DESCRIPTION: Returns phase margin
+MAKE_PUBLIC: False
+RETURNED_VALUE: Real
+CATEGORY: AC, S-Parameter
+EXAMPLE: pm = phase_margin(OL_Gain) returns the phase margin
+
+SYNTAX: pm = phase_margin(data)
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION: data in complex form (representing magnitude and phase)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: gain_margin()
+NOTES:
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: August.2004
+VERSION_CREATED: ADS 2005A
+END_DOC*/
+
+/*! Calculates phase margin
+ *  @param data multi-dimensional data in complex form representing mag and phase
+ *  @return phase margin
+*/
+defun phase_margin(data)
+{
+  return __calculate_gain_phase_margin(__calculate_phase_margin, data);
+} //fun - phase_margin
+
+//************************************************************************************
+/*! Common internal function called by phase_margin() and gain_margin()
+ *  to calculate the phase margin and gain margin
+ *  @param marginFunction name of the function to be called for calculating phase or gain margin
+ *  @param data multi-dimensional data in complex form representing mag and phase
+ *  @return phase or gain margin
+*/
+defun __calculate_gain_phase_margin(marginFunction, data)
+{
+  decl iSweepDim = sweep_dim(data);
+  if (iSweepDim <= 0 || iSweepDim > 5) {
+    print_function_error("phase_margin or gain_margin"," does not support data with dimensions greater than five.");
+    return;
+  } //if
+
+  decl retval;
+  decl s_size_all;
+
+  if (iSweepDim == 1 )
+    retval=marginFunction(data);
+
+  if (iSweepDim == 2 ) {
+    s_size_all=sweep_size(data);
+    decl ssize=s_size_all(1);
+    decl x=mag(data[::,0]);
+    decl iDC;
+    for (iDC = 0; iDC < ssize ; iDC++)
+      x[iDC]=marginFunction(data[iDC,::]);
+    retval=x;
+  } //if
+
+  if (iSweepDim == 3) {
+    s_size_all=sweep_size(data);
+    decl ssize_1=s_size_all(1);
+    decl ssize_2=s_size_all(2);
+    decl x=mag(data[::,::,0]);
+    decl p1,p2;
+    for( p1 = 0; p1 < ssize_1 ; p1++ ) {
+      for( p2 = 0; p2 < ssize_2 ; p2++ )
+        x[p1,p2]=marginFunction(data[p1,p2,::]);
+    } //for
+    retval=x;
+  } //if
+
+  if (iSweepDim == 4) {
+    s_size_all=sweep_size(data);
+    decl ssize_1=s_size_all(1);
+    decl ssize_2=s_size_all(2);
+    decl ssize_3=s_size_all(3);
+    decl x=mag(data[::,::,::,0]);
+    decl p1,p2,p3;
+    for( p1 = 0; p1 < ssize_1 ; p1++ ) {
+      for( p2 = 0; p2 < ssize_2 ; p2++ ) {
+        for(p3 = 0; p3 < ssize_3 ; p3++)
+          x[p1,p2,p3]=marginFunction(data[p1,p2,p3,::]);
+      } //for
+    } //for
+    retval=x;
+  } //if
+
+  if (iSweepDim == 5) {
+    s_size_all=sweep_size(data);
+    decl ssize_1=s_size_all(1);
+    decl ssize_2=s_size_all(2);
+    decl ssize_3=s_size_all(3);
+    decl ssize_4=s_size_all(4);
+    decl x=mag(data[::,::,::,::,0]);
+    decl p1,p2,p3,p4;
+    for(p1 = 0; p1 < ssize_1; p1++)
+      for(p2 = 0; p2 < ssize_2; p2++)
+        for(p3 = 0; p3 < ssize_3; p3++)
+          for(p4 = 0; p4 < ssize_4; p4++)
+            x[p1,p2,p3,p4]=marginFunction(data[p1,p2,p3,p4,::]);
+    retval=x;
+  } //if
+  return retval;
+} //fun - __calculate_gain_phase_margin
+
+//************************************************************************************
+/*! Calculates phase margin for a single dimension
+ *  @param data multi-dimensional data in complex form representing mag and phase
+ *  @return phase margin
+*/
+defun __calculate_phase_margin(data)
+{
+  //Find index of values at zero crossing or for absolute value of 1
+  decl ind = find(mag(data) < 1);
+  decl ind1 = ind[0];
+
+  //If there is a zero crossing 
+  if (ind1 != -1) {
+    decl pm;
+    //If there are atleast two values, interpolate
+    if (ind1 >= 1) {
+      decl GVs = data[ind1-1::1::ind1];
+      pm = 180+(((1-mag(GVs[0]))*(phase(GVs[1])-phase(GVs[0])))/(mag(GVs[1])-mag(GVs[0])))+phase(GVs[0]);
+    }
+    else {
+      decl phV = phase(data);
+      decl phK = phV[ind1];
+      pm = if (phK < 0) then phK+180 else phK-180;
+    }
+    return pm;
+  } //if
+  return NULL;
+} //fun - __calculate_phase_margin
+
+//***************************************************************************
+/* Not for external use or customer documentation */
+/*BEGIN_DOC
+FUN_NAME: gain_margin()
+FUN_DESCRIPTION: Returns gain margin
+MAKE_PUBLIC: False
+RETURNED_VALUE: Real
+CATEGORY: AC, S-Parameter
+EXAMPLE: pm = gain_margin(OL_Gain) returns the gain margin
+
+SYNTAX: gm = gain_margin(data)
+ARGUMENT
+  ARG_NAME: Data
+  ARG_DESCRIPTION: data in complex form (representing magnitude and phase)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/rf_system_fun.ael 
+SEE ALSO: phase_margin()
+NOTES:
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: August.2004
+VERSION_CREATED: ADS 2005A
+END_DOC*/
+
+/*! Calculates gain margin
+ *  @param data multi-dimensional data in complex form representing mag and phase
+ *  @return gain margin
+*/
+defun gain_margin(data)
+{
+  return __calculate_gain_phase_margin(__calculate_gain_margin, data);
+} //fun - gain_margin
+
+//************************************************************************************
+/*! Calculates gain margin for a single dimension
+ *  @param data multi-dimensional data in complex form representing mag and phase
+ *  @return gain margin
+*/
+defun __calculate_gain_margin(data)
+{
+  //Find index of values at -180 crossing
+  decl ind = find(unwrap(phase(data)) < -180);
+  decl ind1 = ind[0];
+
+  //If there is a -180 crossing 
+  if (ind1 != -1) {
+    decl gm;
+    //If there are atleast two values, interpolate
+    if (ind1 >= 1) {
+      decl GMagVs = mag(data[ind1-1::1::ind1]);
+      decl GPhVs = unwrap(phase(data[ind1-1::1::ind1]));
+      gm = -(((-180-GPhVs[0])*(dB(GMagVs[1]) - dB(GMagVs[0]))/(GPhVs[1]-GPhVs[0])) + dB(GMagVs[0]));
+    }
+    else {
+      gm = -dB(data[ind1]);
+    }
+    return gm;
+  } //if
+  return NULL;
+} //fun - __calculate_gain_margin
+
+//************************************************************************************
+// TFS 98951
+defun phasewrap(value, units)
+{
+    // process the input, units is optional
+    if (listlen(arg_list()) <= 0)
+    {
+        print_function_error("phasewrap", " The phasewrap expression must have an input value representing the phase.\n");
+        return;
+    }
+
+    decl rawPhaseD = 0.0;
+    rawPhaseD = value;
+    decl unitsDegree = TRUE;
+
+    if (units)
+    {
+        if (strcmp(units, "deg") == 0)
+            unitsDegree = TRUE;
+        else if (strcmp(units, "rad") == 0)
+            unitsDegree = FALSE;
+        else
+        {
+            print_function_error("phasewrap", " The units parameter for the phasewrap expression is optional\nyet it can only be \"deg\" for degrees, or \"rad\" for radians.");
+            return;
+        }
+    }
+
+    decl newPhaseD = 0.0;
+    decl phaseEps = 1e-12;
+    decl twoPI = 2*PI;
+    decl newPhaseI = 0;
+
+    newPhaseD = rawPhaseD;
+    //Wrap supplied phase around anti-clockwise around phase circle using logic:
+    //for +ve valued phase, subtract integer (number of rotations) from rawvalue.
+    //for -ve valued phase, add integer (number of rotations less 1) to rawvalue.
+    //If wrapped value comes within a small fraction of wrapping point, return absolute zero.
+
+    if (unitsDegree)
+    {
+        newPhaseD -= ( (newPhaseD > 0) ? ( int(newPhaseD/360.0) * 360.0 ) : ( ceil(newPhaseD/360.0 - 1) * 360.0) );
+        // If newPhaseD is too close to absolute value of 0 or 360 force it to zero
+        if ( (abs(newPhaseD) < phaseEps) || (abs(newPhaseD - 360.0) < phaseEps) )
+            newPhaseD = 0.0;
+    }
+    else
+    {
+        newPhaseD -= ( (newPhaseD > 0) ? ( int(newPhaseD/twoPI) * twoPI ) : ( ceil(newPhaseD/twoPI - 1) * twoPI ) );
+        // If newPhaseD is too close to absolute value of 0 or twoPI force it to zero 
+        if ( (abs(newPhaseD) < phaseEps) || (abs(newPhaseD - twoPI) < phaseEps) )
+            newPhaseD = 0.0;
+    }
+
+    // Note from now on, newPhaseD is always a non-negative number
+    // so store as real if significant truncation residual is left
+    // else store as integer.
+
+    newPhaseI = int( newPhaseD );
+    if ( newPhaseD - newPhaseI > phaseEps )
+        return newPhaseD;
+    else
+        return newPhaseI;
+}
+
+// NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+
+
+
+
+
+

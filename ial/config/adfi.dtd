@@ -1,0 +1,236 @@
+<!-- Copyright 1983 Keysight Technologies, Inc -->
+
+<!ELEMENT AdfiToAds (AdfiComponent*,abl:ABLRoot?)>
+<!-- adfi files use various existing ADS utilities to complete an import into into ADS or EMPro with the intention of performing a EM simulation -->
+<!-- adfi file starts with AdfiToAds root element and consists of a sequence of AdfiComponent elements representing the components in a design -->
+<!-- an optional section in the EEDFI format can be included -->
+
+<!ELEMENT abl:ABLRoot (#PCDATA)>
+<!-- defined by schema definition -->
+<!-- experimental usage of the new format for exchange of design data with ADS (used for technology definition) -->
+
+<!ATTLIST AdfiToAds 
+       tool CDATA #REQUIRED
+       adfiVersion CDATA #REQUIRED
+       adfiTarget (ads|empro) "ads">
+<!-- tool = describes the tool of origin of this file i.e. allegro, cdnsip -->
+<!-- adfiVersion = the version of the exported file format as defined by ial build version i.e 4.x.x -->
+<!-- adfiTarget = empro or ads platform depending on used features of which are only available in one of the platforms, if not present assume the file is valid for both -->
+
+<!ELEMENT AdfiComponent (Name,Type,Units?,Substrate?,Geometry2D*,Geometry3D*,Ports?,Instances?,RefLocation?,ComponentParms?)>
+<!-- basic building block of hierarchical import of designs in adfi format -->
+<!-- every component must be defined before use in a later component as instance -->
+
+<!ATTLIST AdfiComponent
+       id ID #REQUIRED
+       top (true|false) "false"
+       main (true|false) "false">
+<!-- id = unique components name in the import library -->
+<!-- top = defines the one top component which defines the process (layers, display data, etc ) for all the components to import -->
+<!-- main = defines the main interconnect layout to import this is the board, module, package not the mounted components -->
+
+<!ELEMENT Type (#PCDATA)>
+<!-- component type specification string like BOARD, DISCRETE, IC, PACKAGE, etc. -->
+<!-- used to determine how to process components for assembly, symbol generation, model attachment -->
+
+<!ELEMENT Name (#PCDATA)>
+<!-- component name string is when different from the id attached as parameter to the component in ADS -->
+
+<!ELEMENT Units (Unit*)>
+<!ELEMENT Unit EMPTY>
+<!ATTLIST Unit
+        key CDATA #REQUIRED
+        value CDATA #IMPLIED>
+<!-- component unit settings contain currently only Unit element for -->
+<!-- drawing_units key value pair (values can be m, mm, um, pm, mil, inch) -->
+<!-- drawing_resolution key value pair -->
+<!-- currently only the value in the top level component is used -->
+
+<!ELEMENT Substrate (SubstrateName?,SubstrateFile?,SubstrateData?,SubstrateLayerData?)>
+<!-- substrate technology of a component -->
+<!ELEMENT SubstrateName (#PCDATA)>
+<!-- optional name of the substrate to use if not specified component id is used -->
+<!ELEMENT SubstrateFile (#PCDATA)>
+<!ATTLIST SubstrateFile
+       substrateFileType (ltdFile|slmFile) "ltdFile">
+<!-- SubstrateFile element references a file of the particular file type specified by substrateFileType attribute -->
+<!-- an ltd file can be created with the eesofsubed tool see:  -->
+<!-- http://edadocs.software.keysight.com/display/ggtools440/Substrate+File+Definitions for documentation -->
+<!ELEMENT SubstrateData (#PCDATA)>
+<!ATTLIST SubstrateData 
+       substrateDataType (ltd|tch|slm) "ltd">
+<!-- SubstrateData needs to contains a CDATA section in the format specified by the substrateDataType attribute -->
+
+<!ELEMENT SubstrateLayerData (SubstrateLayer*)>
+<!ELEMENT SubstrateLayer (LayerName,LayerColor?,Parameter*)>
+<!ELEMENT LayerName (#PCDATA)>
+<!ELEMENT LayerColor EMPTY>
+<!ATTLIST SubstrateLayer
+       id ID #REQUIRED
+>
+<!ATTLIST LayerColor
+       id ID #REQUIRED
+       r CDATA #REQUIRED
+       g CDATA #REQUIRED
+       b CDATA #REQUIRED
+>
+<!-- for ADS 2011 and higher (ADS import kit > 3.1), an adfi document needs to contain in the substrate of the top component a SubstrateLayerData element -->
+<!-- this element is describing the display specification of the layers for ADS -->
+<!-- color is defined by the LayerColor rgb specification -->
+<!-- Parameter key value pairs can be added to specify alpha, trans (transparancy), fill (outline, area or both), pattern, line (line pattern)  -->
+<!-- See ADS layer specification for parameters settings -->
+
+<!ELEMENT Geometry2D (#PCDATA)>
+<!ATTLIST Geometry2D
+       geometry2DType (egsFile|egs|direct) "egs"
+       geometry2DOp   (process|archive) "archive">
+<!-- Geometry2D contains mask driven layout descriptions information or reference to such information -->
+<!-- geometry2DType specifies the type of the following content -->
+<!-- geometry2DType = egs means a in egs format CDATA section is following -->
+<!--    geometry2DOp = archive contains the egs mask layout description for this component only -->
+<!--    geometry2DOp = process is needed in the top level component provide the EGS process specifications for all components in this adfi file -->
+<!--  -different egs sections of various components are enclosed with a component name specification and concatinated for import -->
+<!--  -instantiation is not done using egs sections -->
+<!-- geometry2DType = egsFile uses an external file reference to an egs file -->
+<!-- geometry2DType = direct is followed needs to contain one or more Figures elements -->
+
+<!ELEMENT Figures (Circle*,Trace*,Polyline*,Polygon*,Via*)>
+<!ELEMENT Circle (Layer,Radius,XY)>
+<!ELEMENT Trace (Layer,Width,Radius,XY*)>
+<!ELEMENT Polyline (#PCDATA)>
+<!ELEMENT Polygon (Layer,Outline,Hole*)>
+<!ELEMENT OAVias (ViaName,XY*)>
+<!ATTLIST Figures
+        version CDATA #IMPLIED>
+<!-- Figures elements are experimental for export with ADS 2011 or later -->
+<!-- need to specify adfiTarget=ads and will not work with EMPro -->
+<!-- Allows to use the ADS 2011 drawing objects directly but -->
+<!-- OAVias only work for when a BALLVIA component is defined in the library -->
+
+<!ELEMENT ViaName (#PCDATA)>
+<!-- OAVias only work when a BALLVIA component cell is defined in the ADFI library -->
+<!-- This is cell used as via connection between two layers it is picked up by the viaName during placement in layout -->
+
+<!ELEMENT Outline (Vertices,Bulges)>
+<!ELEMENT Hole (Vertices, Bulges)>
+<!ELEMENT Vertices (#PCDATA)>
+<!ELEMENT Bulges (#PCDATA)>
+<!-- Polygon elements are experimental for export with ADS 2011.10 or later -->
+<!-- need to specify adfiTarget=ads and will not work with EMPro -->
+<!-- Outline is a single outer contour of a polygon -->
+<!-- Hole is a single contour of a polygon -->
+<!-- Vertices contain a CDATA list x y locations in counter clockwise order (positive) -->
+<!-- Bulges contains a CDATA list for each segment defined by the verices list the bulge factor of the arc -->
+<!-- See http://www.descarta2d.com/BookHTML/Chapters/arc.html -->
+<!-- Straight segments have bulge factor 0.0 -->
+<!-- Determine the angle turned by the arc, divide by 4, take tangent of angle -->
+<!-- Positive angles are counterclockwise, negative are clockwise (right hand rule) -->
+<!-- A positive bulge will always be to your right as you travel along a line going from one point to the next -->
+
+<!ELEMENT Geometry3D (#PCDATA)>
+<!ATTLIST Geometry3D
+       geometry3DType CDATA #REQUIRED>
+<!ELEMENT wire_profile_set (#PCDATA)>
+<!-- experimental for use with 3D import, currently ignored by ADS -->
+<!--   geometry3DType = cdnwb provides a set of Cadence APD or SiP wire profile fragments -->
+
+<!ELEMENT Ports (PortDescription*)>
+<!-- Ports element contains Pin and/or EM Port description of a component -->
+<!ELEMENT PortDescription (PinName,PortNumber?,PinNumber,Layer,NetName,Location,Rotation?,PinType?,RePortZ?,ImPortZ?,PortOffset?,PortName?,PosNeg?,PinArea?)>
+<!-- PortDescription describes one pin with PinName, PinNumber, Location, Rotation and the optional PinArea as a polygon -->
+<!-- When used in to describe an EM port a PortDescription gets additional elements like PortNumber, PinType, optional PortName, Real and Imaginary ref. impedance, Offset distance -->
+
+<!ELEMENT PinName (#PCDATA)>
+<!-- PortDescription with particular PinName can occur only 1 time for PinType=+1 but multiple times if PinType=-1 -->
+
+<!ELEMENT Layer (LayerName,LayerNumber)>
+<!ELEMENT LayerNumber (#PCDATA)>
+<!-- Layer where pin is placed by name and number -->
+
+<!ELEMENT PortNumber (#PCDATA)>
+<!-- PortNumber only needed when EM port is described used to associate the correct positive and negative terminals of a port -->
+<!ELEMENT PinNumber (#PCDATA)>
+<!-- Unique PinNumber of the Pin -->
+<!ELEMENT NetName (#PCDATA)>
+<!-- NetName of the net this pin is attached to inside this component -->
+<!ELEMENT PinType (#PCDATA)>
+<!-- PinType for positive or negative ref. pin of an EM port -->
+<!ELEMENT RePortZ (#PCDATA)>
+<!-- RePortZ real part of reference port impedance if used a port, default 50 -->
+<!ELEMENT ImPortZ  (#PCDATA)>
+<!-- ImPortZ imaginary part of reference port impedance if used a port -->
+<!ELEMENT PortOffset (#PCDATA)>
+<!-- PortOffset is ref plane shift for calibrated EM port -->
+<!ELEMENT PortName (#PCDATA)>
+<!-- PortName suggested EM port name on exporting tool side (only used as documentation parameter) -->
+<!ELEMENT PosNeg (#PCDATA)>
+<!-- PosNeg additional count positive and negative pins -->
+<!ELEMENT PinArea (#PCDATA)>
+<!ATTLIST PinArea
+       pinAreaType (egs|direct) "egs">
+<!-- PinArea define a polygon (no holes) or circle on mask Layer defining the area pin -->
+<!--   pinAreaType="egs" uses an EGS polygon or circle fragment enclosed in a CDATA section -->
+<!--   pinAreaType="direct" experimental with native ADS 2011 drawing objects valid for area pins -->
+
+<!ELEMENT Instances (Instance*)>
+<!-- Instances contains list of instantiated components in the current component -->
+<!ELEMENT Instance (Component, Location?, Rotation?, SubstrateMerges?, InstanceParms?)>
+<!ATTLIST Instance
+       id ID #REQUIRED>
+<!-- Instance attribute id contains the reference designator of the component instance -->
+<!ELEMENT Component (#PCDATA)>
+<!-- Component contains the name of a defined component in the adfi file or an SBOND bondwire component -->
+<!-- SBOND are the only components which are automatically replace with ads_tlines components -->
+
+<!ELEMENT RefLocation EMPTY>
+<!ATTLIST RefLocation 
+        x CDATA #REQUIRED
+        y CDATA #REQUIRED>
+<!-- Defines for a Component the x,y location of the origin of the component -->
+<!-- In ADS usually the position of pin 1 -->
+
+<!ELEMENT Location EMPTY>
+<!ATTLIST Location 
+        x CDATA #REQUIRED
+        y CDATA #REQUIRED>
+<!-- Defines the x,y location of the placed instance -->
+
+<!ELEMENT SubstrateMerges (MergeAtInterface, MergeUseComponentInterface)>
+<!-- Elements which describes how respective substrates need to be combined -->
+<!ELEMENT MergeAtInterface (#PCDATA)>
+<!ATTLIST MergeAtInterface
+       mergeDirection (up|down) "up">
+<!-- Interface layer name of component substrate where the current instance substrate needs to be merged in -->
+<!--   mergeDirection specifies if the instance substrate must be up or down configured -->
+<!ELEMENT MergeUseComponentInterface (#PCDATA)>
+<!-- Interface layer for the instance stubstrate when not identical to the component substrates layer -->
+<!-- Experimental mode which is only supported for up and/or down additions of a single substrate above or below the top level substrate using the outer interface layers -->
+
+<!ELEMENT Parameter EMPTY>
+<!ATTLIST Parameter
+        key CDATA #REQUIRED
+        value CDATA #IMPLIED>
+<!-- generic parameter element defined as key value attribute pair -->
+
+<!ELEMENT ComponentParms (Parameter*)>
+<!-- defines the list of component parameters of a component and when available the default value of the parameter -->
+<!ELEMENT InstanceParms (Parameter*)>
+<!-- inside instance specification this defines the actual instance values of the earlier defined component parameters -->
+
+<!ELEMENT XY EMPTY>
+<!ATTLIST XY 
+        x CDATA #REQUIRED
+        y CDATA #REQUIRED>
+<!-- used for x,y coordinate elements -->
+
+<!ELEMENT Rotation EMPTY>
+<!ATTLIST Rotation
+        phi CDATA #REQUIRED>
+<!-- angle element used to define the arrow angle of pins and rotation of components with respect to the x-axis through ref. location of pin, component -->
+
+<!ELEMENT Radius EMPTY>
+<!ATTLIST Radius
+        r CDATA #REQUIRED>
+<!ELEMENT Width EMPTY>
+<!ATTLIST Width
+        w CDATA #REQUIRED>

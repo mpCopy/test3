@@ -1,0 +1,664 @@
+// Copyright Keysight Technologies 1999 - 2014  
+/*******************************************************************
+Function: __completeSum()
+Warning: This is an internal function for plot_vs do not use.
+Which does not consider pre-conditions.
+NOTE: Not intended for Customer use.  The name, arguments or functionality 
+of this function could be changed in future releases.
+Future new implementations may not guarantee backward compatibility
+if used in Customer written functions.
+*******************************************************************/
+defun __completeSum(a)
+{
+  decl y = sweep_dim(a);
+  while(y>=0){
+    a = sum(a);
+    y = y-1;
+  }
+  return a;
+}
+
+
+/*******************************************************************
+Function: __checkSimilarity()
+NOTE: Not intended for Customer use.  The name, arguments or functionality 
+of this function could be changed in future releases.
+Future new implementations may not guarantee backward compatibility
+if used in Customer written functions.
+*******************************************************************/
+defun __checkSimilarity(A,B){
+  decl dimA = sweep_dim(A);
+  decl dimB = sweep_dim(B);
+
+  if(dimA > dimB){
+    decl ind = dimA-dimB+1;
+    decl newVar = indep(A+0,ind);
+    decl x = __completeSum(!(newVar == B));
+    decl i;
+    for(i=1;i<dimB;i++){
+      decl Ai = indep(newVar+0,i);
+      decl Bi = indep(B+0,i);
+      x = x + __completeSum(!(Ai == Bi));
+      if(x!=0)
+	return 1;
+    }
+    return 0;
+  }
+  else
+    return 1; 
+}
+
+//**************************************************************************
+/*BEGIN_DOC
+FUN_NAME: plot_vs()
+FUN_DESCRIPTION: Attaches an independent to data for plotting
+RETURNED_VALUE: Integer, Real, Complex
+CATEGORY: Data Access
+SYNTAX: y = plot_vs(dependent, independent) 
+EXAMPLE:
+Example 1:
+a=[1, 2, 3] 
+b=[4, 5, 6]
+c=plot_vs(a, b) 
+Builds c with independent b, and dependent a. 
+
+Example 2:
+Assume that an S-parameter analysis has been done with one swept variable Cval (of say 10 values) for 20 frequency points.  The dependent data dbS11=db(S11) is of 2 dimension and Dependency of [10, 20].  A standard plot would display dbS11 vs freq(the inner independent), for 10 values of Cval.  Instead to plot dbS11 vs Cval, the plot_vs() function can used as follows:
+plot_vs(dbS11, Cval)
+
+To plot dbS11 for half the values of Cval:
+CvalH=Cval/2
+plot_vs(dbS11, CvalH)
+
+Example 3:
+In the example below lets assume that a DC analysis has been done with two independent variables Vgs and Vds, and Ids.i is the dependent variable.  To see a plot of Ids vs Vgs for different values of Vds the data can be plotted as follows:
+plot_vs(Ids.i, Vgs)
+
+ARGUMENT
+  ARG_NAME: dependent
+  ARG_DESCRIPTION: any N-dimensional square data (all inner independents must have the same value N)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: independent
+  ARG_DESCRIPTION: independent variable
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: YES
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/display_fun.ael
+SEE ALSO: indep(), vs(), permute()
+NOTES: When using plot_vs(), the independent and dependent data should be the same size (i.e., not irregular).  This function works as follows:
+* Checks to see if the argument "independent", is an independent of argument "depend" or argument "independent" is dis-similar to independent of argument "depend"
+* If one of the above condition is met, then the data is swapped or sliced, and the new result formed with the argument "independent" is returned.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//**************************************************************************
+defun plot_vs(depend, independent)
+{
+    decl result = NULL;
+    decl depend_dim = sweep_dim(depend);
+    decl indep_dim =  sweep_dim(independent);
+
+    if(indep_dim == 0) //This is because sweep_dim returns 0 if the innermost independent var is a scalar 
+	indep_dim = 1;
+    
+    //If argument independent, is an independent of argument depend OR
+    //argument independent is not similar to independent of argument depend
+    if(is_indep(depend,independent) || (__checkSimilarity(depend,independent) == 0)){
+      //form the permute vector e.g. if depend is 2D the [1,2]
+      // permute_vector[2-1]=1, permute_vector[0]=2-1+1
+      decl permute_vector = [1.0::depend_dim]; 
+      permute_vector[depend_dim-indep_dim]=1;
+      permute_vector[0]=depend_dim-indep_dim+1;
+
+      //permute the depend data i.e re-arrange the dependent data according to the
+      //permute vector e.g. [2,1]
+      result = permute(depend,permute_vector); 
+
+      independent = permute(independent);
+      while( sweep_dim(independent) > 1 )
+        independent = independent[0];
+
+      //form the new result
+      result = vs(result, independent);
+    }     
+    else
+    {
+      result = vs(depend,independent);
+    } 
+
+    if ( result == NULL)
+      print_function_error("plot_vs","Failed to match dependent and independent data");
+    return result;
+}
+
+//**************************************************************************
+/*BEGIN_DOC
+FUN_NAME: contour_polar()
+FUN_DESCRIPTION: Generates contour levels on polar or Smith chart surface data
+RETURNED_VALUE: Complex
+CATEGORY: Data Access
+SYNTAX: y = contour_polar(data, contour_levels, InterpolationType, DataFormat) 
+EXAMPLE:
+a = contour_polar(data_polar, [1::4]) 
+a = contour_polar(data_polar, {1, 2, 3, 4}) 
+produces a set of four equally spaced contours on a polar or Smith chart surface. 
+
+a = contour_polar(data_polar, {1, 2, 3, 4}, 2)
+produces the same set of contours as the above example, but with B-spline interpolation. 
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION:  polar or Smith chart data to be contoured, (and therefore is surface data)
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: contour_levels
+  ARG_DESCRIPTION: one-dimensional quantity specifying the levels of the contours dagger.gif
+  ARG_DEFAULT: six levels equally spaced between the maximum and the minimum of the data
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: InterpolationType
+  ARG_DESCRIPTION: specifies the type of interpolation to perform
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0,1,2] dagger.gif dagger.gif
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: DataFormat
+  ARG_DESCRIPTION: format of swept data
+  ARG_DEFAULT: "RI"
+  ARG_RANGE: "RI", "MA" dbldagr.gif
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES:
+dagger.gif  Normally specified by the sweep generator "[ ]," but can also be specified as a vector
+dagger.gif dagger.gif Interpolation types are: 0 - No Interpolation,1 - Cubic Spline,2 - B-Spline
+dbldagr.gif DataFormat are: "RI" = real-imaginary, "MA" = magnitude-phase
+
+DEFINED_IN: $HPEESOF_DIR/expressions/ael/display_fun.ael
+SEE ALSO: contour()
+NOTES: This function introduces three extra inner independents into the data. The first two are "level", the contour level, and "number", the contour number. For each contour level there may be n contours. The contour is an integer running from 1 to n. The contour is represented as an (x, y) pair with x as the inner independent.
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//**************************************************************************
+defun contour_polar(data, contour_levels, interpolation_type, DataFormat)
+{
+  decl dataFormat = if (DataFormat == NULL) then "RI" else DataFormat;
+  if (dataFormat != "RI" && dataFormat != "MA")
+    print_function_error("contour_polar", "DataFormat can only be RI or MA");
+  
+  decl contour_data=contour(data, contour_levels, interpolation_type);
+
+  decl dRet;
+  if (strcmp(dataFormat, "RI") == 0)
+    dRet = [indep(contour_data)+j*contour_data];
+  else if (strcmp(dataFormat, "MA") == 0)
+    dRet = [polar(indep(contour_data), contour_data)];
+  return dRet;
+} //fun - contour_polar
+
+//***********************************************************************
+/*BEGIN_DOC
+FUN_NAME: contour_ex()
+FUN_DESCRIPTION: Generates contours at desired levels that you specify, or at "round number" values on polar, or rectangular surface data
+RETURNED_VALUE: Complex
+CATEGORY: Data Access
+SYNTAX: Response1_Contours=contour_ex(data, rect_or_polar, step_size, num_lines, desired_levels, interp_type, min_or_max, data_format)
+EXAMPLE: polar contours
+Response1=PAE
+StepSize=1
+Num_Lines=5
+InterpType=2
+Response1_Contours=contour_ex(Response1, StepSize, Num_Lines, [25,30,35], InterpType)
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: 2-dimensional, or 3-dimensional data
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: rect_or_polar
+  ARG_DESCRIPTION: specifies whether to use the contour() or contour_polar() function internally
+  ARG_DEFAULT: "POLAR" or 1
+  ARG_RANGE: (0, 1), or ("RECT", "POLAR")
+             0/"RECT" - use contour(), 1/"POLAR" - use contour_polar()
+  ARG_TYPE: integer/string
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: step_size
+  ARG_DESCRIPTION: step size between contour lines, a single real or integer number
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: num_lines
+  ARG_DESCRIPTION: number of contour lines requested
+  ARG_DEFAULT: 5
+  ARG_RANGE: [1:inf)
+  ARG_TYPE: Real or Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: desired_levels
+  ARG_DESCRIPTION: specific desired contour levels
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real or Integer single value or array
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: interp_type
+  ARG_DESCRIPTION: specifies the type of interpolation to perform
+  ARG_DEFAULT: 2
+  ARG_RANGE: (0, 1, 2)  0 - No Interpolation, 1 - Cubic Spline, 2 - B-Spline
+  ARG_TYPE: integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: min_or_max
+  ARG_DESCRIPTION: boolean variable that specifies whether the contours are to be drawn from the maximum value down or from the minimum value up
+  ARG_DEFAULT: 1
+  ARG_RANGE: (0, 1), or ("Min", "Max")
+            0/"Min", from the minimum value up
+            1/"Max", from the maximum value down
+  ARG_TYPE: integer or string
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: data_format
+  ARG_DESCRIPTION: specifies data format. It is required for the polar contour plot
+  ARG_DEFAULT: "RI"
+  ARG_RANGE: "RI"/"MA"
+  ARG_TYPE: string
+  ARG_REQUIRED: NO
+DEFINED_IN: 
+SEE ALSO: contour_polar() and contour()
+NOTES: This function is similar to contour() and contour_polar() except that it generates "round number" contour levels if you request a 
+particular number of lines and a particular step size.  If you request specific contour levels by entering a number or an array, 
+for example: [25, 30, 35] (contours at 25, 30, and 35) or [20::1::35] (contours at 20, 21, 22, ..., 35) or [20::5::40] (contours 
+at 20, 25, 30, 35, and 40), these values will be used instead of the contour levels that would be 
+generated by values for the step size and number of lines.  If you have entered specific contour levels and none of these contours 
+can be generated, then the values you have entered for the step size and the number of lines will be used, instead.  
+You can see the values of the plotted contours by entering a listing column like this: 
+sort(indep(Response1_Contours[::,0,0]),"descending")
+If the contours are from the minimum up, use "ascending" instead of "descending".
+EXTERNAL: Yes
+AUTHOR: Keysight Technologies
+VERSION_CREATED: ADS 2011.01
+END_DOC*/
+//***********************************************************************
+defun contour_ex(data, rect_or_polar, step_size, num_lines, desired_levels, interp_type, min_or_max, data_format)
+{
+    //data: the input data. Required.
+    if ( data == NULL )
+    {
+        print_function_error( "contour_ex", "'data' can't be empty.");
+        return;
+    }
+
+    decl data_dim = sweep_dim(data);    
+    if ( data_dim != 2 && data_dim !=3 )
+    {
+        print_function_error( "contour_ex", "'data' must be 2- or 3-dimensional. Otherwise, please use 'contour', or 'contour_polar' function.");
+	return;
+    }
+    
+    //rect_or_polar: input: 0 (RECT) / 1 (POLAR)
+    //1 -- polar contour plots (default)
+    //0 -- rectangular contour plots
+    decl rect_or_polar_v = rect_or_polar;
+    if ( rect_or_polar_v == NULL )
+        rect_or_polar_v = 1;
+    if( is_string( rect_or_polar_v ) )
+        rect_or_polar_v = tolower( rect_or_polar_v );
+    if ( rect_or_polar_v == 0 || rect_or_polar_v == "rect" )
+        rect_or_polar_v = 0;
+    else if( rect_or_polar_v == 1 || rect_or_polar_v == "polar" )
+        rect_or_polar_v = 1;
+    else
+    {
+        print_function_error( "contour_ex", "'rect_or_polar' must be \"RECT\"(or 0) or \"POLAR\"(or 1).");
+	return;
+    }
+    
+    //step_size
+    decl step_size_v = step_size;
+    if( step_size_v == NULL )
+        step_size_v = 1;
+    if( (!is_integer( step_size_v )) && (!is_real( step_size_v )) )
+    {
+        print_function_error( "contour_ex", "'step_size' must be a number.");
+        return;
+    }
+    if( step_size_v < 0.0 || step_size_v == 0.0 || step_size_v == 0 )
+    {
+        print_function_error( "contour_ex", "'step_size' must be larger than 0.0.");
+        return;
+    }
+
+    //num_lines
+    decl num_lines_v = num_lines;
+    if( num_lines_v == NULL )
+        num_lines_v = 5;
+    if( (!is_integer( num_lines_v )) && (!is_real( num_lines_v )) )
+    {
+        print_function_error( "contour_ex", "'num_lines' must be a number");
+        return;
+    }
+    if( num_lines_v < 1.0 || num_lines_v < 1 )
+        num_lines_v = 1;
+  
+    //desired_levels
+    decl desired_levels_v = desired_levels;
+    if (desired_levels_v != NULL)
+    {
+        if (sweep_dim(desired_levels_v) !=0 && sweep_dim(desired_levels_v) !=1)
+        {
+            print_function_error( "contour_ex", "desired contour levels must be a single real number or a one-dimensional array of real numbers");
+            return;
+        }
+    }
+    
+    //interp_type
+    decl interp_type_v = interp_type;
+    if ( interp_type_v == NULL )
+        interp_type_v = 2;
+    if( is_string( interp_type_v ) )
+        interp_type_v = tolower( interp_type_v );     
+    if( interp_type_v == 0 || interp_type_v == "none" )
+        interp_type_v = 0;
+    else if( interp_type_v == 1 || interp_type_v == "cubic spline" )
+        interp_type_v = 1;
+    else if( interp_type_v == 2 || interp_type_v == "b-spline" )
+        interp_type_v = 2;
+    else
+    {
+        print_function_error( "contour_ex", "'interp_type' must be 0 (None), 1 (Cubic Spline), or 2 (B-Spline)");
+        return;
+    }
+    
+    //min_or_max
+    decl  min_or_max_v = min_or_max;
+    if( min_or_max_v == NULL )
+        min_or_max_v = 1;
+    if( is_string( min_or_max_v ) )
+        min_or_max_v = tolower( min_or_max_v );
+    if( min_or_max_v == 0 || min_or_max_v == "min" )
+        min_or_max_v = 0;
+    else if( min_or_max_v == 1 || min_or_max_v == "max" )
+        min_or_max_v = 1;  
+    else
+    {
+        print_function_error( "contour_ex", "'min_or_max' must be \"Min\"(or 0) or \"Max\"(or 1).");
+	return;
+    } 
+    
+    //data_format: 0 (RI) / 1 (MA)
+    decl data_format_v = data_format;
+    if ( data_format_v == NULL )
+        data_format_v = "RI";
+    if( is_string( data_format_v ) )
+        data_format_v = toupper( data_format_v );
+    if (data_format_v == 0 || data_format_v == "RI" )
+        data_format_v = "RI";
+    else if( data_format_v == 1 || data_format_v == "MA" )
+        data_format_v = "MA";
+    else
+    {
+        print_function_error( "contour_ex", "'data_format' must be \"RI\"(or 0) or \"MA\"(or 1).");
+        return;
+    }
+        
+    decl contours = NULL;
+    if( data_dim == 2 )
+    {
+        contours = contour_ex_2d(data, rect_or_polar_v, step_size_v, num_lines_v,  
+                                desired_levels_v, interp_type_v, min_or_max_v, data_format_v);
+    }
+    else if( data_dim == 3 )
+    {
+        contours = contour_ex_3d(data, rect_or_polar_v, step_size_v, num_lines_v,  
+                                desired_levels_v, interp_type_v, min_or_max_v, data_format_v);
+    }
+								
+    return contours;
+} // fun - contour_ex
+
+defun contour_ex_levels(dataMin, dataMax, step_size, num_lines, min_or_max)
+{
+    if( dataMin == NULL || dataMax == NULL || step_size == NULL || num_lines == NULL || min_or_max == NULL )
+        return NULL;
+    
+    if( (!is_integer(step_size)) &&
+        (!is_real(step_size)) )
+        return NULL;
+    if(step_size <= 0.0 || step_size <= 0)
+        return NULL;
+     
+    if( (!is_integer(num_lines)) &&
+        (!is_real(num_lines)) )
+        return NULL;
+    if(num_lines < 1.0 || num_lines < 1)
+        return NULL;
+        
+    if( (!is_integer(min_or_max)) )
+        return NULL;
+  
+    decl contLevels = NULL;
+    if( min_or_max == 0 )
+    {
+        decl contourInner0 = step_size*ceil(dataMin/step_size);
+        decl delta = contourInner0 - dataMin;
+        decl contourInner = if(delta > 1.1*step_size) then (contourInner0 - step_size) elseif (delta < 0.1*step_size) then (contourInner0 + step_size) else contourInner0;
+        decl contourOuter = contourInner+((num_lines-1)*step_size);
+        contLevels = [contourInner::step_size::contourOuter];
+    }
+    else
+    {
+        decl contourInner0 = step_size*floor(dataMax/step_size); 
+        decl delta = dataMax - contourInner0;
+        decl contourInner = if(delta > 1.1*step_size) then (contourInner0 + step_size) elseif (delta < 0.1*step_size) then (contourInner0 - step_size) else contourInner0;
+        decl contourOuter = contourInner-((num_lines-1)*step_size);
+        contLevels = [contourInner::-step_size::contourOuter];
+    }
+    
+    return contLevels;
+}
+
+defun contour_ex_2d(data, rect_or_polar, step_size, num_lines, desired_levels, interp_type, min_or_max, data_format)
+{
+    if( data == NULL ||
+        rect_or_polar == NULL ||
+        step_size == NULL ||
+        num_lines == NULL ||
+        interp_type == NULL ||
+        min_or_max == NULL ||
+        data_format == NULL )
+        return NULL;
+        
+    if( sweep_dim(data) != 2 )
+        return NULL;
+        
+    if( (!is_integer(rect_or_polar)) )
+        return NULL;
+        
+    if( (!is_integer(step_size)) &&
+        (!is_real(step_size)) )
+        return NULL;
+     if(step_size <= 0.0 || step_size <= 0)
+        return NULL;
+
+    if( (!is_integer(num_lines)) &&
+        (!is_real(num_lines)) )
+        return NULL;
+    if(num_lines < 1.0 || num_lines < 1)
+        return NULL;
+        
+    if( (!is_integer(interp_type)) || 
+        interp_type < 0 || 
+        interp_type > 2 )
+        return NULL;
+        
+    if( (!is_integer(min_or_max)) ||
+        (!is_string(data_format)) )
+        return NULL;
+        
+    decl contours = NULL;
+    decl dataMax = max(max(data));
+    decl dataMin = min(min(data));
+    if( min_or_max == 0 )
+    {
+        decl contLevels = NULL;
+        if (desired_levels == NULL)
+        {
+	    contLevels = contour_ex_levels(dataMin, dataMax, step_size, num_lines, min_or_max);
+        }
+        else
+	{
+	    decl desired_levels_sorted = sort(desired_levels);                  // variable initialization
+	    decl validIndicies = find(desired_levels_sorted > dataMin);
+	    decl indicies = [0::sweep_size(desired_levels_sorted)-1];
+	    decl desired_levels_sorted_wIndicies = vs(desired_levels_sorted,indicies);
+	    if (max(validIndicies) < 0)                                         // if there are no valid indicies, generate some reasonable contour levels
+	    {
+	        contLevels = contour_ex_levels(dataMin, dataMax, step_size, num_lines, min_or_max);
+	    }
+	    else
+	    {
+	        contLevels = desired_levels_sorted_wIndicies[min(validIndicies)::max(validIndicies)];
+	    }
+	}
+	if( rect_or_polar == 0 )
+	    contours = contour(data,{contLevels,1.001*dataMin},interp_type);
+        else
+	    contours = contour_polar(data,{contLevels,1.001*dataMin},interp_type,data_format);
+    }
+    else
+    {
+        decl contLevels = NULL;
+        if (desired_levels == NULL)
+	{
+	    contLevels = contour_ex_levels(dataMin, dataMax, step_size, num_lines, min_or_max);
+	}
+	else
+	{
+	    decl desired_levels_sorted = sort(desired_levels); 
+	    decl validIndicies = find(desired_levels_sorted < dataMax);
+	    decl indicies = [0::sweep_size(desired_levels_sorted)-1];
+	    decl desired_levels_sorted_wIndicies = vs(desired_levels_sorted,indicies);
+	    if (max(validIndicies) < 0)                                         // if there are no valid indicies, generate some reasonable contour levels
+	    {
+	        contLevels = contour_ex_levels(dataMin, dataMax, step_size, num_lines, min_or_max);
+	    }
+	    else
+	    {
+	        contLevels = desired_levels_sorted_wIndicies[max(validIndicies)::-1::min(validIndicies)];
+	    }
+        }
+	if (rect_or_polar == 0)
+	    contours = contour(data,{contLevels,0.999*dataMax},interp_type);
+        else
+            contours = contour_polar(data,{contLevels,0.999*dataMax},interp_type,data_format);
+    }
+    
+    return contours;
+} // fun - contour_ex
+
+
+defun contour_ex_3d(data, rect_or_polar, step_size, num_lines, desired_levels, interp_type, min_or_max, data_format)
+{
+    if( data == NULL ||
+        rect_or_polar == NULL ||
+        step_size == NULL ||
+        num_lines == NULL ||
+        interp_type == NULL ||
+        min_or_max == NULL ||
+        data_format == NULL )
+        return NULL;
+        
+    if( sweep_dim(data) != 3 )
+        return NULL;
+        
+    if( (!is_integer(rect_or_polar)) )
+        return NULL;
+        
+    if( (!is_integer(step_size)) &&
+        (!is_real(step_size)) )
+        return NULL;
+     if(step_size <= 0.0 || step_size <= 0)
+        return NULL;
+
+    if( (!is_integer(num_lines)) &&
+        (!is_real(num_lines)) )
+        return NULL;
+    if(num_lines < 1.0 || num_lines < 1)
+        return NULL;
+        
+    if( (!is_integer(interp_type)) || 
+        interp_type < 0 || 
+        interp_type > 2 )
+        return NULL;
+        
+    if( (!is_integer(min_or_max)) ||
+        (!is_string(data_format)) )
+        return NULL;
+		
+    decl contour_array = create(4,"Complex",{"indepVar1","Level","number","points"},{"Real","Real","Real","Implicit"},1,1);
+   
+    decl indep_indepVar1   = indep( contour_array, "indepVar1"   );
+    decl indep_Level       = indep( contour_array, "Level"       );
+    decl indep_number      = indep( contour_array, "number"      );
+   
+    decl tmpIndepVar1 = indep(data[::,0,0]);
+    decl numPts_i = sweep_size(tmpIndepVar1);
+    decl i;
+    for (i=0; i<numPts_i; i++)
+    {
+        decl contourData = contour_ex_2d(data[i,::,::], rect_or_polar, step_size, num_lines, desired_levels, interp_type, min_or_max, data_format);
+
+        decl tmpLevel = indep(contourData[::,0,0]); 
+        decl numPts_j = sweep_size(tmpLevel);
+        decl j;
+        for (j=0; j<numPts_j; j++)
+        {
+            decl tmpNumber = indep(contourData[j,::,0]);
+            decl numPts_k = sweep_size(tmpNumber);
+            decl k;
+            for (k=0; k<numPts_k; k++)
+            {
+                contour_array[i,j,k,::] = contourData[j,k,::];
+                indep_number[i,j,k] = tmpNumber[k];
+            }
+            indep_Level[i,j] = tmpLevel[j];
+        }
+        indep_indepVar1[i] = tmpIndepVar1[i];
+    }
+
+    return contour_array;
+} // fun - contour_ex_3d
+
+
+// NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//

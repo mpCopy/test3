@@ -1,0 +1,40 @@
+// Copyright Keysight Technologies 2010 - 2014  
+/*----------------------------------------------------------------------------+/
+
+   FILE         :  boot.ael
+
+   This file controls the loading of the design kit.
+
+   To use this file properly, your ads.lib file should contain the
+   following line:
+
+   designKitName|designKitPath|designKitBootFile
+
+   These are also the 3 first list items in the designKitRecord.  The 4th
+   item is a boolean indicating if the library is loaded.
+
+/+----------------------------------------------------------------------------*/
+decl BONDWIRE_UTIL_AEL_ADDON_DIR = de_get_current_ads_ael_addon_root_directory();
+decl BONDWIRE_UTIL_AEL_DIR = BONDWIRE_UTIL_AEL_ADDON_DIR ? strcat(BONDWIRE_UTIL_AEL_ADDON_DIR,"/") : strcat(getsysenv("HPEESOF_DIR"),"/ial/bondwire_utilities_addon/ael/");
+
+if( de_version_number_int() < 430 )
+{
+    de_info("ERROR: This AEL add on is for use with ADS 2014.11 or later: ael code not loaded");
+}
+else
+{
+/*--- AEL files to be loaded at boot time ----------------------------------*/
+
+load(strcat(BONDWIRE_UTIL_AEL_DIR, "bondWireImport"));
+load(strcat(BONDWIRE_UTIL_AEL_DIR, "ebondUtil"));
+load(strcat(BONDWIRE_UTIL_AEL_DIR, "menu"));
+
+//---------------------------------------------------
+// REGISTER THE MENU FUNCTION AND MENU NAMES WITH
+// THE DESIGN KIT INFRASTRUCTURE FUNCTIONS
+//---------------------------------------------------
+// Name of AEL menu creation function provided by the design kit
+de_add_ads_ael_addon_menu_function ( "BondWire_add_custom_menus" );
+
+}
+

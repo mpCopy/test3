@@ -1,0 +1,1879 @@
+// Copyright Keysight Technologies 1998 - 2017  
+// @(#) $Source: /cvs/sr/src/genfun/source/network_fun.ael,v $ $Revision: 1.42 $ $Date: 2011/08/23 21:25:20 $
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:stoabcd()
+FUN_DESCRIPTION: This measurement transforms the scattering matrix of a 2-port network to a chain (ABCD) matrix
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX:  y = stoabcd(S, zRef)
+EXAMPLE: a = stoabcd(S, 50) 
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: abcdtoh(), stoh(), stoy() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun stoabcd(s,zRef)
+{
+  //If zRef is optional, set it to 50.0 ohms
+  decl z = if (zRef == NULL) then 50.0 else zRef;
+  decl size_s = size(s);
+  if (size(z)==1 || size(z)==size_s(1)) {
+    if (size_s(1) == 2 && size_s(2) == 2) {
+      decl z0 = if (size(z) == 1) then {z, z} else z;
+      // TFS132353
+      //Convert from S to Z, then Z to ABCD
+      decl Z = stoz(s, z0);
+      decl ABCD = ztoabcd(Z);
+      return {{ABCD(1,1), ABCD(1,2)}, {ABCD(2,1), ABCD(2,2)}};
+    } //if
+    print_function_error("stoabcd", "Transformation is only available for 2-port scattering parameters");
+  } //if
+  print_function_error("stoabcd","Incompatible arguments");
+} //fun - stoabcd
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:stoh()
+FUN_DESCRIPTION: This measurement transforms the scattering matrix of a 2-port network to a hybrid matrix
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: y = stoh(S, zRef)
+EXAMPLE: h = stoh(S, 50)
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: htos(), stoabcd(), stoy()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun stoh(s, zRef)
+{	
+   decl z = if (zRef == NULL) then 50.0 else zRef;
+   decl size_s = size(s);
+   if (size(z)==1 || size(z)==size_s(1))
+     {
+	if ( size_s(1) == 2 && size_s(2) == 2 ) 
+	  {
+	    decl z0 = if (size(z) == 1) then {z, z} else z;
+	    decl denom = (1.0-s(1,1))*(1.0+s(2,2))+s(1,2)*s(2,1);
+	    decl h11 = ((1.0+s(1,1))*(1.0+s(2,2))-s(1,2)*s(2,1))*z0(1)/denom;
+	    decl h12 = 2.0*s(1,2)/denom;
+	    decl h21 = -2.0*s(2,1)/denom;
+	    decl h22 = ((1.0-s(1,1))*(1.0-s(2,2))-s(1,2)*s(2,1))/(z0(2)*denom);
+	    return {{h11,h12},{h21,h22}};
+	  }
+	print_function_error("stoh","Transformation is only available for 2-port scattering parameters");
+	 }
+     print_function_error("stoh","Incompatible arguments");
+}
+
+//****************************************************************************
+// StoS'
+// scattering parameters to new scattering matrix
+// Pre ADS 2001 - conversion through Z
+//****************************************************************************
+//defun stos (s, zRef, zRefNew)
+//{ 
+//  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+//  decl zNew = if (zRefNew == NULL) then 50.0 else zRefNew;
+//  decl size_sx = size(s);         // s can be a scalar reflection coef.
+//  decl size_s = if (size_sx == 1) then {1,1} else size_sx; 
+//  return ztos(stoz(s,z0),zNew);
+//  /*
+//  //if ((size(z0)==1 || size(z0)==size_s(1)) && (size(zNew)==1 || size(zNew)==size_s(1)))
+//  if (size(z0)==1 || size(z0)==size_s(1))
+//    {
+//     if (size(zNew)==1 || size(zNew)==size_s(1))
+//
+//      {
+//      decl gamma = (zNew-z0)./(zNew+z0); 
+//      decl identMat = identity(size_s(1));
+//      decl a = identMat.*(1.0-conj(gamma)).*sqrt(real(zNew)./real(z0));
+//      decl sNew = inverse(a)*(s-identMat.*gamma)*inverse(identMat-gamma.*s)*conj(a);
+//      return(sNew);
+//      }
+//    }
+//     print_function_error("stos","Incompatible arguments");
+//     return;
+//     */
+//}
+
+
+//****************************************************************************
+// StoS'
+// scattering parameters to new scattering matrix
+// ADS 2001 and beyond - conversion through Z or Y via zy parameter
+/*BEGIN_DOC
+FUN_NAME:stos()
+FUN_DESCRIPTION: Changes the normalizing impedance of a scattering matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: y = stos(S, zRef, zNew, zy)
+EXAMPLE: Converts the 50 ohm terminated S-parameters to 75 ohm terminated S-parameters through the Y-matrix:
+a = stos(S, 50, 75, 1)
+Converts the 75 ohm terminated S-parameters to 50 ohm terminated S-parameters through the Y-matrix:
+a = stos(S, 75)
+Assume that a two-port S-parameter analysis has been done with port 1 terminated in50 ohms, and port 2 in 75 ohms.  The expression below converts the S-parameters at a 50 ohm impedance termination at both ports:
+S50 = stos(S, PortZ, 50, 1)
+The above converted S-parameters can than be written to a S2P file using the function write_snp().
+
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix 
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: normalizing impedance 
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: zNew
+  ARG_DESCRIPTION: new normalizing impedance 
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: zy
+  ARG_DESCRIPTION: directs the conversion through the Z- or Y-matrix. dagger.gif
+  ARG_DEFAULT: 1 (Y-matrix)
+  ARG_RANGE: [0:1]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif f zy=0, the S-to-S conversion is performed through the Z-matrix. If zy=1, the S-to-S conversion is performed through the Y-matrix
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: stoy(), stoz()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun stos (s, zRef, zRefNew, zy)
+{ 
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl zNew = if (zRefNew == NULL) then 50.0 else zRefNew;
+  decl zory = if (zy == NULL) then 1 else zy;
+  decl size_sx = size(s);         // s can be a scalar reflection coef.
+  decl size_s = if (size_sx == 1) then {1,1} else size_sx; 
+  if (zory==0)
+    {
+      return ztos(stoz(s,z0),zNew);
+    } /* if */
+  elseif (zory==1)
+    {
+      return ytos(stoy(s,z0),zNew);
+    } /* elseif */
+  else
+    {
+      print_function_error("stos","The fourth parameter to stos must be either 0\n  (for conversion through Z) or 1 (for conversion through Y).");
+    } /* else */
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:stoz()
+FUN_DESCRIPTION: This measurement transforms a scattering matrix to an impedance matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: z = stoz(S, zRef)
+EXAMPLE: z = stoz(S, 50)
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: stoh(), stoy(), ztos(), s2z()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun stoz(s, zRef)
+{
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl size_sx = size(s);         // s can be a scalar reflection coef.
+  decl size_s = if (size_sx == 1) then {1,1} else size_sx;
+  if (size(z0)==1 || size(z0)==size_s(1)) {
+    decl identMat = identity(size_s(1));
+    decl zref= identMat.*z0;
+    decl gref=identMat.*(0.5./sqrt(abs(real(z0))));
+    decl retV = if (s == 1.0) then inverse(0.0) else (inverse(gref)*inverse(identMat-s)*(s*zref+conj(zref))*gref);
+    return retV;
+  }
+  print_function_error("stoz","Incompatible arguments");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:stoy()
+FUN_DESCRIPTION: This measurement transforms a scattering matrix to an admittance matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: y = stoy(S, zRef)
+EXAMPLE: y = stoy (S, 50.0)
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: ytos(), ztos(), s2y()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun stoy(s, zRef)
+{
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl size_sx = size(s);         // s can be a scalar reflection coef.
+  decl size_s = if (size_sx == 1) then {1,1} else size_sx;
+  if (size(z0)==1 || size(z0)==size_s(1)) {
+    decl identMat = identity(size_s(1));
+    decl zref= identMat.*z0;
+    decl gref=identMat.*(0.5./sqrt(abs(real(z0))));
+    return inverse(gref)*inverse(s*zref+conj(zref))*(identMat-s)*gref; 
+  }
+  print_function_error("stoy","Incompatible arguments");
+}
+
+//****************************************************************************
+//stot(s)
+//Conversion from Scattering Matrix to Chain Scattering Matrix
+//Reference: CAD of Microwave Circuits - K.C. Gupta et al.
+/*BEGIN_DOC
+FUN_NAME:stot()
+FUN_DESCRIPTION: This function transforms the scattering matrix of a 2-port network to a chain scattering matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: t = stot(S)
+EXAMPLE: Tparams = stot(S)
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: ttos() 
+EXTERNAL: yes
+NOTES: Works only for two-port networks.
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+defun stot(s)
+{
+  decl aSMatSize = size(s);
+  if (aSMatSize(1) == 2 && aSMatSize(2) == 2) {
+
+    //Calculate the T-parameters
+    decl T11 = (-s(1,1) * s(2,2) + s(1,2) * s(2,1))/s(2,1);
+    decl T12 = s(1,1)/s(2,1);
+    decl T21 = -s(2,2)/s(2,1);
+    decl T22 = 1/s(2,1);
+
+    //Construct and return the matrix
+    return {{T11, T12}, {T21, T22}};
+   } //if
+   print_function_error("stot","Transformation is only available for 2-port scattering parameters");
+} //fun - stot
+
+//****************************************************************************
+//ttos(T)
+//Conversion from Chain Scattering Matrix to Scattering Matrix
+//Reference: CAD of Microwave Circuits - K.C. Gupta et al.
+/*BEGIN_DOC
+FUN_NAME:ttos()
+FUN_DESCRIPTION: This function transforms the chain scattering matrix of a 2-port network to a scattering matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: sp = ttos(T)
+EXAMPLE: sp = ttos(t)
+ARGUMENT
+  ARG_NAME: T
+  ARG_DESCRIPTION: scattering matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: stot()
+EXTERNAL: yes
+NOTES: Works only for two-port networks.
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+defun ttos(T)
+{
+  decl aTMatSize = size(T);
+  if (aTMatSize(1) == 2 && aTMatSize(2) == 2) {
+
+    //Calculate the S-parameters
+    decl S11 = T(1,2) / T(2,2);
+    decl S12 = T(1,1) - (T(1,2) * T(2,1))/T(2,2);
+    decl S21 = 1/T(2,2);
+    decl S22 = -T(2,1)/T(2,2);
+
+    //Construct and return the matrix
+    return {{S11, S12}, {S21, S22}};
+  } //if
+  print_function_error("ttos","Transformation is only available for 2-port scattering parameters");
+} //fun - ttos
+
+//****************************************************************************
+// YtoZ
+// admittance parameters to impedance matrix
+/*BEGIN_DOC
+FUN_NAME:ytoz()
+FUN_DESCRIPTION: This measurement transforms an admittance matrix to an impedance matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: Z = ytoz(Y)
+EXAMPLE: Z = ytoz(Y)
+ARGUMENT
+  ARG_NAME: Y
+  ARG_DESCRIPTION: admittance matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: ytos(), ztoy()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ytoz(y)
+{
+    return inverse(y);
+}
+
+//****************************************************************************
+// YtoS
+// admittance parameters to scattering matrix
+/*BEGIN_DOC
+FUN_NAME:ytos()
+FUN_DESCRIPTION: This measurement transforms an admittance matrix into a scattering matrix. 
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: z = ytos(Y, zRef) 
+EXAMPLE: s = ytos(Y, 50.0)
+ARGUMENT
+  ARG_NAME: Y
+  ARG_DESCRIPTION: admittance matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: stoy(), ytoz(), y2s()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ytos(y,zRef)
+{   
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl size_yx = size(y);       // y can be a scalar  
+  decl size_y = if (size_yx == 1) then {1,1} else size_yx;
+  if (size(z0)==1 || size(z0)==size_y(1)) {
+    decl identMat = identity(size_y(1));
+    decl zref= identMat.*z0;
+    decl gref=identMat.*(0.5./sqrt(abs(real(z0))));
+    return gref*(identMat-conj(zref)*y)*inverse(identMat+zref*y)*inverse(gref); 
+  }
+  print_function_error("ytos","Incompatible arguments");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:ytoh()
+FUN_DESCRIPTION: This measurement transforms an admittance matrix of a 2-port network into a hybrid matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: h = ytoh(Y) 
+EXAMPLE:  h = ytoh(Y)
+ARGUMENT
+  ARG_NAME: Y
+  ARG_DESCRIPTION: 2-port admittance matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: htoy(), ytoabcd()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ytoh(y)
+{  
+    decl size_y = size(y);
+    if ( size_y(1) == 2 && size_y(2) == 2 ) 
+      {
+	decl h11 = 1.0/y(1,1);
+	decl h12 = -1.0*y(1,2)/y(1,1);
+	decl h21 = 1.0*y(2,1)/y(1,1); 
+	decl h22 = 1.0*(y(1,1)*y(2,2)-y(2,1)*y(1,2))/y(1,1);
+	return {{h11,h12},{h21,h22}};
+      }    
+    print_function_error("ytoh","Transformation is only available for 2-port admittance parameters");   
+}
+
+//****************************************************************************
+// YtoABCD
+// admittance parameters to chain matrix
+/*BEGIN_DOC
+FUN_NAME:ytoabcd()
+FUN_DESCRIPTION: This measurement transforms an admittance matrix of a 2-port network into a hybrid matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: a = ytoabcd(Y)
+EXAMPLE: a = ytoabcd(Y)
+ARGUMENT
+  ARG_NAME: Y
+  ARG_DESCRIPTION: 2-port admittance matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: abcdtoh(), htoabcd()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun ytoabcd(y)
+{   
+    decl size_y = size(y);
+    if ( size_y(1) == 2 && size_y(2) == 2 ) 
+    {
+	decl a = -1.0*y(2,2)/y(2,1);
+	decl b = -1.0/y(2,1);
+	decl c = -1.0*(y(1,1)*y(2,2)-y(2,1)*y(1,2))/y(2,1);
+	decl d = -1.0*y(1,1)/y(2,1);
+    return {{a,b},{c,d}};
+    }    
+    print_function_error("ytoabcd","Transformation is only available for 2-port admittance parameters");
+}
+
+//****************************************************************************
+// ZtoY
+// impedance parameters to admittance parameters
+/*BEGIN_DOC
+FUN_NAME:ztoy()
+FUN_DESCRIPTION: This measurement transforms an impedance matrix to an admittance matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: y = ztoy(Z)
+EXAMPLE: y = ztoy(Z)
+ARGUMENT
+  ARG_NAME: Z
+  ARG_DESCRIPTION: impedance matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: stoz(), ytos(), ztoy() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun ztoy(z)
+{
+    return inverse(z);
+}
+
+//****************************************************************************
+// ztoS
+// impedance parameters to scattering matrix
+/*BEGIN_DOC
+FUN_NAME:ztos()
+FUN_DESCRIPTION: This measurement transforms an impedance matrix to a scattering matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX:  sp = ztos(Z, zRef)
+EXAMPLE: s = ztos(Z, 50.0)
+ARGUMENT
+  ARG_NAME: Z
+  ARG_DESCRIPTION: impedance matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: stoz(), ytoz(), ztoy(), z2s()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ztos(z,zRef)
+{
+  decl z0 = if (zRef == NULL) then 50.0 else zRef;
+  decl size_zx = size(z);       // z can be a scalar  
+  decl size_z = if (size_zx == 1) then {1,1} else size_zx;
+  if (size(z0)==1 || size(z0)==size_z(1)) {
+    decl identMat = identity(size_z(1));
+    decl zref= identMat.*z0;
+    decl gref=identMat.*(0.5./sqrt(abs(real(z0))));
+    return gref*(z-conj(zref))*inverse(z+zref)*inverse(gref); 	
+  }
+  print_function_error("ztos","Incompatible arguments");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:ztoh()
+FUN_DESCRIPTION: This measurement transforms an impedance matrix of a 2-port network into a hybrid matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: h = ztoh(Z)
+EXAMPLE: h = ztoh(Z)
+ARGUMENT
+  ARG_NAME: Z
+  ARG_DESCRIPTION: 2-port impedance matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: htoz(), ytoh(), ztoabcd() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun ztoh(z)
+{ 
+    decl size_z = size(z);
+    if ( size_z(1) == 2 && size_z(2) == 2 )  
+    {
+	decl h11 = 1.0*(z(1,1)*z(2,2) - z(2,1)*z(1,2))/z(2,2);
+	decl h12 = 1.0*z(1,2)/z(2,2);
+	decl h21 = -1.0*z(2,1)/z(2,2);
+	decl h22 = 1.0/z(2,2);
+	return {{h11,h12},{h21,h22}};
+    }    
+    print_function_error("ztoh","Transformation is only available for 2-port impedance parameters");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:ztoabcd()
+FUN_DESCRIPTION: This measurement transforms an impedance matrix of a 2-port network into a chain (ABCD) matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: a = ztoabcd(Z)
+EXAMPLE: a = ztoabcd(Z)
+ARGUMENT
+  ARG_NAME: Z
+  ARG_DESCRIPTION: 2-port impedance matrix
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: abcdtoz(), ytoabcd(), ztoh()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun ztoabcd(z)
+{
+    decl size_z = size(z);
+    if ( size_z(1) == 2 && size_z(2) == 2 )  
+    {
+	decl a = 1.0*z(1,1)/z(2,1);
+	decl b = 1.0*(z(1,1)*z(2,2)-z(2,1)*z(1,2))/z(2,1);
+	decl c = 1.0/z(2,1);
+	decl d = 1.0*z(2,2)/z(2,1);
+	return {{a,b},{c,d}};
+    }    
+    print_function_error("ztoabcd","Transformation is only available for 2-port impedance parameters");
+}
+
+//****************************************************************************
+// HtoZ
+// hybrid parameters to impedance parameters
+/*BEGIN_DOC
+FUN_NAME:htoz()
+FUN_DESCRIPTION: This measurement transforms the hybrid matrix of a 2-port network to an impedance matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: z = htoz(H)
+EXAMPLE: z = htoz(h)
+ARGUMENT
+  ARG_NAME: H
+  ARG_DESCRIPTION: hybrid matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: htos(), htoy(), ytoh() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun htoz(h)
+{   
+    decl size_h = size(h);
+    if ( size_h(1) == 2 && size_h(2) == 2 )   
+    {
+	decl z11 = 1.0*(h(1,1)*h(2,2)-h(2,1)*h(1,2))/h(2,2);
+	decl z12 = 1.0*h(1,2)/h(2,2);
+	decl z21 = -1.0*h(2,1)/h(2,2);
+	decl z22 = 1.0/h(2,2);
+	return {{z11,z12},{z21,z22}};
+    }
+    print_function_error("htoz","Transformation is only available for 2-port impedance parameters");
+}
+
+//**************************************************************************** 
+// admittance
+/*BEGIN_DOC
+FUN_NAME:htoy()
+FUN_DESCRIPTION: This measurement transforms the hybrid matrix of a 2-port network to an admittance matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: y = htoy(H)
+EXAMPLE: y = htoy(H) 
+ARGUMENT
+  ARG_NAME: H
+  ARG_DESCRIPTION: hybrid matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: htos(), htoz(), ytoh()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun htoy(h)
+{
+    decl size_h = size(h);
+    if ( size_h(1) == 2 && size_h(2) == 2 )  
+    {
+	decl y11 = 1.0/h(1,1);
+	decl y12 = -1.0*h(1,2)/h(1,1);
+	decl y21 = 1.0*h(2,1)/h(1,1);
+	decl y22 = 1.0*(h(1,1)*h(2,2)-h(2,1)*h(1,2))/h(1,1);
+	return {{y11,y12},{y21,y22}};
+    } 
+    print_function_error("htoy","Transformation is only available for 2-port admittance parameters");
+}
+
+//****************************************************************************
+// HtoS
+// hybrid parameters to scattering parameters
+/*BEGIN_DOC
+FUN_NAME:htos()
+FUN_DESCRIPTION: This measurement transforms the hybrid matrix of a 2-port network to a scattering matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: sp = htos(h, zRef)
+EXAMPLE: sp = htos(h, 50) 
+ARGUMENT
+  ARG_NAME: H
+  ARG_DESCRIPTION: hybrid matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: htoy(), htoz(), stoh()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun htos(h,zRef)
+{	
+  decl size_h = size(h);
+  decl z = if (zRef == NULL) then 50.0 else zRef;
+  if (size(z)==1 || size(z)==size_h(1))
+    {  
+      if ( size_h(1) == 2 && size_h(2) == 2 )  
+	{
+	  decl z0 = if (size(z) == 1) then {z, z} else z;
+	  decl denom = (1.0+h(1,1)/z0(1))*(1.0+z0(2)*h(2,2))-h(1,2)*h(2,1);
+	  decl s11 = ((h(1,1)/z0(1) -1.0)*(1.0+z0(2)*h(2,2))-h(1,2)*h(2,1))/denom;
+	  decl s12 = 2.0*h(1,2)/denom;
+	  decl s21 = -2.0*h(2,1)/denom;
+	  decl s22 = ((1.0+h(1,1)/z0(1))*(1.0-z0(2)*h(2,2))+h(1,2)*h(2,1))/denom;
+	  return {{s11,s12},{s21,s22}};
+	}
+      print_function_error("htos","Transformation is only available for 2-port scattering parameters");
+    }
+   print_function_error("htos","Incompatible arguments");
+}      
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:htoabcd()
+FUN_DESCRIPTION: This measurement transforms the hybrid matrix of a 2-port network to a chain (ABCD) matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: a = htoabcd(H)
+EXAMPLE: a = htoabcd(H)
+ARGUMENT
+  ARG_NAME: H
+  ARG_DESCRIPTION: hybrid matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: abcdtoh(), htoz(), ytoh()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun htoabcd(h)
+{
+    decl size_h = size(h);
+    if ( size_h(1) == 2 && size_h(2) == 2 )   
+    {
+	decl a = -1.0*(h(1,1)*h(2,2)-h(1,2)*h(2,1))/h(2,1);
+	decl b = -1.0*h(1,1)/h(2,1);
+	decl c = -1.0*h(2,2)/h(2,1);
+	decl d = -1.0/h(2,1);
+	return {{a,b},{c,d}};
+    }    
+    print_function_error("htoabcd","Transformation is only available for 2-port scattering parameters");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:abcdtoz()
+FUN_DESCRIPTION: This measurement transforms the chain (ABCD) matrix of a 2-port network to impedance matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: z = abcdtoz(a) 
+EXAMPLE: z = abcdtoz(a) 
+ARGUMENT
+  ARG_NAME: A
+  ARG_DESCRIPTION: chain (ABCD) matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: abcdtoh(), abcdtos(), abcdtoy(), htoabcd(), stoabcd(), ytoabcd(), ztoabcd() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun abcdtoz(a)
+{
+    decl size_a = size(a);
+    if ( size_a(1) == 2 && size_a(2) == 2 )   
+    {
+	decl z11 = 1.0*a(1,1)/a(2,1);
+	decl z12 = 1.0*(a(1,1)*a(2,2)-a(2,1)*a(1,2))/a(2,1);
+	decl z21 = 1.0/a(2,1);
+	decl z22 = 1.0*a(2,2)/a(2,1);
+	return {{z11,z12},{z21,z22}};
+    }
+    print_function_error("abcdtoz","Transformation is only available for 2-port impedance parameters");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:abcdtoy()
+FUN_DESCRIPTION:  This measurement transforms the chain (ABCD) matrix of a 2-port network to an admittance matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: y = abcdtoy(a)
+EXAMPLE: y = abcdtoy(a)
+ARGUMENT
+  ARG_NAME: A
+  ARG_DESCRIPTION: chain (ABCD) matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: abcdtoh(), abcdtos(), abcdtoz(), htoabcd(), stoabcd(), ytoabcd(), ztoabcd() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun abcdtoy(a)
+{  
+    decl size_a = size(a);
+    if ( size_a(1) == 2 && size_a(2) == 2 )   
+    {
+	decl y11 = 1.0*a(2,2)/a(1,2);
+	decl y12 = -1.0*(a(1,1)*a(2,2)-a(2,1)*a(1,2))/a(1,2);
+	decl y21 = -1.0/a(1,2);
+	decl y22 = 1.0*a(1,1)/a(1,2);
+	return {{y11,y12},{y21,y22}};
+    }
+    print_function_error("abcdtoy","Transformation is only available for 2-port admittance parameters");
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:abcdtos()
+FUN_DESCRIPTION: This measurement transforms the chain (ABCD) matrix of a 2-port network to a scattering matrix.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: sp = abcdtos(A, zRef) 
+EXAMPLE: sp = abcdtos(a, 50)
+ARGUMENT
+  ARG_NAME: A
+  ARG_DESCRIPTION: chain (ABCD) matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: abcdtoh(), abcdtoy(), abcdtoz(), htoabcd(), stoabcd(), ytoabcd(), ztoabcd()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//****************************************************************************
+defun abcdtos(ABCD,zRef)
+{
+  decl size_a = size(ABCD);
+  decl z = if (zRef == NULL) then 50.0 else zRef;
+  if (size(z)==1 || size(z)==size_a(1)) {   
+    if (size_a(1) == 2 && size_a(2) == 2) {
+      decl z0 = if (size(z) == 1) then {z, z} else z;
+
+      //Convert ABCD to Y, then Y to S
+      decl Y = abcdtoy(ABCD);
+      decl S = ytos(Y, z0); 
+      return {{S(1,1),S(1,2)},{S(2,1),S(2,2)}};
+    } //if
+    print_function_error("abcdtos","Transformation is only available for 2-port scattering parameters");
+  } //if
+  print_function_error("abcdtos","Incompatible arguments");
+} //fun - abcdtos
+ 
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:abcdtoh()
+FUN_DESCRIPTION: This measurement transforms the chain (ABCD) matrix of a 2-port network to a hybrid matrix.
+RETURNED_VALUE:
+CATEGORY: S-Parameter
+SYNTAX: h=abcdtoh(a) 
+EXAMPLE: h=abcdtoh(a) 
+ARGUMENT
+  ARG_NAME: A
+  ARG_DESCRIPTION: chain (ABCD) matrix of a 2-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: abcdtos(), abcdtoy(), abcdtoz(), htoabcd(), stoabcd(), ytoabcd(), ztoabcd()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+//**************************************************************************** 
+defun abcdtoh(a)
+{
+   decl size_a = size(a);
+   if ( size_a(1) == 2 && size_a(2) == 2 ) 
+    {
+	decl h11 = 1.0*a(1,2)/a(2,2);
+	decl h12 = 1.0*(a(1,1)*a(2,2)-a(1,2)*a(2,1))/a(2,2);
+	decl h21 = -1.0/a(2,2);
+	decl h22 = 1.0*a(2,1)/a(2,2);
+	return {{h11,h12},{h21,h22}};
+    }
+    print_function_error("htoabcd","Transformation is only available for 2-port scattering parameters");
+}
+ 	
+
+defun ael_epsilon()
+{
+    decl AEL_epsilon = 2.22507385850721e-308;  // SMALLEST_REAL yuk
+    return( AEL_epsilon );
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:s2z()
+FUN_DESCRIPTION: Transforms a scattering matrix to an impedance matrix. The reference impedance can be a number, a vector of numbers, or left unspecified. When not specified, 50 (ohms) is used as the reference impedance. When a vector is used, the number of its elements must be equal to the number of ports.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: z = s2z(S, zRef)
+EXAMPLE: z = s2z(S, [75+j10, 50, 100+j30])
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of an n-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real, complex, or a vector of numbers
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: z2s(), s2y(), y2s(), stoz()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies (MM)
+DATE: June 2011
+VERSION_CREATED: ADS 2011.10
+END_DOC*/
+//****************************************************************************
+defun s2z(sMatrix, zRef)
+{
+    decl matrix_size=size(sMatrix);
+    decl portCount;
+    decl gMatrix, fMatrix, z0, zMatrix, indx;
+  
+    if ( size(matrix_size) == 1 )
+    {
+        z0 = if (zRef == NULL) then 50.0 else zRef;
+        zMatrix=(conj(z0)+z0*sMatrix)/(1-sMatrix);
+    }
+    else
+    {
+        if ( matrix_size(1) != matrix_size(2) )
+        {
+            print_function_error("s2z: first argument must be a square matrix");
+            return;
+        }
+    
+        decl zSize=sweep_size(zRef);
+        portCount=matrix_size(1);
+        if (zRef == NULL)
+        {
+            z0 = 50*[1::portCount]/[1::portCount];
+        }
+        else if ( zSize == portCount )
+        {
+            z0 = zRef;
+        }
+        else
+        {
+            if ( zSize == 1 )
+            {
+                z0 = zRef*[1::portCount]/[1::portCount];
+            }
+            else
+            {
+                print_function_error(strcat("s2z: The number of elements in the second argument (",
+                     identify_value(zSize), ") is not equal to the size of the first argument (", 
+                     identify_value(portCount), ")."));
+                return;
+            }
+        }
+    
+        gMatrix={z0[0], zeros(1, portCount-1)};
+        decl realZ0=abs(real(z0[0]));
+        if (realZ0!=NULL && realZ0>ael_epsilon())
+        {
+            fMatrix={0.5/sqrt(realZ0), zeros(1,portCount-1)};
+        }
+        else
+        {
+            print_function_error("s2z: Real part of the second argument cannot be zero!");
+            return;
+        }
+
+        if( portCount > 2 )
+        {
+            for( indx=1; indx<portCount-1; indx++ )
+            {
+                gMatrix={gMatrix, {zeros(1,indx), z0[indx], zeros(1, portCount-1-indx)}};
+                realZ0=abs(real(z0[indx]));
+                if (realZ0!=NULL && realZ0>ael_epsilon())
+                {
+                    fMatrix={fMatrix, {zeros(1, indx), 0.5/sqrt(realZ0), zeros(1, portCount-1-indx)}};
+                }
+                else
+                {
+                    print_function_error(strcat("s2z: Real part of element # ", identify_value(indx+1), 
+                        " in the second argument cannot be zero!"));
+                    return;
+                }
+            }
+        }
+
+        indx=portCount-1;
+        gMatrix={gMatrix, {zeros(1, indx), z0[indx]}};
+        realZ0=abs(real(z0[indx]));
+        fMatrix={fMatrix, {zeros(1, indx), 0.5/sqrt(realZ0)}};
+    
+        // F = diag( 1 / (2 sqrt( abs( real( Zo ) ) ) ) )
+        // Z = inverse(F) inverse(1 - S) (S F G + F conj( G ))
+        zMatrix=inverse(fMatrix) * inverse( identity(portCount)-sMatrix ) *(sMatrix*fMatrix*gMatrix+fMatrix*conj(gMatrix));
+    }
+  
+    return zMatrix;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:s2y()
+FUN_DESCRIPTION: Transforms a scattering matrix to an admittance matrix. The reference impedance can be a number, a vector of numbers, or left unspecified. When not specified, 50 (ohms) is used as the reference impedance. When a vector is used, the number of its elements must be equal to the number of ports.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: y = s2y(S, zRef)
+EXAMPLE: y = s2y(S, [75+j10, 50, 100+j30])
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: scattering matrix of an n-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real, complex, or a vector of numbers
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: y2s(), z2s(), s2z(), stoy()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies (MM)
+DATE: June 2011
+VERSION_CREATED: ADS 2011.10
+END_DOC*/
+//****************************************************************************
+defun s2y(sMatrix, zRef)
+{
+    decl matrix_size=size(sMatrix);
+    decl portCount;
+    decl gMatrix, fMatrix, z0, yMatrix, indx;
+  
+    if ( size(matrix_size) == 1 )
+    {
+        z0 = if (zRef == NULL) then 50.0 else zRef;
+        yMatrix=(conj(z0)+z0*sMatrix)/(1-sMatrix);
+    }
+    else
+    {
+        if ( matrix_size(1) != matrix_size(2) )
+        {
+            print_function_error("s2y: first argument must be a square matrix");
+            return;
+        }
+    
+        decl zSize=sweep_size(zRef);
+        portCount=matrix_size(1);
+        if (zRef == NULL)
+        {
+            z0 = 50*[1::portCount]/[1::portCount];
+        }
+        else if ( zSize == portCount )
+        {
+            z0 = zRef;
+        }
+        else
+        {
+            if ( zSize == 1 )
+            {
+                z0 = zRef*[1::portCount]/[1::portCount];
+            }
+            else
+            {
+                print_function_error(strcat("s2y: The number of elements in the second argument (",
+                     identify_value(zSize), ") is not equal to the size of the first argument (", 
+                     identify_value(portCount), ")."));
+                return;
+            }
+        }
+    
+        gMatrix={z0[0], zeros(1, portCount-1)};
+        decl realZ0=abs(real(z0[0]));
+        if (realZ0!=NULL && realZ0>ael_epsilon())
+        {
+            fMatrix={0.5/sqrt(realZ0), zeros(1, portCount-1)};
+        }
+        else
+        {
+            print_function_error("s2y: Real part of the second argument cannot be zero!");
+            return;
+        }
+
+        if( portCount > 2 )
+        {
+            for( indx=1; indx<portCount-1; indx++ )
+            {
+                gMatrix={gMatrix, {zeros(1,indx), z0[indx], zeros(1, portCount-1-indx)}};
+                realZ0=abs(real(z0[indx]));
+                if (realZ0!=NULL && realZ0>ael_epsilon())
+                {
+                    fMatrix={fMatrix, {zeros(1,indx), 0.5/sqrt(realZ0), zeros(1, portCount-1-indx)}};
+                }
+                else
+                {
+                    print_function_error(strcat("s2y: Real part of element # ", identify_value(indx+1), 
+                        " in the second argument cannot be zero!"));
+                    return;
+                }
+            }
+        }
+
+        indx=portCount-1;
+        gMatrix={gMatrix, {zeros(1,indx), z0[indx]}};
+        realZ0=abs(real(z0[indx]));
+        fMatrix={fMatrix, {zeros(1,indx), 0.5/sqrt(realZ0)}};
+
+        // F = diag( 1 / (2 sqrt( abs( real( Zo ) ) ) ) )
+        // Y = inverse(S F G + F conj(G)) (1 - S) F 
+        yMatrix=inverse(sMatrix * fMatrix * gMatrix + fMatrix * conj(gMatrix)) * (identity(portCount)-sMatrix) * fMatrix;
+    }
+  
+    return yMatrix;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:y2s()
+FUN_DESCRIPTION: Transforms an admittance matrix to a scattering matrix. The reference impedance can be a number, a vector of numbers, or left unspecified. When not specified, 50 (ohms) is used as the reference impedance. When a vector is used, the number of its elements must be equal to the number of ports.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: s = y2s(Y, zRef)
+EXAMPLE: s = y2s(Y, [75+j10, 50, 100+j30])
+ARGUMENT
+  ARG_NAME: Y
+  ARG_DESCRIPTION: admittance matrix of an n-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real, complex, or a vector of numbers
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: s2y(), z2s(), s2z(), ytos()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies (MM)
+DATE: June 2011
+VERSION_CREATED: ADS 2011.10
+END_DOC*/
+//****************************************************************************
+defun y2s(yMatrix, zRef)
+{
+    decl matrix_size=size(yMatrix);
+    decl portCount;
+    decl gMatrix, fMatrix, z0, sMatrix, indx;
+  
+    if ( size(matrix_size) == 1 )
+    {
+        z0 = if (zRef == NULL) then 50.0 else zRef;
+        sMatrix=(yMatrix - conj(z0))/(yMatrix + z0);
+    }
+    else
+    {
+        if ( matrix_size(1) != matrix_size(2) )
+        {
+            print_function_error("y2s: first argument must be a square matrix");
+            return;
+        }
+    
+        decl zSize=sweep_size(zRef);
+        portCount=matrix_size(1);
+        if (zRef == NULL)
+        {
+            z0 = 50*[1::portCount]/[1::portCount];
+        }
+        else if ( zSize == portCount )
+        {
+            z0 = zRef;
+        }
+        else
+        {
+            if ( zSize == 1 )
+            {
+                z0 = zRef*[1::portCount]/[1::portCount];
+            }
+            else
+            {
+                print_function_error(strcat("y2s: The number of elements in the second argument (",
+                     identify_value(zSize), ") is not equal to the size of the first argument (", 
+                     identify_value(portCount), ")."));
+                return;
+            }
+        }
+    
+        gMatrix={z0[0], zeros(1, portCount-1)};
+        decl realZ0=abs(real(z0[0]));
+        if (realZ0!=NULL && realZ0>ael_epsilon())
+        {
+            fMatrix={0.5/sqrt(realZ0), zeros(1, portCount-1)};
+        }
+        else
+        {
+            print_function_error("y2s: Real part of the second argument cannot be zero!");
+            return;
+        }
+
+        if( portCount > 2 )
+        {
+            for( indx=1; indx<portCount-1; indx++ )
+            {
+                gMatrix={gMatrix, {zeros(1,indx), z0[indx], zeros(1, portCount-1-indx)}};
+                realZ0=abs(real(z0[indx]));
+                if (realZ0!=NULL && realZ0>ael_epsilon())
+                {
+                    fMatrix={fMatrix, {zeros(1, indx), 0.5/sqrt(realZ0), zeros(1, portCount-1-indx)}};
+                }
+                else
+                {
+                    print_function_error(strcat("y2s: Real part of element # ", identify_value(indx+1), 
+                        " in the second argument cannot be zero!"));
+                    return;
+                }
+            }
+        }
+
+        indx=portCount-1;
+        gMatrix={gMatrix, {zeros(1,indx), z0[indx]}};
+        realZ0=abs(real(z0[indx]));
+        fMatrix={fMatrix, {zeros(1, indx), 0.5/sqrt(realZ0)}};
+    
+        // F = diag( 1 / (2 sqrt( abs( real( Zo ) ) ) ) )
+        // S = F (1 - conj( G ) Y) inverse(1 + G Y) inverse( F )
+        sMatrix = fMatrix * (identity(portCount) - conj(gMatrix) * yMatrix) 
+            * inverse(identity(portCount) + gMatrix * yMatrix) * inverse(fMatrix);
+    }
+  
+    return sMatrix;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:z2s()
+FUN_DESCRIPTION: Transforms an impedance matrix to a scattering matrix. The reference impedance can be a number, a vector of numbers, or left unspecified. When not specified, 50 (ohms) is used as the reference impedance. When a vector is used, the number of its elements must be equal to the number of ports.
+RETURNED_VALUE: Matrix
+CATEGORY: S-Parameter
+SYNTAX: s = z2s(Z, zRef)
+EXAMPLE: s = z2s(Z, [75+j10, 50, 100+j30])
+ARGUMENT
+  ARG_NAME: Z
+  ARG_DESCRIPTION: impedance matrix of an n-port network
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real, complex, or a vector of numbers
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: s2z(), s2y(), y2s(), ztos()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies (MM)
+DATE: June 2011
+VERSION_CREATED: ADS 2011.10
+END_DOC*/
+//****************************************************************************
+defun z2s(zMatrix, zRef)
+{
+    decl matrix_size=size(zMatrix);
+    decl portCount;
+    decl gMatrix, fMatrix, z0, sMatrix, indx;
+  
+    if ( size(matrix_size) == 1 )
+    {
+        z0 = if (zRef == NULL) then 50.0 else zRef;
+        sMatrix=(zMatrix - conj(z0))/(zMatrix + z0);
+    }
+    else
+    {
+        if ( matrix_size(1) != matrix_size(2) )
+        {
+            print_function_error("z2s: first argument must be a square matrix");
+            return;
+        }
+    
+        decl zSize=sweep_size(zRef);
+        portCount=matrix_size(1);
+        if (zRef == NULL)
+        {
+            z0 = 50*[1::portCount]/[1::portCount];
+        }
+        else if ( zSize == portCount )
+        {
+            z0 = zRef;
+        }
+        else
+        {
+            if ( zSize == 1 )
+            {
+                z0 = zRef*[1::portCount]/[1::portCount];
+            }
+            else
+            {
+                print_function_error(strcat("z2s: The number of elements in the second argument (",
+                     identify_value(zSize), ") is not equal to the size of the first argument (", 
+                     identify_value(portCount), ")."));
+                return;
+            }
+        }
+    
+        gMatrix={z0[0], zeros(1, portCount-1)};
+        decl realZ0=abs(real(z0[0]));
+        if (realZ0!=NULL && realZ0>ael_epsilon())
+        {
+            fMatrix={0.5/sqrt(realZ0), zeros(1, portCount-1)};
+        }
+        else
+        {
+            print_function_error("z2s: Real part of the second argument cannot be zero!");
+            return;
+        }
+
+        if( portCount > 2 )
+        {
+            for( indx=1; indx<portCount-1; indx++ )
+            {
+                gMatrix={gMatrix, {zeros(1,indx), z0[indx], zeros(1, portCount-1-indx)}};
+                realZ0=abs(real(z0[indx]));
+                if (realZ0!=NULL && realZ0>ael_epsilon())
+                {
+                    fMatrix={fMatrix, {zeros(1, indx), 0.5/sqrt(realZ0), zeros(1, portCount-1-indx)}};
+                }
+                else
+                {
+                    print_function_error(strcat("z2s: Real part of element # ", identify_value(indx+1), 
+                        " in the second argument cannot be zero!"));
+                    return;
+                }
+            }
+        }
+
+        indx=portCount-1;
+        fMatrix={fMatrix, {zeros(1,indx), 0.5/sqrt(realZ0)}};
+        gMatrix={gMatrix, {zeros(1,indx), z0[indx]}};
+    
+        // F = diag( 1 / (2 sqrt( abs( real( Zo ) ) ) ) )
+        // S = F (Z - conj( G )) inverse(Z + G) inverse( F )
+        sMatrix=fMatrix * (zMatrix - conj(gMatrix)) * inverse(zMatrix + gMatrix) * inverse(fMatrix);
+    }
+  
+    return sMatrix;
+}
+
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:yin()
+FUN_DESCRIPTION: Given a reflection coefficient and the reference impedance, this measurement returns the input admittance looking into the measurement ports. 
+RETURNED_VALUE: Integer, real or complex
+CATEGORY: S-Parameter
+SYNTAX: y = yin(Sii, Z) 
+EXAMPLE: yIN = yin(S11, 50)
+ARGUMENT
+  ARG_NAME: Sii
+  ARG_DESCRIPTION: complex reflection coefficient
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: vswr(), zin() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun yin(sii,zRef)
+{
+  decl zi = if (zRef == NULL) then 50.0 else zRef;
+  return (1-sii)/(conj(zi)+zi*sii);
+  
+}
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME:zin()
+FUN_DESCRIPTION: Given a reflection coefficient and the reference impedance, this measurement returns the input impedance looking into the measurement ports. 
+RETURNED_VALUE: Integer, real or complex
+CATEGORY: S-Parameter
+SYNTAX:  z = zin(Sii, Z) 
+EXAMPLE: zIN = zin(S11, 50.0)
+ARGUMENT
+  ARG_NAME: Sii
+  ARG_DESCRIPTION: complex reflection coefficient.
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: zRef
+  ARG_DESCRIPTION: reference impedance
+  ARG_DEFAULT: 50.0
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Integer, real or complex
+  ARG_REQUIRED: NO
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: vswr(), yin() 
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+//**************************************************************************** 
+defun zin(sii,zRef)
+{  
+  decl zi = if (zRef == NULL) then 50.0 else zRef;
+      return (conj(zi)+zi*sii)/(1-sii); 
+}   
+
+//****************************************************************************
+/*BEGIN_DOC
+FUN_NAME: write_snp()
+FUN_DESCRIPTION:  Write S-Parameters in Touchstone SnP file format.  Returns True or False.
+RETURNED_VALUE: boolean
+CATEGORY: S-Parameter
+SYNTAX: y = write_snp(FileName, S, Comment, FreqUnit, DataFormat, Zref, Znorm, ZorY, Precision, Delimiter)
+EXAMPLE:
+We assume that a S-Parameter Analysis has been performed.
+
+write_snp("spar_ts.s2p", S, "S-par simulation data", "GHz", "MA", 50)
+writes the S-Parameters to the file spar_ts.s2p in mag-phase format
+
+write_snp("spar_ts_1.s2p", S, "S-par simulation data")
+writes the S-Parameters to the file spar_ts_1.s2p in default "GHz", mag-phase format and referenece impedance of 50.0.
+
+We assume that a 2-port S-Parameter Analysis has been performed with source terminated in 60 ohms and load terminated in 70 ohms:
+write_snp("spar_norm_ts.s2p", S, "S-par simulation data", "GHz", "MA", PortZ, 50, 1,9,"  ")
+writes the S-Parameters to the file spar_norm_ts.s2p in "GHz", mag-phase format, with 9 digit precision and delimited by "  " and normalized impedance of 50.0.
+
+ARGUMENT
+  ARG_NAME: FileName
+  ARG_DESCRIPTION: Name or full-path of the S-Parameter file.
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: S
+  ARG_DESCRIPTION: S-parameter matrix variable
+  ARG_DEFAULT: None
+  ARG_RANGE: None
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: Comment
+  ARG_DESCRIPTION: Text that is to be written at the top of file.
+  ARG_DEFAULT: ""
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: FreqUnit
+  ARG_DESCRIPTION: Frequency Unit
+  ARG_DEFAULT: GHz
+  ARG_RANGE: "Hz", "KHz", "MHz", "GHz", "THz"
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: DataFormat
+  ARG_DESCRIPTION: Format of S-Parameter that is to be output
+  ARG_DEFAULT: "MA"
+  ARG_RANGE: "MA", "DB", "RI" dagger.gif
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Zref
+  ARG_DESCRIPTION: Reference impedance (scalar or vector)
+  ARG_DEFAULT: 50
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Znorm
+  ARG_DESCRIPTION: Normalizing impedance (a scalar value)
+  ARG_DEFAULT: 50
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: ZorY
+  ARG_DESCRIPTION: Directs the conversion through Z or Y transform dbldagr.gif
+  ARG_DEFAULT: 1 (Y-matrix)
+  ARG_RANGE: [0:1]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Precision
+  ARG_DESCRIPTION: precision of the data
+  ARG_DEFAULT: 6
+  ARG_RANGE: [1:64]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: Delimiter
+  ARG_DESCRIPTION: Delimiter that separates the data
+  ARG_DEFAULT: "\t"
+  ARG_RANGE: None
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+FOOTNOTES: dagger.gif "MA" = magnitude-phase, "DB" = dB-phase, "RI" = real-imaginary
+dbldagr.gif If ZorY=0, the S-to-S conversion is performed through the Z-matrix. If ZorY=1, the S-to-S conversion is performed through the Y-matrix
+NOTES: The function supports only 1-dimesnional S-Parameter data.  S-parameters can be from 1 to 99 ports.  The S-parameters to be written can be normalized by a different impedance through the arguments Znorm and ZorY.  If the argument Znorm is not specified, then the S-parameters are normalized to 50 ohms.
+DEFINED IN: $HPEESOF_DIR/expressions/ael/network_fun.ael
+SEE ALSO: stos()
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: July.2003
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+defun write_snp(filename, SmatrixIn, Comment, FreqUnit, DataFormat, ZrefIn, ZnormIn, ZorYIn, iPrecision,iDelimiter)
+{
+  decl Zref = if (ZrefIn == NULL) then 50.0 else ZrefIn;
+  decl freqUnit = if (FreqUnit == NULL) then "GHz" else FreqUnit;
+  decl dataFormat = if (DataFormat == NULL) then "MA" else DataFormat;
+  decl comment = if (Comment == NULL) then "" else Comment;
+  decl Znorm = if (ZnormIn == NULL) then 50.0 else ZnormIn;
+  decl ZorY = if (ZorYIn == NULL) then 1 else ZorYIn;
+  if (iPrecision != NULL) 
+  {
+    if (! is_integer(iPrecision) || iPrecision < 1 || iPrecision > 64)
+    {
+      print_function_error("write_snp"," argument Precision should be an integer in the range 1 to 64.");
+      return 0;
+    } //if
+  } //if
+  decl Precision = if (iPrecision == NULL) then 6 else iPrecision;
+  if (iDelimiter != NULL) 
+  {
+    if (! is_string(iDelimiter)) 
+    {
+      print_function_error("write_snp"," argument Delimiter should be a string .");
+      return 0;
+    } //if
+  } //if
+  decl Delimiter = if (iDelimiter == NULL) then "\t" else iDelimiter;
+  decl freq = indep(SmatrixIn);
+
+  if (sweep_size(Znorm) != 1) 
+  {
+    print_function_error("write_snp"," Znorm should be a scalar.");
+    return 0;
+  } //if
+
+  decl freqDim = sweep_dim(freq);
+  if (freqDim > 1 || freqDim < 1) 
+  {
+    print_function_error("write_snp"," only supports 1 Dimensional Frequency data.");
+    return 0;
+  } //if
+
+  //Normalize the S-matrix
+  decl Smatrix = stos(SmatrixIn, Zref, Znorm, ZorY);
+
+  decl SParDim = sweep_dim(Smatrix);
+  if (SParDim > 1 || SParDim < 1) 
+  {
+    print_function_error("write_snp"," only supports 1 Dimensional S-Parameter data.");
+    return 0;
+  } //if
+
+  decl f, i, j, k;
+  decl Smx, Smy;
+  decl FILE;
+
+  // Adjust frequency according to desired unit
+  if (!strcasecmp(freqUnit,"KHz"))
+    freq = freq/1e3;
+  elseif (!strcasecmp(freqUnit,"MHz"))
+    freq = freq/1e6;
+  elseif (!strcasecmp(freqUnit,"GHz"))
+    freq = freq/1e9;
+  elseif (!strcasecmp(freqUnit,"THz"))
+    freq = freq/1e12;
+  elseif (!strcasecmp(freqUnit,"Hz"))
+    freqUnit = "Hz";
+  else 
+  {
+    print_function_error("write_snp"," only supports Hz, KHz, MHz, GHz, THz");
+    return 0;
+  } //if
+
+  // get sweep size and S matrix dimension
+  decl s_size = sweep_size(freq);
+  decl dim = size(Smatrix);   //Matrix dimension (x X y)
+  if (size(dim) > 1)
+    dim = dim(1);
+
+  // No more than 99 ports
+  if (dim > 99) 
+  {
+    print_function_error("write_snp"," does not support more than 99 ports.");
+    return 0;
+  } //if
+
+  // Set up for appropriate data format
+  decl sFirstH="mag(", sSecondH="phase(";
+  if (!strcasecmp(dataFormat,"MA")) 
+  {
+    Smx = mag(Smatrix);
+    Smy = phase(Smatrix);
+  }
+  elseif (!strcasecmp(dataFormat,"DB")) 
+  {
+    Smx = dB(Smatrix);
+    Smy = phase(Smatrix);
+    sFirstH="dB(";
+  }
+  elseif (!strcasecmp(dataFormat,"RI")) 
+  {
+    dataFormat = "RI";
+    Smx = real(Smatrix);
+    Smy = imag(Smatrix);
+    sFirstH="real(";
+    sSecondH="imag(";
+  }
+  else 
+  {
+    print_function_error("write_snp"," only supports MA, DB and RI formats.");
+    return 0;
+  } //if
+
+  // open output file for writing
+  FILE = fopen(filename, "W");
+  if (FILE == NULL) 
+  {
+    print_function_error("write_snp", strcat(" could not open file:", filename));
+    return 0;
+  } //if
+
+  //Form the default S-parameter header - ! freq mag(S11) phase(S11)
+  decl sHLine = strcat("! freq", Delimiter);
+  for (i=1; i<=dim; i++) 
+  {
+    //Formulate and write S11, S12, S13, ...
+    for (j=1; j<=dim; j++) 
+    {
+      if (j%4==0)
+        sHLine = strcat(sHLine, sprintf("\n!     %s", Delimiter));
+      decl sPar = sprintf("S%d%d",i,j);
+      sHLine = strcat(sHLine, sFirstH, sPar, ")", Delimiter, sSecondH, sPar, ")", Delimiter);
+    } //for
+    fprintf(FILE,"%s\n", sHLine);
+    sHLine = strcat("!     ", Delimiter);
+  } //for
+
+  // put out comment and option lines
+  fprintf(FILE, "!%s\n#  %s  S  %s  R %s\n", comment, freqUnit, dataFormat, Znorm);
+  if (dim == 1) 
+  {
+    decl sPrecision = strcat("%.",Precision,"f",Delimiter,"%.",Precision,"f",Delimiter,"%.",Precision,"f\n");
+    for (f=0; f<s_size; f++) 
+    {
+//      fprintf(FILE, sPrecision, freq[f], Smx(1)[f], Smy(1)[f]);
+      fprintf(FILE, sPrecision, freq[f], Smx[f], Smy[f]);
+    }
+  }
+  elseif (dim == 2) 
+  {
+    decl sPrecision = strcat("%.",Precision,"f",Delimiter,"%.",Precision,"f",Delimiter,"%.",Precision,"f",Delimiter,"%.",Precision,"f",Delimiter,"%.",Precision,"f",Delimiter,"%.",Precision,"f",Delimiter,"%.",Precision,"f",Delimiter,"%.",Precision,"f",Delimiter,"%.",Precision,"f\n");
+    for (f=0; f<s_size; f++) 
+    {
+//      fprintf(FILE,"%.3f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n",
+      fprintf(FILE,sPrecision,
+        freq[f], Smx(1,1)[f], Smy(1,1)[f], Smx(2,1)[f], Smy(2,1)[f],
+                 Smx(1,2)[f], Smy(1,2)[f], Smx(2,2)[f], Smy(2,2)[f]);
+    }
+  }
+  else 
+  {
+    //For s_size frequency points
+    decl sPrecision = strcat(Delimiter,"%.",Precision,"f",Delimiter,"%.",Precision,"f");
+    for (f=0; f < s_size; f++) 
+    {
+        //For "dim" number of ports
+        // TFS141954
+        for (i=1; i<=dim; i++) 
+	{
+	    k = 0;
+	    //Formulate and write S11, S12, S13, ...
+            for (j=1; j<=dim; j++,k++) 
+            {
+                if (i==1 && j==1)
+                  fprintf(FILE,strcat("%.",Precision,"f"), freq[f]);
+                if (k > 0 && !(k%4))
+                  fprintf(FILE,strcat("\n",Delimiter));
+                //Write one S-Par data - Sij
+                fprintf(FILE,sPrecision, Smx(i,j)[f], Smy(i,j)[f]);
+            } //for
+            fprintf(FILE,"\n");
+        } //for
+        fprintf(FILE,"\n");
+    } //for
+  }
+
+  fclose(FILE);
+  return 1;
+} //fun - write_snp
+
+//
+// ***** DO NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+
+
+
+
+

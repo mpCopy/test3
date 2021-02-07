@@ -1,0 +1,289 @@
+// Copyright Keysight Technologies 1999 - 2011  
+
+
+
+//****************************************************************************
+// BudIP3out
+// Budget IP3 measurement is based on HB simulation. 
+// (returns in dBm) (pin 1)
+// Options: CalcNoise (FreqForNoise, OutputBudgetIV
+//component = ["A0_PORT1","A1_AMP1","A2_BPF1","A3_MIX1","A4_Term2"]
+//fundFreq = ["{1,0}","{1,0}","{1,0}","{1,0}","{-1,1}"]
+//imFreq = =["{2,-1}","{2,-1}","{2,-1}","{2,-1}","{1,1}"]
+//****************************************************************************
+defun bud_ip3_out(component,fundFreq,imFreq)
+{
+  decl comp_num = sweep_size(component);
+  decl result = create(1, "Real", {"Component"},  {"String"},1, 1);
+  decl indep_comp_name = indep(result,"Component");
+  decl i,strg, eqn;
+  for(i=0;i<comp_num;i++)
+    {     
+      strg = strcat(component[i],".t1.v,",fundFreq[i],",",imFreq[i]);
+      eqn = strcat("ip3_out(",strg,")");
+      result[i] = evaluate(eqn,"ael");
+      indep_comp_name[i]=component[i];
+    }
+  return result;
+}
+    
+
+
+defun hash_chart(freq,Mix,LO_freq,RF_freq,select_mix)
+{
+  decl k = if(select_mix == NULL) then 0 else select_mix;
+  decl sweepSize = sweep_size(Mix);
+  decl inner_len = sweepSize(2);
+  decl outer_len = sweepSize(1);
+  decl result = create(2, "Real", {"F", "RF_freq"},  {"String","Real"},1, 1);
+  decl indep_freq = indep(result,"F");
+  decl indep_RF_freq = indep(result,"RF_freq");
+  
+  decl i,j;
+  for(j=0;j<outer_len;j++)
+    {
+      for(i=0;i<inner_len;i++)
+	{
+	  result[i,j]=Mix(1)[k,i]*LO_freq + Mix(2)[k,i]*RF_freq[j];
+	  if(Mix(2)[k,i] < 0)
+	     indep_freq[i]=strcat(Mix(1)[k,i],"LO",Mix(2)[k,i],"RF");
+	  else
+	    indep_freq[i]=strcat(Mix(1)[k,i],"LO+",Mix(2)[k,i],"RF"); 
+	}
+      indep_RF_freq[j]=RF_freq[j];   
+    }
+  return result;
+}
+
+
+
+defun hash_chart2(freq,Mix,IF_freq,RF_freq,select_mix)
+{
+  decl k = if(select_mix == NULL) then 0 else select_mix;
+  decl LO_freq = RF_freq - IF_freq;
+  decl sweepSize = sweep_size(Mix);
+  decl inner_len = sweepSize(2);
+  decl outer_len = sweepSize(1);
+  decl result = create(2, "Real", {"F", "RF_freq"},  {"String","Real"},1, 1);
+  decl indep_freq = indep(result,"F");
+  decl indep_RF_freq = indep(result,"RF_freq");
+  
+  decl i,j, ii;
+  for(j=0;j<outer_len;j++)
+    {
+      ii = 0;
+      result[ii,j] = min(RF_freq);
+      indep_freq[ii]="RFlow";
+      for(i=0;i<inner_len;i++)
+	{
+	  if ((Mix(2)[k,i] > 0) && (Mix(1)[k,i] > 0))
+	    {    
+	      ii = ii +1;
+	      result[ii,j]=abs(Mix(1)[k,i]*LO_freq[j] + IF_freq)/(Mix(2)[k,i]);
+	   
+	      //if(Mix(2)[k,i] < 0)
+	      //indep_freq[ii]=strcat(Mix(1)[k,i],"LO",Mix(2)[k,i],"RF");
+	      // else
+	      indep_freq[ii]=strcat(Mix(1)[k,i],"LO+",Mix(2)[k,i],"RF"); 
+	    }
+	}
+      result[ii+1,j] = max(RF_freq);
+      indep_freq[ii+1]="RFhigh";
+      indep_RF_freq[j]=RF_freq[j];   
+    }
+  return result;
+}
+
+
+
+defun freq_chart(IF_freq,RF_freq,convType,M,N)
+{
+  decl inner_len = sweep_size(RF_freq);
+  decl conv  = if(convType > 0) then 1.0 else -1.0;
+  decl LO_freq = RF_freq + conv*IF_freq;
+  decl result = create(2, "Real", {"F", "RF_freq"},  {"String","Real"},1, 1);
+  decl indep_freq = indep(result,"F");
+  decl indep_RF_freq = indep(result,"RF_freq");
+  
+  decl i,j,n,m,ii;
+  for(j=0;j<inner_len;j++)
+    {
+      ii = 0;
+      result[ii,j] = min(RF_freq);
+      indep_freq[ii]="RFlow";
+      for(m=-M;m <= M;m++)
+	{  
+	  for(n=0;n <= N;n++)
+	    {
+	      if ((n != 0) && (m != 0) )
+		{    
+		  ii = ii +1;
+		  result[ii,j]=abs(m*LO_freq[j] + IF_freq)/n; 
+		  indep_freq[ii]=strcat(m,"LO+",n,"RF"); 
+		}
+	    }
+	}
+      result[ii+1,j] = max(RF_freq);
+      if(M<1 || N<1)
+	indep_freq[ii+1]="RFhigh";
+      else
+	indep_freq[ii+1]="         , RFhigh";
+      
+      indep_RF_freq[j]=RF_freq[j]; 
+    }
+  return result;
+}
+
+
+defun spur_plot(IF_freq,RF_freq,convType,M,N)
+{
+  decl inner_len = sweep_size(RF_freq);
+  decl conv  = if(convType > 0) then 1.0 else -1.0;
+  decl LO_freq = RF_freq + conv*IF_freq;
+  decl freqBand = create(2, "Real", {"F", "RF_freq"},  {"String","Real"},1, 1);
+  decl result = create(2, "Real", {"F", "RF_freq"},  {"String","Real"},1, 1);
+  decl indep_freq1 = indep(freqBand,"F");
+  decl indep_RF_freq1 = indep(freqBand,"RF_freq");
+  decl indep_freq2 = indep(result,"F");
+  decl indep_RF_freq2 = indep(result,"RF_freq");
+
+  decl j,n,m,ii;
+  for(j=0;j<inner_len;j++)
+    {
+      ii = 0;
+      result[ii,j]=0.1;
+      freqBand[ii,j]=RF_freq[j];
+      indep_freq1[ii]=strcat("RFin"); 
+      indep_freq2[ii]=strcat("RFin");
+      for(m=-M;m <= M;m++)
+	{    
+	  for(n=0;n <= N;n++)
+	    {
+	      if ((n != 0) )     // && (m != 0)
+		{  
+		  ii = ii +1;
+		  result[ii,j]=m+0.1*sgn(m)*n;
+		  freqBand[ii,j]=abs((m*LO_freq[j] + IF_freq)/n); 
+		  indep_freq1[ii]=strcat("(",m,",",n,")"); 
+		  indep_freq2[ii]=strcat("(",m,",",n,")"); 
+		}
+	    }
+	}
+   
+      indep_RF_freq1[j]=j;
+      indep_RF_freq2[j]=j;
+    }
+  result = vs(result,freqBand);
+  //set_attr(result,"Thickness",identify_value(10));
+  return result;
+}
+
+
+defun spur_table(IF_freq,RF_freq,convType,M,N)
+{
+  decl conv  = if(convType > 0) then 1.0 else -1.0;
+  decl LO_freq = RF_freq + conv*IF_freq;
+  decl RFhigh = max(RF_freq);
+  decl RFlow = min(RF_freq);
+  decl spurLow = create(1, "Real", {"F"},  {"String"},1, 1);
+  decl spurHigh = create(1, "Real", {"F"},  {"String"},1, 1);
+  decl distSpur = create(1, "Real", {"F"},  {"String"},1, 1);
+  decl spurBand = create(1, "Real", {"F"},  {"String"},1, 1); 
+
+  decl indep_freq1 = indep(spurLow,"F"); 
+  decl indep_freq2 = indep(spurHigh,"F"); 
+  decl indep_freq3 = indep(distSpur,"F"); 
+  decl indep_freq4 = indep(spurBand,"F"); 
+  
+  decl spur,n,m,ii=0;
+ 
+  for(m=-M;m <= M;m++)
+    {  
+      for(n=0;n <= N;n++)
+	{
+	  if ((n != 0) && (m != 0) )
+	    {    
+	      spur=abs(m*LO_freq + IF_freq)/n; 
+	      spurLow[ii]=min(spur);
+	      spurHigh[ii]=max(spur);
+	      distSpur[ii]=min([abs(spurLow[ii]-RFhigh),abs(spurLow[ii]-RFlow),abs(spurHigh[ii]-RFhigh),abs(spurHigh[ii]-RFlow)]);
+	      spurBand[ii] = spurHigh[ii] - spurLow[ii];
+	      
+	      indep_freq1[ii]=strcat(m,",",n); 
+	      indep_freq2[ii]=strcat(m,",",n); 
+	      indep_freq3[ii]=strcat(m,",",n); 
+	      indep_freq4[ii]=strcat(m,",",n); 
+	      ii = ii +1;
+	    }
+	}
+      
+    }
+  return {spurLow ,spurHigh, distSpur, spurBand} ;
+}
+
+
+defun spur_sort(IF_freq,RF_freq,convType,M,N)
+{		
+  decl conv = if(convType > 0) then 1.0 else -1.0;
+  decl LO_freq = RF_freq + conv*IF_freq;
+  decl RFhigh = max(RF_freq);
+  decl RFlow = min(RF_freq);
+  decl interMod = create(1, "Real", {"spurDist"},  {"Real"},1, 1);
+  decl spurLow = create(1, "Real", {"spurDist"},  {"Real"},1, 1);
+  decl spurHigh = create(1, "Real", {"spurDist"},  {"Real"},1, 1);
+  decl spurBand = create(1, "Real", {"spurDist"},  {"Real"},1, 1); 
+
+  
+  decl indep_freq1 = indep(interMod,"spurDist"); 
+  decl indep_freq2 = indep(spurLow,"spurDist"); 
+  decl indep_freq3 = indep(spurHigh,"spurDist"); 
+  decl indep_freq4 = indep(spurBand,"spurDist"); 
+  
+  decl spur,dist,n,m,ii=0;
+ 
+  for(m=-M;m <= M;m++)
+    {  
+      for(n=0;n <= N;n++)
+	{
+	  if ((n != 0) && (m != 0) )
+	    {    
+	      spur=abs(m*LO_freq + IF_freq)/n; 
+	      interMod[ii] =  m+0.1*sgn(m)*n;
+	      spurLow[ii]=min(spur);
+	      spurHigh[ii]=max(spur);
+	      spurBand[ii] = spurHigh[ii] - spurLow[ii];
+
+	      dist=min([abs(spurLow[ii]-RFhigh),abs(spurLow[ii]-RFlow),abs(spurHigh[ii]-RFhigh),abs(spurHigh[ii]-RFlow)]);
+	      
+	      indep_freq1[ii]=dist; 
+	      indep_freq2[ii]=dist;  
+	      indep_freq3[ii]=dist;  
+	      indep_freq4[ii]=dist;  
+	      ii = ii +1;
+	    }
+	}
+      
+    }
+  decl result = {interMod, spurLow ,spurHigh, spurBand} ;
+  return sort(result,"ascending","spurDist");
+}
+
+
+
+
+
+
+
+
+// NOT DELETE THE FOLLOWING!!!!! *****
+//
+// This obviously isn't a C++ file, but the C++ editing mode works.
+//
+// Local Variables:
+// mode: c++
+// header-comment-character: ?*
+// header-prefix: "/* -*-C++-*-"
+// header-suffix: "*/"
+// End:
+//
+//
