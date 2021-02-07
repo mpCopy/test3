@@ -1,0 +1,27 @@
+# @(#) $Source: /cvs/wlv/src/cedamk/bin/aixMakeCppSL,v $ $Revision: 100.7 $ $Date: 2001/10/02 23:07:47 $
+# wrapper to makeC++SharedLib which will find .exp files in -L args
+
+#$makecppsl="/usr/lpp/xlC/bin/makeC++SharedLib";
+#$makecppsl="/usr/ibmcxx/bin/makeC++SharedLib";
+$makecppsl="/usr/vacpp/bin/makeC++SharedLib";
+push(@args, $makecppsl);
+
+while ($_ = shift) {
+  /^\-E$/ && do { push(@args, $_, shift); next; };
+  /^\-L(\S*)$/ && do { push(@args, $_); push(@epath, $1); next; };
+  /\.exp$/ && do { push (@args, findexp($_)); next; };
+  push(@args, $_);
+}
+
+exec(@args) || die "Failed to exec $makecppsl: $!\n";
+
+sub findexp () {
+  $e = shift;
+  for $p (@epath) { return "$p/$e" if (-f "$p/$e"); }
+  die "Failed to find $e in ", join(":",@epath), "\n";
+}
+
+
+# Local Variables:
+# mode:perl
+# End:

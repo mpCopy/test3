@@ -1,0 +1,51 @@
+# Print out a .bat file that will set up a ptolemy mb shell
+
+error() {
+   echo "echo $1"
+   echo "pause"
+   exit
+}
+
+PATH=$PWD:$PATH
+
+vcpath=$(regtool -qW get '\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\14.0\Setup\VC\ProductDir')
+
+if [ $? -ne 0 ] ; then
+    echo "echo The ADS2017 Ptolemy Modelbuilder Shell requires"
+    echo "echo Microsoft Visual Studio 2015 on 64-bit Windows."
+    echo "echo Unable to find Microsoft Visual Studio 2015 installation."
+    echo "echo ************************************************"
+    echo "echo Ptolemy Modelbuilder Shell Setup FAILED."
+    echo "echo ************************************************"
+else
+    echo "call \"$vcpath\vcvarsall.bat\" x86_amd64 > %TEMP%\mbshellcmds64.out"
+    echo "echo ************************************************"
+    echo "echo Setting environment for building Ptolemy models."
+    echo "echo ************************************************"
+    echo "echo To build a Ptolemy model for use in 64-bit "
+    echo "echo simulations, use the command hpeesofmake64. "
+    echo "echo ************************************************"
+fi
+
+hpeesofdir=$(regtool -qw get '\HKEY_LOCAL_MACHINE\SOFTWARE\Keysight\ADS\5.10\eeenv\HPEESOF_DIR')
+
+if [ $? -ne 0 ] ; then
+    error "Error: Unable to find ADS installation"
+fi
+
+hpeesofdir=$(cygpath -w "$hpeesofdir")
+
+adshome=$(regtool -qw get '\HKEY_LOCAL_MACHINE\SOFTWARE\Keysight\ADS\5.10\eeenv\HOME')
+
+if [ $? -ne 0 ] ; then
+    error "Error: Unable to find ADS HOME directory"
+fi
+
+adshome=$(cygpath -w "$adshome")
+
+echo "set HPEESOF_DIR=$hpeesofdir"
+echo "set PATH=%HPEESOF_DIR%\bin;%PATH%"
+echo "for /f \"delims=\" %%a in ('menv getRefvalue --name SystemVue --location --product_root \"%HPEESOF_DIR%\"') do @set SVE_DIR=%%a"
+echo "set PATH=%SVE_DIR%\win32_64\sveclient;%PATH%"
+echo "cd /d $adshome"
+echo "%COMSPEC%"

@@ -1,0 +1,37 @@
+// Copyright 2000 - 2014 Keysight Technologies, Inc  
+// -*- c++ -*-
+// migrate edge components
+
+defun migrate_BERFER(design, instance) {
+  decl r = FALSE;
+  if (pt_migrateStartStop(design, instance, "Start", NULL, NULL, NULL,
+			  "DefaultNumericStart"))
+    r = TRUE;
+  if (pt_migrateStartStop(design, instance, "Stop", NULL, NULL, NULL,
+			  "DefaultNumericStop"))
+    r = TRUE;
+  if (r)
+    db_regenerate_instance_annotation(instance);
+  return(r);
+}
+
+defun migrate_EDGE_RF_RX_IFout(design, instance) {
+  decl tempC = pt_get_instance_parm( instance, "RX_AntTemp" );
+  if ( !tempC )
+    return( FALSE );
+  else {
+    decl tempK;
+    tempK = sprintf( "(%s)+273.15", tempC );
+    pt_set_instance_parm( instance, "RX_AntTemp", tempK );
+    db_regenerate_instance_annotation( instance );
+    return( TRUE );
+  }
+}
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_edge", 1,
+		     "EDGE_BERFER", migrate_BERFER));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_edge", 2,
+		     "EDGE_RF_RX_IFout", migrate_EDGE_RF_RX_IFout));

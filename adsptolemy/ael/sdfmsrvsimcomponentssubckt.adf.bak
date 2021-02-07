@@ -1,0 +1,78 @@
+set_design_type( sigproc_net );
+create_text_form ("_nCM_x5fN6030_x5fFileRead_fbin_x5ffile", 
+	"File with bin extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "bin"), prefix_path_to_data_file);
+create_form_set ( "_nCM_x5fN6030_x5fFileRead_fFileNameI_x5fFileSet",
+	"_nCM_x5fN6030_x5fFileRead_fbin_x5ffile");
+create_text_form ("_nCM_x5fN6030_x5fFileRead_fbin_x5ffile", 
+	"File with bin extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "bin"), prefix_path_to_data_file);
+create_form_set ( "_nCM_x5fN6030_x5fFileRead_fFileNameQ_x5fFileSet",
+	"_nCM_x5fN6030_x5fFileRead_fbin_x5ffile");
+create_constant_form ("_nCM_x5fN6030_x5fFileRead_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+create_constant_form ("_nCM_x5fN6030_x5fFileRead_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+create_form_set("_nCM_x5fN6030_x5fFileRead_fControlSimulationSet",
+	"_nCM_x5fN6030_x5fFileRead_fNO",
+	"_nCM_x5fN6030_x5fFileRead_fYES",
+	"StdForm");
+create_constant_form ("_nCM_x5fN6030_x5fFileRead_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+create_constant_form ("_nCM_x5fN6030_x5fFileRead_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+create_form_set("_nCM_x5fN6030_x5fFileRead_fPeriodicSet",
+	"_nCM_x5fN6030_x5fFileRead_fNO",
+	"_nCM_x5fN6030_x5fFileRead_fYES",
+	"StdForm");
+create_item ("CM_N6030_FileRead","N6030 Arbitrary Waveform file read",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CM_N6030_FileRead",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CM_N6030_FileRead",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CM_N6030_FileRead",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FileNameI","Output baseband studio file name for In-channel data",
+		PARM_STRING,
+		"_nCM_x5fN6030_x5fFileRead_fFileNameI_x5fFileSet",
+		UNITLESS_UNIT,
+		prm("_nCM_x5fN6030_x5fFileRead_fbin_x5ffile","\"file_i.bin\"")),
+	create_parm ("FileNameQ","Output baseband studio file name for Quadrature-channel data",
+		PARM_STRING,
+		"_nCM_x5fN6030_x5fFileRead_fFileNameQ_x5fFileSet",
+		UNITLESS_UNIT,
+		prm("_nCM_x5fN6030_x5fFileRead_fbin_x5ffile","\"file_q.bin\"")),
+	create_parm ("ControlSimulation","Control simulation",
+		PARM_INT,
+		"_nCM_x5fN6030_x5fFileRead_fControlSimulationSet",
+		UNITLESS_UNIT,
+		prm("_nCM_x5fN6030_x5fFileRead_fYES","YES")),
+	create_parm ("Periodic","Periodic output",
+		PARM_INT,
+		"_nCM_x5fN6030_x5fFileRead_fPeriodicSet",
+		UNITLESS_UNIT,
+		prm("_nCM_x5fN6030_x5fFileRead_fYES","YES")));
+library_group("Instruments","Instruments","CM_N6030_FileRead");
+palette_group("Instruments","Instruments","CM_N6030_FileRead");
+

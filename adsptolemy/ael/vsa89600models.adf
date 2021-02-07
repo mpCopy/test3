@@ -1,0 +1,534 @@
+set_design_type( sigproc_net );
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fTimed", 
+	"Timed",
+	0,
+	"0",
+	"Timed");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fFrequency", 
+	"Frequency",
+	0,
+	"1",
+	"Frequency");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fDemod_x5fErrors", 
+	"Demod Errors",
+	0,
+	"2",
+	"Demod Errors");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fComplex_x5fScalar", 
+	"Complex Scalar",
+	0,
+	"3",
+	"Complex Scalar");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fFloat_x5fScalar", 
+	"Float Scalar",
+	0,
+	"4",
+	"Float Scalar");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fInteger_x5fScalar", 
+	"Integer Scalar",
+	0,
+	"5",
+	"Integer Scalar");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_fOutputTypeSet",
+	"_nVSA_x5f89600B_x5fSource_fTimed",
+	"_nVSA_x5f89600B_x5fSource_fFrequency",
+	"_nVSA_x5f89600B_x5fSource_fDemod_x5fErrors",
+	"_nVSA_x5f89600B_x5fSource_fComplex_x5fScalar",
+	"_nVSA_x5f89600B_x5fSource_fFloat_x5fScalar",
+	"_nVSA_x5f89600B_x5fSource_fInteger_x5fScalar",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_fPauseSet",
+	"_nVSA_x5f89600B_x5fSource_fNO",
+	"_nVSA_x5f89600B_x5fSource_fYES",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fA", 
+	"A",
+	0,
+	"0",
+	"A");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fB", 
+	"B",
+	0,
+	"1",
+	"B");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fC", 
+	"C",
+	0,
+	"2",
+	"C");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fD", 
+	"D",
+	0,
+	"3",
+	"D");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fE", 
+	"E",
+	0,
+	"4",
+	"E");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fF", 
+	"F",
+	0,
+	"5",
+	"F");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fG", 
+	"G",
+	0,
+	"6",
+	"G");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fH", 
+	"H",
+	0,
+	"7",
+	"H");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_fVSATraceSet",
+	"_nVSA_x5f89600B_x5fSource_fA",
+	"_nVSA_x5f89600B_x5fSource_fB",
+	"_nVSA_x5f89600B_x5fSource_fC",
+	"_nVSA_x5f89600B_x5fSource_fD",
+	"_nVSA_x5f89600B_x5fSource_fE",
+	"_nVSA_x5f89600B_x5fSource_fF",
+	"_nVSA_x5f89600B_x5fSource_fG",
+	"_nVSA_x5f89600B_x5fSource_fH",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fRepeat", 
+	"Repeat",
+	0,
+	"0",
+	"Repeat");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fReacquire", 
+	"Reacquire",
+	0,
+	"1",
+	"Reacquire");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fSingle_x5fpass", 
+	"Single pass",
+	0,
+	"2",
+	"Single pass");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_fRepeatDataSet",
+	"_nVSA_x5f89600B_x5fSource_fRepeat",
+	"_nVSA_x5f89600B_x5fSource_fReacquire",
+	"_nVSA_x5f89600B_x5fSource_fSingle_x5fpass",
+	"StdForm");
+
+create_text_form ("_nVSA_x5f89600B_x5fSource_fset_x5ffile", 
+	"File with set extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "set"), prefix_path_to_data_file);
+
+create_form_set ( "_nVSA_x5f89600B_x5fSource_fSetupFile_x5fFileSet",
+	"_nVSA_x5f89600B_x5fSource_fset_x5ffile");
+
+create_text_form ("_nVSA_x5f89600B_x5fSource_fsdf_x5ffile", 
+	"File with sdf extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "sdf"), prefix_path_to_data_file);
+
+create_text_form ("_nVSA_x5f89600B_x5fSource_fdat_x5ffile", 
+	"File with dat extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "dat"), prefix_path_to_data_file);
+
+create_text_form ("_nVSA_x5f89600B_x5fSource_fcap_x5ffile", 
+	"File with cap extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "cap"), prefix_path_to_data_file);
+
+create_text_form ("_nVSA_x5f89600B_x5fSource_fcsv_x5ffile", 
+	"File with csv extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "csv"), prefix_path_to_data_file);
+
+create_text_form ("_nVSA_x5f89600B_x5fSource_fmat_x5ffile", 
+	"File with mat extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "mat"), prefix_path_to_data_file);
+
+create_text_form ("_nVSA_x5f89600B_x5fSource_ftxt_x5ffile", 
+	"File with txt extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "txt"), prefix_path_to_data_file);
+
+create_form_set ( "_nVSA_x5f89600B_x5fSource_fRecordingFile_x5fFileSet",
+	"_nVSA_x5f89600B_x5fSource_fsdf_x5ffile",
+	"_nVSA_x5f89600B_x5fSource_fdat_x5ffile",
+	"_nVSA_x5f89600B_x5fSource_fcap_x5ffile",
+	"_nVSA_x5f89600B_x5fSource_fcsv_x5ffile",
+	"_nVSA_x5f89600B_x5fSource_fmat_x5ffile",
+	"_nVSA_x5f89600B_x5fSource_ftxt_x5ffile");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fAlways", 
+	"Always",
+	0,
+	"0",
+	"Always");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fOnce", 
+	"Once",
+	0,
+	"1",
+	"Once");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fNo", 
+	"No",
+	0,
+	"2",
+	"No");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_fSetupUseSet",
+	"_nVSA_x5f89600B_x5fSource_fAlways",
+	"_nVSA_x5f89600B_x5fSource_fOnce",
+	"_nVSA_x5f89600B_x5fSource_fNo",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_fAutoCaptureSet",
+	"_nVSA_x5f89600B_x5fSource_fNO",
+	"_nVSA_x5f89600B_x5fSource_fYES",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_fDefaultHardwareSet",
+	"_nVSA_x5f89600B_x5fSource_fNO",
+	"_nVSA_x5f89600B_x5fSource_fYES",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fUnchanged", 
+	"Unchanged",
+	0,
+	"0",
+	"0");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_f_x5fFrequencySpanSet",
+	"_nVSA_x5f89600B_x5fSource_fUnchanged",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_fSetCenterFrequencySet",
+	"_nVSA_x5f89600B_x5fSource_fNO",
+	"_nVSA_x5f89600B_x5fSource_fYES",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fUnchanged", 
+	"Unchanged",
+	0,
+	"0",
+	"0");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_f_x5fRangeSet",
+	"_nVSA_x5f89600B_x5fSource_fUnchanged",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSource_fUnchanged", 
+	"Unchanged",
+	0,
+	"0",
+	"0");
+
+create_form_set("_nVSA_x5f89600B_x5fSource_f_x5fRecordingLengthSet",
+	"_nVSA_x5f89600B_x5fSource_fUnchanged",
+	"StdForm");
+
+create_item ("VSA_89600B_Source","Keysight 89600B Vector Signal Analyzer",
+	"V",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_VSA_89600B_Source",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dTSDF_nVSA_x5f89600B_x5fSource_lvsa89600models",
+	SPComponentAnnotFmt,
+	"SYM_VSA_89600B_Source",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("VSATitle","Text for VSA title bar",
+		PARM_STRING,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Simulation source\"")),
+	create_parm ("OutputType","Output port type",
+		PARM_INT,
+		"_nVSA_x5f89600B_x5fSource_fOutputTypeSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fTimed","Timed")),
+	create_parm ("Pause","Pause for VSA setup",
+		PARM_INT,
+		"_nVSA_x5f89600B_x5fSource_fPauseSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fNO","NO")),
+	create_parm ("VSATrace","VSA trace that will supply data",
+		PARM_INT,
+		"_nVSA_x5f89600B_x5fSource_fVSATraceSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fB","B")),
+	create_parm ("RepeatData","VSA hardware measurement control",
+		PARM_INT,
+		"_nVSA_x5f89600B_x5fSource_fRepeatDataSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fRepeat","Repeat")),
+	create_parm ("TStep","Simulation time step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SetupFile","Name of setup file to recall into VSA",
+		PARM_STRING,
+		"_nVSA_x5f89600B_x5fSource_fSetupFile_x5fFileSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fset_x5ffile","\"\"")),
+	create_parm ("RecordingFile","Name of recording file to recall into VSA",
+		PARM_STRING,
+		"_nVSA_x5f89600B_x5fSource_fRecordingFile_x5fFileSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fsdf_x5ffile","\"\"")),
+	create_parm ("SetupUse","VSA setup file recall control",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nVSA_x5f89600B_x5fSource_fSetupUseSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fAlways","Always")),
+	create_parm ("AutoCapture","Capture VSA input data at start-up",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nVSA_x5f89600B_x5fSource_fAutoCaptureSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fNO","NO")),
+	create_parm ("DefaultHardware","Use VSA default hardware configuration",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nVSA_x5f89600B_x5fSource_fDefaultHardwareSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fNO","NO")),
+	create_parm ("FrequencySpan","If non-zero, set the frequency span",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"_nVSA_x5f89600B_x5fSource_f_x5fFrequencySpanSet",
+		FREQUENCY_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fUnchanged","Unchanged")),
+	create_parm ("SetCenterFrequency","Controls the CenterFrequency parameter",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nVSA_x5f89600B_x5fSource_fSetCenterFrequencySet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fNO","NO")),
+	create_parm ("CenterFrequency","If the parameter SetCenterFrequency is set to YES, set the center frequency",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","0")),
+	create_parm ("Range","If non-zero and RecordingFile not set, set the range",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"_nVSA_x5f89600B_x5fSource_f_x5fRangeSet",
+		VOLTAGE_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fUnchanged","Unchanged")),
+	create_parm ("RecordingLength","If non-zero and RecordingFile not set, this parameter set the recording length",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"_nVSA_x5f89600B_x5fSource_f_x5fRecordingLengthSet",
+		TIME_UNIT,
+		prm("_nVSA_x5f89600B_x5fSource_fUnchanged","Unchanged")));
+
+
+create_text_form ("_nVSA_x5f89600B_x5fSink_fset_x5ffile", 
+	"File with set extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "set"), prefix_path_to_data_file);
+
+create_form_set ( "_nVSA_x5f89600B_x5fSink_fSetupFile_x5fFileSet",
+	"_nVSA_x5f89600B_x5fSink_fset_x5ffile");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSink_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSink_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nVSA_x5f89600B_x5fSink_fRestoreHWSet",
+	"_nVSA_x5f89600B_x5fSink_fNO",
+	"_nVSA_x5f89600B_x5fSink_fYES",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSink_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSink_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nVSA_x5f89600B_x5fSink_fTclTkModeSet",
+	"_nVSA_x5f89600B_x5fSink_fNO",
+	"_nVSA_x5f89600B_x5fSink_fYES",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSink_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSink_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nVSA_x5f89600B_x5fSink_fRecordModeSet",
+	"_nVSA_x5f89600B_x5fSink_fNO",
+	"_nVSA_x5f89600B_x5fSink_fYES",
+	"StdForm");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSink_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nVSA_x5f89600B_x5fSink_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nVSA_x5f89600B_x5fSink_fSetFreqPropSet",
+	"_nVSA_x5f89600B_x5fSink_fNO",
+	"_nVSA_x5f89600B_x5fSink_fYES",
+	"StdForm");
+
+create_item ("VSA_89600B_Sink","Keysight 89600B Vector Signal Analyzer",
+	"V",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_VSA_89600B_Sink",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dTSDF_nVSA_x5f89600B_x5fSink_lvsa89600models",
+	SPComponentAnnotFmt,
+	"SYM_VSA_89600B_Sink",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("VSATitle","Text for VSA title bar",
+		PARM_STRING,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Simulation output\"")),
+	create_parm ("TStep","Simulation time step use a value of 0 for time step synchronization with other network timed signals",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SamplesPerSymbol","Digital demodulation samples per symbol NOT to be confused with VSA points per symbol",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("SetupFile","Name of measurement setup file to recall",
+		PARM_STRING,
+		"_nVSA_x5f89600B_x5fSink_fSetupFile_x5fFileSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSink_fset_x5ffile","\"\"")),
+	create_parm ("RestoreHW","YES to restore VSA hardware selection at end of simulation NO to not",
+		PARM_INT,
+		"_nVSA_x5f89600B_x5fSink_fRestoreHWSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSink_fNO","NO")),
+	create_parm ("Start","Sample number to start measuring",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","DefaultNumericStart")),
+	create_parm ("Stop","Sample number to stop measuring",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","DefaultNumericStop")),
+	create_parm ("TclTkMode","YES enables Tcl/Tk mode (continuous simulation) NO disables",
+		PARM_INT,
+		"_nVSA_x5f89600B_x5fSink_fTclTkModeSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSink_fNO","NO")),
+	create_parm ("RecordMode","YES enables VSA 89600 Recording mode NO disables Stop must be > Start, TclTkMode = NO",
+		PARM_INT,
+		"_nVSA_x5f89600B_x5fSink_fRecordModeSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSink_fNO","NO")),
+	create_parm ("SetFreqProp","Set VSA 89600 frequency properties (center, span, zoom)",
+		PARM_INT,
+		"_nVSA_x5f89600B_x5fSink_fSetFreqPropSet",
+		UNITLESS_UNIT,
+		prm("_nVSA_x5f89600B_x5fSink_fYES","YES")));

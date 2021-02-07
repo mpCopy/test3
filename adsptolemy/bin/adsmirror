@@ -1,0 +1,416 @@
+#! /bin/sh
+###############################################################################
+#
+# File:         adsmirror
+# RCS:          $Header: /cvs/wlv/src/cedamk/bin/adsmirror,v 1.5 2005/05/11 18:09:04 build Exp $
+# Description:  Script for mirroring files for detached development.
+# Author:       Darryl Okahata
+# Created:      Tue Aug 28 14:03:44 2001
+# Modified:     Wed Sep 26 14:55:43 2001 (Darryl Okahata) darrylo@soco.keysight.com
+# Language:     Shell-script
+# Package:      N/A
+# Status:       Experimental (Do Not Distribute)
+#
+# (C) Copyright 2001, Keysight Technologies, all rights reserved.
+#
+###############################################################################
+set -e
+###############################################################################
+# START OF CONFIGURATION SECTION.
+#
+# The following variables are defaults, and can often be overridden by
+# command-line options.
+###############################################################################
+
+# SITE should be set to either "sr" or "wlv", whichever is closer to you.
+# SITE determines the location from which files are transferred to the
+# local system.  It does not have to be the same as your site, although
+# performance may be better if it is.
+SITE=sr
+
+# ARCH must be blank, or one of "win32", "linux_x86", or "hpux10"
+# (case-sensitive).  If you leave ARCH empty/blank, this script will
+# attempt to auto-determine the correct platform, but this is not
+# guaranteed to work.  If ARCH is not set in this script, you can pass
+# it in via the enviroment, which is useful if you want to grab Win32
+# bits from a Linux box.
+ARCH=
+
+VER=190
+REV=day
+
+# BUILD_TYPE is either "debug" or "opt":
+BUILD_TYPE=debug
+
+# Comment out the next line if you want to install the build packages:
+NO_PACKAGES=1
+
+# PROD_EXCLUDES is a list of rsync exclusion patterns for the "prod"
+# directory.  Note that, as per the rsync documentation, names of
+# directories to exclude must end with a "/", and should generally not
+# begin with a "/".
+PROD_EXCLUDES='doc/ examples/ designguides/ Acrobat/ xprinter/ netscape/'
+
+# ComponentLibs is needed by some people, but not by most.  Leaving it
+# off results in significant disk savings, and allows a minimal ADS
+# developer distribution to fit onto a CDROM.
+PROD_EXCLUDES="ComponentLibs/ $PROD_EXCLUDES"
+
+# Uncomment the next line to tell rsync to bypass size/timestamps and use
+# checksums.  THIS OPTION CAN RUN VERY SLOWLY.  BEWARE.
+#FORCE_CHECKSUMS=1
+
+# Comment out the next line if you don't want to delete excluded files.  It's
+# recommended that you delete excluded files to save disk space.
+DELETE_EXCLUDED='--delete-excluded'
+
+###############################################################################
+# END OF CONFIGURATION SECTION.
+# You should not have to modify anything past this point.
+###############################################################################
+
+PROGNAME=`basename $0`
+export PROGNAME
+
+usage()
+{
+    echo "usage: $PROGNAME [-a arch] [-s site] [-r rev] [-v ver] [-t type] [-p]" >&2
+    exit 1
+}
+
+while [ -n "$1" ]
+do
+    case $1 in
+    -a)
+	if [ "X$2" = "X" ]
+	then
+	    echo "$PROGNAME: missing parameter for \"$1\" option -- aborting" >&2
+	    usage
+	fi
+	ARCH="$2"
+	shift
+	;;
+    -p)
+	NO_PACKAGES=
+	;;
+    -r)
+	if [ "X$2" = "X" ]
+	then
+	    echo "$PROGNAME: missing parameter for \"$1\" option -- aborting" >&2
+	    usage
+	fi
+	REV="$2"
+	shift
+	;;
+    -s)
+	if [ "X$2" = "X" ]
+	then
+	    echo "$PROGNAME: missing parameter for \"$1\" option -- aborting" >&2
+	    usage
+	fi
+	SITE="$2"
+	shift
+	;;
+    -t)
+	if [ "X$2" = "X" ]
+	then
+	    echo "$PROGNAME: missing parameter for \"$1\" option -- aborting" >&2
+	    usage
+	fi
+	BUILD_TYPE="$2"
+	shift
+	;;
+    -v)
+	if [ "X$2" = "X" ]
+	then
+	    echo "$PROGNAME: missing parameter for \"$1\" option -- aborting" >&2
+	    usage
+	fi
+	VER="$2"
+	shift
+	;;
+    -X)
+	if [ "X$2" = "X" ]
+	then
+	    echo "$PROGNAME: missing parameter for \"$1\" option -- aborting" >&2
+	    usage
+	fi
+	PROD_EXCLUDES="$PROD_EXCLUDES $2"
+	shift
+	;;
+    *)
+	echo "$PROGNAME: Unknown option \"$1\" -- aborting" >&2
+	exit 1
+	;;
+    esac
+    shift
+done
+
+case `uname` in
+CYGWIN*)
+    # Make sure that /usr/bin/rsync.exe is used under cygwin:
+    PATH=/usr/bin:$PATH
+    ;;
+*)
+    ;;
+esac
+
+DELETE='--delete'
+
+if [ "X$ARCH" = "X" ]
+then
+    # No $ARCH specified.  Sacrifice tea leaves and attempt to divine the
+    # correct platform.
+    WORLD=`uname`
+    case $WORLD in
+    Linux | FreeBSD)
+	ARCH=linux_x86
+	;;
+    HP-UX)
+	if [ "X`uname -r`" = "XB.10.20" ]
+	then
+	    ARCH=hpux10
+	else
+	    echo "Sorry, HP-UX version \"`uname -r`\" is not supported." >&2
+	    exit 1
+	fi
+	;;
+    CYGWIN*)
+	ARCH=win32
+	;;
+    Windows*)
+	(
+	echo "Sorry, you are using an MKS toolkit shell, and you cannot use the MKS toolkit"
+	echo "shell to run this script.  You can only run this script from a Cygwin shell."
+	) >&2
+	exit 1
+	;;
+    *)
+	echo "Sorry, ARCH is not set, and the architecture \"$WORLD\" is unknown." >&2
+	exit 1
+	;;
+    esac
+fi
+
+if [ "X$USER" != "X" ]
+then
+    RSYNC_USER="$USER@"
+elif [ "X$LOGNAME" != "X" ]
+then
+    RSYNC_USER="$LOGNAME@"
+elif [ "X$USERNAME" != "X" ]
+then
+    # USERNAME is sometimes defined under Win32
+    RSYNC_USER="$USERNAME@"
+else
+    RSYNC_USER=
+fi
+
+DEVSRC=
+if [ "$SITE" = "sr" ]
+then
+    case $ARCH in
+    win32)
+	#RSYNC_PATH=--rsync-path=/opt/hpeesofRD/allbin10/rsync
+	#SRC_SYSTEM=ntbldfs.soco.keysight.com
+	#DEVTOP=/hfs/d1/samba
+	# Experimental.  Jolt seems to be faster.
+	RSYNC_PATH=
+	SRC_SYSTEM=jolt.soco.keysight.com
+	DEVTOP=/gfs/sr/ntbldfs/d1/samba
+
+	DEVSRC="$RSYNC_USER$SRC_SYSTEM:$DEVTOP"
+	HPEDTOP=$DEVTOP
+	HPEDSRC=$DEVSRC
+	HPED_EXCLUDES="$HPED_EXCLUDES PA-RISC1.1/ sun4-solaris/ aix/"
+	;;
+    linux_x86)
+	RSYNC_PATH=
+	SRC_SYSTEM=jolt.soco.keysight.com
+	DEVTOP=/hfs/d3/build
+	DEVTOP=/hfs/d1
+	DEVSRC="$RSYNC_USER$SRC_SYSTEM:$DEVTOP"
+	HPEDTOP=/hfs/d1
+	HPEDSRC="$RSYNC_USER$SRC_SYSTEM:$HPEDTOP"
+	HPED_EXCLUDES="$HPED_EXCLUDES PA-RISC1.1/ sun4-solaris/ aix/"
+	;;
+    hpux10)
+	RSYNC_PATH=--rsync-path=/opt/hpeesofRD/allbin10/rsync
+	SRC_SYSTEM=ntbldfs.soco.keysight.com
+	DEVTOP=
+	DEVSRC="$RSYNC_USER$SRC_SYSTEM:$DEVTOP"
+	HPEDTOP=
+	HPEDSRC=$DEVSRC
+	HPED_EXCLUDES="$HPED_EXCLUDES sun4-solaris/ aix/"
+	;;
+    *)
+	echo "***** WARNING: architecture \"$ARCH\" at $SITE is not yet supported." >&2
+	if [ -d /hped ]
+	then
+	    if [ "X`pwd`" = "X/" ]
+	    then
+		echo "      Unable to locate a download site!  Aborting!" >&2
+		exit 1
+	    fi
+	    echo "      Will try raw file copying!" >&2
+	else
+	    echo "      /hped does not exist!  Cannot do raw file copying!  Aborting!" >&2
+	    exit 1
+	fi
+	;;
+    esac
+elif [ "$SITE" = "wlv" ]
+then
+    case $ARCH in
+    win32)
+	RSYNC_PATH=--rsync-path=/usr/local/bin/rsync
+	SRC_SYSTEM=wlvbldfs.wlv.keysight.com
+	DEVTOP=/hfs/d1/samba
+	DEVSRC="$RSYNC_USER$SRC_SYSTEM:$DEVTOP"
+	HPEDTOP=$DEVTOP
+	HPEDSRC=$DEVSRC
+	HPED_EXCLUDES="$HPED_EXCLUDES PA-RISC1.1/ sun4-solaris/ aix/"
+	;;
+    linux_x86)
+	RSYNC_PATH=
+	SRC_SYSTEM=burl.wlv.keysight.com
+	DEVTOP=/hfs/d2
+	DEVSRC="$RSYNC_USER$SRC_SYSTEM:$DEVTOP"
+	HPEDTOP=$DEVTOP
+	HPEDSRC=$DEVSRC
+	HPED_EXCLUDES="$HPED_EXCLUDES PA-RISC1.1/ sun4-solaris/ aix/"
+	;;
+    hpux10)
+	RSYNC_PATH=--rsync-path=/hped/builds/bin/rsync
+	SRC_SYSTEM=applebee.wlv.keysight.com
+	DEVTOP=
+	DEVSRC="$RSYNC_USER$SRC_SYSTEM:$DEVTOP"
+	HPEDTOP=
+	HPEDSRC=$DEVSRC
+	HPED_EXCLUDES="$HPED_EXCLUDES sun4-solaris/ aix/"
+	;;
+    *)
+	echo "***** WARNING: architecture \"$ARCH\" at $SITE is not yet supported." >&2
+	if [ -d /hped ]
+	then
+	    if [ "X`pwd`" = "X/" ]
+	    then
+		echo "      Unable to locate a download site!  Aborting!" >&2
+		exit 1
+	    fi
+	    echo "      Will try raw file copying!" >&2
+	else
+	    echo "      /hped does not exist!  Cannot do raw file copying!  Aborting!" >&2
+	    exit 1
+	fi
+	;;
+    esac
+elif [ "$SITE" = "gent" ]
+then
+    case $ARCH in
+    hpux10)
+	RSYNC_PATH=
+	SRC_SYSTEM=abzy.belgium.keysight.com
+	DEVTOP=
+	DEVSRC="$RSYNC_USER$SRC_SYSTEM:$DEVTOP"
+	HPEDTOP=
+	HPEDSRC=$DEVSRC
+	HPED_EXCLUDES="$HPED_EXCLUDES sun4-solaris/ aix/"
+	;;
+    *)
+	echo "***** WARNING: architecture \"$ARCH\" at $SITE is not yet supported." >&2
+	if [ -d /hped ]
+	then
+	    if [ "X`pwd`" = "X/" ]
+	    then
+		echo "      Unable to locate a download site!  Aborting!" >&2
+		exit 1
+	    fi
+	    echo "      Will try raw file copying!" >&2
+	else
+	    echo "      /hped does not exist!  Cannot do raw file copying!  Aborting!" >&2
+	    exit 1
+	fi
+	;;
+    esac
+else
+    (
+    echo "Sorry, site \"$SITE\" is not yet supported."
+    ) >&2
+    exit 1
+fi
+
+BUILD_TOP=$SITE/dev$VER/r$REV/$BUILD_TYPE
+BUILD_DIR=$BUILD_TOP/build
+
+RSYNC_OPTIONS="-v --exclude=CVS/"
+if [ "X$FORCE_CHECKSUMS" != "X" ]
+then
+    RSYNC_OPTIONS="$RSYNC_OPTIONS -c"
+fi
+
+if [ ! -d hped/builds ] ; then mkdir -p hped/builds ; fi
+(
+    cd hped/builds
+    if [ ! -d $BUILD_DIR ] ; then mkdir -p $BUILD_DIR ; fi
+
+    RSYNC_HPED_EXCLUDES=
+    if [ "X$HPED_EXCLUDES" != "X" ]
+    then
+	for p in $HPED_EXCLUDES
+	do
+	    RSYNC_HPED_EXCLUDES="$RSYNC_HPED_EXCLUDES --exclude=$p"
+	done
+    fi
+    rsync -a $RSYNC_OPTIONS $DELETE $DELETE_EXCLUDED \
+	--exclude=bin/bin/ $RSYNC_HPED_EXCLUDES \
+	$RSYNC_PATH $HPEDSRC/hped/builds/bin .
+    rsync -a $RSYNC_OPTIONS $DELETE $DELETE_EXCLUDED \
+	--exclude=bin/bin/ $RSYNC_HPED_EXCLUDES \
+	$RSYNC_PATH $HPEDSRC/hped/builds/lib .
+
+    RSYNC_BUILD_EXCLUDES=
+    if [ "X$NO_PACKAGES" != "X" ]
+    then
+	RSYNC_BUILD_EXCLUDES="$RSYNC_BUILD_EXCLUDES --exclude=*.deb"
+    fi
+    rsync -a $RSYNC_OPTIONS $DELETE $DELETE_EXCLUDED $RSYNC_BUILD_EXCLUDES \
+	$RSYNC_PATH $DEVSRC/hped/builds/$BUILD_TOP/cedamk $BUILD_TOP
+    rsync -a $RSYNC_OPTIONS $DELETE $DELETE_EXCLUDED $RSYNC_BUILD_EXCLUDES \
+	--exclude=include/hptolemy/doc/ \
+	$RSYNC_PATH $DEVSRC/hped/builds/$BUILD_DIR/include $BUILD_DIR
+    rsync -a $RSYNC_OPTIONS $DELETE $DELETE_EXCLUDED $RSYNC_BUILD_EXCLUDES \
+	$RSYNC_PATH $DEVSRC/hped/builds/$BUILD_DIR/lib.$ARCH $BUILD_DIR
+
+    # bin.$(ARCH) may not always exist, and so we never allow a failure here
+    # to kill script execution.
+    # We also exclude various programs that we know should not in bin.$(ARCH).
+    rsync -a $RSYNC_OPTIONS $DELETE $DELETE_EXCLUDED \
+	--exclude=C_bu* \
+	--exclude=Mom* \
+	--exclude=bus* \
+	--exclude=hpdsp* \
+	--exclude=hpeesof* \
+	--exclude=hpesyn* \
+	--exclude=lib* \
+	--exclude=linecalc* \
+	--exclude=mom* \
+	$RSYNC_PATH $DEVSRC/hped/builds/$BUILD_DIR/bin.$ARCH $BUILD_DIR || true
+
+    # bin may not always exist, and so we never allow a failure here
+    # to kill script execution.
+    rsync -a $RSYNC_OPTIONS $DELETE $DELETE_EXCLUDED \
+	$RSYNC_PATH $DEVSRC/hped/builds/$BUILD_DIR/bin $BUILD_DIR || true
+
+    INTERNAL_PROD_EXCLUDES=
+    if [ "X$PROD_EXCLUDES" != "X" ]
+    then
+	for p in $PROD_EXCLUDES
+	do
+	    INTERNAL_PROD_EXCLUDES="$INTERNAL_PROD_EXCLUDES --exclude=$p"
+	done
+    fi
+    rsync -a $RSYNC_OPTIONS $DELETE $DELETE_EXCLUDED \
+	$INTERNAL_PROD_EXCLUDES \
+	$RSYNC_PATH $DEVSRC/hped/builds/$BUILD_TOP/prod $BUILD_TOP
+)

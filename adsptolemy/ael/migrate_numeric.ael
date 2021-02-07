@@ -1,0 +1,177 @@
+// Copyright  2000 - 2017 Keysight Technologies, Inc  
+// -*- c++ -*-
+// migrate numeric components
+
+defun migrate_StopSimulation(design, instance) {
+  // the enum values match, so any expressions will migrate ok if we
+  // just copy the value
+  decl stopsim = pt_get_instance_parm(instance, "StopSimulation");
+  if (!stopsim)
+    return(FALSE);
+  decl csvalue = stopsim;
+  if (!strcmp(stopsim,"do_not_stop"))
+    csvalue = "NO";
+  else if (!strcmp(stopsim,"stop_at_end"))
+    csvalue = "YES";
+  pt_add_instance_parm(instance, "ControlSimulation", csvalue);
+  return(TRUE);
+}
+
+
+defun migrate_Printer(design, instance) {
+  decl r = FALSE;
+  if (pt_migrateStartStop(design, instance, "Start", NULL, NULL, NULL,
+			  "DefaultNumericStart"))
+    r = TRUE;
+  if (pt_migrateStartStop(design, instance, "Stop", NULL, NULL, NULL,
+			  "DefaultNumericStop"))
+    r = TRUE;
+  return(r);
+}
+
+
+defun migrate_CoderConvolutionType( design, instance ) {
+  decl r = FALSE;
+  decl value = pt_get_instance_parm( instance, "Type" );
+  if ( !strcmp( value, "_nCoderConvolution_frate_x5f1_x5f3_x5f_x5fm_x5f7_x5f_x5fg0_x5f171_x5f_x5fg1_x5f133" ) ) {
+    pt_set_instance_parm( instance, "Type", "_nCoderConvolution_frate_x5f1_x5f3_x5f_x5fm_x5f7_x5f_x5fg0_x5f171_x5f_x5fg1_x5f133_x5f_x5fg2_x5f165" );
+    db_regenerate_instance_annotation( instance );
+    r = TRUE;
+  }
+  return(r);
+}
+
+
+defun migrate_DecoderViterbiType(design, instance) {
+  decl r = FALSE;
+  decl value = pt_get_instance_parm( instance, "Type" );
+  if ( !strcmp( value, "_nDecoderViterbi_frate_x5f1_x5f3_x5f_x5fm_x5f7_x5f_x5fg0_x5f171_x5f_x5fg1_x5f133" ) ) {
+    pt_set_instance_parm( instance, "Type", "_nDecoderViterbi_frate_x5f1_x5f3_x5f_x5fm_x5f7_x5f_x5fg0_x5f171_x5f_x5fg1_x5f133_x5f_x5fg2_x5f165" );
+    db_regenerate_instance_annotation( instance );
+    r = TRUE;
+  }
+  return(r);
+}
+
+
+defun migrate_ARF_ExportPort( design, instance )
+{
+	decl rep = db_get_rep(design, REP_SCHEM);
+	decl context = de_get_design_context_from_rep(rep);
+
+	// find existing ARF_Export instance if there is one
+	decl inst;
+	for ( inst = db_create_inst_iter(context); db_inst_iter_is_valid(inst); inst = db_inst_iter_get_next(inst))
+	{
+		decl instComp = db_get_instance_component_name(inst);
+		if ("ARF_Export" == instComp)
+			break;
+	}
+
+	if (!db_inst_iter_is_valid(inst))
+	{
+		// collect information from all ARF_ExportPorts so that only one ARF_Export is created
+		decl portIn = 0, portOut = 0;
+		decl RFPortNum = "0";
+		for ( inst = db_create_inst_iter(context); db_inst_iter_is_valid(inst); inst = db_inst_iter_get_next(inst))
+		{
+			decl instComp = db_get_instance_component_name(inst);
+			if ("ARF_ExportPort" == instComp)
+			{
+				decl portNum;
+				decl isRFPort = FALSE;
+				decl param = db_create_param_iter(inst);
+				for ( ; db_param_iter_is_valid(param); param = db_param_iter_get_next(param))
+				{
+					decl name = db_get_param_name(param);
+					decl formH = db_param_iter_find_form(param);
+					if (formH)
+					{
+						decl value = dm_form_get_net_format(formH);
+						if (name == "Num")
+						{
+							portNum = db_get_param_string_value(param);
+						}
+						else if (name == "Direction")
+						{
+							if (evaluate(value) == INPUT_PIN )
+							{
+								portIn = portIn + 1;
+							}
+							else
+							{
+								portOut = portOut + 1;
+							}
+						}
+						else if (name == "PortType")
+						{
+							decl portType = evaluate(value);
+							if (portType != 1) isRFPort = TRUE;
+						}
+					}
+				}
+
+				// validate direction
+				if ((portIn > 0) && (portOut > 0))
+				{
+					warning(NULL, 0, "The ports do not have the same direction. Please set ARF_Export ComponentType.", NULL);
+				}
+
+				// we need to know which one is the RF port (if any)
+				if (isRFPort)
+				{
+					RFPortNum = portNum;
+				}
+			}
+		}
+
+		// add ARF_Export to the design
+		decl itemDataP = de_init_new_iteminfo(context, "", "ARF_Export");
+		if (itemDataP)
+		{
+			decl plist = list();
+			if (portIn > portOut)
+			{
+				plist = append(plist, list(prm("_nARF_Export_fSINK", "SINK")));
+			}
+			else
+			{
+				plist = append(plist, list(prm("_nARF_Export_fSOURCE", "SOURCE")));
+			}
+			plist = append(plist, list(prm("StdForm", RFPortNum)));
+			de_set_item_parameters(itemDataP, plist);
+			
+			decl myX = 0;
+			decl myY = 0;
+			decl convFact = db_get_context_db_factor(context);
+			decl bbox = db_get_context_bbox (context);
+			if ( bbox )
+			{
+				myX = (db_get_bbox_x1(bbox) + db_get_bbox_x2(bbox)) * 0.5 / convFact; // middle of the screen
+				myY = db_get_bbox_y1(bbox)/convFact - 0.5; // under the old schematic
+			}
+			de_place_item(itemDataP, myX, myY);
+			de_free_iteminfo(itemDataP);
+		}
+	}
+
+	db_set_instance_attribute( instance, INST_DESIGN_NAME, "Port" );
+	return( TRUE );
+}
+
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_numeric", 1,
+		     "WaveForm", migrate_StopSimulation,
+		     "WaveFormCx", migrate_StopSimulation,
+		     "ReadFile", migrate_StopSimulation,
+		     "Printer", migrate_Printer));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_numeric", 2,
+		     "CoderConvolution", migrate_CoderConvolutionType,
+		     "DecoderViterbi", migrate_DecoderViterbiType));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_numeric", 3,
+		     "ARF_ExportPort", migrate_ARF_ExportPort));

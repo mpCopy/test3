@@ -1,0 +1,329 @@
+// Copyright 2004 - 2014 Keysight Technologies, Inc  
+//migration code for WCDMA3G design library
+
+
+defun migrate_3GPP_PrefixedOnOff( instance, parmName ) {
+// The assumption made is that the parameter with the name 
+// parmName is enumerated with options { parmName_On, parmName_Off } 
+// and we are changing the formset to {OFF, ON } (defining the 
+// parameter to be of type switch)
+
+  decl compName = db_get_instance_attribute( instance, INST_DESIGN_NAME );
+  decl mangledCompName = pt_mangle_name( compName );
+  decl prefixedOff = strcat( parmName, "_Off" );
+  decl mangledPrefixedOff = strcat( "_n", mangledCompName, "_f", pt_mangle_name( prefixedOff ) );
+  decl prefixedOn = strcat( parmName, "_On" );
+  decl mangledPrefixedOn = strcat( "_n", mangledCompName, "_f", pt_mangle_name( prefixedOn ) );
+  decl mangledOFF = strcat( "_n", mangledCompName, "_fOFF" );
+  decl mangledON = strcat( "_n", mangledCompName, "_fON" );
+
+  decl parmVal = pt_get_instance_parm( instance, parmName );
+
+  if ( ! strcmp( parmVal, mangledPrefixedOn ) ) {
+     pt_set_instance_parm( instance, parmName, mangledON );
+  }
+  else if ( ! strcmp( parmVal, mangledPrefixedOff ) ) {
+     pt_set_instance_parm( instance, parmName, mangledOFF );
+  }
+  else {
+     pt_set_instance_parm( instance, parmName, sprintf("1-(%s)", parmVal) );
+  }
+}
+
+
+defun migrate_3GPP_YesNo( instance, parmName ) {
+// The assumption made is that the parameter with the name 
+// parmName is enumerated with options { Yes, No } 
+// and we are changing the formset to {YES, NO } (defining the 
+// parameter to be of type query)
+
+  decl compName = db_get_instance_attribute( instance, INST_DESIGN_NAME );
+  decl mangledCompName = pt_mangle_name( compName );
+  decl mangledNo = strcat( "_n", mangledCompName, "_fNo"  );
+  decl mangledYes = strcat( "_n", mangledCompName, "_fYes" );
+  decl mangledNO = strcat( "_n", mangledCompName, "_fNO" );
+  decl mangledYES = strcat( "_n", mangledCompName, "_fYES" );
+
+  decl parmVal = pt_get_instance_parm( instance, parmName );
+
+  if ( ! strcmp( parmVal, mangledYes ) ) {
+     pt_set_instance_parm( instance, parmName, mangledYES );
+  }
+  else if ( ! strcmp( parmVal, mangledNo ) ) {
+     pt_set_instance_parm( instance, parmName, mangledNO );
+  }
+  else {
+     pt_set_instance_parm( instance, parmName, sprintf("1-(%s)", parmVal) );
+  }
+}
+
+
+defun migrate_WCDMA3G_TkPowerCal(design, instance) {
+  db_set_instance_attribute( instance, INST_DESIGN_NAME, "TkIQrms" );
+  db_regenerate_instance_annotation( instance );
+  pt_add_instance_parm(instance, "Label", "\"Set VRef to\"");
+  
+  return( TRUE );
+}
+
+
+defun migrate_WCDMA3G_TX_IFin(design, instance) {
+  db_set_instance_attribute( instance, INST_DESIGN_NAME, "RF_TX_IFin" );
+
+  return( TRUE );
+}
+
+
+defun migrate_WCDMA3G_RX_IFout(design, instance) {
+  db_set_instance_attribute( instance, INST_DESIGN_NAME, "RF_RX_IFout" );
+
+  return( TRUE );
+}
+
+
+defun migrate_WCDMA3G_RF_Mod(design, instance) {
+// WCDMA3G_RF_Mod is replaced by RF_ModulatorRC.
+// RF_ModulatorRC has some extra parameters compared to WCDMA3G_RF_Mod.
+// RF_ModulatorRC does not have a parameter equivalent to InputSignalType
+// but this parameter is not actually used so it is ignored.
+// The formset of enumerated parameter SquareRoot is changed from { No, Yes } to 
+// { NO, YES }.
+// The formset of enumerated parameter PhasePolarity is changed from 
+// { Normal, Invert } to { NO, YES }.
+// NDensity is removed. RTemp is added
+// Noise is introduced by when RTemp is set to other than -273.15.
+// SymbolRate=3.84e6
+
+  db_set_instance_attribute( instance, INST_DESIGN_NAME, "RF_ModulatorRC" );
+  pt_add_instance_parm( instance, "SymbolRate", "3.84e6" );
+
+  decl squareRootVal = pt_get_instance_parm( instance, "SquareRoot" );
+
+  if ( ! strcmp( squareRootVal, "_nWCDMA3G_x5fRF_x5fMod_fYes" ) ) {
+     pt_set_instance_parm( instance, "SquareRoot", "_nRF_x5fModulatorRC_fYES" );
+  }
+  else if ( ! strcmp( squareRootVal, "_nWCDMA3G_x5fRF_x5fMod_fNo" ) ) {
+     pt_set_instance_parm( instance, "SquareRoot", "_nRF_x5fModulatorRC_fNO" );
+  }
+  else {
+     pt_set_instance_parm( instance, "SquareRoot", squareRootVal );
+  }
+
+  decl phasePolarityVal = pt_get_instance_parm( instance, "PhasePolarity" );
+
+  if ( ! strcmp( phasePolarityVal, "_nWCDMA3G_x5fRF_x5fMod_fNormal" ) ) {
+     pt_add_instance_parm( instance, "MirrorSpectrum", "_nRF_x5fModulatorRC_fNO" );
+  }
+  else if ( ! strcmp( phasePolarityVal, "_nWCDMA3G_x5fRF_x5fMod_fInvert" ) ) {
+     pt_add_instance_parm( instance, "MirrorSpectrum", "_nRF_x5fModulatorRC_fYES" );
+  }
+  else {
+     pt_add_instance_parm( instance, "MirrorSpectrum", phasePolarityVal );
+  }
+
+  decl nDensityVal = pt_get_instance_parm( instance, "NDensity" );
+
+// nDensityVal is in dBm/Hz
+// Resistor thermal noise density is k * T W/Hz, 
+// where k = 1.38e-23 and T is the temperature in degrees Kelvin
+//
+// nDensityVal dBm/Hz = 10**((nDensityVal-30)/10) W/Hz
+// Since RTemp is in degrees Celsius the resistor thermal noise 
+// density is = 1.38e-23 * ( RTemp + 273.15 ) W/Hz
+//
+// 10**((nDensityVal-30)/10) = 1.38e-23 * ( RTemp + 273.15 ) =>
+// => Rtemp = 10**((nDensityVal-30)/10) / 1.38e-23 - 273.15
+
+  decl rTempVal = sprintf( "10**( ( (%s) - 30 ) / 10 ) / 1.38e-23 - 273.15", nDensityVal );
+  pt_add_instance_parm( instance, "RTemp", rTempVal );
+
+  return( TRUE );
+}
+
+
+defun migrate_WCDMA3G_RF_Demod(design, instance) {
+// WCDMA3G_RF_Demod is replaced by RF_DemodulatorRC.
+// RF_DemodulatorRC has some extra parameters compared to WCDMA3G_RF_Demod.
+// RF_DemodulatorRC does not have a parameter equivalent to InputSignalType
+// but this parameter is not actually used so it is ignored.
+// The formset of enumerated parameter SquareRoot is changed from { No, Yes } to 
+// { NO, YES }. The extra parameters in RF_DemodulatorRC is set to:
+// RTemp=-273.15
+// MirrorSpectrum=NO (default value)
+// GainImbalance=0.0 (default value)
+// PhaseImbalance=0.0  (default value)
+
+  db_set_instance_attribute( instance, INST_DESIGN_NAME, "RF_DemodulatorRC" );
+  pt_add_instance_parm( instance, "RTemp", "-273.15" );
+  
+  pt_add_instance_parm( instance, "MirrorSpectrum", "_nRF_x5fDemodulatorRC_fNO" );
+  pt_add_instance_parm( instance, "GainImbalance", "0.0" );
+  pt_add_instance_parm( instance, "PhaseImbalance", "0.0" );
+
+  decl squareRootVal = pt_get_instance_parm( instance, "SquareRoot" );
+
+  if ( ! strcmp( squareRootVal, "_nWCDMA3G_x5fRF_x5fDemod_fYes" ) ) {
+     pt_set_instance_parm( instance, "SquareRoot", "_nRF_x5fDemodulatorRC_fYES" );
+  }
+  else if ( ! strcmp( squareRootVal, "_nWCDMA3G_x5fRF_x5fDemod_fNo" ) ) {
+     pt_set_instance_parm( instance, "SquareRoot", "_nRF_x5fDemodulatorRC_fNO" );
+  }
+  else {
+     pt_set_instance_parm( instance, "SquareRoot", squareRootVal );
+  }
+    
+  return( TRUE );
+}
+
+
+defun migrate_WCDMA3G_RF_Combiner(design, instance) {
+  db_set_instance_attribute( instance, INST_DESIGN_NAME, "RF_Combiner" );
+  pt_add_instance_parm( instance, "SymbolRate", "3.84e6" );
+  pt_add_instance_parm( instance, "ModInterfererExcessBW", "0.22" );
+  pt_add_instance_parm( instance, "AutoResampling", "_nRF_x5fCombiner_fYES" );  
+
+  return( TRUE );
+}
+
+
+defun migrate_WCDMA3G_RF_IQ(design, instance) {
+// WCDMA3G_RF_IQ is replaced by RF_CombinerIQ.
+// RF_CombinerIQ has some extra parameters that need to be set to certain values.
+// In addition, some parameters that are used for the same purpose have slightly 
+// different names between these two components.
+// SymbolRate = 3.84e6.
+// CWFreq is set to what CWInterfererFreq was set to.
+// CWPower is set to what CWInterfererPower was set to.
+// ModFreq is set to what ModInterfererFreq was set to.
+// ModPower is set to what ModInterfererPower was set to.
+// ModVRef is set to what ModInterfererVRef was set to.
+// ModFilterLength = 16
+// ModSquareRoot = YES
+// ModExcessBW = 0.22.
+// AutoResampling = YES.
+
+  db_set_instance_attribute( instance, INST_DESIGN_NAME, "RF_CombinerIQ" );
+  pt_add_instance_parm( instance, "SymbolRate", "3.84e6" );
+  pt_add_instance_parm( instance, "ModFilterLength", "16" );
+  pt_add_instance_parm( instance, "ModSquareRoot", "_nRF_x5fCombinerIQ_fYES" );
+  pt_add_instance_parm( instance, "ModExcessBW", "0.22" );
+  pt_add_instance_parm( instance, "AutoResampling", "_nRF_x5fCombinerIQ_fYES" );
+  
+  decl cwFreqVal = pt_get_instance_parm( instance, "CWInterfererFreq" );
+  pt_add_instance_parm( instance, "CWFreq", cwFreqVal );
+
+  decl cwPowerVal = pt_get_instance_parm( instance, "CWInterfererPower" );
+  pt_add_instance_parm( instance, "CWPower", cwPowerVal );
+
+  decl modFreqVal = pt_get_instance_parm( instance, "ModInterfererFreq" );
+  pt_add_instance_parm( instance, "ModFreq", modFreqVal );
+
+  decl modPowerVal = pt_get_instance_parm( instance, "ModInterfererPower" );
+  pt_add_instance_parm( instance, "ModPower", modPowerVal );
+
+  decl modVRefVal = pt_get_instance_parm( instance, "ModInterfererVRef" );
+  pt_add_instance_parm( instance, "ModVRef", modVRefVal );
+
+  return( TRUE );  
+}
+
+defun migrate_3GPPFDD_RF_ACLR(design, instance) {
+// The formset of parameter SCH is changed from {SCH_On, SCH_Off} to {OFF, ON}
+// The formset of parameter CPICH is changed from {CPICH_On, CPICH_Off} to {OFF, ON}
+
+  migrate_3GPP_PrefixedOnOff( instance, "SCH" );
+  migrate_3GPP_PrefixedOnOff( instance, "CPICH" );
+
+  return( TRUE );
+}
+
+defun migrate_3GPPFDD_RF_CCDF(design, instance) {
+// The formset of parameter SCH is changed from {SCH_On, SCH_Off} to {OFF, ON}
+// The formset of parameter CPICH is changed from {CPICH_On, CPICH_Off} to {OFF, ON}
+
+  migrate_3GPP_PrefixedOnOff( instance, "SCH" );
+  migrate_3GPP_PrefixedOnOff( instance, "CPICH" );
+    
+  return( TRUE );
+}
+
+defun migrate_3GPPFDD_RF_EVM(design, instance) {
+// The formset of parameter SCH is changed from {SCH_On, SCH_Off} to {OFF, ON}
+// The formset of parameter CPICH is changed from {CPICH_On, CPICH_Off} to {OFF, ON}
+// The formset of parameter Correct_IQ_Offset from {Yes, No} to {NO, YES}
+
+  migrate_3GPP_PrefixedOnOff( instance, "SCH" );
+  migrate_3GPP_PrefixedOnOff( instance, "CPICH" );
+
+  migrate_3GPP_YesNo( instance, "Correct_IQ_Offset" );  
+
+  return( TRUE );
+}
+
+defun migrate_3GPPFDD_RF_OccupiedBW(design, instance) {
+// The formset of parameter SCH is changed from {SCH_On, SCH_Off} to {OFF, ON}
+// The formset of parameter CPICH is changed from {CPICH_On, CPICH_Off} to {OFF, ON}
+
+  migrate_3GPP_PrefixedOnOff( instance, "SCH" );
+  migrate_3GPP_PrefixedOnOff( instance, "CPICH" );
+    
+  return( TRUE );
+}
+
+defun migrate_3GPPFDD_RF_OutputPower(design, instance) {
+// The formset of parameter SCH is changed from {SCH_On, SCH_Off} to {OFF, ON}
+// The formset of parameter CPICH is changed from {CPICH_On, CPICH_Off} to {OFF, ON}
+
+  migrate_3GPP_PrefixedOnOff( instance, "SCH" );
+  migrate_3GPP_PrefixedOnOff( instance, "CPICH" );
+    
+  return( TRUE );
+}
+
+defun migrate_3GPPFDD_RF_PCDE(design, instance) {
+// The formset of parameter SCH is changed from {SCH_On, SCH_Off} to {OFF, ON}
+// The formset of parameter CPICH is changed from {CPICH_On, CPICH_Off} to {OFF, ON}
+// The formset of parameter Correct_IQ_Offset from {Yes, No} to {NO, YES}
+
+  migrate_3GPP_PrefixedOnOff( instance, "SCH" );
+  migrate_3GPP_PrefixedOnOff( instance, "CPICH" );
+
+  migrate_3GPP_YesNo( instance, "Correct_IQ_Offset" );
+    
+  return( TRUE );
+}
+
+defun migrate_3GPPFDD_RF_SpecEmission(design, instance) {
+// The formset of parameter SCH is changed from {SCH_On, SCH_Off} to {OFF, ON}
+// The formset of parameter CPICH is changed from {CPICH_On, CPICH_Off} to {OFF, ON}
+
+  migrate_3GPP_PrefixedOnOff( instance, "SCH" );
+  migrate_3GPP_PrefixedOnOff( instance, "CPICH" );
+  
+  return( TRUE );
+}
+
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_wcdma3g", 1,
+		     "3GPPFDD_DnLinkRF", migrate_R_Temp_Noise,
+		     "3GPPFDD_UpLinkRF", migrate_R_Temp_Noise));
+		     
+		     
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_wcdma3g", 2,
+		     "WCDMA3G_TkPowerCal", migrate_WCDMA3G_TkPowerCal,
+		     "WCDMA3G_TX_IFin", migrate_WCDMA3G_TX_IFin,
+		     "WCDMA3G_RX_IFout", migrate_WCDMA3G_RX_IFout,
+		     "WCDMA3G_RF_Mod", migrate_WCDMA3G_RF_Mod,
+		     "WCDMA3G_RF_Demod", migrate_WCDMA3G_RF_Demod,
+		     "WCDMA3G_RF_Combiner", migrate_WCDMA3G_RF_Combiner,
+		     "WCDMA3G_RF_IQ", migrate_WCDMA3G_RF_IQ,
+		     "3GPPFDD_RF_ACLR", migrate_3GPPFDD_RF_ACLR,
+		     "3GPPFDD_RF_CCDF", migrate_3GPPFDD_RF_CCDF,
+		     "3GPPFDD_RF_EVM", migrate_3GPPFDD_RF_EVM,
+		     "3GPPFDD_RF_OccupiedBW", migrate_3GPPFDD_RF_OccupiedBW,
+		     "3GPPFDD_RF_OutputPower", migrate_3GPPFDD_RF_OutputPower,
+		     "3GPPFDD_RF_PCDE", migrate_3GPPFDD_RF_PCDE,
+		     "3GPPFDD_RF_SpecEmission", migrate_3GPPFDD_RF_SpecEmission));
+

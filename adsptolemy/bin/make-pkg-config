@@ -1,0 +1,37 @@
+#! /usr/bin/perl
+###############################################################################
+#
+# File:         make-pkg-config
+# RCS:          $Header: /cvs/wlv/src/cedamk/bin/make-pkg-config,v 1.2 2001/08/27 23:34:50 darrylo Exp $
+# Description:  Perl script to help create part of the packaging config file.
+# Author:       Darryl Okahata
+# Created:      Mon Aug 27 14:08:29 2001
+# Modified:     Mon Aug 27 15:08:45 2001 (Darryl Okahata) darrylo@soco.keysight.com
+# Language:     CPerl
+# Package:      N/A
+# Status:       Experimental (Do Not Distribute)
+#
+# (C) Copyright 2001, Keysight Technologies, all rights reserved.
+#
+###############################################################################
+
+$dir = 'include';
+
+###############################################################################
+
+use Cwd 'chdir';
+use Getopt::Std;
+
+die if (!getopts('d:'));
+
+$dir = $opt_d if ($opt_d);
+
+print "\n";		# Just in case a newline is missing at the end
+			# of the config file.
+foreach $pkg (@ARGV) {
+    $basename = $pkg;
+    if ($basename =~ m|^.+/([^/]+)$|) {
+	$basename = $1;
+    }
+    print "FILE 644 $pkg $dir/$basename\n";
+}

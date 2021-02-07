@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+# Helper program for listing unshipped headers stars.  See
+# list-unshipped target in package.mk.
+
+while (<STDIN>) {
+  s,^./,,;
+  $f{$_} = 1;
+}
+
+for $i (@ARGV) {
+  open(F,$i) || exit;
+  while (<F>) { delete $f{$_} }
+}
+
+for $_ (sort keys %f) {
+  chop;
+  ($pl = $_) =~ s/\.h$/.pl/;
+  next if (/\.h$/ && -f $pl);
+  print "\t$_\n";
+}
+  

@@ -1,0 +1,122 @@
+#! /usr/bin/env perl
+# Dump symbols in .def file format
+# Usage: winDumpExts LIBNAME.dll OBJS > LIBNAME.def
+use File::Basename;
+
+$libname = basename($ARGV[0]);
+
+print "NAME $libname\nEXPORTS\n" if ($libname ne "-");
+shift;
+
+if ($ARGV[0] =~ /^@(.*)/) {
+    $filename = $1;
+    open(objfiles,"< $filename");
+    $line = <objfiles>;
+    @FILES = split(/ /,$line);
+} else {
+    @FILES = @ARGV;
+}
+
+while (@FILES) {
+
+    # Piping data no longer works when running this script in VS2005, the
+    # data goes to the output window in VS2005 instead of being piped to
+    # the file handle D.
+    # open (D, "dumpbin /symbols ".
+    #   join(' ', splice(@FILES,0,20))."|") || die "open: $!";
+
+    # Instead of piping data directly, write to a temp file then read it.
+    # compose the cmd string
+    $dumpcmd = "dumpbin /symbols /OUT:tempsym ". join(' ', splice(@FILES,0,20));
+    `$dumpcmd`; # executes above cmd
+    open (D, "< tempsym") || die "open: $!";
+
+    #
+    # We first read in everything, store symbol candidates, and figure out
+    # which sections are good.
+    #
+    undef %syms;
+    undef %goodsections;
+    undef %section;
+    $last_section = '';
+    $phase = 0;
+    while (<D>) {
+        if (/\bfatal\s+error\b/i) {
+            print STDERR;
+        }
+        if (/^Dump of file /) {
+            #
+            # Restart
+            #
+            output_syms();
+
+            undef %syms;
+            undef %goodsections;
+            undef %section;
+            $last_section = '';
+            $phase = 0;
+            next;
+        }
+        chop;
+        $data = " DATA";
+        ($index, $loc, $sect, $type, $external, $pipe, $sym, $comm) =
+            split(' ',$_,8);
+        if ($external eq 'Static' && $sym =~ /^\.(text|bss)/) {
+            $last_section = $sect;
+            $phase = 1;
+            next;
+        }
+        if ($phase == 1) {
+            if ($index eq 'Section' && $loc eq 'length' &&
+                ($comm !~ /\(pick / || $comm =~ /\(pick no duplicates/)) {
+                $goodsections{$last_section} = 1;
+                #print "Good section '$last_section'\n"
+            }
+            $last_section = '';
+            $phase = 0;
+            next;
+        }
+        if ($external eq '()') {
+            ($index, $loc, $sect, $type, $func, $external, $pipe, $sym, $comm)
+                = split(' ',$_,9);
+            $data = "";
+        }
+        next if ($pipe ne '|' || $sect !~ /SECT/ || $external ne 'External' ||
+                 $sym =~ /^\?\?_/ && $comm !~ /operator/ ||
+                 $sym !~ /^\?/ && $sym =~ /\@/);
+        $sym =~ s/^_//  if ( ! $ENV{CEDA_64_BIT} );
+        $section{$sym} = $sect;
+        $syms{$sym} = $data;
+    }
+
+    #
+    # Once we know which sections are good, we can output the proper symbols
+    #
+    output_syms();
+
+    close D;
+    $? && die "dumpbin returned $?";
+    unlink("tempsym");
+}
+
+exit 0;
+
+###############################################################################
+
+sub output_syms ()
+{
+    foreach $k (sort keys(%syms)) {
+        #print "Key '$k' in section $section{$k}\n";
+        if (exists($goodsections{$section{$k}})) {
+            $data = $syms{$k};
+            print "\t$k$data\n";
+        }
+    }
+}
+
+
+###############################################################################
+#
+# Local Variables:
+# mode:perl
+# End:

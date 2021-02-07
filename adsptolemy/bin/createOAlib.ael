@@ -1,0 +1,222 @@
+// Copyright  2010 - 2017 Keysight Technologies, Inc  
+
+defun ptmb_getLibItemList( ptmb_path )
+{
+	decl libItemList = list();
+	decl recFilePath = strcat(ptmb_path, "/ael");
+	decl recFileList = get_dir_files( recFilePath, "rec" );
+	decl recFile;
+	for ( /* nop */ ; recFile = car( recFileList ); recFileList = cdr( recFileList ) )
+	{
+		decl fid = fopen( strcat( recFilePath, "/", recFile ), "R");
+		if ( fid )
+		{
+			decl recLine;
+			do
+			{
+				recLine = fgets( fid );
+				if ( recLine )
+				{
+					decl recList = parse( recLine, "|" );
+					if ( listlen( recList ) >= 4 )
+					{
+						decl itemName = stripstr( nth( 0, recList ) );
+						decl libName = stripstr( nth( 0, parse( nth( 3, recList ), "," ) ) );
+						// replace spaces with underlines
+						decl i = index( libName, " " );
+						while ( i >= 0 )
+						{
+							libName = strcat( leftstr( libName, i ), "_", midstr( libName, i + 1, -1 ) );
+							i = index( libName, " " );
+						}
+						// add to the master list
+						libItemList = append( libItemList, list( list(libName, itemName) ) );
+					}
+				}
+			} while ( recLine != NULL );
+
+			fclose( fid );
+		}
+	}
+
+	return libItemList;
+}
+
+defun ptmb_getLibBrowserCtl( ptmb_path )
+{
+	decl strConfig = "";
+	decl recFilePath = strcat(ptmb_path, "/ael");
+	decl ctlFileList = get_dir_files( recFilePath, "ctl" );
+	decl ctlFile;
+	for ( /* nop */ ; ctlFile = car( ctlFileList ); ctlFileList = cdr( ctlFileList ) )
+	{
+		strConfig = strcat( strConfig, "../../ael/", ctlFile, ";" );
+	}
+	return strConfig;
+}
+
+defun ptmb_openLibraryPath( mbPath, libName, strConfig )
+{
+	decl libPathBase = strcat( mbPath, "/oalibs" );
+	decl libPath = strcat( libPathBase, "/", libName );
+
+	if ( !ael_file_exists( libPathBase ) )
+	{
+		mkdir( libPathBase );
+	}
+
+	if ( ! de_is_library_open( libName ) )
+	{
+		if ( de_library_exists_at_path(libPath) )
+		{
+			de_open_library(libName, libPath, SHARED_LIB_MODE);
+		}
+		else
+		{
+			de_new_library(libName, libPath);
+			de_add_library_to_def_file( libName, libPath, SHARED_LIB_MODE, strcat(libPathBase, "/lib.defs") );
+		}
+	}
+
+	de_set_library_config_file_var(libPath, "LIB_BROWSER_CTL", strConfig);
+
+	if ( !de_is_library_open(libName))
+	{
+		libPath = NULL;
+	}
+
+	return libPath;
+}
+
+defun ptmb_copyItemDef( ptmb_path, libName, itemName )
+{
+	decl adfFilePath = strcat(ptmb_path, "/ael");
+	decl adfFileList = get_dir_files( adfFilePath, "adf" );
+	decl adfFile;
+	for ( /* nop */ ; adfFile = car( adfFileList ); adfFileList = cdr( adfFileList ) )
+	{
+		decl strItemDef = "";
+
+		// find adf file that has item definition
+		decl adfFileWithPath = strcat( adfFilePath, "/", adfFile );
+		decl fid = fopen( adfFileWithPath, "R");
+		if ( fid )
+		{
+			decl adfLine;
+			decl thisItemDef = FALSE;
+			decl otherItemDef = FALSE;
+			strItemDef = "";
+			do
+			{
+				adfLine = fgets( fid );
+				if ( adfLine )
+				{
+					// item definition starts with "create_item"
+					if ( index( adfLine, "create_item" ) >= 0 )
+					{
+						if ( index( adfLine, strcat( "\"", itemName, "\"" ) ) >= 0 )
+						{
+							thisItemDef = TRUE;
+						}
+						else
+						{
+							otherItemDef = TRUE;
+						}
+					}
+
+					// add all strings that are not other create_item() definitions
+					if ( !otherItemDef )
+					{
+						if ( strlen( strItemDef ) > 0 )
+						{
+							strItemDef = strcat( strItemDef, "\n" );
+						}
+
+						strItemDef = strcat( strItemDef, adfLine );
+					}
+
+					// item definition ends with ");"
+					if ( thisItemDef || otherItemDef )
+					{
+						decl endItemDefParen = index( adfLine, ");" );
+						if ( ( endItemDefParen >= 0 ) && ( endItemDefParen + 2 == strlen( adfLine ) ) )
+						{
+							thisItemDef = FALSE;
+							otherItemDef = FALSE;
+						}
+					}
+				}
+			} while ( adfLine != NULL );
+
+			fclose( fid );
+
+			// copy item definition to the symbol cell
+			if ( index( strItemDef, strcat( "\"", itemName, "\"" ) ) >= 0 )
+			{
+				decl itemDefFileWithPath = strcat( adfFilePath, "/itemdef.ael" );
+				fid = fopen( itemDefFileWithPath, "W");
+				if ( fid )
+				{
+					fputs(fid, strItemDef);
+					fclose(fid);
+				}
+				de_copy_file_to_cell( itemDefFileWithPath, libName, itemName );
+				remove( itemDefFileWithPath );
+				break;
+			}
+		}
+	}
+}
+
+defun ptmb_convertItemsToOA(mbPath, libItemList, strConfig)
+{
+	decl libItem;
+	for ( /* nop */ ; libItem = car(libItemList); libItemList = cdr(libItemList) )
+	{
+		decl libName = nth(0, libItem);
+		decl itemName = nth(1, libItem);
+		decl libPath = ptmb_openLibraryPath(mbPath, libName, strConfig);
+		if ( libPath )
+		{
+			decl tmpSymbolCellName = strcat(itemName, "_tmpSymbol");
+			if ( de_cell_exists(libName, tmpSymbolCellName) )
+			{
+				// this must be left over from an old build
+				de_delete_cell(libName, tmpSymbolCellName);
+			}
+			// preserve symbol if it already exists
+			if ( de_cell_exists(libName, itemName) )
+			{
+				de_copy_cellview(libName, itemName, "symbol", libName, tmpSymbolCellName, "symbol");
+				de_delete_cell(libName, itemName);
+			}
+			// convert mb output to oa
+			decl symAel = strcat(mbPath, "/symbols/ptmb_symbol_", itemName, ".ael");
+			load( symAel);
+			execute( strcat("ptmb_symbol_", itemName, "(\"", libName, "\");"));
+			ptmb_copyItemDef(mbPath, libName, itemName);
+			// restore the old symbol and clean up
+			if ( de_cell_exists(libName, tmpSymbolCellName) )
+			{
+				de_delete_cellview(libName, itemName, "symbol");
+				de_copy_cellview(libName, tmpSymbolCellName, "symbol", libName, itemName, "symbol");
+				de_delete_cell(libName, tmpSymbolCellName);		
+			}
+		}
+	}
+}
+
+defun ptmb_createOAlib()
+{
+	decl ptmb_path = getcwd();
+	decl ptmb_libItemList = ptmb_getLibItemList(ptmb_path);
+	if ( listlen(ptmb_libItemList) > 0 )
+	{
+		de_open_workspace(strcat(ptmb_path, "/symbols/ptmb_wrk"));
+		decl ptmb_strLibBrowser = ptmb_getLibBrowserCtl(ptmb_path);
+		ptmb_convertItemsToOA(ptmb_path, ptmb_libItemList, ptmb_strLibBrowser);
+	}
+	de_exit();
+}
+
+ptmb_createOAlib();

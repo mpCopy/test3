@@ -1,0 +1,23 @@
+// Copyright 2003 - 2014 Keysight Technologies, Inc  
+defun migrate_TDSCDMA_EVM(design, instance) {
+  decl despreadCode = pt_get_instance_parm( instance, "DespreadCodeChannel" );
+  if ( !despreadCode )
+    return( FALSE );
+  else {
+    decl newValue;
+    newValue = sprintf( "(%s)+1", despreadCode );
+    pt_set_instance_parm( instance, "DespreadCodeChannel", newValue );
+    db_regenerate_instance_annotation( instance );
+    return( TRUE );
+  }
+}
+
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_tdscdma", 1,
+		     "TDSCDMA_EVM", migrate_TDSCDMA_EVM));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_tdscdma", 2,
+		     "TDSCDMA_DnLinkRF", migrate_R_Temp_Noise,
+		     "TDSCDMA_UpLinkRF", migrate_R_Temp_Noise));

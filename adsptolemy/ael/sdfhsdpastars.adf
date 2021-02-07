@@ -1,0 +1,3278 @@
+set_design_type( sigproc_net );
+
+create_constant_form ("_nHSPA_x5fChannel_x5fITU_x5fH_fPedestrian_x5fA", 
+	"Pedestrian_A",
+	0,
+	"0",
+	"Pedestrian_A");
+
+create_constant_form ("_nHSPA_x5fChannel_x5fITU_x5fH_fPedestrian_x5fB", 
+	"Pedestrian_B",
+	0,
+	"1",
+	"Pedestrian_B");
+
+create_constant_form ("_nHSPA_x5fChannel_x5fITU_x5fH_fVehicular_x5fA", 
+	"Vehicular_A",
+	0,
+	"2",
+	"Vehicular_A");
+
+create_constant_form ("_nHSPA_x5fChannel_x5fITU_x5fH_fVehicular_x5fB", 
+	"Vehicular_B",
+	0,
+	"3",
+	"Vehicular_B");
+
+create_constant_form ("_nHSPA_x5fChannel_x5fITU_x5fH_fUserDefined", 
+	"UserDefined",
+	0,
+	"4",
+	"UserDefined");
+
+create_form_set("_nHSPA_x5fChannel_x5fITU_x5fH_fModelTypeSet",
+	"_nHSPA_x5fChannel_x5fITU_x5fH_fPedestrian_x5fA",
+	"_nHSPA_x5fChannel_x5fITU_x5fH_fPedestrian_x5fB",
+	"_nHSPA_x5fChannel_x5fITU_x5fH_fVehicular_x5fA",
+	"_nHSPA_x5fChannel_x5fITU_x5fH_fVehicular_x5fB",
+	"_nHSPA_x5fChannel_x5fITU_x5fH_fUserDefined",
+	"StdForm");
+
+create_constant_form ("_nHSPA_x5fChannel_x5fITU_x5fH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSPA_x5fChannel_x5fITU_x5fH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSPA_x5fChannel_x5fITU_x5fH_fPathLossSet",
+	"_nHSPA_x5fChannel_x5fITU_x5fH_fNO",
+	"_nHSPA_x5fChannel_x5fITU_x5fH_fYES",
+	"StdForm");
+
+create_constant_form ("_nHSPA_x5fChannel_x5fITU_x5fH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSPA_x5fChannel_x5fITU_x5fH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSPA_x5fChannel_x5fITU_x5fH_fPwrNormalSet",
+	"_nHSPA_x5fChannel_x5fITU_x5fH_fNO",
+	"_nHSPA_x5fChannel_x5fITU_x5fH_fYES",
+	"StdForm");
+
+create_item ("HSPA_Channel_ITU_H","ITU channel model",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSPA_Channel_ITU_H",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dTSDF_nHSPA_x5fChannel_x5fITU_x5fH_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSPA_Channel_ITU_H",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModelType","the ITU-R M.1225 Channel number or User defined Channel",
+		PARM_INT,
+		"_nHSPA_x5fChannel_x5fITU_x5fH_fModelTypeSet",
+		UNITLESS_UNIT,
+		prm("_nHSPA_x5fChannel_x5fITU_x5fH_fVehicular_x5fA","Vehicular_A")),
+	create_parm ("Delay","the delay of each tap in usec, effective only when ModelType is set as UserDefined",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		TIME_UNIT,
+		prm("StringAndReference","{0.0 , 0.31 , 0.71 , 1.09 , 1.73 , 2.51 }")),
+	create_parm ("Power","the power in each tap in dB, effective only when ModelType is set as UserDefined",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0.0 dB, -1.0 dB, -9.0 dB, -10.0 dB, -15.0 dB, -20.0 dB}")),
+	create_parm ("Ricean_factor","the Ricean K-factor in linear scale of each tap, effective only when ModelType is set as UserDefined",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}")),
+	create_parm ("Velocity","the velocity of mobile station",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","120")),
+	create_parm ("PathLoss","option for inclusion of large-scale pathloss",
+		PARM_INT,
+		"_nHSPA_x5fChannel_x5fITU_x5fH_fPathLossSet",
+		UNITLESS_UNIT,
+		prm("_nHSPA_x5fChannel_x5fITU_x5fH_fNO","NO")),
+	create_parm ("PropDistance","the distance of BS and UE in meter, effective only when PassLoss is set as YES",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DISTANCE_UNIT,
+		prm("StdForm","1000")),
+	create_parm ("PwrNormal","option for normalization of the output power",
+		PARM_INT,
+		"_nHSPA_x5fChannel_x5fITU_x5fH_fPwrNormalSet",
+		UNITLESS_UNIT,
+		prm("_nHSPA_x5fChannel_x5fITU_x5fH_fNO","NO")),
+	create_parm ("PwrMeasPeriod","The period of power measurement in order to normalize the output power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","1 msec")));
+
+
+create_constant_form ("_nHSDPA_x5fEqualizer_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSDPA_x5fEqualizer_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSDPA_x5fEqualizer_fEnableSet",
+	"_nHSDPA_x5fEqualizer_fNO",
+	"_nHSDPA_x5fEqualizer_fYES",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fEqualizer_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSDPA_x5fEqualizer_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSDPA_x5fEqualizer_fIdealChannelEstSet",
+	"_nHSDPA_x5fEqualizer_fNO",
+	"_nHSDPA_x5fEqualizer_fYES",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fEqualizer_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSDPA_x5fEqualizer_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSDPA_x5fEqualizer_fRC_x5fSquareRootSet",
+	"_nHSDPA_x5fEqualizer_fNO",
+	"_nHSDPA_x5fEqualizer_fYES",
+	"StdForm");
+
+create_item ("HSDPA_Equalizer","MMSE equalizer for HSDPA",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_Equalizer",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fEqualizer_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_Equalizer",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Enable","Enable this model or not(output all zeros)",
+		PARM_INT,
+		"_nHSDPA_x5fEqualizer_fEnableSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fEqualizer_fYES","YES")),
+	create_parm ("IdealChannelEst","using ideal channel estimation or not",
+		PARM_INT,
+		"_nHSDPA_x5fEqualizer_fIdealChannelEstSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fEqualizer_fYES","YES")),
+	create_parm ("SamplesPerChip","number of samples per chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("MaxDelaySpread","the maximal multi-paths delay spread in the unit of sample, to decide the length of channal implus response",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","80")),
+	create_parm ("EqualizerLength","the coefficients length of the equalizer in the unit of chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("sigma2","the variance of the AWGN noise",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0001")),
+	create_parm ("PathNum","number of paths",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("UpdatePeriod","the period to update the channel information in the unit of chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RC_Length","number of RC filter taps",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("RC_SymbolInterval","distance of RC filter from center to first zero crossing",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("RC_ExcessBW","RC filter excess bandwidth",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1.0")),
+	create_parm ("RC_SquareRoot","square root raised-cosine pulse of RC filter",
+		PARM_INT,
+		"_nHSDPA_x5fEqualizer_fRC_x5fSquareRootSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fEqualizer_fYES","YES")));
+
+
+create_constant_form ("_nHSDPA_x5fDespreadHSCh_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSDPA_x5fDespreadHSCh_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSDPA_x5fDespreadHSCh_fSuppress_x5fSCHSet",
+	"_nHSDPA_x5fDespreadHSCh_fNO",
+	"_nHSDPA_x5fDespreadHSCh_fYES",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fDespreadHSCh_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSDPA_x5fDespreadHSCh_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSDPA_x5fDespreadHSCh_fPSCH_x5fOutputSTTDSet",
+	"_nHSDPA_x5fDespreadHSCh_fNO",
+	"_nHSDPA_x5fDespreadHSCh_fYES",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fDespreadHSCh_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSDPA_x5fDespreadHSCh_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSDPA_x5fDespreadHSCh_fSSCH_x5fOutputSTTDSet",
+	"_nHSDPA_x5fDespreadHSCh_fNO",
+	"_nHSDPA_x5fDespreadHSCh_fYES",
+	"StdForm");
+
+create_item ("HSDPA_DespreadHSCh","De-spread chip sequence of code channels",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_DespreadHSCh",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fDespreadHSCh_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_DespreadHSCh",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ScrambleCode","Index of scramble code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumHSPDSCH","number of HS-PDSCHs",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")),
+	create_parm ("HS_PDSCH_CodeOffset","Spread code offset",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("Suppress_SCH","select whether to suppress SCHs",
+		PARM_INT,
+		"_nHSDPA_x5fDespreadHSCh_fSuppress_x5fSCHSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fDespreadHSCh_fYES","YES")),
+	create_parm ("PSCH_OutputSTTD","",
+		PARM_INT,
+		"_nHSDPA_x5fDespreadHSCh_fPSCH_x5fOutputSTTDSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fDespreadHSCh_fYES","YES")),
+	create_parm ("SSCH_OutputSTTD","",
+		PARM_INT,
+		"_nHSDPA_x5fDespreadHSCh_fSSCH_x5fOutputSTTDSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fDespreadHSCh_fYES","YES")),
+	create_parm ("SSCH_ScrambleCode","index of scramble code for SSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("PSCH_Gain","the PSCH gain",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SSCH_Gain","the SSCH gain",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_item ("HSDPA_DespreadPilot","De-spread chip sequence of code channels",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_DespreadPilot",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fDespreadPilot_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_DespreadPilot",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PathNum","number of paths or fingers of Rake",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("ScrambleCode","Index of scramble code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_item ("HSDPA_DemuxHSPDSCH","demux HSPDSCH code channels and power normalization",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_DemuxHSPDSCH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fDemuxHSPDSCH_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_DemuxHSPDSCH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("NumHSPDSCH","number of NumHSPDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_item ("HSDPA_CodeBlkDeseg","Code block desegmentation",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_CodeBlkDeseg",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fCodeBlkDeseg_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_CodeBlkDeseg",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")));
+
+
+create_item ("HSDPA_Throughput","HSDPA throughput calculator",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_Throughput",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fThroughput_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_Throughput",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TTIPattern","inter-TTI pattern",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1, 1, 1, 1, 1, 1}")),
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")),
+	create_parm ("TransBlockIgnored","Transport block Ignored due to system delay",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nHSDPA_x5fRakeCombine_fNo_x5fDiversity", 
+	"No_Diversity",
+	0,
+	"0",
+	"No_Diversity");
+
+create_constant_form ("_nHSDPA_x5fRakeCombine_fSTTD", 
+	"STTD",
+	0,
+	"1",
+	"STTD");
+
+create_form_set("_nHSDPA_x5fRakeCombine_fTXDiversitySet",
+	"_nHSDPA_x5fRakeCombine_fNo_x5fDiversity",
+	"_nHSDPA_x5fRakeCombine_fSTTD",
+	"StdForm");
+
+create_item ("HSDPA_RakeCombine","Combine signals of optimum paths according to path estimation",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_RakeCombine",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fRakeCombine_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_RakeCombine",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TXDiversity","transmit diversity in downlink",
+		PARM_INT,
+		"_nHSDPA_x5fRakeCombine_fTXDiversitySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fRakeCombine_fNo_x5fDiversity","No_Diversity")),
+	create_parm ("PathNum","number of paths or fingers of Rake",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("NumHSPDSCH","number of NumHSPDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nHSDPA_x5fPathSearch_fNo_x5fDiversity", 
+	"No_Diversity",
+	0,
+	"0",
+	"No_Diversity");
+
+create_constant_form ("_nHSDPA_x5fPathSearch_fSTTD", 
+	"STTD",
+	0,
+	"1",
+	"STTD");
+
+create_form_set("_nHSDPA_x5fPathSearch_fTXDiversitySet",
+	"_nHSDPA_x5fPathSearch_fNo_x5fDiversity",
+	"_nHSDPA_x5fPathSearch_fSTTD",
+	"StdForm");
+
+create_item ("HSDPA_PathSearch","Multiple path maximum power timing search",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_PathSearch",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fPathSearch_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_PathSearch",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TXDiversity","transmit diversity in downlink",
+		PARM_INT,
+		"_nHSDPA_x5fPathSearch_fTXDiversitySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fPathSearch_fNo_x5fDiversity","No_Diversity")),
+	create_parm ("SampleRate","number of samples per chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("PathNum","number of paths or fingers of Rake",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("MaxDelay","maximum path delay in terms of samples",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","40")),
+	create_parm ("ScrambleCode","Index of scramble code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_item ("HSDPA_DownSample","Extract optimum samples according to path delay timing",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_DownSample",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fDownSample_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_DownSample",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampleRate","number of samples per chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("PathNum","number of paths or fingers of Rake",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")));
+
+
+create_item ("HSDPA_Despread","De-spread chip sequence of code channels",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_Despread",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fDespread_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_Despread",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PathNum","number of paths or fingers of Rake",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("ScrambleCode","Index of scramble code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumHSPDSCH","number of HS-PDSCHs",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")),
+	create_parm ("HS_PDSCH_CodeOffset","Spread code offset",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nHSDPA_x5fChEstimate_fNo_x5fDiversity", 
+	"No_Diversity",
+	0,
+	"0",
+	"No_Diversity");
+
+create_constant_form ("_nHSDPA_x5fChEstimate_fSTTD", 
+	"STTD",
+	0,
+	"1",
+	"STTD");
+
+create_form_set("_nHSDPA_x5fChEstimate_fTXDiversitySet",
+	"_nHSDPA_x5fChEstimate_fNo_x5fDiversity",
+	"_nHSDPA_x5fChEstimate_fSTTD",
+	"StdForm");
+
+create_item ("HSDPA_ChEstimate","Path parameter estimate aided by pilot symbols",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_ChEstimate",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fChEstimate_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_ChEstimate",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TXDiversity","transmit diversity in downlink",
+		PARM_INT,
+		"_nHSDPA_x5fChEstimate_fTXDiversitySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fChEstimate_fNo_x5fDiversity","No_Diversity")),
+	create_parm ("PathNum","number of paths or fingers of Rake",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")));
+
+
+create_item ("HSDPA_SCCH_DeRM","HS-SCCH de-rateMatching",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_SCCH_DeRM",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fSCCH_x5fDeRM_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_SCCH_DeRM",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("HSDPA_ChDecoder","Turbo decoder",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_ChDecoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fChDecoder_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_ChDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")),
+	create_parm ("TC_Iteration","Turbo code decoder iteration number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("TC_Alfa","Alfa of lowpass filter",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.4")));
+
+
+create_item ("HSDPA_CRCDecoder","CRC decoder",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_CRCDecoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fCRCDecoder_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_CRCDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")),
+	create_parm ("Polynomial","generator polynomial",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0x1800063")));
+
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fDecoder_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fDecoder_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fDecoder_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fSTTD_x5fDecoder_fMSSet",
+	"_nHSDPA_x5fSTTD_x5fDecoder_f_x5fQPSK",
+	"_nHSDPA_x5fSTTD_x5fDecoder_f_x5f16QAM",
+	"_nHSDPA_x5fSTTD_x5fDecoder_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_STTD_Decoder","STTD decoder",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_STTD_Decoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fSTTD_x5fDecoder_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_STTD_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fSTTD_x5fDecoder_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fSTTD_x5fDecoder_f_x5fQPSK","_QPSK")),
+	create_parm ("NumHSPDSCH","Number of HS_PDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fDemap_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fDemap_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fDemap_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fPhCH_x5fDemap_fMSSet",
+	"_nHSDPA_x5fPhCH_x5fDemap_f_x5fQPSK",
+	"_nHSDPA_x5fPhCH_x5fDemap_f_x5f16QAM",
+	"_nHSDPA_x5fPhCH_x5fDemap_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_PhCH_Demap","Soft demapper",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_PhCH_Demap",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fPhCH_x5fDemap_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_PhCH_Demap",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fPhCH_x5fDemap_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fPhCH_x5fDemap_f_x5fQPSK","_QPSK")),
+	create_parm ("NumHSPDSCH","Number of HS_PDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nHSDPA_x5fRateDematch_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fRateDematch_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fRateDematch_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fRateDematch_fMSSet",
+	"_nHSDPA_x5fRateDematch_f_x5fQPSK",
+	"_nHSDPA_x5fRateDematch_f_x5f16QAM",
+	"_nHSDPA_x5fRateDematch_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_RateDematch","HS_DSCH Rate matching",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_RateDematch",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fRateDematch_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_RateDematch",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fRateDematch_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fRateDematch_f_x5fQPSK","_QPSK")),
+	create_parm ("NIR","",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9600")),
+	create_parm ("NumHSPDSCH","Number of HS_PDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")),
+	create_parm ("NumHARQ","Number of HARQ processes",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("TTIPattern","inter-TTI pattern",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1, 1, 1, 1, 1, 1}")));
+
+
+create_constant_form ("_nHSDPA_x5fDeinterleaver_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fDeinterleaver_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fDeinterleaver_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fDeinterleaver_fMSSet",
+	"_nHSDPA_x5fDeinterleaver_f_x5fQPSK",
+	"_nHSDPA_x5fDeinterleaver_f_x5f16QAM",
+	"_nHSDPA_x5fDeinterleaver_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_Deinterleaver","Deinterleaver",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_Deinterleaver",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fDeinterleaver_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_Deinterleaver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fDeinterleaver_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fDeinterleaver_f_x5fQPSK","_QPSK")),
+	create_parm ("NumHSPDSCH","Number of HS_PDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fSTTD_x5fEncoder_fUE_x5fCategorySet",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f1",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f2",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f3",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f4",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f5",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f6",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f7",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f8",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f9",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f10",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f11",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f12",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f13",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f14",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f15",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f16",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f17",
+	"_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fSTTD_x5fEncoder_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fSTTD_x5fEncoder_fMSSet",
+	"_nHSDPA_x5fSTTD_x5fEncoder_f_x5fQPSK",
+	"_nHSDPA_x5fSTTD_x5fEncoder_f_x5f16QAM",
+	"_nHSDPA_x5fSTTD_x5fEncoder_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_STTD_Encoder","STTD encoder",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_STTD_Encoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fSTTD_x5fEncoder_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_STTD_Encoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fSTTD_x5fEncoder_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fSTTD_x5fEncoder_fCategory_x5f1","Category_1")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fSTTD_x5fEncoder_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fSTTD_x5fEncoder_f_x5fQPSK","_QPSK")),
+	create_parm ("NumHSPDSCH","Number of HS_PDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nHSDPA_x5fSCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSDPA_x5fSCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSDPA_x5fSCH_fOutputSTTDSet",
+	"_nHSDPA_x5fSCH_fNO",
+	"_nHSDPA_x5fSCH_fYES",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fSCH_fPrimary", 
+	"Primary",
+	0,
+	"0",
+	"Primary");
+
+create_constant_form ("_nHSDPA_x5fSCH_fSecondary", 
+	"Secondary",
+	0,
+	"1",
+	"Secondary");
+
+create_form_set("_nHSDPA_x5fSCH_fSCHTypeSet",
+	"_nHSDPA_x5fSCH_fPrimary",
+	"_nHSDPA_x5fSCH_fSecondary",
+	"StdForm");
+
+create_item ("HSDPA_SCH","Synchronization Channel",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_SCH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fSCH_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_SCH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OutputSTTD","",
+		PARM_INT,
+		"_nHSDPA_x5fSCH_fOutputSTTDSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fSCH_fYES","YES")),
+	create_parm ("ScrambleCode","index of scramble code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SCHType","SCH type",
+		PARM_INT,
+		"_nHSDPA_x5fSCH_fSCHTypeSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fSCH_fPrimary","Primary")));
+
+
+create_constant_form ("_nHSDPA_x5fOCNS_x5fGain_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSDPA_x5fOCNS_x5fGain_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSDPA_x5fOCNS_x5fGain_fOutputSTTDSet",
+	"_nHSDPA_x5fOCNS_x5fGain_fNO",
+	"_nHSDPA_x5fOCNS_x5fGain_fYES",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fOCNS_x5fGain_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nHSDPA_x5fOCNS_x5fGain_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nHSDPA_x5fOCNS_x5fGain_fDPCH_x5fConfiguredSet",
+	"_nHSDPA_x5fOCNS_x5fGain_fNO",
+	"_nHSDPA_x5fOCNS_x5fGain_fYES",
+	"StdForm");
+
+create_item ("HSDPA_OCNS_Gain","HSDPA OCNS gain calculator",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_OCNS_Gain",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fOCNS_x5fGain_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_OCNS_Gain",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OutputSTTD","Output STTD mode option",
+		PARM_INT,
+		"_nHSDPA_x5fOCNS_x5fGain_fOutputSTTDSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fOCNS_x5fGain_fNO","NO")),
+	create_parm ("HS_PDSCH_UE_Category","UE category",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 1\"")),
+	create_parm ("PCPICH_Power_EcToIor","Primary CPICH power gain in dB",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","-10.0")),
+	create_parm ("PCCPCH_Power_EcToIor","PCCPCH power gain in dB",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","-12.0")),
+	create_parm ("SCH_Power_EcToIor","SCH power gain in dB",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","-15.0")),
+	create_parm ("PICH_Power_EcToIor","PICH power gain in dB",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","-15.0")),
+	create_parm ("DPCH_Configured","Setting to YES if DPCH is configured, otherwise NO",
+		PARM_INT,
+		"_nHSDPA_x5fOCNS_x5fGain_fDPCH_x5fConfiguredSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fOCNS_x5fGain_fNO","NO")),
+	create_parm ("DPCH_Power_EcToIor","DPCH power gain in dB",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","-15.0")),
+	create_parm ("HS_SCCH_Configured","HS-SCCH configured flags",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 0 0 0\"")),
+	create_parm ("HS_SCCH_EcToIor","HS-SCCH power gain in dB",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		DB_GAIN_UNIT,
+		prm("StringAndReference","\"-9 -9 -9 -9\"")),
+	create_parm ("HS_PDSCH_Configured","HS-PDSCH configured flags",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 0 0 0\"")),
+	create_parm ("HS_PDSCH_EcToIor","HS-PDSCH power gain in dB",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		DB_GAIN_UNIT,
+		prm("StringAndReference","\"-10 -10 -10 -10\"")),
+	create_parm ("HS_PDSCH_1_TTIPattern","inter-TTI pattern",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 1 1 1\"")),
+	create_parm ("HS_PDSCH_2_TTIPattern","inter-TTI pattern",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 1 1 1\"")),
+	create_parm ("HS_PDSCH_3_TTIPattern","inter-TTI pattern",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 1 1 1\"")),
+	create_parm ("HS_PDSCH_4_TTIPattern","inter-TTI pattern",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 1 1 1\"")),
+	create_parm ("HS_PDSCH_MS","Modulation scheme of HS-PDSCH 1 to 4",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0, 0, 0, 0}")));
+
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fPowerAdjust_fUE_x5fCategorySet",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f1",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f2",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f3",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f4",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f5",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f6",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f7",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f8",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f9",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f10",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f11",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f12",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f13",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f14",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f15",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f16",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f17",
+	"_nHSDPA_x5fPowerAdjust_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fPowerAdjust_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fPowerAdjust_fMSSet",
+	"_nHSDPA_x5fPowerAdjust_f_x5fQPSK",
+	"_nHSDPA_x5fPowerAdjust_f_x5f16QAM",
+	"_nHSDPA_x5fPowerAdjust_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_PowerAdjust","Power adjust",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_PowerAdjust",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_v_dSDF_nHSDPA_x5fPowerAdjust_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_PowerAdjust",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fPowerAdjust_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fPowerAdjust_fCategory_x5f1","Category_1")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fPowerAdjust_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fPowerAdjust_f_x5fQPSK","_QPSK")));
+
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fSpread_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fSpread_fUE_x5fCategorySet",
+	"_nHSDPA_x5fSpread_fCategory_x5f1",
+	"_nHSDPA_x5fSpread_fCategory_x5f2",
+	"_nHSDPA_x5fSpread_fCategory_x5f3",
+	"_nHSDPA_x5fSpread_fCategory_x5f4",
+	"_nHSDPA_x5fSpread_fCategory_x5f5",
+	"_nHSDPA_x5fSpread_fCategory_x5f6",
+	"_nHSDPA_x5fSpread_fCategory_x5f7",
+	"_nHSDPA_x5fSpread_fCategory_x5f8",
+	"_nHSDPA_x5fSpread_fCategory_x5f9",
+	"_nHSDPA_x5fSpread_fCategory_x5f10",
+	"_nHSDPA_x5fSpread_fCategory_x5f11",
+	"_nHSDPA_x5fSpread_fCategory_x5f12",
+	"_nHSDPA_x5fSpread_fCategory_x5f13",
+	"_nHSDPA_x5fSpread_fCategory_x5f14",
+	"_nHSDPA_x5fSpread_fCategory_x5f15",
+	"_nHSDPA_x5fSpread_fCategory_x5f16",
+	"_nHSDPA_x5fSpread_fCategory_x5f17",
+	"_nHSDPA_x5fSpread_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fSpread_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fSpread_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fSpread_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fSpread_fMSSet",
+	"_nHSDPA_x5fSpread_f_x5fQPSK",
+	"_nHSDPA_x5fSpread_f_x5f16QAM",
+	"_nHSDPA_x5fSpread_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_Spread","Physical channnel spreader",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_Spread",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fSpread_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_Spread",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fSpread_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fSpread_fCategory_x5f1","Category_1")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fSpread_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fSpread_f_x5fQPSK","_QPSK")),
+	create_parm ("NumHSPDSCH","Number of HS PDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")),
+	create_parm ("SpreadCodeOffset","Spread code offset",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f1", 
+	"H-Set 1",
+	0,
+	"0",
+	"H-Set 1");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f2", 
+	"H-Set 2",
+	0,
+	"1",
+	"H-Set 2");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f3", 
+	"H-Set 3",
+	0,
+	"2",
+	"H-Set 3");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f4", 
+	"H-Set 4",
+	0,
+	"3",
+	"H-Set 4");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f5", 
+	"H-Set 5",
+	0,
+	"4",
+	"H-Set 5");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f6", 
+	"H-Set 6",
+	0,
+	"5",
+	"H-Set 6");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f7", 
+	"H-Set 7",
+	0,
+	"6",
+	"H-Set 7");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f8", 
+	"H-Set 8",
+	0,
+	"7",
+	"H-Set 8");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f9", 
+	"H-Set 9",
+	0,
+	"8",
+	"H-Set 9");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f10", 
+	"H-Set 10",
+	0,
+	"9",
+	"H-Set 10");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f11", 
+	"H-Set 11",
+	0,
+	"10",
+	"H-Set 11");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f12", 
+	"H-Set 12",
+	0,
+	"11",
+	"H-Set 12");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fUserDefined", 
+	"UserDefined",
+	0,
+	"12",
+	"UserDefined");
+
+create_form_set("_nHSDPA_x5fSCCH_x5fParaCalc_fHSDPA_x5fFRCSet",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f1",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f2",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f3",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f4",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f5",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f6",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f7",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f8",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f9",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f10",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f11",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f12",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fUserDefined",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_fQPSK", 
+	"QPSK",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fSCCH_x5fParaCalc_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fSCCH_x5fParaCalc_fMSSet",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_fQPSK",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_f_x5f16QAM",
+	"_nHSDPA_x5fSCCH_x5fParaCalc_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_SCCH_ParaCalc","HS-SCCH CQI Mapping",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_SCCH_ParaCalc",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fSCCH_x5fParaCalc_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_SCCH_ParaCalc",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("HSDPA_FRC","Fixed reference channel",
+		PARM_INT,
+		"_nHSDPA_x5fSCCH_x5fParaCalc_fHSDPA_x5fFRCSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fSCCH_x5fParaCalc_fH_x5fSet_x5f1","H_Set_1")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fSCCH_x5fParaCalc_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fSCCH_x5fParaCalc_fQPSK","QPSK")),
+	create_parm ("NumHARQ","Number of HARQ processes, only valid when port CQI is connected",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("HS_PDSCH_CodeOffset","Spread code offset",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("HS_PDSCH_NumCh","Number of HS-PDSCH channels, valid when HSDPA_FRC = UserDefined",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fBits_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fBits_fUE_x5fCategorySet",
+	"_nHSDPA_x5fBits_fCategory_x5f1",
+	"_nHSDPA_x5fBits_fCategory_x5f2",
+	"_nHSDPA_x5fBits_fCategory_x5f3",
+	"_nHSDPA_x5fBits_fCategory_x5f4",
+	"_nHSDPA_x5fBits_fCategory_x5f5",
+	"_nHSDPA_x5fBits_fCategory_x5f6",
+	"_nHSDPA_x5fBits_fCategory_x5f7",
+	"_nHSDPA_x5fBits_fCategory_x5f8",
+	"_nHSDPA_x5fBits_fCategory_x5f9",
+	"_nHSDPA_x5fBits_fCategory_x5f10",
+	"_nHSDPA_x5fBits_fCategory_x5f11",
+	"_nHSDPA_x5fBits_fCategory_x5f12",
+	"_nHSDPA_x5fBits_fCategory_x5f13",
+	"_nHSDPA_x5fBits_fCategory_x5f14",
+	"_nHSDPA_x5fBits_fCategory_x5f15",
+	"_nHSDPA_x5fBits_fCategory_x5f16",
+	"_nHSDPA_x5fBits_fCategory_x5f17",
+	"_nHSDPA_x5fBits_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fBits_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fBits_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fBits_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fBits_fMSSet",
+	"_nHSDPA_x5fBits_f_x5fQPSK",
+	"_nHSDPA_x5fBits_f_x5f16QAM",
+	"_nHSDPA_x5fBits_f_x5f64QAM",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fBits_fRandom", 
+	"Random",
+	0,
+	"0",
+	"Random");
+
+create_constant_form ("_nHSDPA_x5fBits_fPN9", 
+	"PN9",
+	0,
+	"1",
+	"PN9");
+
+create_constant_form ("_nHSDPA_x5fBits_fPN15", 
+	"PN15",
+	0,
+	"2",
+	"PN15");
+
+create_constant_form ("_nHSDPA_x5fBits_fRepeat_x5fBits", 
+	"Repeat Bits",
+	0,
+	"3",
+	"Repeat Bits");
+
+create_form_set("_nHSDPA_x5fBits_fDataPatternSet",
+	"_nHSDPA_x5fBits_fRandom",
+	"_nHSDPA_x5fBits_fPN9",
+	"_nHSDPA_x5fBits_fPN15",
+	"_nHSDPA_x5fBits_fRepeat_x5fBits",
+	"StdForm");
+
+create_item ("HSDPA_Bits","HSDPA information bit generator",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_Bits",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_v_dSDF_nHSDPA_x5fBits_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_Bits",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fBits_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fBits_fCategory_x5f1","Category_1")),
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fBits_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fBits_f_x5fQPSK","_QPSK")),
+	create_parm ("NumHARQ","Number of HARQ processes",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RVSeq","Redundancy and constellation version coding sequence",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0, 2, 5, 6}")),
+	create_parm ("DataPattern","Source data pattern",
+		PARM_INT,
+		"_nHSDPA_x5fBits_fDataPatternSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fBits_fRandom","Random")),
+	create_parm ("RepeatBitValue","Repeating data value",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0x0001")),
+	create_parm ("RepeatBitPeriod","Repeating data period",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("TTIPattern","inter-TTI pattern",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1, 1, 1, 1, 1, 1}")));
+
+
+create_item ("HSDPA_SCCH_RM","HS-SCCH Rate Matching",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_SCCH_RM",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fSCCH_x5fRM_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_SCCH_RM",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fPhCH_x5fMap_fUE_x5fCategorySet",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f1",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f2",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f3",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f4",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f5",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f6",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f7",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f8",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f9",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f10",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f11",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f12",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f13",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f14",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f15",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f16",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f17",
+	"_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fPhCH_x5fMap_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fPhCH_x5fMap_fMSSet",
+	"_nHSDPA_x5fPhCH_x5fMap_f_x5fQPSK",
+	"_nHSDPA_x5fPhCH_x5fMap_f_x5f16QAM",
+	"_nHSDPA_x5fPhCH_x5fMap_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_PhCH_Map","Physical channel mapper",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_PhCH_Map",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fPhCH_x5fMap_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_PhCH_Map",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fPhCH_x5fMap_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fPhCH_x5fMap_fCategory_x5f1","Category_1")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fPhCH_x5fMap_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fPhCH_x5fMap_f_x5fQPSK","_QPSK")),
+	create_parm ("TTIPattern","inter-TTI pattern",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1, 1, 1, 1, 1, 1}")),
+	create_parm ("NumHSPDSCH","Number of HS_PDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fInterleaver_fUE_x5fCategorySet",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f1",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f2",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f3",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f4",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f5",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f6",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f7",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f8",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f9",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f10",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f11",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f12",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f13",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f14",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f15",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f16",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f17",
+	"_nHSDPA_x5fInterleaver_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fInterleaver_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fInterleaver_fMSSet",
+	"_nHSDPA_x5fInterleaver_f_x5fQPSK",
+	"_nHSDPA_x5fInterleaver_f_x5f16QAM",
+	"_nHSDPA_x5fInterleaver_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_Interleaver","Interleaver",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_Interleaver",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fInterleaver_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_Interleaver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fInterleaver_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fInterleaver_fCategory_x5f1","Category_1")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fInterleaver_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fInterleaver_f_x5fQPSK","_QPSK")),
+	create_parm ("NumHSPDSCH","Number of HS_PDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fCRCEncoder_fUE_x5fCategorySet",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f1",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f2",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f3",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f4",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f5",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f6",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f7",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f8",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f9",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f10",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f11",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f12",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f13",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f14",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f15",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f16",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f17",
+	"_nHSDPA_x5fCRCEncoder_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fCRCEncoder_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fCRCEncoder_fMSSet",
+	"_nHSDPA_x5fCRCEncoder_f_x5fQPSK",
+	"_nHSDPA_x5fCRCEncoder_f_x5f16QAM",
+	"_nHSDPA_x5fCRCEncoder_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_CRCEncoder","Add CRC to each Transport Block",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_CRCEncoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fCRCEncoder_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_CRCEncoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fCRCEncoder_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fCRCEncoder_fCategory_x5f1","Category_1")),
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fCRCEncoder_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fCRCEncoder_f_x5fQPSK","_QPSK")),
+	create_parm ("Polynomial","generator polynomial",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0x1800063")));
+
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fChEncoder_fUE_x5fCategorySet",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f1",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f2",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f3",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f4",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f5",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f6",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f7",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f8",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f9",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f10",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f11",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f12",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f13",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f14",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f15",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f16",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f17",
+	"_nHSDPA_x5fChEncoder_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fChEncoder_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fChEncoder_fMSSet",
+	"_nHSDPA_x5fChEncoder_f_x5fQPSK",
+	"_nHSDPA_x5fChEncoder_f_x5f16QAM",
+	"_nHSDPA_x5fChEncoder_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_ChEncoder","Code block segmentation and turbo encoder",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_ChEncoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fChEncoder_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_ChEncoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fChEncoder_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fChEncoder_fCategory_x5f1","Category_1")),
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fChEncoder_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fChEncoder_f_x5fQPSK","_QPSK")));
+
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fBitScrambling_fUE_x5fCategorySet",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f1",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f2",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f3",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f4",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f5",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f6",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f7",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f8",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f9",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f10",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f11",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f12",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f13",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f14",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f15",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f16",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f17",
+	"_nHSDPA_x5fBitScrambling_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fBitScrambling_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fBitScrambling_fMSSet",
+	"_nHSDPA_x5fBitScrambling_f_x5fQPSK",
+	"_nHSDPA_x5fBitScrambling_f_x5f16QAM",
+	"_nHSDPA_x5fBitScrambling_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_BitScrambling","Bit scrambler",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_BitScrambling",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fBitScrambling_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_BitScrambling",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fBitScrambling_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fBitScrambling_fCategory_x5f1","Category_1")),
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fBitScrambling_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fBitScrambling_f_x5fQPSK","_QPSK")));
+
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f1", 
+	"Category_1",
+	0,
+	"0",
+	"Category_1");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f2", 
+	"Category_2",
+	0,
+	"1",
+	"Category_2");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f3", 
+	"Category_3",
+	0,
+	"2",
+	"Category_3");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f4", 
+	"Category_4",
+	0,
+	"3",
+	"Category_4");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f5", 
+	"Category_5",
+	0,
+	"4",
+	"Category_5");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f6", 
+	"Category_6",
+	0,
+	"5",
+	"Category_6");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f7", 
+	"Category_7",
+	0,
+	"6",
+	"Category_7");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f8", 
+	"Category_8",
+	0,
+	"7",
+	"Category_8");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f9", 
+	"Category_9",
+	0,
+	"8",
+	"Category_9");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f10", 
+	"Category_10",
+	0,
+	"9",
+	"Category_10");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f11", 
+	"Category_11",
+	0,
+	"10",
+	"Category_11");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f12", 
+	"Category_12",
+	0,
+	"11",
+	"Category_12");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f13", 
+	"Category_13",
+	0,
+	"12",
+	"Category_13");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f14", 
+	"Category_14",
+	0,
+	"13",
+	"Category_14");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f15", 
+	"Category_15",
+	0,
+	"14",
+	"Category_15");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f16", 
+	"Category_16",
+	0,
+	"15",
+	"Category_16");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f17", 
+	"Category_17",
+	0,
+	"16",
+	"Category_17");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_fCategory_x5f18", 
+	"Category_18",
+	0,
+	"17",
+	"Category_18");
+
+create_form_set("_nHSDPA_x5fRateMatch_fUE_x5fCategorySet",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f1",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f2",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f3",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f4",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f5",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f6",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f7",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f8",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f9",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f10",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f11",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f12",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f13",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f14",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f15",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f16",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f17",
+	"_nHSDPA_x5fRateMatch_fCategory_x5f18",
+	"StdForm");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_f_x5fQPSK", 
+	"_QPSK",
+	0,
+	"0",
+	"_QPSK");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"1",
+	"_16QAM");
+
+create_constant_form ("_nHSDPA_x5fRateMatch_f_x5f64QAM", 
+	"_64QAM",
+	0,
+	"2",
+	"_64QAM");
+
+create_form_set("_nHSDPA_x5fRateMatch_fMSSet",
+	"_nHSDPA_x5fRateMatch_f_x5fQPSK",
+	"_nHSDPA_x5fRateMatch_f_x5f16QAM",
+	"_nHSDPA_x5fRateMatch_f_x5f64QAM",
+	"StdForm");
+
+create_item ("HSDPA_RateMatch","HS_DSCH Rate matching",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HSDPA_RateMatch",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHSDPA_x5fRateMatch_lsdfhsdpastars",
+	SPComponentAnnotFmt,
+	"SYM_HSDPA_RateMatch",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("UE_Category","",
+		PARM_INT,
+		"_nHSDPA_x5fRateMatch_fUE_x5fCategorySet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fRateMatch_fCategory_x5f1","Category_1")),
+	create_parm ("TransBlockSize","Transport block size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3202")),
+	create_parm ("MS","Modulation scheme",
+		PARM_INT,
+		"_nHSDPA_x5fRateMatch_fMSSet",
+		UNITLESS_UNIT,
+		prm("_nHSDPA_x5fRateMatch_f_x5fQPSK","_QPSK")),
+	create_parm ("NIR","",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9600")),
+	create_parm ("NumHSPDSCH","Number of HS_PDSCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")),
+	create_parm ("TTIPattern","inter-TTI pattern",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1, 1, 1, 1, 1, 1}")));

@@ -1,0 +1,462 @@
+set_design_type( sigproc_net );
+
+create_constant_form ("_nUWB_x5fChannel_fCM1", 
+	"CM1",
+	0,
+	"0",
+	"CM1");
+
+create_constant_form ("_nUWB_x5fChannel_fCM2", 
+	"CM2",
+	0,
+	"1",
+	"CM2");
+
+create_constant_form ("_nUWB_x5fChannel_fCM3", 
+	"CM3",
+	0,
+	"2",
+	"CM3");
+
+create_constant_form ("_nUWB_x5fChannel_fCM4", 
+	"CM4",
+	0,
+	"3",
+	"CM4");
+
+create_form_set("_nUWB_x5fChannel_fChannelModelSet",
+	"_nUWB_x5fChannel_fCM1",
+	"_nUWB_x5fChannel_fCM2",
+	"_nUWB_x5fChannel_fCM3",
+	"_nUWB_x5fChannel_fCM4",
+	"StdForm");
+
+create_item ("UWB_Channel","UWB channel model",
+	"U",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_UWB_Channel",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"UWB_Channel",
+	SPDesignAnnotFmt,
+	"SYM_DSN_UWB_Channel",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ChannelModel","channel model type",
+		PARM_INT,
+		"_nUWB_x5fChannel_fChannelModelSet",
+		UNITLESS_UNIT,
+		prm("_nUWB_x5fChannel_fCM1","CM1")),
+	create_parm ("ChannelNumber","channel realization number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("TimeStep","time step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","1.894 nsec")),
+	create_parm ("Fmin","-10dB lower edge frequency of the UWB signal",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","3169 MHz")),
+	create_parm ("Fmax","-10dB upper edge frequency of the UWB signal",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","4751 MHz")),
+	create_parm ("BlockLength","input signal block length in samples for fast convolution",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","165")));
+
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fVersion_x5f03_x5f00", 
+	"Version_03_00",
+	0,
+	"0",
+	"Version 03-00");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fVersion_x5f12_x5f00", 
+	"Version_12_00",
+	0,
+	"1",
+	"Version 12-00");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fVersion_x5f03_x5f02", 
+	"Version_03_02",
+	0,
+	"2",
+	"Version 03-02");
+
+create_form_set("_n3GPPFDD_x5fChannel_fSpecVersionSet",
+	"_n3GPPFDD_x5fChannel_fVersion_x5f03_x5f00",
+	"_n3GPPFDD_x5fChannel_fVersion_x5f12_x5f00",
+	"_n3GPPFDD_x5fChannel_fVersion_x5f03_x5f02",
+	"StdForm");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fSoS_x5fStochastic", 
+	"SoS_Stochastic",
+	0,
+	"0",
+	"Sum of Sinusoids: Stochastic");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fSoS_x5fDeterministic", 
+	"SoS_Deterministic",
+	0,
+	"1",
+	"Sum of Sinusoids: Jakes Deterministic");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fFilter_x5fAWGN_x5fNoise", 
+	"Filter_AWGN_Noise",
+	0,
+	"2",
+	"Filter AWGN Noise");
+
+create_form_set("_n3GPPFDD_x5fChannel_fAlgorithmSet",
+	"_n3GPPFDD_x5fChannel_fSoS_x5fStochastic",
+	"_n3GPPFDD_x5fChannel_fSoS_x5fDeterministic",
+	"_n3GPPFDD_x5fChannel_fFilter_x5fAWGN_x5fNoise",
+	"StdForm");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fUserDefined", 
+	"UserDefined",
+	0,
+	"0",
+	"UserDefined");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fCase1", 
+	"Case1",
+	0,
+	"1",
+	"Case1");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fCase2", 
+	"Case2",
+	0,
+	"2",
+	"Case2");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fCase3", 
+	"Case3",
+	0,
+	"3",
+	"Case3");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fCase4", 
+	"Case4",
+	0,
+	"4",
+	"Case4");
+
+create_constant_form ("_n3GPPFDD_x5fChannel_fCase5", 
+	"Case5",
+	0,
+	"5",
+	"Case5");
+
+create_form_set("_n3GPPFDD_x5fChannel_fChProfileSet",
+	"_n3GPPFDD_x5fChannel_fUserDefined",
+	"_n3GPPFDD_x5fChannel_fCase1",
+	"_n3GPPFDD_x5fChannel_fCase2",
+	"_n3GPPFDD_x5fChannel_fCase3",
+	"_n3GPPFDD_x5fChannel_fCase4",
+	"_n3GPPFDD_x5fChannel_fCase5",
+	"StdForm");
+
+create_item ("3GPPFDD_Channel","Fading channel model",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_3GPPFDD_Channel",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"3GPPFDD_Channel",
+	SPDesignAnnotFmt,
+	"SYM_DSN_3GPPFDD_Channel",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SpecVersion","version of specifications",
+		PARM_INT,
+		"_n3GPPFDD_x5fChannel_fSpecVersionSet",
+		UNITLESS_UNIT,
+		prm("_n3GPPFDD_x5fChannel_fVersion_x5f12_x5f00","Version_12_00")),
+	create_parm ("Velocity","mobile velocity in km/hour",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DISTANCE_UNIT,
+		prm("StdForm","100km")),
+	create_parm ("GainArray","path gain in terms of decibel",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"0dB  -10dB\"")),
+	create_parm ("DelayArray","path delay in terms of nanosecond",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"0ns 976ns\"")),
+	create_parm ("RicianFactor","ratio of specular power and the fading power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("Algorithm","the algorithm used",
+		PARM_INT,
+		"_n3GPPFDD_x5fChannel_fAlgorithmSet",
+		UNITLESS_UNIT,
+		prm("_n3GPPFDD_x5fChannel_fSoS_x5fStochastic","SoS_Stochastic")),
+	create_parm ("ChProfile","channel profile",
+		PARM_INT,
+		"_n3GPPFDD_x5fChannel_fChProfileSet",
+		UNITLESS_UNIT,
+		prm("_n3GPPFDD_x5fChannel_fUserDefined","UserDefined")));
+
+
+create_constant_form ("_nTDSCDMA_x5fRevChannel_fcase_x5f1", 
+	"case_1",
+	0,
+	"0",
+	"Case 1");
+
+create_constant_form ("_nTDSCDMA_x5fRevChannel_fcase_x5f2", 
+	"case_2",
+	0,
+	"1",
+	"Case 2");
+
+create_constant_form ("_nTDSCDMA_x5fRevChannel_fcase_x5f3", 
+	"case_3",
+	0,
+	"2",
+	"Case 3");
+
+create_form_set("_nTDSCDMA_x5fRevChannel_fCaseSet",
+	"_nTDSCDMA_x5fRevChannel_fcase_x5f1",
+	"_nTDSCDMA_x5fRevChannel_fcase_x5f2",
+	"_nTDSCDMA_x5fRevChannel_fcase_x5f3",
+	"StdForm");
+
+create_item ("TDSCDMA_RevChannel","Multipath fading channel for reverse link",
+	"T",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_TDSCDMA_RevChannel",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"TDSCDMA_RevChannel",
+	SPDesignAnnotFmt,
+	"SYM_DSN_TDSCDMA_RevChannel",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Case","propagation conditions for multipath fading environments",
+		PARM_INT,
+		"_nTDSCDMA_x5fRevChannel_fCaseSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fRevChannel_fcase_x5f1","case_1")));
+
+
+create_constant_form ("_nTDSCDMA_x5fFwdChannel_fcase_x5f1", 
+	"case_1",
+	0,
+	"0",
+	"Case 1");
+
+create_constant_form ("_nTDSCDMA_x5fFwdChannel_fcase_x5f2", 
+	"case_2",
+	0,
+	"1",
+	"Case 2");
+
+create_constant_form ("_nTDSCDMA_x5fFwdChannel_fcase_x5f3", 
+	"case_3",
+	0,
+	"2",
+	"Case 3");
+
+create_form_set("_nTDSCDMA_x5fFwdChannel_fCaseSet",
+	"_nTDSCDMA_x5fFwdChannel_fcase_x5f1",
+	"_nTDSCDMA_x5fFwdChannel_fcase_x5f2",
+	"_nTDSCDMA_x5fFwdChannel_fcase_x5f3",
+	"StdForm");
+
+create_item ("TDSCDMA_FwdChannel","Multipath fading channel for forward link",
+	"T",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_TDSCDMA_FwdChannel",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"TDSCDMA_FwdChannel",
+	SPDesignAnnotFmt,
+	"SYM_DSN_TDSCDMA_FwdChannel",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Case","propagation conditions for multipath fading environments",
+		PARM_INT,
+		"_nTDSCDMA_x5fFwdChannel_fCaseSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fFwdChannel_fcase_x5f1","case_1")));
+
+
+create_constant_form ("_nWCDMAVectorChannel_fNoMultipath", 
+	"NoMultipath",
+	0,
+	"0",
+	"NoMultipath");
+
+create_constant_form ("_nWCDMAVectorChannel_fIndoor_x5fA", 
+	"Indoor A",
+	0,
+	"1",
+	"Indoor A");
+
+create_constant_form ("_nWCDMAVectorChannel_fIndoor_x5fB", 
+	"Indoor B",
+	0,
+	"2",
+	"Indoor B");
+
+create_constant_form ("_nWCDMAVectorChannel_fPedestrian_x5fA", 
+	"Pedestrian A",
+	0,
+	"3",
+	"Pedestrian A");
+
+create_constant_form ("_nWCDMAVectorChannel_fPedestrian_x5fB", 
+	"Pedestrian B",
+	0,
+	"4",
+	"Pedestrian B");
+
+create_constant_form ("_nWCDMAVectorChannel_fVehicular_x5fA", 
+	"Vehicular A",
+	0,
+	"5",
+	"Vehicular A");
+
+create_constant_form ("_nWCDMAVectorChannel_fVehicular_x5fB", 
+	"Vehicular B",
+	0,
+	"6",
+	"Vehicular B");
+
+create_form_set("_nWCDMAVectorChannel_fChannelTypeSet",
+	"_nWCDMAVectorChannel_fNoMultipath",
+	"_nWCDMAVectorChannel_fIndoor_x5fA",
+	"_nWCDMAVectorChannel_fIndoor_x5fB",
+	"_nWCDMAVectorChannel_fPedestrian_x5fA",
+	"_nWCDMAVectorChannel_fPedestrian_x5fB",
+	"_nWCDMAVectorChannel_fVehicular_x5fA",
+	"_nWCDMAVectorChannel_fVehicular_x5fB",
+	"StdForm");
+
+create_constant_form ("_nWCDMAVectorChannel_fNo", 
+	"No",
+	0,
+	"0",
+	"No");
+
+create_constant_form ("_nWCDMAVectorChannel_fYes", 
+	"Yes",
+	0,
+	"1",
+	"Yes");
+
+create_form_set("_nWCDMAVectorChannel_fPathlossSet",
+	"_nWCDMAVectorChannel_fNo",
+	"_nWCDMAVectorChannel_fYes",
+	"StdForm");
+
+create_constant_form ("_nWCDMAVectorChannel_fIndoor", 
+	"Indoor",
+	0,
+	"0",
+	"Indoor");
+
+create_constant_form ("_nWCDMAVectorChannel_fPedestrian", 
+	"Pedestrian",
+	0,
+	"1",
+	"Pedestrian");
+
+create_constant_form ("_nWCDMAVectorChannel_fVehicular", 
+	"Vehicular",
+	0,
+	"2",
+	"Vehicular");
+
+create_constant_form ("_nWCDMAVectorChannel_fFreeSpace", 
+	"FreeSpace",
+	0,
+	"3",
+	"FreeSpace");
+
+create_form_set("_nWCDMAVectorChannel_fEnvironmentSet",
+	"_nWCDMAVectorChannel_fIndoor",
+	"_nWCDMAVectorChannel_fPedestrian",
+	"_nWCDMAVectorChannel_fVehicular",
+	"_nWCDMAVectorChannel_fFreeSpace",
+	"StdForm");
+
+create_item ("WCDMAVectorChannel","WCDMA Vector Channel",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WCDMAVectorChannel",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WCDMAVectorChannel",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WCDMAVectorChannel",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ChannelType","type of Channel",
+		PARM_INT,
+		"_nWCDMAVectorChannel_fChannelTypeSet",
+		UNITLESS_UNIT,
+		prm("_nWCDMAVectorChannel_fVehicular_x5fB","Vehicular_B")),
+	create_parm ("Echos","number of multipath echos",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("Pathloss","option for inclusion of large-scale pathloss",
+		PARM_INT,
+		"_nWCDMAVectorChannel_fPathlossSet",
+		UNITLESS_UNIT,
+		prm("_nWCDMAVectorChannel_fNo","No")),
+	create_parm ("Environment","IMT2000 environment for pathloss computation",
+		PARM_INT,
+		"_nWCDMAVectorChannel_fEnvironmentSet",
+		UNITLESS_UNIT,
+		prm("_nWCDMAVectorChannel_fFreeSpace","FreeSpace")),
+	create_parm ("NumberOfFloors","number of floors for indoor option",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("N","2N+1 is the number of sine waves used in Jakes model",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")),
+	create_parm ("Seed","integer number to randomize the channel output(Jakes model)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1234567")));

@@ -1,0 +1,3204 @@
+set_design_type( sigproc_net );
+
+create_item ("EDGE_SymbolPrecede","Output the correct content of a frame",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_SymbolPrecede",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fSymbolPrecede_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_SymbolPrecede",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampPerSym","number of samples per symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")));
+
+
+create_item ("EDGE_RCWindow_RCFilter","Raised-cosine windowed raised-cosine filter",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_RCWindow_RCFilter",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fRCWindow_x5fRCFilter_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_RCWindow_RCFilter",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Interpolation","interpolation ratio",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("SampPerSym","number of samples per symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")));
+
+
+create_item ("EDGE_ViterbiBitDCC","Viterbi decoder bit by bit for convolutional code",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_ViterbiBitDCC",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fViterbiBitDCC_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_ViterbiBitDCC",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodeRate","convolutional code rate",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("ConstraintLength","convolutional code constraint length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9")),
+	create_parm ("Polynomials","convolutional code polynomials, in terms of octal number",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"0753 0561\"")));
+
+
+create_constant_form ("_nEDGE_x5fVAProcessor_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fVAProcessor_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fVAProcessor_fModTypeSet",
+	"_nEDGE_x5fVAProcessor_fModified_x5f8PSK",
+	"_nEDGE_x5fVAProcessor_fGMSK",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fVAProcessor_fNormal_x5fBurst", 
+	"Normal Burst",
+	0,
+	"0",
+	"Normal Burst");
+
+create_constant_form ("_nEDGE_x5fVAProcessor_fSynchronization_x5fBurst", 
+	"Synchronization Burst",
+	0,
+	"1",
+	"Synchronization Burst");
+
+create_constant_form ("_nEDGE_x5fVAProcessor_fAccess_x5fBurst", 
+	"Access Burst",
+	0,
+	"2",
+	"Access Burst");
+
+create_form_set("_nEDGE_x5fVAProcessor_fBurstTypeSet",
+	"_nEDGE_x5fVAProcessor_fNormal_x5fBurst",
+	"_nEDGE_x5fVAProcessor_fSynchronization_x5fBurst",
+	"_nEDGE_x5fVAProcessor_fAccess_x5fBurst",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fVAProcessor_fMLSE", 
+	"MLSE",
+	0,
+	"0",
+	"MLSE");
+
+create_constant_form ("_nEDGE_x5fVAProcessor_fRSSE", 
+	"RSSE",
+	0,
+	"1",
+	"RSSE");
+
+create_form_set("_nEDGE_x5fVAProcessor_fAlgorithmSet",
+	"_nEDGE_x5fVAProcessor_fMLSE",
+	"_nEDGE_x5fVAProcessor_fRSSE",
+	"StdForm");
+
+create_item ("EDGE_VAProcessor","Viterbi algorithm processor",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_VAProcessor",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fVAProcessor_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_VAProcessor",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fVAProcessor_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fVAProcessor_fModified_x5f8PSK","Modified_8PSK")),
+	create_parm ("BurstType","burst type",
+		PARM_INT,
+		"_nEDGE_x5fVAProcessor_fBurstTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fVAProcessor_fNormal_x5fBurst","Normal_Burst")),
+	create_parm ("Algorithm","equalization algorithm",
+		PARM_INT,
+		"_nEDGE_x5fVAProcessor_fAlgorithmSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fVAProcessor_fRSSE","RSSE")),
+	create_parm ("MaxDelay","maximum delay of channel in symbol duration units",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")),
+	create_parm ("PartitionArray","array of number of subsets used in each stage of RSSE",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"8 4 2 1 1\"")));
+
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fCS_x5f2", 
+	"CS_2",
+	0,
+	"0",
+	"CS_2");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fCS_x5f3", 
+	"CS_3",
+	0,
+	"1",
+	"CS_3");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fCS_x5f4", 
+	"CS_4",
+	0,
+	"2",
+	"CS_4");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fMCS_x5f1", 
+	"MCS_1",
+	0,
+	"3",
+	"MCS_1");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fMCS_x5f2", 
+	"MCS_2",
+	0,
+	"4",
+	"MCS_2");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fMCS_x5f3", 
+	"MCS_3",
+	0,
+	"5",
+	"MCS_3");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fMCS_x5f4", 
+	"MCS_4",
+	0,
+	"6",
+	"MCS_4");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fMCS_x5f5", 
+	"MCS_5",
+	0,
+	"7",
+	"MCS_5");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fMCS_x5f6", 
+	"MCS_6",
+	0,
+	"8",
+	"MCS_6");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fMCS_x5f7", 
+	"MCS_7",
+	0,
+	"9",
+	"MCS_7");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fMCS_x5f8", 
+	"MCS_8",
+	0,
+	"10",
+	"MCS_8");
+
+create_constant_form ("_nEDGE_x5fUSFPreEncoder_fMCS_x5f9", 
+	"MCS_9",
+	0,
+	"11",
+	"MCS_9");
+
+create_form_set("_nEDGE_x5fUSFPreEncoder_fCodingSchemeSet",
+	"_nEDGE_x5fUSFPreEncoder_fCS_x5f2",
+	"_nEDGE_x5fUSFPreEncoder_fCS_x5f3",
+	"_nEDGE_x5fUSFPreEncoder_fCS_x5f4",
+	"_nEDGE_x5fUSFPreEncoder_fMCS_x5f1",
+	"_nEDGE_x5fUSFPreEncoder_fMCS_x5f2",
+	"_nEDGE_x5fUSFPreEncoder_fMCS_x5f3",
+	"_nEDGE_x5fUSFPreEncoder_fMCS_x5f4",
+	"_nEDGE_x5fUSFPreEncoder_fMCS_x5f5",
+	"_nEDGE_x5fUSFPreEncoder_fMCS_x5f6",
+	"_nEDGE_x5fUSFPreEncoder_fMCS_x5f7",
+	"_nEDGE_x5fUSFPreEncoder_fMCS_x5f8",
+	"_nEDGE_x5fUSFPreEncoder_fMCS_x5f9",
+	"StdForm");
+
+create_item ("EDGE_USFPreEncoder","USF pre-encoder",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_USFPreEncoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fUSFPreEncoder_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_USFPreEncoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fUSFPreEncoder_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fUSFPreEncoder_fCS_x5f2","CS_2")));
+
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fCS_x5f2", 
+	"CS_2",
+	0,
+	"0",
+	"CS_2");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fCS_x5f3", 
+	"CS_3",
+	0,
+	"1",
+	"CS_3");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fCS_x5f4", 
+	"CS_4",
+	0,
+	"2",
+	"CS_4");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fMCS_x5f1", 
+	"MCS_1",
+	0,
+	"3",
+	"MCS_1");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fMCS_x5f2", 
+	"MCS_2",
+	0,
+	"4",
+	"MCS_2");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fMCS_x5f3", 
+	"MCS_3",
+	0,
+	"5",
+	"MCS_3");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fMCS_x5f4", 
+	"MCS_4",
+	0,
+	"6",
+	"MCS_4");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fMCS_x5f5", 
+	"MCS_5",
+	0,
+	"7",
+	"MCS_5");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fMCS_x5f6", 
+	"MCS_6",
+	0,
+	"8",
+	"MCS_6");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fMCS_x5f7", 
+	"MCS_7",
+	0,
+	"9",
+	"MCS_7");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fMCS_x5f8", 
+	"MCS_8",
+	0,
+	"10",
+	"MCS_8");
+
+create_constant_form ("_nEDGE_x5fUSFPostDecoder_fMCS_x5f9", 
+	"MCS_9",
+	0,
+	"11",
+	"MCS_9");
+
+create_form_set("_nEDGE_x5fUSFPostDecoder_fCodingSchemeSet",
+	"_nEDGE_x5fUSFPostDecoder_fCS_x5f2",
+	"_nEDGE_x5fUSFPostDecoder_fCS_x5f3",
+	"_nEDGE_x5fUSFPostDecoder_fCS_x5f4",
+	"_nEDGE_x5fUSFPostDecoder_fMCS_x5f1",
+	"_nEDGE_x5fUSFPostDecoder_fMCS_x5f2",
+	"_nEDGE_x5fUSFPostDecoder_fMCS_x5f3",
+	"_nEDGE_x5fUSFPostDecoder_fMCS_x5f4",
+	"_nEDGE_x5fUSFPostDecoder_fMCS_x5f5",
+	"_nEDGE_x5fUSFPostDecoder_fMCS_x5f6",
+	"_nEDGE_x5fUSFPostDecoder_fMCS_x5f7",
+	"_nEDGE_x5fUSFPostDecoder_fMCS_x5f8",
+	"_nEDGE_x5fUSFPostDecoder_fMCS_x5f9",
+	"StdForm");
+
+create_item ("EDGE_USFPostDecoder","USF postdecoder",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_USFPostDecoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fUSFPostDecoder_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_USFPostDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fUSFPostDecoder_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fUSFPostDecoder_fCS_x5f2","CS_2")));
+
+
+create_constant_form ("_nEDGE_x5fTrainBitGen_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fTrainBitGen_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fTrainBitGen_fModTypeSet",
+	"_nEDGE_x5fTrainBitGen_fModified_x5f8PSK",
+	"_nEDGE_x5fTrainBitGen_fGMSK",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fTrainBitGen_fNormal_x5fBurst", 
+	"Normal Burst",
+	0,
+	"0",
+	"Normal Burst");
+
+create_constant_form ("_nEDGE_x5fTrainBitGen_fSynchronization_x5fBurst", 
+	"Synchronization Burst",
+	0,
+	"1",
+	"Synchronization Burst");
+
+create_constant_form ("_nEDGE_x5fTrainBitGen_fAccess_x5fBurst", 
+	"Access Burst",
+	0,
+	"2",
+	"Access Burst");
+
+create_form_set("_nEDGE_x5fTrainBitGen_fBurstTypeSet",
+	"_nEDGE_x5fTrainBitGen_fNormal_x5fBurst",
+	"_nEDGE_x5fTrainBitGen_fSynchronization_x5fBurst",
+	"_nEDGE_x5fTrainBitGen_fAccess_x5fBurst",
+	"StdForm");
+
+create_item ("EDGE_TrainBitGen","Training bits generation",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_TrainBitGen",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fTrainBitGen_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_TrainBitGen",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fTrainBitGen_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fTrainBitGen_fModified_x5f8PSK","Modified_8PSK")),
+	create_parm ("BurstType","burst type",
+		PARM_INT,
+		"_nEDGE_x5fTrainBitGen_fBurstTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fTrainBitGen_fNormal_x5fBurst","Normal_Burst")),
+	create_parm ("TSC","training sequence code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_constant_form ("_nEDGE_x5fTailBits_fAdding", 
+	"Adding",
+	0,
+	"0",
+	"add");
+
+create_constant_form ("_nEDGE_x5fTailBits_fRemoving", 
+	"Removing",
+	0,
+	"1",
+	"rmv");
+
+create_form_set("_nEDGE_x5fTailBits_fAddRmvSwitchSet",
+	"_nEDGE_x5fTailBits_fAdding",
+	"_nEDGE_x5fTailBits_fRemoving",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fTailBits_fCheck_x5fand_x5fstop_x5fat_x5ferror", 
+	"Check and stop at error",
+	0,
+	"0",
+	"CheckStop");
+
+create_constant_form ("_nEDGE_x5fTailBits_fCheck_x5fand_x5fwarn_x5fthe_x5ferror", 
+	"Check and warn the error",
+	0,
+	"1",
+	"CheckWarn");
+
+create_constant_form ("_nEDGE_x5fTailBits_fNo_x5fCheck", 
+	"No Check",
+	0,
+	"2",
+	"NoCheck");
+
+create_form_set("_nEDGE_x5fTailBits_fBitCheckSet",
+	"_nEDGE_x5fTailBits_fCheck_x5fand_x5fstop_x5fat_x5ferror",
+	"_nEDGE_x5fTailBits_fCheck_x5fand_x5fwarn_x5fthe_x5ferror",
+	"_nEDGE_x5fTailBits_fNo_x5fCheck",
+	"StdForm");
+
+create_item ("EDGE_TailBits","Tailing bits adder or remover",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_TailBits",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fTailBits_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_TailBits",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("AddRmvSwitch","switch between adding and removing tailing bits",
+		PARM_INT,
+		"_nEDGE_x5fTailBits_fAddRmvSwitchSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fTailBits_fAdding","Adding")),
+	create_parm ("BitCheck","check range of input bits",
+		PARM_INT,
+		"_nEDGE_x5fTailBits_fBitCheckSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fTailBits_fCheck_x5fand_x5fstop_x5fat_x5ferror","Check_and_stop_at_error")),
+	create_parm ("NumTailBits","number of tailing bits in a frame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("InfoLength","number of information bits in a frame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","185")));
+
+
+create_constant_form ("_nEDGE_x5fSplitter_ffirst_x5fpart_x5fto_x5fbe_x5foutput1", 
+	"first part to be output1",
+	0,
+	"0",
+	"first part to be output1");
+
+create_constant_form ("_nEDGE_x5fSplitter_ffirst_x5fpart_x5fto_x5fbe_x5foutput2", 
+	"first part to be output2",
+	0,
+	"1",
+	"first part to be output2");
+
+create_constant_form ("_nEDGE_x5fSplitter_fmiddle_x5fpart_x5fto_x5fbe_x5foutput1", 
+	"middle part to be output1",
+	0,
+	"2",
+	"middle part to be output1");
+
+create_constant_form ("_nEDGE_x5fSplitter_fmiddle_x5fpart_x5fto_x5fbe_x5foutput2", 
+	"middle part to be output2",
+	0,
+	"3",
+	"middle part to be output2");
+
+create_form_set("_nEDGE_x5fSplitter_fSplitModeSet",
+	"_nEDGE_x5fSplitter_ffirst_x5fpart_x5fto_x5fbe_x5foutput1",
+	"_nEDGE_x5fSplitter_ffirst_x5fpart_x5fto_x5fbe_x5foutput2",
+	"_nEDGE_x5fSplitter_fmiddle_x5fpart_x5fto_x5fbe_x5foutput1",
+	"_nEDGE_x5fSplitter_fmiddle_x5fpart_x5fto_x5fbe_x5foutput2",
+	"StdForm");
+
+create_item ("EDGE_Splitter","Block splitter for channel coding",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_Splitter",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fSplitter_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_Splitter",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Length1","block length of output1",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("Length2","block length of output2",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","284")),
+	create_parm ("SplitMode","split mode",
+		PARM_INT,
+		"_nEDGE_x5fSplitter_fSplitModeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fSplitter_ffirst_x5fpart_x5fto_x5fbe_x5foutput1","first_part_to_be_output1")));
+
+
+create_constant_form ("_nEDGE_x5fSigPowerMeasure_fNormal_x5fBurst", 
+	"Normal Burst",
+	0,
+	"0",
+	"Normal Burst");
+
+create_constant_form ("_nEDGE_x5fSigPowerMeasure_fSynchronization_x5fBurst", 
+	"Synchronization Burst",
+	0,
+	"1",
+	"Synchronization Burst");
+
+create_constant_form ("_nEDGE_x5fSigPowerMeasure_fAccess_x5fBurst", 
+	"Access Burst",
+	0,
+	"2",
+	"Access Burst");
+
+create_form_set("_nEDGE_x5fSigPowerMeasure_fBurstTypeSet",
+	"_nEDGE_x5fSigPowerMeasure_fNormal_x5fBurst",
+	"_nEDGE_x5fSigPowerMeasure_fSynchronization_x5fBurst",
+	"_nEDGE_x5fSigPowerMeasure_fAccess_x5fBurst",
+	"StdForm");
+
+create_item ("EDGE_SigPowerMeasure","Average signal power measurement",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_SigPowerMeasure",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fSigPowerMeasure_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_SigPowerMeasure",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BurstType","burst type",
+		PARM_INT,
+		"_nEDGE_x5fSigPowerMeasure_fBurstTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fSigPowerMeasure_fNormal_x5fBurst","Normal_Burst")),
+	create_parm ("SampPerSym","number of samples per symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")));
+
+
+create_constant_form ("_nEDGE_x5fSBurst_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fSBurst_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fSBurst_fModTypeSet",
+	"_nEDGE_x5fSBurst_fModified_x5f8PSK",
+	"_nEDGE_x5fSBurst_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_SBurst","Synchronization burst construction",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_SBurst",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fSBurst_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_SBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fSBurst_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fSBurst_fModified_x5f8PSK","Modified_8PSK")));
+
+
+create_item ("EDGE_RxFilter","Receiving filter for EVM measurement",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_RxFilter",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fRxFilter_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_RxFilter",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampPerSym","number of samples per symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("IRLength","length of filter impulse response, in sample",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","240")));
+
+
+create_item ("EDGE_RSEncoder","Reed-Solomon encoder",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_RSEncoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fRSEncoder_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_RSEncoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("GF","Galois Field (2^GF)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("CodeLength","code word length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","36")),
+	create_parm ("InfoLength","information symbol length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("PrimPolynomial","coefficient of primitive polynomial",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 0 0 0 0 1 1\"")),
+	create_parm ("PolynomialRoot","first root of generator polynomial",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","120")));
+
+
+create_item ("EDGE_RSDecoder","Reed-Solomon decoder",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_RSDecoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fRSDecoder_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_RSDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("GF","Galois Field ( 2^GF)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("CodeLength","code word length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","36")),
+	create_parm ("InfoLength","information symbol length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("PrimPolynomial","coefficient of primitive polynomial",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 0 0 0 0 1 1\"")),
+	create_parm ("PolynomialRoot","first root of generator polynomial",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","120")));
+
+
+create_constant_form ("_nEDGE_x5fPuncture_fCS_x5f2", 
+	"CS_2",
+	0,
+	"0",
+	"CS_2");
+
+create_constant_form ("_nEDGE_x5fPuncture_fCS_x5f3", 
+	"CS_3",
+	0,
+	"1",
+	"CS_3");
+
+create_constant_form ("_nEDGE_x5fPuncture_fMCS_x5f1", 
+	"MCS_1",
+	0,
+	"2",
+	"MCS_1");
+
+create_constant_form ("_nEDGE_x5fPuncture_fMCS_x5f2", 
+	"MCS_2",
+	0,
+	"3",
+	"MCS_2");
+
+create_constant_form ("_nEDGE_x5fPuncture_fMCS_x5f3", 
+	"MCS_3",
+	0,
+	"4",
+	"MCS_3");
+
+create_constant_form ("_nEDGE_x5fPuncture_fMCS_x5f4", 
+	"MCS_4",
+	0,
+	"5",
+	"MCS_4");
+
+create_constant_form ("_nEDGE_x5fPuncture_fMCS_x5f5", 
+	"MCS_5",
+	0,
+	"6",
+	"MCS_5");
+
+create_constant_form ("_nEDGE_x5fPuncture_fMCS_x5f6", 
+	"MCS_6",
+	0,
+	"7",
+	"MCS_6");
+
+create_constant_form ("_nEDGE_x5fPuncture_fMCS_x5f7", 
+	"MCS_7",
+	0,
+	"8",
+	"MCS_7");
+
+create_constant_form ("_nEDGE_x5fPuncture_fMCS_x5f8", 
+	"MCS_8",
+	0,
+	"9",
+	"MCS_8");
+
+create_constant_form ("_nEDGE_x5fPuncture_fMCS_x5f9", 
+	"MCS_9",
+	0,
+	"10",
+	"MCS_9");
+
+create_form_set("_nEDGE_x5fPuncture_fCodingSchemeSet",
+	"_nEDGE_x5fPuncture_fCS_x5f2",
+	"_nEDGE_x5fPuncture_fCS_x5f3",
+	"_nEDGE_x5fPuncture_fMCS_x5f1",
+	"_nEDGE_x5fPuncture_fMCS_x5f2",
+	"_nEDGE_x5fPuncture_fMCS_x5f3",
+	"_nEDGE_x5fPuncture_fMCS_x5f4",
+	"_nEDGE_x5fPuncture_fMCS_x5f5",
+	"_nEDGE_x5fPuncture_fMCS_x5f6",
+	"_nEDGE_x5fPuncture_fMCS_x5f7",
+	"_nEDGE_x5fPuncture_fMCS_x5f8",
+	"_nEDGE_x5fPuncture_fMCS_x5f9",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fPuncture_fP1", 
+	"P1",
+	0,
+	"0",
+	"P1");
+
+create_constant_form ("_nEDGE_x5fPuncture_fP2", 
+	"P2",
+	0,
+	"1",
+	"P2");
+
+create_constant_form ("_nEDGE_x5fPuncture_fP3", 
+	"P3",
+	0,
+	"2",
+	"P3");
+
+create_form_set("_nEDGE_x5fPuncture_fPuncSchemeSet",
+	"_nEDGE_x5fPuncture_fP1",
+	"_nEDGE_x5fPuncture_fP2",
+	"_nEDGE_x5fPuncture_fP3",
+	"StdForm");
+
+create_item ("EDGE_Puncture","Data puncturing",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_Puncture",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fPuncture_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_Puncture",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fPuncture_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fPuncture_fMCS_x5f1","MCS_1")),
+	create_parm ("PuncScheme","puncturing scheme",
+		PARM_INT,
+		"_nEDGE_x5fPuncture_fPuncSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fPuncture_fP1","P1")));
+
+
+create_item ("EDGE_PulseShapingFltr","Pulse shaping filter",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_PulseShapingFltr",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fPulseShapingFltr_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_PulseShapingFltr",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampPerSym","number of samples per symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")));
+
+
+create_item ("EDGE_PhaseRotator","Phase rotator used in 8PSK modulation",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_PhaseRotator",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fPhaseRotator_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_PhaseRotator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_constant_form ("_nEDGE_x5fPhaseRecovery_fNormal_x5fBurst", 
+	"Normal Burst",
+	0,
+	"0",
+	"Normal Burst");
+
+create_constant_form ("_nEDGE_x5fPhaseRecovery_fSynchronization_x5fBurst", 
+	"Synchronization Burst",
+	0,
+	"1",
+	"Synchronization Burst");
+
+create_constant_form ("_nEDGE_x5fPhaseRecovery_fAccess_x5fBurst", 
+	"Access Burst",
+	0,
+	"2",
+	"Access Burst");
+
+create_form_set("_nEDGE_x5fPhaseRecovery_fBurstTypeSet",
+	"_nEDGE_x5fPhaseRecovery_fNormal_x5fBurst",
+	"_nEDGE_x5fPhaseRecovery_fSynchronization_x5fBurst",
+	"_nEDGE_x5fPhaseRecovery_fAccess_x5fBurst",
+	"StdForm");
+
+create_item ("EDGE_PhaseRecovery","Index of sequence with peak correlation value",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_PhaseRecovery",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fPhaseRecovery_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_PhaseRecovery",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampPerSym","number of samples per symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("BurstType","burst type",
+		PARM_INT,
+		"_nEDGE_x5fPhaseRecovery_fBurstTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fPhaseRecovery_fNormal_x5fBurst","Normal_Burst")));
+
+
+create_constant_form ("_nEDGE_x5fNormalBurst_fBasic", 
+	"Basic",
+	0,
+	"0",
+	"Basic");
+
+create_constant_form ("_nEDGE_x5fNormalBurst_fGSM_x5f8_x5f3_x5f0_x5fRelease_x5f1999", 
+	"GSM_8_3_0_Release_1999",
+	0,
+	"1",
+	"GSM 8.3.0 Release 1999");
+
+create_form_set("_nEDGE_x5fNormalBurst_fVersionSet",
+	"_nEDGE_x5fNormalBurst_fBasic",
+	"_nEDGE_x5fNormalBurst_fGSM_x5f8_x5f3_x5f0_x5fRelease_x5f1999",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fNormalBurst_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fNormalBurst_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fNormalBurst_fModTypeSet",
+	"_nEDGE_x5fNormalBurst_fModified_x5f8PSK",
+	"_nEDGE_x5fNormalBurst_fGMSK",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fNormalBurst_fyes", 
+	"yes",
+	0,
+	"0",
+	"yes");
+
+create_constant_form ("_nEDGE_x5fNormalBurst_fno", 
+	"no",
+	0,
+	"1",
+	"no");
+
+create_form_set("_nEDGE_x5fNormalBurst_fExtraSymbolSet",
+	"_nEDGE_x5fNormalBurst_fyes",
+	"_nEDGE_x5fNormalBurst_fno",
+	"StdForm");
+
+create_item ("EDGE_NormalBurst","Normal burst construction for EDGE",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_NormalBurst",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fNormalBurst_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_NormalBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Version","EDGE specification version used for normal burst if Version=Basic, each burst has 156 symbols else complys with GSM 8.3.0 Release 1999",
+		PARM_INT,
+		"_nEDGE_x5fNormalBurst_fVersionSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fNormalBurst_fBasic","Basic")),
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fNormalBurst_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fNormalBurst_fModified_x5f8PSK","Modified_8PSK")),
+	create_parm ("TSC","training sequence code, if Version=GSM 8.3.0 Release 1999, TSC will be ignored with default TSC0",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("ExtraSymbol","add extra symbol to normal burst, if Version=Basic, ExtraSymbol will be ignored with default no",
+		PARM_INT,
+		"_nEDGE_x5fNormalBurst_fExtraSymbolSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fNormalBurst_fno","no")));
+
+
+create_constant_form ("_nEDGE_x5fNonLinearAmp_fAbsolute_x5fValue", 
+	"Absolute Value",
+	0,
+	"0",
+	"Absolute Value");
+
+create_constant_form ("_nEDGE_x5fNonLinearAmp_fNormalized_x5fValue", 
+	"Normalized Value",
+	0,
+	"1",
+	"Normalized Value");
+
+create_form_set("_nEDGE_x5fNonLinearAmp_fInputTypeSet",
+	"_nEDGE_x5fNonLinearAmp_fAbsolute_x5fValue",
+	"_nEDGE_x5fNonLinearAmp_fNormalized_x5fValue",
+	"StdForm");
+
+create_item ("EDGE_NonLinearAmp","Non-linear power amplifier",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_NonLinearAmp",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fNonLinearAmp_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_NonLinearAmp",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("InputNormValue","input normalization value, in dBw",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("OutputNormValue","output normalization value, in dBw",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("InputType","input signal type",
+		PARM_INT,
+		"_nEDGE_x5fNonLinearAmp_fInputTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fNonLinearAmp_fAbsolute_x5fValue","Absolute_Value")));
+
+
+create_constant_form ("_nEDGE_x5fMatchedFilter_fNormal_x5fBurst", 
+	"Normal Burst",
+	0,
+	"0",
+	"Normal Burst");
+
+create_constant_form ("_nEDGE_x5fMatchedFilter_fSynchronization_x5fBurst", 
+	"Synchronization Burst",
+	0,
+	"1",
+	"Synchronization Burst");
+
+create_constant_form ("_nEDGE_x5fMatchedFilter_fAccess_x5fBurst", 
+	"Access Burst",
+	0,
+	"2",
+	"Access Burst");
+
+create_form_set("_nEDGE_x5fMatchedFilter_fBurstTypeSet",
+	"_nEDGE_x5fMatchedFilter_fNormal_x5fBurst",
+	"_nEDGE_x5fMatchedFilter_fSynchronization_x5fBurst",
+	"_nEDGE_x5fMatchedFilter_fAccess_x5fBurst",
+	"StdForm");
+
+create_item ("EDGE_MatchedFilter","Matched filter",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_MatchedFilter",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fMatchedFilter_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_MatchedFilter",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BurstType","burst type",
+		PARM_INT,
+		"_nEDGE_x5fMatchedFilter_fBurstTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fMatchedFilter_fNormal_x5fBurst","Normal_Burst")),
+	create_parm ("MaxDelay","maximum delay of channel in symbol duration units",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nEDGE_x5fInterleaver_fCS1_x5f4_x5fMCS1_x5f4", 
+	"CS1-4&MCS1-4",
+	0,
+	"0",
+	"CS1-4&MCS1-4");
+
+create_constant_form ("_nEDGE_x5fInterleaver_fMCS5_x5f6", 
+	"MCS5-6",
+	0,
+	"1",
+	"MCS5-6");
+
+create_constant_form ("_nEDGE_x5fInterleaver_fMCS7", 
+	"MCS7",
+	0,
+	"2",
+	"MCS7");
+
+create_constant_form ("_nEDGE_x5fInterleaver_fMCS8_x5f9", 
+	"MCS8-9",
+	0,
+	"3",
+	"MCS8-9");
+
+create_form_set("_nEDGE_x5fInterleaver_fCodingSchemeSet",
+	"_nEDGE_x5fInterleaver_fCS1_x5f4_x5fMCS1_x5f4",
+	"_nEDGE_x5fInterleaver_fMCS5_x5f6",
+	"_nEDGE_x5fInterleaver_fMCS7",
+	"_nEDGE_x5fInterleaver_fMCS8_x5f9",
+	"StdForm");
+
+create_item ("EDGE_Interleaver","Interleaving for packet data traffic channels",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_Interleaver",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fInterleaver_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_Interleaver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fInterleaver_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fInterleaver_fCS1_x5f4_x5fMCS1_x5f4","CS1_4_MCS1_4")));
+
+
+create_constant_form ("_nEDGE_x5fHeaderPunc_fMCS1_x5f4", 
+	"MCS1-4",
+	0,
+	"0",
+	"MCS1-4");
+
+create_constant_form ("_nEDGE_x5fHeaderPunc_fMCS5_x5f6", 
+	"MCS5-6",
+	0,
+	"1",
+	"MCS5-6");
+
+create_constant_form ("_nEDGE_x5fHeaderPunc_fMCS7_x5f9", 
+	"MCS7-9",
+	0,
+	"2",
+	"MCS7-9");
+
+create_form_set("_nEDGE_x5fHeaderPunc_fCodingSchemeSet",
+	"_nEDGE_x5fHeaderPunc_fMCS1_x5f4",
+	"_nEDGE_x5fHeaderPunc_fMCS5_x5f6",
+	"_nEDGE_x5fHeaderPunc_fMCS7_x5f9",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fHeaderPunc_fDownLink", 
+	"DownLink",
+	0,
+	"0",
+	"DownLink");
+
+create_constant_form ("_nEDGE_x5fHeaderPunc_fUpLink", 
+	"UpLink",
+	0,
+	"1",
+	"UpLink");
+
+create_form_set("_nEDGE_x5fHeaderPunc_fLinkTypeSet",
+	"_nEDGE_x5fHeaderPunc_fDownLink",
+	"_nEDGE_x5fHeaderPunc_fUpLink",
+	"StdForm");
+
+create_item ("EDGE_HeaderPunc","Header puncture",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_HeaderPunc",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fHeaderPunc_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_HeaderPunc",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fHeaderPunc_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fHeaderPunc_fMCS1_x5f4","MCS1_4")),
+	create_parm ("LinkType","type of link",
+		PARM_INT,
+		"_nEDGE_x5fHeaderPunc_fLinkTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fHeaderPunc_fDownLink","DownLink")));
+
+
+create_constant_form ("_nEDGE_x5fHeaderIntrlv_fMCS5_x5f6", 
+	"MCS5-6",
+	0,
+	"0",
+	"MCS5-6");
+
+create_constant_form ("_nEDGE_x5fHeaderIntrlv_fMCS7_x5f9", 
+	"MCS7-9",
+	0,
+	"1",
+	"MCS7-9");
+
+create_form_set("_nEDGE_x5fHeaderIntrlv_fCodingSchemeSet",
+	"_nEDGE_x5fHeaderIntrlv_fMCS5_x5f6",
+	"_nEDGE_x5fHeaderIntrlv_fMCS7_x5f9",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fHeaderIntrlv_fDownLink", 
+	"DownLink",
+	0,
+	"0",
+	"DownLink");
+
+create_constant_form ("_nEDGE_x5fHeaderIntrlv_fUpLink", 
+	"UpLink",
+	0,
+	"1",
+	"UpLink");
+
+create_form_set("_nEDGE_x5fHeaderIntrlv_fLinkTypeSet",
+	"_nEDGE_x5fHeaderIntrlv_fDownLink",
+	"_nEDGE_x5fHeaderIntrlv_fUpLink",
+	"StdForm");
+
+create_item ("EDGE_HeaderIntrlv","Header interleaver",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_HeaderIntrlv",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fHeaderIntrlv_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_HeaderIntrlv",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fHeaderIntrlv_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fHeaderIntrlv_fMCS5_x5f6","MCS5_6")),
+	create_parm ("LinkType","type of link",
+		PARM_INT,
+		"_nEDGE_x5fHeaderIntrlv_fLinkTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fHeaderIntrlv_fDownLink","DownLink")));
+
+
+create_constant_form ("_nEDGE_x5fHeaderDePunc_fMCS1_x5f4", 
+	"MCS1-4",
+	0,
+	"0",
+	"MCS1-4");
+
+create_constant_form ("_nEDGE_x5fHeaderDePunc_fMCS5_x5f6", 
+	"MCS5-6",
+	0,
+	"1",
+	"MCS5-6");
+
+create_constant_form ("_nEDGE_x5fHeaderDePunc_fMCS7_x5f9", 
+	"MCS7-9",
+	0,
+	"2",
+	"MCS7-9");
+
+create_form_set("_nEDGE_x5fHeaderDePunc_fCodingSchemeSet",
+	"_nEDGE_x5fHeaderDePunc_fMCS1_x5f4",
+	"_nEDGE_x5fHeaderDePunc_fMCS5_x5f6",
+	"_nEDGE_x5fHeaderDePunc_fMCS7_x5f9",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fHeaderDePunc_fDownLink", 
+	"DownLink",
+	0,
+	"0",
+	"DownLink");
+
+create_constant_form ("_nEDGE_x5fHeaderDePunc_fUpLink", 
+	"UpLink",
+	0,
+	"1",
+	"UpLink");
+
+create_form_set("_nEDGE_x5fHeaderDePunc_fLinkTypeSet",
+	"_nEDGE_x5fHeaderDePunc_fDownLink",
+	"_nEDGE_x5fHeaderDePunc_fUpLink",
+	"StdForm");
+
+create_item ("EDGE_HeaderDePunc","Header de-puncture",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_HeaderDePunc",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fHeaderDePunc_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_HeaderDePunc",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fHeaderDePunc_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fHeaderDePunc_fMCS1_x5f4","MCS1_4")),
+	create_parm ("LinkType","type of link",
+		PARM_INT,
+		"_nEDGE_x5fHeaderDePunc_fLinkTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fHeaderDePunc_fDownLink","DownLink")));
+
+
+create_constant_form ("_nEDGE_x5fHeaderDeIntrlv_fMCS5_x5f6", 
+	"MCS5-6",
+	0,
+	"0",
+	"MCS5-6");
+
+create_constant_form ("_nEDGE_x5fHeaderDeIntrlv_fMCS7_x5f9", 
+	"MCS7-9",
+	0,
+	"1",
+	"MCS7-9");
+
+create_form_set("_nEDGE_x5fHeaderDeIntrlv_fCodingSchemeSet",
+	"_nEDGE_x5fHeaderDeIntrlv_fMCS5_x5f6",
+	"_nEDGE_x5fHeaderDeIntrlv_fMCS7_x5f9",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fHeaderDeIntrlv_fDownLink", 
+	"DownLink",
+	0,
+	"0",
+	"DownLink");
+
+create_constant_form ("_nEDGE_x5fHeaderDeIntrlv_fUpLink", 
+	"UpLink",
+	0,
+	"1",
+	"UpLink");
+
+create_form_set("_nEDGE_x5fHeaderDeIntrlv_fLinkTypeSet",
+	"_nEDGE_x5fHeaderDeIntrlv_fDownLink",
+	"_nEDGE_x5fHeaderDeIntrlv_fUpLink",
+	"StdForm");
+
+create_item ("EDGE_HeaderDeIntrlv","Header de-interleaver",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_HeaderDeIntrlv",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fHeaderDeIntrlv_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_HeaderDeIntrlv",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fHeaderDeIntrlv_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fHeaderDeIntrlv_fMCS5_x5f6","MCS5_6")),
+	create_parm ("LinkType","type of link",
+		PARM_INT,
+		"_nEDGE_x5fHeaderDeIntrlv_fLinkTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fHeaderDeIntrlv_fDownLink","DownLink")));
+
+
+create_constant_form ("_nEDGE_x5fFBurst_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fFBurst_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fFBurst_fModTypeSet",
+	"_nEDGE_x5fFBurst_fModified_x5f8PSK",
+	"_nEDGE_x5fFBurst_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_FBurst","Frequency correction burst construction",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_FBurst",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fFBurst_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_FBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fFBurst_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fFBurst_fModified_x5f8PSK","Modified_8PSK")));
+
+
+create_constant_form ("_nEDGE_x5fExtraSFAddRmv_fadd_x5fextra_x5fSF", 
+	"add extra SF",
+	0,
+	"0",
+	"add extra SF");
+
+create_constant_form ("_nEDGE_x5fExtraSFAddRmv_fremove_x5fextra_x5fSF", 
+	"remove extra SF",
+	0,
+	"1",
+	"remove extra SF");
+
+create_form_set("_nEDGE_x5fExtraSFAddRmv_fActionSet",
+	"_nEDGE_x5fExtraSFAddRmv_fadd_x5fextra_x5fSF",
+	"_nEDGE_x5fExtraSFAddRmv_fremove_x5fextra_x5fSF",
+	"StdForm");
+
+create_item ("EDGE_ExtraSFAddRmv","Add or remove extra stealing flags for MCS1 to MCS4",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_ExtraSFAddRmv",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fExtraSFAddRmv_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_ExtraSFAddRmv",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Action","add or remove extra stealing flags",
+		PARM_INT,
+		"_nEDGE_x5fExtraSFAddRmv_fActionSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fExtraSFAddRmv_fadd_x5fextra_x5fSF","add_extra_SF")));
+
+
+create_constant_form ("_nEDGE_x5fEquStateToFloat_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fEquStateToFloat_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fEquStateToFloat_fModTypeSet",
+	"_nEDGE_x5fEquStateToFloat_fModified_x5f8PSK",
+	"_nEDGE_x5fEquStateToFloat_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_EquStateToFloat","State index to float translation",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_EquStateToFloat",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fEquStateToFloat_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_EquStateToFloat",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fEquStateToFloat_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fEquStateToFloat_fModified_x5f8PSK","Modified_8PSK")));
+
+
+create_constant_form ("_nEDGE_x5fEquSplitter_fNormal_x5fBurst", 
+	"Normal Burst",
+	0,
+	"0",
+	"Normal Burst");
+
+create_constant_form ("_nEDGE_x5fEquSplitter_fSynchronization_x5fBurst", 
+	"Synchronization Burst",
+	0,
+	"1",
+	"Synchronization Burst");
+
+create_form_set("_nEDGE_x5fEquSplitter_fBurstTypeSet",
+	"_nEDGE_x5fEquSplitter_fNormal_x5fBurst",
+	"_nEDGE_x5fEquSplitter_fSynchronization_x5fBurst",
+	"StdForm");
+
+create_item ("EDGE_EquSplitter","Bidirectional equalization splitter",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_EquSplitter",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fEquSplitter_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_EquSplitter",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BurstType","burst type",
+		PARM_INT,
+		"_nEDGE_x5fEquSplitter_fBurstTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fEquSplitter_fNormal_x5fBurst","Normal_Burst")),
+	create_parm ("MaxDelay","maximum delay of channel in symbol duration units",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_item ("EDGE_EquDeComposeAB","Equalization access burst decomposer",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_EquDeComposeAB",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fEquDeComposeAB_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_EquDeComposeAB",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxDelay","maximum delay of channel in symbol duration units",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nEDGE_x5fEquComposeAB_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fEquComposeAB_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fEquComposeAB_fModTypeSet",
+	"_nEDGE_x5fEquComposeAB_fModified_x5f8PSK",
+	"_nEDGE_x5fEquComposeAB_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_EquComposeAB","Equalization access burst composer",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_EquComposeAB",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fEquComposeAB_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_EquComposeAB",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fEquComposeAB_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fEquComposeAB_fModified_x5f8PSK","Modified_8PSK")),
+	create_parm ("MaxDelay","maximum delay of channel in symbol duration units",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nEDGE_x5fEquCombiner_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fEquCombiner_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fEquCombiner_fModTypeSet",
+	"_nEDGE_x5fEquCombiner_fModified_x5f8PSK",
+	"_nEDGE_x5fEquCombiner_fGMSK",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fEquCombiner_fNormal_x5fBurst", 
+	"Normal Burst",
+	0,
+	"0",
+	"Normal Burst");
+
+create_constant_form ("_nEDGE_x5fEquCombiner_fSynchronization_x5fBurst", 
+	"Synchronization Burst",
+	0,
+	"1",
+	"Synchronization Burst");
+
+create_form_set("_nEDGE_x5fEquCombiner_fBurstTypeSet",
+	"_nEDGE_x5fEquCombiner_fNormal_x5fBurst",
+	"_nEDGE_x5fEquCombiner_fSynchronization_x5fBurst",
+	"StdForm");
+
+create_item ("EDGE_EquCombiner","Bidirectional equalization combiner",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_EquCombiner",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fEquCombiner_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_EquCombiner",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fEquCombiner_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fEquCombiner_fModified_x5f8PSK","Modified_8PSK")),
+	create_parm ("BurstType","burst type",
+		PARM_INT,
+		"_nEDGE_x5fEquCombiner_fBurstTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fEquCombiner_fNormal_x5fBurst","Normal_Burst")),
+	create_parm ("MaxDelay","maximum delay of channel in symbol duration units",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nEDGE_x5fDummyBurst_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fDummyBurst_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fDummyBurst_fModTypeSet",
+	"_nEDGE_x5fDummyBurst_fModified_x5f8PSK",
+	"_nEDGE_x5fDummyBurst_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_DummyBurst","Dummy burst construction",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DummyBurst",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDummyBurst_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DummyBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fDummyBurst_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fDummyBurst_fModified_x5f8PSK","Modified_8PSK")));
+
+
+create_item ("EDGE_DownSample","EDGE burst down-sample",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DownSample",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDownSample_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DownSample",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampPerSym","number of samples per symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")));
+
+
+create_constant_form ("_nEDGE_x5fDeSBurst_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fDeSBurst_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fDeSBurst_fModTypeSet",
+	"_nEDGE_x5fDeSBurst_fModified_x5f8PSK",
+	"_nEDGE_x5fDeSBurst_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_DeSBurst","Synchronization burst disassembly",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DeSBurst",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDeSBurst_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DeSBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fDeSBurst_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fDeSBurst_fModified_x5f8PSK","Modified_8PSK")));
+
+
+create_constant_form ("_nEDGE_x5fDeRotator_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fDeRotator_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fDeRotator_fModTypeSet",
+	"_nEDGE_x5fDeRotator_fModified_x5f8PSK",
+	"_nEDGE_x5fDeRotator_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_DeRotator","De-rotator",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DeRotator",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDeRotator_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DeRotator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fDeRotator_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fDeRotator_fModified_x5f8PSK","Modified_8PSK")));
+
+
+create_constant_form ("_nEDGE_x5fDePuncture_fCS_x5f2", 
+	"CS_2",
+	0,
+	"0",
+	"CS_2");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fCS_x5f3", 
+	"CS_3",
+	0,
+	"1",
+	"CS_3");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fMCS_x5f1", 
+	"MCS_1",
+	0,
+	"2",
+	"MCS_1");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fMCS_x5f2", 
+	"MCS_2",
+	0,
+	"3",
+	"MCS_2");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fMCS_x5f3", 
+	"MCS_3",
+	0,
+	"4",
+	"MCS_3");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fMCS_x5f4", 
+	"MCS_4",
+	0,
+	"5",
+	"MCS_4");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fMCS_x5f5", 
+	"MCS_5",
+	0,
+	"6",
+	"MCS_5");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fMCS_x5f6", 
+	"MCS_6",
+	0,
+	"7",
+	"MCS_6");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fMCS_x5f7", 
+	"MCS_7",
+	0,
+	"8",
+	"MCS_7");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fMCS_x5f8", 
+	"MCS_8",
+	0,
+	"9",
+	"MCS_8");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fMCS_x5f9", 
+	"MCS_9",
+	0,
+	"10",
+	"MCS_9");
+
+create_form_set("_nEDGE_x5fDePuncture_fCodingSchemeSet",
+	"_nEDGE_x5fDePuncture_fCS_x5f2",
+	"_nEDGE_x5fDePuncture_fCS_x5f3",
+	"_nEDGE_x5fDePuncture_fMCS_x5f1",
+	"_nEDGE_x5fDePuncture_fMCS_x5f2",
+	"_nEDGE_x5fDePuncture_fMCS_x5f3",
+	"_nEDGE_x5fDePuncture_fMCS_x5f4",
+	"_nEDGE_x5fDePuncture_fMCS_x5f5",
+	"_nEDGE_x5fDePuncture_fMCS_x5f6",
+	"_nEDGE_x5fDePuncture_fMCS_x5f7",
+	"_nEDGE_x5fDePuncture_fMCS_x5f8",
+	"_nEDGE_x5fDePuncture_fMCS_x5f9",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fP1", 
+	"P1",
+	0,
+	"0",
+	"P1");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fP2", 
+	"P2",
+	0,
+	"1",
+	"P2");
+
+create_constant_form ("_nEDGE_x5fDePuncture_fP3", 
+	"P3",
+	0,
+	"2",
+	"P3");
+
+create_form_set("_nEDGE_x5fDePuncture_fPuncSchemeSet",
+	"_nEDGE_x5fDePuncture_fP1",
+	"_nEDGE_x5fDePuncture_fP2",
+	"_nEDGE_x5fDePuncture_fP3",
+	"StdForm");
+
+create_item ("EDGE_DePuncture","Data de-puncturing",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DePuncture",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDePuncture_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DePuncture",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fDePuncture_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fDePuncture_fMCS_x5f1","MCS_1")),
+	create_parm ("PuncScheme","puncturing scheme",
+		PARM_INT,
+		"_nEDGE_x5fDePuncture_fPuncSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fDePuncture_fP1","P1")));
+
+
+create_constant_form ("_nEDGE_x5fDeNormalBurst_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fDeNormalBurst_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fDeNormalBurst_fModTypeSet",
+	"_nEDGE_x5fDeNormalBurst_fModified_x5f8PSK",
+	"_nEDGE_x5fDeNormalBurst_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_DeNormalBurst","Normal burst disassembly",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DeNormalBurst",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDeNormalBurst_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DeNormalBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fDeNormalBurst_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fDeNormalBurst_fModified_x5f8PSK","Modified_8PSK")));
+
+
+create_constant_form ("_nEDGE_x5fDeInterleaver_fCS1_x5f4_x5fMCS1_x5f4", 
+	"CS1-4&MCS1-4",
+	0,
+	"0",
+	"CS1-4&MCS1-4");
+
+create_constant_form ("_nEDGE_x5fDeInterleaver_fMCS5_x5f6", 
+	"MCS5-6",
+	0,
+	"1",
+	"MCS5-6");
+
+create_constant_form ("_nEDGE_x5fDeInterleaver_fMCS7", 
+	"MCS7",
+	0,
+	"2",
+	"MCS7");
+
+create_constant_form ("_nEDGE_x5fDeInterleaver_fMCS8_x5f9", 
+	"MCS8-9",
+	0,
+	"3",
+	"MCS8-9");
+
+create_form_set("_nEDGE_x5fDeInterleaver_fCodingSchemeSet",
+	"_nEDGE_x5fDeInterleaver_fCS1_x5f4_x5fMCS1_x5f4",
+	"_nEDGE_x5fDeInterleaver_fMCS5_x5f6",
+	"_nEDGE_x5fDeInterleaver_fMCS7",
+	"_nEDGE_x5fDeInterleaver_fMCS8_x5f9",
+	"StdForm");
+
+create_item ("EDGE_DeInterleaver","De-interleaving for packet data traffic channels",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DeInterleaver",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDeInterleaver_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DeInterleaver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fDeInterleaver_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fDeInterleaver_fCS1_x5f4_x5fMCS1_x5f4","CS1_4_MCS1_4")));
+
+
+create_constant_form ("_nEDGE_x5fDeAccessBurst_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fDeAccessBurst_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fDeAccessBurst_fModTypeSet",
+	"_nEDGE_x5fDeAccessBurst_fModified_x5f8PSK",
+	"_nEDGE_x5fDeAccessBurst_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_DeAccessBurst","Access burst disassembly",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DeAccessBurst",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDeAccessBurst_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DeAccessBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fDeAccessBurst_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fDeAccessBurst_fModified_x5f8PSK","Modified_8PSK")));
+
+
+create_item ("EDGE_DCC_WithTail","Viterbi decoder for convolutional code with tail",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DCC_WithTail",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDCC_x5fWithTail_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DCC_WithTail",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodeRate","convolutional code rate",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("ConstraintLength","convolutional code constraint length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9")),
+	create_parm ("Polynomials","convolutional code polynomials, in terms of octal number",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"0753 0561\"")),
+	create_parm ("InputFrameLength","length of input frame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","288")));
+
+
+create_constant_form ("_nEDGE_x5fDataPattern_fPN9", 
+	"PN9",
+	0,
+	"0",
+	"PN9");
+
+create_constant_form ("_nEDGE_x5fDataPattern_fPN15", 
+	"PN15",
+	0,
+	"1",
+	"PN15");
+
+create_constant_form ("_nEDGE_x5fDataPattern_fFIX4", 
+	"FIX4",
+	0,
+	"2",
+	"FIX4");
+
+create_constant_form ("_nEDGE_x5fDataPattern_f_x5f4_x5f1_x5f4_x5f0", 
+	"_4_1_4_0",
+	0,
+	"3",
+	"_4_1_4_0");
+
+create_constant_form ("_nEDGE_x5fDataPattern_f_x5f8_x5f1_x5f8_x5f0", 
+	"_8_1_8_0",
+	0,
+	"4",
+	"_8_1_8_0");
+
+create_constant_form ("_nEDGE_x5fDataPattern_f_x5f16_x5f1_x5f16_x5f0", 
+	"_16_1_16_0",
+	0,
+	"5",
+	"_16_1_16_0");
+
+create_constant_form ("_nEDGE_x5fDataPattern_f_x5f32_x5f1_x5f32_x5f0", 
+	"_32_1_32_0",
+	0,
+	"6",
+	"_32_1_32_0");
+
+create_constant_form ("_nEDGE_x5fDataPattern_f_x5f64_x5f1_x5f64_x5f0", 
+	"_64_1_64_0",
+	0,
+	"7",
+	"_64_1_64_0");
+
+create_form_set("_nEDGE_x5fDataPattern_fDataPatternSet",
+	"_nEDGE_x5fDataPattern_fPN9",
+	"_nEDGE_x5fDataPattern_fPN15",
+	"_nEDGE_x5fDataPattern_fFIX4",
+	"_nEDGE_x5fDataPattern_f_x5f4_x5f1_x5f4_x5f0",
+	"_nEDGE_x5fDataPattern_f_x5f8_x5f1_x5f8_x5f0",
+	"_nEDGE_x5fDataPattern_f_x5f16_x5f1_x5f16_x5f0",
+	"_nEDGE_x5fDataPattern_f_x5f32_x5f1_x5f32_x5f0",
+	"_nEDGE_x5fDataPattern_f_x5f64_x5f1_x5f64_x5f0",
+	"StdForm");
+
+create_item ("EDGE_DataPattern","Patterned data source for EDGE",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_DataPattern",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fDataPattern_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_DataPattern",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataPattern","data pattern",
+		PARM_INT,
+		"_nEDGE_x5fDataPattern_fDataPatternSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fDataPattern_fPN9","PN9")));
+
+
+create_constant_form ("_nEDGE_x5fCycEncoder_fUsing_x5fEnum_x5fType_x5fselector_x5fGenEnum", 
+	"Using Enum Type selector GenEnum",
+	0,
+	"0",
+	"EnumType");
+
+create_constant_form ("_nEDGE_x5fCycEncoder_fUsing_x5fArray_x5fType_x5fselector_x5fGenArray", 
+	"Using Array Type selector GenArray",
+	0,
+	"1",
+	"ArrType");
+
+create_form_set("_nEDGE_x5fCycEncoder_fGenTypeSet",
+	"_nEDGE_x5fCycEncoder_fUsing_x5fEnum_x5fType_x5fselector_x5fGenEnum",
+	"_nEDGE_x5fCycEncoder_fUsing_x5fArray_x5fType_x5fselector_x5fGenArray",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fCycEncoder_fg_x5f13", 
+	"g 13",
+	0,
+	"0",
+	"CyclicCodeTCH");
+
+create_constant_form ("_nEDGE_x5fCycEncoder_fg_x5f157", 
+	"g 157",
+	0,
+	"1",
+	"CyclicCodeRACH");
+
+create_constant_form ("_nEDGE_x5fCycEncoder_fg_x5f2565", 
+	"g 2565",
+	0,
+	"2",
+	"CyclicCodeSCH");
+
+create_constant_form ("_nEDGE_x5fCycEncoder_fg_x5f45045", 
+	"g 45045",
+	0,
+	"3",
+	"FireCode1");
+
+create_constant_form ("_nEDGE_x5fCycEncoder_fg_x5f123", 
+	"g 123",
+	0,
+	"4",
+	"FireCode2");
+
+create_constant_form ("_nEDGE_x5fCycEncoder_fg_x5f20000440400011", 
+	"g 20000440400011",
+	0,
+	"5",
+	"FireCodeSacch");
+
+create_form_set("_nEDGE_x5fCycEncoder_fGenEnumSet",
+	"_nEDGE_x5fCycEncoder_fg_x5f13",
+	"_nEDGE_x5fCycEncoder_fg_x5f157",
+	"_nEDGE_x5fCycEncoder_fg_x5f2565",
+	"_nEDGE_x5fCycEncoder_fg_x5f45045",
+	"_nEDGE_x5fCycEncoder_fg_x5f123",
+	"_nEDGE_x5fCycEncoder_fg_x5f20000440400011",
+	"StdForm");
+
+create_item ("EDGE_CycEncoder","Systematic cyclic codes encoder",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_CycEncoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fCycEncoder_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_CycEncoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodeLength","length of code word",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","53")),
+	create_parm ("InfoLength","length of information part in code word",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","50")),
+	create_parm ("GenType","type of generator polynomial selector",
+		PARM_INT,
+		"_nEDGE_x5fCycEncoder_fGenTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fCycEncoder_fUsing_x5fEnum_x5fType_x5fselector_x5fGenEnum","Using_Enum_Type_selector_GenEnum")),
+	create_parm ("GenEnum","generator polynomial, valid when GenType = 0",
+		PARM_INT,
+		"_nEDGE_x5fCycEncoder_fGenEnumSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fCycEncoder_fg_x5f13","g_13")),
+	create_parm ("GenArray","generator polynomial, in octal, MSB first, valid when GenType = 1",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 3\"")));
+
+
+create_constant_form ("_nEDGE_x5fCycDecoder_fNot_x5fShortened_x5fCode", 
+	"Not Shortened Code",
+	0,
+	"0",
+	"NS");
+
+create_constant_form ("_nEDGE_x5fCycDecoder_fShortened_x5fCode", 
+	"Shortened Code",
+	0,
+	"1",
+	"S");
+
+create_form_set("_nEDGE_x5fCycDecoder_fShortenFlagSet",
+	"_nEDGE_x5fCycDecoder_fNot_x5fShortened_x5fCode",
+	"_nEDGE_x5fCycDecoder_fShortened_x5fCode",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fCycDecoder_fDetection_x5fOnly", 
+	"Detection Only",
+	0,
+	"0",
+	"NC");
+
+create_constant_form ("_nEDGE_x5fCycDecoder_fDetection_x5fand_x5fCorrection", 
+	"Detection and Correction",
+	0,
+	"1",
+	"C");
+
+create_form_set("_nEDGE_x5fCycDecoder_fCorrectFlagSet",
+	"_nEDGE_x5fCycDecoder_fDetection_x5fOnly",
+	"_nEDGE_x5fCycDecoder_fDetection_x5fand_x5fCorrection",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fCycDecoder_fUsing_x5fEnum_x5fType_x5fselector_x5fGenEnum", 
+	"Using Enum Type selector GenEnum",
+	0,
+	"0",
+	"EnumType");
+
+create_constant_form ("_nEDGE_x5fCycDecoder_fUsing_x5fArray_x5fType_x5fselector_x5fGenArray", 
+	"Using Array Type selector GenArray",
+	0,
+	"1",
+	"ArrType");
+
+create_form_set("_nEDGE_x5fCycDecoder_fGenTypeSet",
+	"_nEDGE_x5fCycDecoder_fUsing_x5fEnum_x5fType_x5fselector_x5fGenEnum",
+	"_nEDGE_x5fCycDecoder_fUsing_x5fArray_x5fType_x5fselector_x5fGenArray",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fCycDecoder_fg_x5f13", 
+	"g 13",
+	0,
+	"0",
+	"CyclicCodeTCH");
+
+create_constant_form ("_nEDGE_x5fCycDecoder_fg_x5f157", 
+	"g 157",
+	0,
+	"1",
+	"CyclicCodeRACH");
+
+create_constant_form ("_nEDGE_x5fCycDecoder_fg_x5f2565", 
+	"g 2565",
+	0,
+	"2",
+	"CyclicCodeSCH");
+
+create_form_set("_nEDGE_x5fCycDecoder_fGenEnumSet",
+	"_nEDGE_x5fCycDecoder_fg_x5f13",
+	"_nEDGE_x5fCycDecoder_fg_x5f157",
+	"_nEDGE_x5fCycDecoder_fg_x5f2565",
+	"StdForm");
+
+create_item ("EDGE_CycDecoder","Systematic cyclic codes decoder",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_CycDecoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fCycDecoder_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_CycDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ShortenFlag","flag indicating a shortened code",
+		PARM_INT,
+		"_nEDGE_x5fCycDecoder_fShortenFlagSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fCycDecoder_fShortened_x5fCode","Shortened_Code")),
+	create_parm ("CorrectFlag","flag indicating to correct errors",
+		PARM_INT,
+		"_nEDGE_x5fCycDecoder_fCorrectFlagSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fCycDecoder_fDetection_x5fOnly","Detection_Only")),
+	create_parm ("CodeLength","length of code word",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","53")),
+	create_parm ("InfoLength","length of information part in code word",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","50")),
+	create_parm ("GenType","type of generator polynomial selector",
+		PARM_INT,
+		"_nEDGE_x5fCycDecoder_fGenTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fCycDecoder_fUsing_x5fEnum_x5fType_x5fselector_x5fGenEnum","Using_Enum_Type_selector_GenEnum")),
+	create_parm ("GenEnum","generator polynomial, valid when GenType = 0",
+		PARM_INT,
+		"_nEDGE_x5fCycDecoder_fGenEnumSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fCycDecoder_fg_x5f13","g_13")),
+	create_parm ("GenArray","generator polynomial, in octal, MSB first, valid when GenType = 1",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 3\"")),
+	create_parm ("CutOffBits","number of bits cut off in shortened cyclic code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_constant_form ("_nEDGE_x5fCombiner_finput1_x5fto_x5fbe_x5ffirst_x5fpart", 
+	"input1 to be first part",
+	0,
+	"0",
+	"input1 to be first part");
+
+create_constant_form ("_nEDGE_x5fCombiner_finput2_x5fto_x5fbe_x5ffirst_x5fpart", 
+	"input2 to be first part",
+	0,
+	"1",
+	"input2 to be first part");
+
+create_constant_form ("_nEDGE_x5fCombiner_finput1_x5fto_x5fbe_x5fmiddle_x5fpart", 
+	"input1 to be middle part",
+	0,
+	"2",
+	"input1 to be middle part");
+
+create_constant_form ("_nEDGE_x5fCombiner_finput2_x5fto_x5fbe_x5fmiddle_x5fpart", 
+	"input2 to be middle part",
+	0,
+	"3",
+	"input2 to be middle part");
+
+create_form_set("_nEDGE_x5fCombiner_fCombineModeSet",
+	"_nEDGE_x5fCombiner_finput1_x5fto_x5fbe_x5ffirst_x5fpart",
+	"_nEDGE_x5fCombiner_finput2_x5fto_x5fbe_x5ffirst_x5fpart",
+	"_nEDGE_x5fCombiner_finput1_x5fto_x5fbe_x5fmiddle_x5fpart",
+	"_nEDGE_x5fCombiner_finput2_x5fto_x5fbe_x5fmiddle_x5fpart",
+	"StdForm");
+
+create_item ("EDGE_Combiner","Bits combiner for channel coding",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_Combiner",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fCombiner_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_Combiner",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Length1","block length of input1",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("Length2","block length of input2",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","284")),
+	create_parm ("CombineMode","combination mode",
+		PARM_INT,
+		"_nEDGE_x5fCombiner_fCombineModeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fCombiner_finput1_x5fto_x5fbe_x5ffirst_x5fpart","input1_to_be_first_part")));
+
+
+create_constant_form ("_nEDGE_x5fChannelEstimator_fForward", 
+	"Forward",
+	0,
+	"0",
+	"Forward");
+
+create_constant_form ("_nEDGE_x5fChannelEstimator_fBackward", 
+	"Backward",
+	0,
+	"1",
+	"Backward");
+
+create_form_set("_nEDGE_x5fChannelEstimator_fDirectionSet",
+	"_nEDGE_x5fChannelEstimator_fForward",
+	"_nEDGE_x5fChannelEstimator_fBackward",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fChannelEstimator_fNormal_x5fBurst", 
+	"Normal Burst",
+	0,
+	"0",
+	"Normal Burst");
+
+create_constant_form ("_nEDGE_x5fChannelEstimator_fSynchronization_x5fBurst", 
+	"Synchronization Burst",
+	0,
+	"1",
+	"Synchronization Burst");
+
+create_constant_form ("_nEDGE_x5fChannelEstimator_fAccess_x5fBurst", 
+	"Access Burst",
+	0,
+	"2",
+	"Access Burst");
+
+create_form_set("_nEDGE_x5fChannelEstimator_fBurstTypeSet",
+	"_nEDGE_x5fChannelEstimator_fNormal_x5fBurst",
+	"_nEDGE_x5fChannelEstimator_fSynchronization_x5fBurst",
+	"_nEDGE_x5fChannelEstimator_fAccess_x5fBurst",
+	"StdForm");
+
+create_item ("EDGE_ChannelEstimator","Channel estimator",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_ChannelEstimator",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fChannelEstimator_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_ChannelEstimator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Direction","direction of estimation",
+		PARM_INT,
+		"_nEDGE_x5fChannelEstimator_fDirectionSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fChannelEstimator_fForward","Forward")),
+	create_parm ("BurstType","burst type",
+		PARM_INT,
+		"_nEDGE_x5fChannelEstimator_fBurstTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fChannelEstimator_fNormal_x5fBurst","Normal_Burst")),
+	create_parm ("MaxDelay","maximum delay of channel in symbol duration units",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_item ("EDGE_CC_WithTail","Convolutional encoder with tail",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_CC_WithTail",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fCC_x5fWithTail_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_CC_WithTail",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodeRate","convolutional code rate",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("ConstraintLength","convolutional code constraint length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9")),
+	create_parm ("Polynomials","convolutional code polynomials, in terms of octal number",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"0753 0561\"")),
+	create_parm ("InputFrameLength","length of input frame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","96")));
+
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fCS_x5f1", 
+	"CS_1",
+	0,
+	"0",
+	"CS_1");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fCS_x5f2", 
+	"CS_2",
+	0,
+	"1",
+	"CS_2");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fCS_x5f3", 
+	"CS_3",
+	0,
+	"2",
+	"CS_3");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fCS_x5f4", 
+	"CS_4",
+	0,
+	"3",
+	"CS_4");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fMCS_x5f1", 
+	"MCS_1",
+	0,
+	"4",
+	"MCS_1");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fMCS_x5f2", 
+	"MCS_2",
+	0,
+	"5",
+	"MCS_2");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fMCS_x5f3", 
+	"MCS_3",
+	0,
+	"6",
+	"MCS_3");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fMCS_x5f4", 
+	"MCS_4",
+	0,
+	"7",
+	"MCS_4");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fMCS_x5f5", 
+	"MCS_5",
+	0,
+	"8",
+	"MCS_5");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fMCS_x5f6", 
+	"MCS_6",
+	0,
+	"9",
+	"MCS_6");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fMCS_x5f7", 
+	"MCS_7",
+	0,
+	"10",
+	"MCS_7");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fMCS_x5f8", 
+	"MCS_8",
+	0,
+	"11",
+	"MCS_8");
+
+create_constant_form ("_nEDGE_x5fBurstMapping_fMCS_x5f9", 
+	"MCS_9",
+	0,
+	"12",
+	"MCS_9");
+
+create_form_set("_nEDGE_x5fBurstMapping_fCodingSchemeSet",
+	"_nEDGE_x5fBurstMapping_fCS_x5f1",
+	"_nEDGE_x5fBurstMapping_fCS_x5f2",
+	"_nEDGE_x5fBurstMapping_fCS_x5f3",
+	"_nEDGE_x5fBurstMapping_fCS_x5f4",
+	"_nEDGE_x5fBurstMapping_fMCS_x5f1",
+	"_nEDGE_x5fBurstMapping_fMCS_x5f2",
+	"_nEDGE_x5fBurstMapping_fMCS_x5f3",
+	"_nEDGE_x5fBurstMapping_fMCS_x5f4",
+	"_nEDGE_x5fBurstMapping_fMCS_x5f5",
+	"_nEDGE_x5fBurstMapping_fMCS_x5f6",
+	"_nEDGE_x5fBurstMapping_fMCS_x5f7",
+	"_nEDGE_x5fBurstMapping_fMCS_x5f8",
+	"_nEDGE_x5fBurstMapping_fMCS_x5f9",
+	"StdForm");
+
+create_item ("EDGE_BurstMapping","Normal burst mapping",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_BurstMapping",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fBurstMapping_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_BurstMapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fBurstMapping_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fBurstMapping_fCS_x5f1","CS_1")));
+
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fCS_x5f1", 
+	"CS_1",
+	0,
+	"0",
+	"CS_1");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fCS_x5f2", 
+	"CS_2",
+	0,
+	"1",
+	"CS_2");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fCS_x5f3", 
+	"CS_3",
+	0,
+	"2",
+	"CS_3");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fCS_x5f4", 
+	"CS_4",
+	0,
+	"3",
+	"CS_4");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fMCS_x5f1", 
+	"MCS_1",
+	0,
+	"4",
+	"MCS_1");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fMCS_x5f2", 
+	"MCS_2",
+	0,
+	"5",
+	"MCS_2");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fMCS_x5f3", 
+	"MCS_3",
+	0,
+	"6",
+	"MCS_3");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fMCS_x5f4", 
+	"MCS_4",
+	0,
+	"7",
+	"MCS_4");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fMCS_x5f5", 
+	"MCS_5",
+	0,
+	"8",
+	"MCS_5");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fMCS_x5f6", 
+	"MCS_6",
+	0,
+	"9",
+	"MCS_6");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fMCS_x5f7", 
+	"MCS_7",
+	0,
+	"10",
+	"MCS_7");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fMCS_x5f8", 
+	"MCS_8",
+	0,
+	"11",
+	"MCS_8");
+
+create_constant_form ("_nEDGE_x5fBurstDeMapping_fMCS_x5f9", 
+	"MCS_9",
+	0,
+	"12",
+	"MCS_9");
+
+create_form_set("_nEDGE_x5fBurstDeMapping_fCodingSchemeSet",
+	"_nEDGE_x5fBurstDeMapping_fCS_x5f1",
+	"_nEDGE_x5fBurstDeMapping_fCS_x5f2",
+	"_nEDGE_x5fBurstDeMapping_fCS_x5f3",
+	"_nEDGE_x5fBurstDeMapping_fCS_x5f4",
+	"_nEDGE_x5fBurstDeMapping_fMCS_x5f1",
+	"_nEDGE_x5fBurstDeMapping_fMCS_x5f2",
+	"_nEDGE_x5fBurstDeMapping_fMCS_x5f3",
+	"_nEDGE_x5fBurstDeMapping_fMCS_x5f4",
+	"_nEDGE_x5fBurstDeMapping_fMCS_x5f5",
+	"_nEDGE_x5fBurstDeMapping_fMCS_x5f6",
+	"_nEDGE_x5fBurstDeMapping_fMCS_x5f7",
+	"_nEDGE_x5fBurstDeMapping_fMCS_x5f8",
+	"_nEDGE_x5fBurstDeMapping_fMCS_x5f9",
+	"StdForm");
+
+create_item ("EDGE_BurstDeMapping","Normal burst demapping",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_BurstDeMapping",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fBurstDeMapping_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_BurstDeMapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingScheme","type of coding scheme",
+		PARM_INT,
+		"_nEDGE_x5fBurstDeMapping_fCodingSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fBurstDeMapping_fCS_x5f1","CS_1")));
+
+
+create_item ("EDGE_BitSwapping","Bit swapping in normal burst",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_BitSwapping",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fBitSwapping_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_BitSwapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Pos1","bit positions to be swapped with those defined in Pos2",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"142 144 145 147 148 150 151 176 179 182 185 188 191 194\"")),
+	create_parm ("Pos2","bit positions to be swapped with those defined in Pos1",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"155 158 161 164 167 170 173 195 196 198 199 201 202 204\"")));
+
+
+create_item ("EDGE_BitDeSwapping","Bit de-swapping in normal burst",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_BitDeSwapping",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fBitDeSwapping_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_BitDeSwapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Pos1","bit positions to be swapped with those defined in Pos2",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"142 144 145 147 148 150 151 176 179 182 185 188 191 194\"")),
+	create_parm ("Pos2","bit positions to be swapped with those defined in Pos1",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"155 158 161 164 167 170 173 195 196 198 199 201 202 204\"")));
+
+
+create_item ("EDGE_BitCC","Convolutional encoder bit by bit",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_BitCC",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fBitCC_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_BitCC",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodeRate","convolutional code rate",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("ConstraintLength","convolutional code constraint length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9")),
+	create_parm ("Polynomials","convolutional code polynomials, in terms of octal number",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"0753 0561\"")));
+
+
+create_item ("EDGE_BERFER","BER and FER performance",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_BERFER",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fBERFER_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_BERFER",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Start","frame from which measurement starts",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","DefaultNumericStart")),
+	create_parm ("Stop","frame at which measurement stops -1 for no stop",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","DefaultNumericStop")),
+	create_parm ("FrameLength","number of bits in a frame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nEDGE_x5fAccessBurst_fModified_x5f8PSK", 
+	"Modified 8PSK",
+	0,
+	"0",
+	"Modified 8PSK");
+
+create_constant_form ("_nEDGE_x5fAccessBurst_fGMSK", 
+	"GMSK",
+	0,
+	"1",
+	"GMSK");
+
+create_form_set("_nEDGE_x5fAccessBurst_fModTypeSet",
+	"_nEDGE_x5fAccessBurst_fModified_x5f8PSK",
+	"_nEDGE_x5fAccessBurst_fGMSK",
+	"StdForm");
+
+create_item ("EDGE_AccessBurst","Access burst construction",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_AccessBurst",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fAccessBurst_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_AccessBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","modulation type",
+		PARM_INT,
+		"_nEDGE_x5fAccessBurst_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fAccessBurst_fModified_x5f8PSK","Modified_8PSK")),
+	create_parm ("TSC","training sequence code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_constant_form ("_nEDGE_x5fAddRamp_fBasic", 
+	"Basic",
+	0,
+	"0",
+	"Basic");
+
+create_constant_form ("_nEDGE_x5fAddRamp_fGSM_x5f8_x5f3_x5f0_x5fRelease_x5f1999", 
+	"GSM_8_3_0_Release_1999",
+	0,
+	"1",
+	"GSM 8.3.0 Release 1999");
+
+create_form_set("_nEDGE_x5fAddRamp_fVersionSet",
+	"_nEDGE_x5fAddRamp_fBasic",
+	"_nEDGE_x5fAddRamp_fGSM_x5f8_x5f3_x5f0_x5fRelease_x5f1999",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fAddRamp_fNone", 
+	"None",
+	0,
+	"0",
+	"None");
+
+create_constant_form ("_nEDGE_x5fAddRamp_fLinear", 
+	"Linear",
+	0,
+	"1",
+	"Linear");
+
+create_constant_form ("_nEDGE_x5fAddRamp_fCosine", 
+	"Cosine",
+	0,
+	"2",
+	"Cosine");
+
+create_form_set("_nEDGE_x5fAddRamp_fPwrTypeSet",
+	"_nEDGE_x5fAddRamp_fNone",
+	"_nEDGE_x5fAddRamp_fLinear",
+	"_nEDGE_x5fAddRamp_fCosine",
+	"StdForm");
+
+create_constant_form ("_nEDGE_x5fAddRamp_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nEDGE_x5fAddRamp_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nEDGE_x5fAddRamp_fContinuesSet",
+	"_nEDGE_x5fAddRamp_fNO",
+	"_nEDGE_x5fAddRamp_fYES",
+	"StdForm");
+
+create_item ("EDGE_AddRamp","adding ramp up and ramp down",
+	"E",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_EDGE_AddRamp",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nEDGE_x5fAddRamp_lsdfedgestars",
+	SPComponentAnnotFmt,
+	"SYM_EDGE_AddRamp",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Version","EDGE specification version used for normal burst if Version=Basic, each burst has 156 symbols else complys with GSM 8.3.0 Release 1999",
+		PARM_INT,
+		"_nEDGE_x5fAddRamp_fVersionSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fAddRamp_fBasic","Basic")),
+	create_parm ("TS_State","state of each time slot 0 for idle, 1 for active",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 1 1 1 1 1\"")),
+	create_parm ("PwrType","power on and power off type",
+		PARM_INT,
+		"_nEDGE_x5fAddRamp_fPwrTypeSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fAddRamp_fNone","None")),
+	create_parm ("RampLength","power on and power off length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("RampUpScramble","scramble of ramp up function",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 1\"")),
+	create_parm ("RampDownScramble","scramble of ramp down function",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 1 1\"")),
+	create_parm ("Continues","adding ramp between active slots or not",
+		PARM_INT,
+		"_nEDGE_x5fAddRamp_fContinuesSet",
+		UNITLESS_UNIT,
+		prm("_nEDGE_x5fAddRamp_fNO","NO")));

@@ -1,0 +1,45 @@
+#!/eesof/bin/perl5
+
+# Script to execute an AEL macro to create OA libraries from modelbuilder files
+# See on-line docs for more details.
+
+$aelMacroName = "createOAlib.ael";
+
+use Cwd;
+use File::Spec;
+
+$dir =  Cwd::getcwd();
+$aelDir = File::Spec->catfile( $dir, 'ael' );
+$symbolsDir = File::Spec->catfile( $dir, 'symbols' );
+if (( -d "$aelDir" ) && ( -d "$symbolsDir" ))
+{
+	# set the environment variable for ADS to find the modelbuilder model
+	$ENV{'ADSPTOLEMY_MODEL_PATH'} = $dir;
+
+	# find the full path to AEL file
+	$scriptPath = File::Spec->rel2abs( __FILE__ );
+	( $scriptVolume, $scriptDirs, $scriptFile ) = File::Spec->splitpath( $scriptPath );
+	$aelMacroPath = File::Spec->catpath( $scriptVolume, $scriptDirs, $aelMacroName );
+	$aelMacroPath = "\"$aelMacroPath\"";
+
+	# form the command line to launch ADS
+	$hpeesof_dir = $ENV{'HPEESOF_DIR_WINDOWS'};
+	if ( $hpeesof_dir eq "" )
+	{
+		$hpeesof_dir = $ENV{'HPEESOF_DIR'};
+	}
+	$adsPath = File::Spec->catfile( $hpeesof_dir, 'bin', 'ads' );
+	$adsOptions = ' -no_reg_vs_env -ng -m '; # this is followed by the AEL file
+	$systemCmd = $adsPath . $adsOptions . $aelMacroPath;
+
+	print "***\n*** Launching ADS to create OA libraries.\n";
+	print "*** Please don't close ADS windows - it will quit automatically after it's done.\n";
+
+	system($systemCmd);
+
+	print "*** ADS is done.\n";
+}
+else
+{
+	print "OA library cannot be created in $dir - no ael or symbols.\n";
+}

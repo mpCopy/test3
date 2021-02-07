@@ -1,0 +1,24 @@
+#!/bin/ksh
+# Remove DSP-based A/RF sources from circuit palettes
+
+set -e
+prog=$0
+
+usage () {
+    echo "Usage: $prog rec_file_name"
+}
+
+if [ "$1" = "" ]; then
+  echo "rec_file_name not provided."
+  usage
+  exit 1
+fi 
+
+if [ ! -f "$HPEESOF_DIR/circuit/records/hpeesof_rf.ctl" ] ; then
+  echo "$HPEESOF_DIR/circuit/records/hpeesof_rf.ctl file not found."
+  echo "DSP-based A/RF sources may not be removed from circuit palettes."
+  exit 0
+fi
+
+grep -v $1 circuit/records/hpeesof_rf.ctl > hpeesof_rf.ctl.tmpARFsource
+mv -f hpeesof_rf.ctl.tmpARFsource circuit/records/hpeesof_rf.ctl

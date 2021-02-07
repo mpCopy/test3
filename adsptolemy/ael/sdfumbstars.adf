@@ -1,0 +1,5538 @@
+set_design_type( sigproc_net );
+
+create_constant_form ("_nUMB_x5fChannel_x5fITU_x5fH_fPedestrian_x5fA", 
+	"Pedestrian_A",
+	0,
+	"0",
+	"Pedestrian_A");
+
+create_constant_form ("_nUMB_x5fChannel_x5fITU_x5fH_fPedestrian_x5fB", 
+	"Pedestrian_B",
+	0,
+	"1",
+	"Pedestrian_B");
+
+create_constant_form ("_nUMB_x5fChannel_x5fITU_x5fH_fVehicular_x5fA", 
+	"Vehicular_A",
+	0,
+	"2",
+	"Vehicular_A");
+
+create_constant_form ("_nUMB_x5fChannel_x5fITU_x5fH_fVehicular_x5fB", 
+	"Vehicular_B",
+	0,
+	"3",
+	"Vehicular_B");
+
+create_constant_form ("_nUMB_x5fChannel_x5fITU_x5fH_fUserDefined", 
+	"UserDefined",
+	0,
+	"4",
+	"UserDefined");
+
+create_form_set("_nUMB_x5fChannel_x5fITU_x5fH_fModelTypeSet",
+	"_nUMB_x5fChannel_x5fITU_x5fH_fPedestrian_x5fA",
+	"_nUMB_x5fChannel_x5fITU_x5fH_fPedestrian_x5fB",
+	"_nUMB_x5fChannel_x5fITU_x5fH_fVehicular_x5fA",
+	"_nUMB_x5fChannel_x5fITU_x5fH_fVehicular_x5fB",
+	"_nUMB_x5fChannel_x5fITU_x5fH_fUserDefined",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fChannel_x5fITU_x5fH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fChannel_x5fITU_x5fH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fChannel_x5fITU_x5fH_fPathLossSet",
+	"_nUMB_x5fChannel_x5fITU_x5fH_fNO",
+	"_nUMB_x5fChannel_x5fITU_x5fH_fYES",
+	"StdForm");
+
+create_item ("UMB_Channel_ITU_H","3GPP2 UMB channel model",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_Channel_ITU_H",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dTSDF_nUMB_x5fChannel_x5fITU_x5fH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_Channel_ITU_H",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModelType","the ITU-R M.1225 Channel number or User defined Channel",
+		PARM_INT,
+		"_nUMB_x5fChannel_x5fITU_x5fH_fModelTypeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fChannel_x5fITU_x5fH_fVehicular_x5fA","Vehicular_A")),
+	create_parm ("Delay","the delay of each tap in usec, effective only when ModelType is set as UserDefined",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		TIME_UNIT,
+		prm("StringAndReference","{0.0 , 0.31 , 0.71 , 1.09 , 1.73 , 2.51 }")),
+	create_parm ("Power","the power in each tap in dB, effective only when ModelType is set as UserDefined",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0.0 dB, -1.0 dB, -9.0 dB, -10.0 dB, -15.0 dB, -20.0 dB}")),
+	create_parm ("Ricean_factor","the Ricean K-factor in linear scale of each tap, effective only when ModelType is set as UserDefined",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}")),
+	create_parm ("Velocity","the velocity of mobile station",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","120")),
+	create_parm ("PathLoss","option for inclusion of large-scale pathloss",
+		PARM_INT,
+		"_nUMB_x5fChannel_x5fITU_x5fH_fPathLossSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fChannel_x5fITU_x5fH_fNO","NO")),
+	create_parm ("PropDistance","the distance of BS and UE in meter, effective only when PassLoss is set as YES",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DISTANCE_UNIT,
+		prm("StdForm","1000")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fBER_x5fFER_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fBER_x5fFER_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fMode_x5f1",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fBER_x5fFER_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fSize_x5f64",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fSize_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex", 
+	"BER vs index",
+	0,
+	"0",
+	"BER vs index");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex_x5fevery_x5f10_x5fbits", 
+	"BER vs index every 10 bits",
+	0,
+	"1",
+	"BER vs index every 10 bits");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex_x5fevery_x5f100_x5fbits", 
+	"BER vs index every 100 bits",
+	0,
+	"2",
+	"BER vs index every 100 bits");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex_x5fevery_x5f1000_x5fbits", 
+	"BER vs index every 1000 bits",
+	0,
+	"3",
+	"BER vs index every 1000 bits");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex_x5fevery_x5fBitsPerFrame_x5fbits", 
+	"BER vs index every BitsPerFrame bits",
+	0,
+	"4",
+	"BER vs index every BitsPerFrame bits");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fFinal_x5fBER", 
+	"Final BER",
+	0,
+	"5",
+	"Final BER");
+
+create_form_set("_nUMB_x5fFL_x5fBER_x5fFER_fOutputBERSet",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex_x5fevery_x5f10_x5fbits",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex_x5fevery_x5f100_x5fbits",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex_x5fevery_x5f1000_x5fbits",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fBER_x5fvs_x5findex_x5fevery_x5fBitsPerFrame_x5fbits",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fFinal_x5fBER",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fFER_x5fvs_x5fframe", 
+	"FER vs frame",
+	0,
+	"0",
+	"FER vs frame");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fFER_x5fvs_x5fframe_x5fevery_x5f10_x5fframes", 
+	"FER vs frame every 10 frames",
+	0,
+	"1",
+	"FER vs frame every 10 frames");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fFinal_x5fFER", 
+	"Final FER",
+	0,
+	"2",
+	"Final FER");
+
+create_constant_form ("_nUMB_x5fFL_x5fBER_x5fFER_fNo_x5fFER", 
+	"No FER",
+	0,
+	"3",
+	"No FER");
+
+create_form_set("_nUMB_x5fFL_x5fBER_x5fFER_fOutputFERSet",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fFER_x5fvs_x5fframe",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fFER_x5fvs_x5fframe_x5fevery_x5f10_x5fframes",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fFinal_x5fFER",
+	"_nUMB_x5fFL_x5fBER_x5fFER_fNo_x5fFER",
+	"StdForm");
+
+create_item ("UMB_FL_BER_FER","UMB Forward Bit Error Rate and Frame Error Rate estimation",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_BER_FER",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fBER_x5fFER_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_BER_FER",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fBER_x5fFER_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fBER_x5fFER_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fBER_x5fFER_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fBER_x5fFER_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fBER_x5fFER_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fBER_x5fFER_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_PFIndex","the packet format index for the data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_NodeID","the array of NodeID allocated to the data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("FDCH_NumFrames","the number of frames on which the data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("SuperframesDelay","number of delay superframes introduced by the receiver",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("StartMeasFrame","Start superframe index for data collection",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("StopMeasFrame","Stop superframe index for data collection when EstRelVariance is not met",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","100")),
+	create_parm ("EstRelVariance","BER estimation relative variance",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.01")),
+	create_parm ("OutputBER","BER output",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fBER_x5fFER_fOutputBERSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fBER_x5fFER_fFinal_x5fBER","Final_BER")),
+	create_parm ("OutputFER","FER output",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fBER_x5fFER_fOutputFERSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fBER_x5fFER_fFinal_x5fFER","Final_FER")),
+	create_parm ("StatusUpdatePeriod","Status update period in number of bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1000")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fFL_x5fCRCDecoder_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f4096",
+	"_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fCRCDecoder_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fCRCDecoder_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fCRCDecoder_fMode_x5f1",
+	"_nUMB_x5fFL_x5fCRCDecoder_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fCRCDecoder_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f64",
+	"_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f128",
+	"StdForm");
+
+create_item ("UMB_FL_CRCDecoder","forward link CRC decoder",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_CRCDecoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fCRCDecoder_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_CRCDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCRCDecoder_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f8192","Size_8192")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCRCDecoder_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCRCDecoder_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCRCDecoder_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCRCDecoder_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCRCDecoder_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCRCDecoder_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_PFIndex","the packet format index for the data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_NodeID","the array of NodeID allocated to the data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("FDCH_NumFrames","the number of frames on which the data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_item ("UMB_TurboDecoder","UMB rate-1/5 turbo decoder)",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_TurboDecoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fTurboDecoder_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_TurboDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("NumPacketBits","the number of packet bits from SFP MAC Protocol including CRC bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","200")),
+	create_parm ("IterationNumber","number of iterations for turbo decoder",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fFL_x5fDecoder_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fFL_x5fDecoder_fSize_x5f4096",
+	"_nUMB_x5fFL_x5fDecoder_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fDecoder_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fDecoder_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fDecoder_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fDecoder_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fDecoder_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fDecoder_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fDecoder_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fDecoder_fMode_x5f1",
+	"_nUMB_x5fFL_x5fDecoder_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fDecoder_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fDecoder_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fDecoder_fSize_x5f64",
+	"_nUMB_x5fFL_x5fDecoder_fSize_x5f128",
+	"StdForm");
+
+create_item ("UMB_FL_Decoder","forward link decoder (rate-1/3 CC and rate-1/5 TC)",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_Decoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fDecoder_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDecoder_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDecoder_fSize_x5f8192","Size_8192")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDecoder_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDecoder_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDecoder_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDecoder_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDecoder_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDecoder_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_PFIndex","the packet format index for the data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_NodeID","the array of NodeID allocated to the data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("FDCH_NumFrames","the number of frames on which the data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("IterationNumber","number of iterations for turbo decoder",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fFL_x5fDeinterleaver_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f4096",
+	"_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fDeinterleaver_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fDeinterleaver_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fDeinterleaver_fMode_x5f1",
+	"_nUMB_x5fFL_x5fDeinterleaver_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fDeinterleaver_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f64",
+	"_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f128",
+	"StdForm");
+
+create_item ("UMB_FL_Deinterleaver","forward link channel de-interleaver",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_Deinterleaver",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fDeinterleaver_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_Deinterleaver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDeinterleaver_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f8192","Size_8192")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDeinterleaver_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDeinterleaver_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDeinterleaver_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDeinterleaver_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDeinterleaver_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDeinterleaver_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_PFIndex","the packet format index for the data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_NodeID","the array of NodeID allocated to the data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("FDCH_NumFrames","the number of frames on which the data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fMode_x5f1",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f64",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f4096",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fGloballySynchronousSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fRandom", 
+	"Random",
+	0,
+	"0",
+	"Random");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fDeterministic", 
+	"Deterministic",
+	0,
+	"1",
+	"Deterministic");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fFCPICH_x5fHoppingModeSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fRandom",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fDeterministic",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fFormat_x5f0", 
+	"Format 0",
+	0,
+	"0",
+	"Format 0");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fFormat_x5f1", 
+	"Format 1",
+	0,
+	"1",
+	"Format 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fFormat_x5f2", 
+	"Format 2",
+	0,
+	"2",
+	"Format 2");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fDPICHFormatSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fFormat_x5f0",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fFormat_x5f1",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fFormat_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fEnableBRCHSubzoneCyclingSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fEnableFLCSSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fFLCS_x5fUseDRCHSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fHard", 
+	"Hard",
+	0,
+	"0",
+	"Hard");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fSoft", 
+	"Soft",
+	0,
+	"1",
+	"Soft");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxOFDMSym_fCSI", 
+	"CSI",
+	0,
+	"2",
+	"CSI");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxOFDMSym_fDecoderTypeSet",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fHard",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fSoft",
+	"_nUMB_x5fFL_x5fDemuxOFDMSym_fCSI",
+	"StdForm");
+
+create_item ("UMB_FL_DemuxOFDMSym","forward link demux OFDM symbol",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_DemuxOFDMSym",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fDemuxOFDMSym_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_DemuxOFDMSym",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fSize_x5f8192","Size_8192")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fYES","YES")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FCPICH_HoppingMode","the hopping mode for F-CPICH",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fFCPICH_x5fHoppingModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fRandom","Random")),
+	create_parm ("FCPICH_PilotSpacing","the subcarrier spacing for common pilots",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("FCPICH_PowerDensity","the power density for F-CPICH (defined as power(dBm) per modulation symbol)",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-16.0")),
+	create_parm ("CodeOffset","code offset between 0 and 2 for Forward Dedicated Pilot Channel",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("DPICHFormat","the Forward Dedicated Pilot Channel format for Forward Data Channel",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fDPICHFormatSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fFormat_x5f0","Format_0")),
+	create_parm ("EnableBRCHSubzoneCycling","whether the cycling for BRCH subzones is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fEnableBRCHSubzoneCyclingSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fNO","NO")),
+	create_parm ("EnableFLCS","whether the Forward Link Control Segment is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fEnableFLCSSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fNO","NO")),
+	create_parm ("FLCS_NumBlocks","the number of blocks (tiles) allocated for FLCS, only valid when EnableFLCS is YES",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("FLCS_UseDRCH","whether FLCS is on DRCH or on BRCH, only valid when EnableFLCS is YES",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fFLCS_x5fUseDRCHSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fNO","NO")),
+	create_parm ("FLCS_PowerDensity","the power density for FLCS (defined as power(dBm) per modulation symbol), only valid when EnableFLCS is YES",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-16.0")),
+	create_parm ("FDCH_NumPackets","number of data packets transmitted in F-DCH At most four packets are supported",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_1_PFIndex","the packet format index for the first data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_1_NodeID","the array of NodeID allocated to the first data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("FDCH_1_MACID","the MAC ID of the first data packet (Access Terminal) transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_1_NumHARQTrans","the number of HARQ transmissions for the first data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_1_HARQInterlace","the number of frames in HARQ interlace structure for the first data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FDCH_1_StartingFrame","the starting frame index for the first HARQ transmission from which the first data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_1_NumFrames","the number of frames for the first HARQ transmission on which the first data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FDCH_1_PowerDensity","the power density for the first data packet transmitted in F-DCH (defined as power(dBm) per modulation symbol)",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-16.0}")),
+	create_parm ("FDCH_2_PFIndex","the packet format index for the second data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_2_NodeID","the array of NodeID allocated to the second data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{32}")),
+	create_parm ("FDCH_2_MACID","the MAC ID of the second data packet (Access Terminal) transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("FDCH_2_NumHARQTrans","the number of HARQ transmissions for the second data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_2_HARQInterlace","the number of frames in HARQ interlace structure for the second data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FDCH_2_StartingFrame","the starting frame index for the first HARQ transmission from which the second data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_2_NumFrames","the number of frames for the first HARQ transmission on which the second data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FDCH_2_PowerDensity","the power density for the second data packet transmitted in F-DCH (defined as power(dBm) per modulation symbol)",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-16.0}")),
+	create_parm ("FDCH_3_PFIndex","the packet format index for the third data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_3_NodeID","the array of NodeID allocated to the third data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{33}")),
+	create_parm ("FDCH_3_MACID","the MAC ID of the third data packet (Access Terminal) transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("FDCH_3_NumHARQTrans","the number of HARQ transmissions for the third data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_3_HARQInterlace","the number of frames in HARQ interlace structure for the third data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FDCH_3_StartingFrame","the starting frame index for the first HARQ transmission from which the third data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_3_NumFrames","the number of frames for the first HARQ transmission on which the third data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FDCH_3_PowerDensity","the power density for the third data packet transmitted in F-DCH (defined as power(dBm) per modulation symbol)",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-16.0}")),
+	create_parm ("FDCH_4_PFIndex","the packet format index for the fourth data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_4_NodeID","the array of NodeID allocated to the fourth data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{34}")),
+	create_parm ("FDCH_4_MACID","the MAC ID of the fourth data packet (Access Terminal) transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("FDCH_4_NumHARQTrans","the number of HARQ transmissions for the fourth data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_4_HARQInterlace","the number of frames in HARQ interlace structure for the fourth data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FDCH_4_StartingFrame","the starting frame index for the first HARQ transmission from which the fourth data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_4_NumFrames","the number of frames for the first HARQ transmission on which the fourth data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FDCH_4_PowerDensity","the power density for the fourth data packet transmitted in F-DCH (defined as power(dBm) per modulation symbol)",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-16.0}")),
+	create_parm ("DecoderType","Demapping type",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxOFDMSym_fDecoderTypeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxOFDMSym_fCSI","CSI")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fChEstimator_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fChEstimator_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fChEstimator_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fChEstimator_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fChEstimator_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fChEstimator_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fNcp_x5f1", 
+	"Ncp 1",
+	0,
+	"0",
+	"Ncp 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fNcp_x5f2", 
+	"Ncp 2",
+	0,
+	"1",
+	"Ncp 2");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fNcp_x5f3", 
+	"Ncp 3",
+	0,
+	"2",
+	"Ncp 3");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fNcp_x5f4", 
+	"Ncp 4",
+	0,
+	"3",
+	"Ncp 4");
+
+create_form_set("_nUMB_x5fFL_x5fChEstimator_fNcpSet",
+	"_nUMB_x5fFL_x5fChEstimator_fNcp_x5f1",
+	"_nUMB_x5fFL_x5fChEstimator_fNcp_x5f2",
+	"_nUMB_x5fFL_x5fChEstimator_fNcp_x5f3",
+	"_nUMB_x5fFL_x5fChEstimator_fNcp_x5f4",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fChEstimator_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fChEstimator_fMode_x5f1",
+	"_nUMB_x5fFL_x5fChEstimator_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fChEstimator_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fChEstimator_fSize_x5f64",
+	"_nUMB_x5fFL_x5fChEstimator_fSize_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fChEstimator_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fFL_x5fChEstimator_fNO",
+	"_nUMB_x5fFL_x5fChEstimator_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fChEstimator_fGloballySynchronousSet",
+	"_nUMB_x5fFL_x5fChEstimator_fNO",
+	"_nUMB_x5fFL_x5fChEstimator_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fRandom", 
+	"Random",
+	0,
+	"0",
+	"Random");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fDeterministic", 
+	"Deterministic",
+	0,
+	"1",
+	"Deterministic");
+
+create_form_set("_nUMB_x5fFL_x5fChEstimator_fFCPICH_x5fHoppingModeSet",
+	"_nUMB_x5fFL_x5fChEstimator_fRandom",
+	"_nUMB_x5fFL_x5fChEstimator_fDeterministic",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fFormat_x5f0", 
+	"Format 0",
+	0,
+	"0",
+	"Format 0");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fFormat_x5f1", 
+	"Format 1",
+	0,
+	"1",
+	"Format 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fFormat_x5f2", 
+	"Format 2",
+	0,
+	"2",
+	"Format 2");
+
+create_form_set("_nUMB_x5fFL_x5fChEstimator_fDPICHFormatSet",
+	"_nUMB_x5fFL_x5fChEstimator_fFormat_x5f0",
+	"_nUMB_x5fFL_x5fChEstimator_fFormat_x5f1",
+	"_nUMB_x5fFL_x5fChEstimator_fFormat_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fChEstimator_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fChEstimator_fEnableBRCHSubzoneCyclingSet",
+	"_nUMB_x5fFL_x5fChEstimator_fNO",
+	"_nUMB_x5fFL_x5fChEstimator_fYES",
+	"StdForm");
+
+create_item ("UMB_FL_ChEstimator","Forward link channel estimator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_ChEstimator",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fChEstimator_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_ChEstimator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SuperframesDelay","the number of delay superframes introduced by the receiver",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fChEstimator_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fChEstimator_fFFT_x5f512","FFT_512")),
+	create_parm ("Ncp","the index for Cyclic Prefix (Tcp=Ncp*FFTSize*Tchip/16)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fChEstimator_fNcpSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fChEstimator_fNcp_x5f1","Ncp_1")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fChEstimator_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fChEstimator_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fChEstimator_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fChEstimator_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fChEstimator_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fChEstimator_fYES","YES")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fChEstimator_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fChEstimator_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FCPICH_HoppingMode","the hopping mode for F-CPICH",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fChEstimator_fFCPICH_x5fHoppingModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fChEstimator_fRandom","Random")),
+	create_parm ("FCPICH_PilotSpacing","the subcarrier spacing for common pilots",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("CodeOffset","code offset between 0 and 2 for Forward Dedicated Pilot Channel",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("DPICHFormat","the Forward Dedicated Pilot Channel format for Forward Data Channel",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fChEstimator_fDPICHFormatSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fChEstimator_fFormat_x5f0","Format_0")),
+	create_parm ("EnableBRCHSubzoneCycling","whether the cycling for BRCH subzones is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fChEstimator_fEnableBRCHSubzoneCyclingSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fChEstimator_fNO","NO")),
+	create_parm ("SNR","SNR in dB",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","15")),
+	create_parm ("Tmax","The maximum delay of multi-path channel",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1e-6")),
+	create_parm ("Fmax","The maximum doppler frequency",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","100 Hz")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fFull_x5fSuperframe", 
+	"Full Superframe",
+	0,
+	"0",
+	"Full Superframe");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fCompact_x5fSuperframe", 
+	"Compact Superframe",
+	0,
+	"1",
+	"Compact Superframe");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxFrame_fOutputFrameFormatSet",
+	"_nUMB_x5fFL_x5fDemuxFrame_fFull_x5fSuperframe",
+	"_nUMB_x5fFL_x5fDemuxFrame_fCompact_x5fSuperframe",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f1", 
+	"Ratio 1",
+	0,
+	"0",
+	"Ratio 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f2", 
+	"Ratio 2",
+	0,
+	"1",
+	"Ratio 2");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f4", 
+	"Ratio 4",
+	0,
+	"2",
+	"Ratio 4");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f8", 
+	"Ratio 8",
+	0,
+	"3",
+	"Ratio 8");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f16", 
+	"Ratio 16",
+	0,
+	"4",
+	"Ratio 16");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f32", 
+	"Ratio 32",
+	0,
+	"5",
+	"Ratio 32");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxFrame_fOversamplingOptionSet",
+	"_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f1",
+	"_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f2",
+	"_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f4",
+	"_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f8",
+	"_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f16",
+	"_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f32",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxFrame_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fNcp_x5f1", 
+	"Ncp 1",
+	0,
+	"0",
+	"Ncp 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fNcp_x5f2", 
+	"Ncp 2",
+	0,
+	"1",
+	"Ncp 2");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fNcp_x5f3", 
+	"Ncp 3",
+	0,
+	"2",
+	"Ncp 3");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fNcp_x5f4", 
+	"Ncp 4",
+	0,
+	"3",
+	"Ncp 4");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxFrame_fNcpSet",
+	"_nUMB_x5fFL_x5fDemuxFrame_fNcp_x5f1",
+	"_nUMB_x5fFL_x5fDemuxFrame_fNcp_x5f2",
+	"_nUMB_x5fFL_x5fDemuxFrame_fNcp_x5f3",
+	"_nUMB_x5fFL_x5fDemuxFrame_fNcp_x5f4",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fDemuxFrame_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fDemuxFrame_fEnableHalfDuplexOperationSet",
+	"_nUMB_x5fFL_x5fDemuxFrame_fNO",
+	"_nUMB_x5fFL_x5fDemuxFrame_fYES",
+	"StdForm");
+
+create_item ("UMB_FL_DemuxFrame","Forward link frame demultiplexer",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_DemuxFrame",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fDemuxFrame_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_DemuxFrame",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OutputFrameFormat","output superframe format",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxFrame_fOutputFrameFormatSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxFrame_fFull_x5fSuperframe","Full_Superframe")),
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("OversamplingOption","Oversampling ratio option",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxFrame_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxFrame_fRatio_x5f2","Ratio_2")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxFrame_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxFrame_fFFT_x5f512","FFT_512")),
+	create_parm ("Ncp","the index for Cyclic Prefix (Tcp=Ncp*FFTSize*Tchip/16)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxFrame_fNcpSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxFrame_fNcp_x5f1","Ncp_1")),
+	create_parm ("EnableHalfDuplexOperation","whether the half duplex operation is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fDemuxFrame_fEnableHalfDuplexOperationSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fDemuxFrame_fNO","NO")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fRatio_x5f1", 
+	"Ratio 1",
+	0,
+	"0",
+	"Ratio 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fRatio_x5f2", 
+	"Ratio 2",
+	0,
+	"1",
+	"Ratio 2");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fRatio_x5f4", 
+	"Ratio 4",
+	0,
+	"2",
+	"Ratio 4");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fRatio_x5f8", 
+	"Ratio 8",
+	0,
+	"3",
+	"Ratio 8");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fRatio_x5f16", 
+	"Ratio 16",
+	0,
+	"4",
+	"Ratio 16");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fRatio_x5f32", 
+	"Ratio 32",
+	0,
+	"5",
+	"Ratio 32");
+
+create_form_set("_nUMB_x5fFL_x5fFreqSync_fOversamplingOptionSet",
+	"_nUMB_x5fFL_x5fFreqSync_fRatio_x5f1",
+	"_nUMB_x5fFL_x5fFreqSync_fRatio_x5f2",
+	"_nUMB_x5fFL_x5fFreqSync_fRatio_x5f4",
+	"_nUMB_x5fFL_x5fFreqSync_fRatio_x5f8",
+	"_nUMB_x5fFL_x5fFreqSync_fRatio_x5f16",
+	"_nUMB_x5fFL_x5fFreqSync_fRatio_x5f32",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fFreqSync_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fFreqSync_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fFreqSync_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fFreqSync_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fFreqSync_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fFreqSync_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fNcp_x5f1", 
+	"Ncp 1",
+	0,
+	"0",
+	"Ncp 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fNcp_x5f2", 
+	"Ncp 2",
+	0,
+	"1",
+	"Ncp 2");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fNcp_x5f3", 
+	"Ncp 3",
+	0,
+	"2",
+	"Ncp 3");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fNcp_x5f4", 
+	"Ncp 4",
+	0,
+	"3",
+	"Ncp 4");
+
+create_form_set("_nUMB_x5fFL_x5fFreqSync_fNcpSet",
+	"_nUMB_x5fFL_x5fFreqSync_fNcp_x5f1",
+	"_nUMB_x5fFL_x5fFreqSync_fNcp_x5f2",
+	"_nUMB_x5fFL_x5fFreqSync_fNcp_x5f3",
+	"_nUMB_x5fFL_x5fFreqSync_fNcp_x5f4",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fNone", 
+	"None",
+	0,
+	"0",
+	"None");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fFractional_x5fFreq", 
+	"Fractional Freq",
+	0,
+	"1",
+	"Fractional Freq");
+
+create_constant_form ("_nUMB_x5fFL_x5fFreqSync_fIntegeral_x5fand_x5fFractional_x5fFreq", 
+	"Integeral and Fractional Freq",
+	0,
+	"2",
+	"Integeral and Fractional Freq");
+
+create_form_set("_nUMB_x5fFL_x5fFreqSync_fFreqSyncSet",
+	"_nUMB_x5fFL_x5fFreqSync_fNone",
+	"_nUMB_x5fFL_x5fFreqSync_fFractional_x5fFreq",
+	"_nUMB_x5fFL_x5fFreqSync_fIntegeral_x5fand_x5fFractional_x5fFreq",
+	"StdForm");
+
+create_item ("UMB_FL_FreqSync","Forward link frequency synchronizer",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_FreqSync",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fFreqSync_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_FreqSync",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OversamplingOption","Oversampling ratio option",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fFreqSync_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fFreqSync_fRatio_x5f2","Ratio_2")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fFreqSync_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fFreqSync_fFFT_x5f512","FFT_512")),
+	create_parm ("Ncp","the index for Cyclic Prefix (Tcp=Ncp*FFTSize*Tchip/16)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fFreqSync_fNcpSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fFreqSync_fNcp_x5f1","Ncp_1")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("FreqSync","frequency sync mode",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fFreqSync_fFreqSyncSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fFreqSync_fFractional_x5fFreq","Fractional_Freq")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fFull_x5fSuperframe", 
+	"Full Superframe",
+	0,
+	"0",
+	"Full Superframe");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fCompact_x5fSuperframe", 
+	"Compact Superframe",
+	0,
+	"1",
+	"Compact Superframe");
+
+create_form_set("_nUMB_x5fFL_x5fFrameSync_fOutputFrameFormatSet",
+	"_nUMB_x5fFL_x5fFrameSync_fFull_x5fSuperframe",
+	"_nUMB_x5fFL_x5fFrameSync_fCompact_x5fSuperframe",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fRatio_x5f1", 
+	"Ratio 1",
+	0,
+	"0",
+	"Ratio 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fRatio_x5f2", 
+	"Ratio 2",
+	0,
+	"1",
+	"Ratio 2");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fRatio_x5f4", 
+	"Ratio 4",
+	0,
+	"2",
+	"Ratio 4");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fRatio_x5f8", 
+	"Ratio 8",
+	0,
+	"3",
+	"Ratio 8");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fRatio_x5f16", 
+	"Ratio 16",
+	0,
+	"4",
+	"Ratio 16");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fRatio_x5f32", 
+	"Ratio 32",
+	0,
+	"5",
+	"Ratio 32");
+
+create_form_set("_nUMB_x5fFL_x5fFrameSync_fOversamplingOptionSet",
+	"_nUMB_x5fFL_x5fFrameSync_fRatio_x5f1",
+	"_nUMB_x5fFL_x5fFrameSync_fRatio_x5f2",
+	"_nUMB_x5fFL_x5fFrameSync_fRatio_x5f4",
+	"_nUMB_x5fFL_x5fFrameSync_fRatio_x5f8",
+	"_nUMB_x5fFL_x5fFrameSync_fRatio_x5f16",
+	"_nUMB_x5fFL_x5fFrameSync_fRatio_x5f32",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fFrameSync_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fFrameSync_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fFrameSync_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fFrameSync_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fFrameSync_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fFrameSync_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fNcp_x5f1", 
+	"Ncp 1",
+	0,
+	"0",
+	"Ncp 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fNcp_x5f2", 
+	"Ncp 2",
+	0,
+	"1",
+	"Ncp 2");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fNcp_x5f3", 
+	"Ncp 3",
+	0,
+	"2",
+	"Ncp 3");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fNcp_x5f4", 
+	"Ncp 4",
+	0,
+	"3",
+	"Ncp 4");
+
+create_form_set("_nUMB_x5fFL_x5fFrameSync_fNcpSet",
+	"_nUMB_x5fFL_x5fFrameSync_fNcp_x5f1",
+	"_nUMB_x5fFL_x5fFrameSync_fNcp_x5f2",
+	"_nUMB_x5fFL_x5fFrameSync_fNcp_x5f3",
+	"_nUMB_x5fFL_x5fFrameSync_fNcp_x5f4",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fFrameSync_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fFrameSync_fEnableHalfDuplexOperationSet",
+	"_nUMB_x5fFL_x5fFrameSync_fNO",
+	"_nUMB_x5fFL_x5fFrameSync_fYES",
+	"StdForm");
+
+create_item ("UMB_FL_FrameSync","Forward link frame synchronization",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_FrameSync",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fFrameSync_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_FrameSync",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OutputFrameFormat","output superframe format",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fFrameSync_fOutputFrameFormatSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fFrameSync_fFull_x5fSuperframe","Full_Superframe")),
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("OversamplingOption","Oversampling ratio option",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fFrameSync_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fFrameSync_fRatio_x5f2","Ratio_2")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fFrameSync_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fFrameSync_fFFT_x5f512","FFT_512")),
+	create_parm ("Ncp","the index for Cyclic Prefix (Tcp=Ncp*FFTSize*Tchip/16)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fFrameSync_fNcpSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fFrameSync_fNcp_x5f1","Ncp_1")),
+	create_parm ("EnableHalfDuplexOperation","whether the half duplex operation is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fFrameSync_fEnableHalfDuplexOperationSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fFrameSync_fNO","NO")));
+
+
+create_item ("UMB_TurboCoder","UMB rate-1/5 turbo coder",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_TurboCoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fTurboCoder_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_TurboCoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("NumPacketBits","the number of packet bits from SFP MAC Protocol including CRC bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","200")));
+
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fRL_x5fCoder_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fRL_x5fCoder_fSize_x5f4096",
+	"_nUMB_x5fRL_x5fCoder_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fRL_x5fCoder_fFFTSizeSet",
+	"_nUMB_x5fRL_x5fCoder_fFFT_x5f2048",
+	"_nUMB_x5fRL_x5fCoder_fFFT_x5f1024",
+	"_nUMB_x5fRL_x5fCoder_fFFT_x5f512",
+	"_nUMB_x5fRL_x5fCoder_fFFT_x5f256",
+	"_nUMB_x5fRL_x5fCoder_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fRL_x5fCoder_fSubzoneSizeSet",
+	"_nUMB_x5fRL_x5fCoder_fSize_x5f64",
+	"_nUMB_x5fRL_x5fCoder_fSize_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fCoder_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fCoder_fEnableCDMASubsegmentsSet",
+	"_nUMB_x5fRL_x5fCoder_fNO",
+	"_nUMB_x5fRL_x5fCoder_fYES",
+	"StdForm");
+
+create_item ("UMB_RL_Coder","reverse link coder (rate-1/3 CC and rate-1/5 TC)",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_RL_Coder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fRL_x5fCoder_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_RL_Coder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCoder_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCoder_fSize_x5f8192","Size_8192")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCoder_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCoder_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCoder_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCoder_fSize_x5f64","Size_64")),
+	create_parm ("EnableCDMASubsegments","whether the allocation of CDMA subsegments is enabled",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCoder_fEnableCDMASubsegmentsSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCoder_fNO","NO")),
+	create_parm ("NumCDMASubsegments","number of allocated CDMA subsegments allocated, only valid when EnableCDMASubsegments is YES",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_PFIndex","the packet format index for R-ODCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_NodeID","the array of NodeID allocated to R-ODCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("RODCH_NumFrames","the number of PHY frames on which R-ODCH is allocated",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fRL_x5fCRC_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fRL_x5fCRC_fSize_x5f4096",
+	"_nUMB_x5fRL_x5fCRC_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fRL_x5fCRC_fFFTSizeSet",
+	"_nUMB_x5fRL_x5fCRC_fFFT_x5f2048",
+	"_nUMB_x5fRL_x5fCRC_fFFT_x5f1024",
+	"_nUMB_x5fRL_x5fCRC_fFFT_x5f512",
+	"_nUMB_x5fRL_x5fCRC_fFFT_x5f256",
+	"_nUMB_x5fRL_x5fCRC_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fRL_x5fCRC_fSubzoneSizeSet",
+	"_nUMB_x5fRL_x5fCRC_fSize_x5f64",
+	"_nUMB_x5fRL_x5fCRC_fSize_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fCRC_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fCRC_fEnableCDMASubsegmentsSet",
+	"_nUMB_x5fRL_x5fCRC_fNO",
+	"_nUMB_x5fRL_x5fCRC_fYES",
+	"StdForm");
+
+create_item ("UMB_RL_CRC","reverse link CRC generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_RL_CRC",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fRL_x5fCRC_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_RL_CRC",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCRC_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCRC_fSize_x5f8192","Size_8192")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCRC_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCRC_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCRC_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCRC_fSize_x5f64","Size_64")),
+	create_parm ("EnableCDMASubsegments","whether the allocation of CDMA subsegments is enabled",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCRC_fEnableCDMASubsegmentsSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCRC_fNO","NO")),
+	create_parm ("NumCDMASubsegments","number of allocated CDMA subsegments allocated, only valid when EnableCDMASubsegments is YES",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_PFIndex","the packet format index for R-ODCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_NodeID","the array of NodeID allocated to R-ODCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("RODCH_NumFrames","the number of PHY frames on which R-ODCH is allocated",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fRL_x5fInterleaver_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fRL_x5fInterleaver_fSize_x5f4096",
+	"_nUMB_x5fRL_x5fInterleaver_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fRL_x5fInterleaver_fFFTSizeSet",
+	"_nUMB_x5fRL_x5fInterleaver_fFFT_x5f2048",
+	"_nUMB_x5fRL_x5fInterleaver_fFFT_x5f1024",
+	"_nUMB_x5fRL_x5fInterleaver_fFFT_x5f512",
+	"_nUMB_x5fRL_x5fInterleaver_fFFT_x5f256",
+	"_nUMB_x5fRL_x5fInterleaver_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fRL_x5fInterleaver_fSubzoneSizeSet",
+	"_nUMB_x5fRL_x5fInterleaver_fSize_x5f64",
+	"_nUMB_x5fRL_x5fInterleaver_fSize_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fInterleaver_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fInterleaver_fEnableCDMASubsegmentsSet",
+	"_nUMB_x5fRL_x5fInterleaver_fNO",
+	"_nUMB_x5fRL_x5fInterleaver_fYES",
+	"StdForm");
+
+create_item ("UMB_RL_Interleaver","reverse link channel interleaver",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_RL_Interleaver",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fRL_x5fInterleaver_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_RL_Interleaver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fInterleaver_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fInterleaver_fSize_x5f8192","Size_8192")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fInterleaver_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fInterleaver_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fInterleaver_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fInterleaver_fSize_x5f64","Size_64")),
+	create_parm ("EnableCDMASubsegments","whether the allocation of CDMA subsegments is enabled",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fInterleaver_fEnableCDMASubsegmentsSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fInterleaver_fNO","NO")),
+	create_parm ("NumCDMASubsegments","number of allocated CDMA subsegments allocated, only valid when EnableCDMASubsegments is YES",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_PFIndex","the packet format index for R-ODCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_NodeID","the array of NodeID allocated to R-ODCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("RODCH_NumFrames","the number of PHY frames on which R-ODCH is allocated",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nUMB_x5fScrambler_fF_x5fPBCCH", 
+	"F-PBCCH",
+	0,
+	"0",
+	"F-PBCCH");
+
+create_constant_form ("_nUMB_x5fScrambler_fF_x5fSBCCH", 
+	"F-SBCCH",
+	0,
+	"1",
+	"F-SBCCH");
+
+create_constant_form ("_nUMB_x5fScrambler_fF_x5fQPCH", 
+	"F-QPCH",
+	0,
+	"2",
+	"F-QPCH");
+
+create_constant_form ("_nUMB_x5fScrambler_fR_x5fCDCH", 
+	"R-CDCH",
+	0,
+	"3",
+	"R-CDCH");
+
+create_form_set("_nUMB_x5fScrambler_fScramblingTypeSet",
+	"_nUMB_x5fScrambler_fF_x5fPBCCH",
+	"_nUMB_x5fScrambler_fF_x5fSBCCH",
+	"_nUMB_x5fScrambler_fF_x5fQPCH",
+	"_nUMB_x5fScrambler_fR_x5fCDCH",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fScrambler_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fScrambler_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fScrambler_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fScrambler_fNO",
+	"_nUMB_x5fScrambler_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fScrambler_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fScrambler_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fScrambler_fGloballySynchronousSet",
+	"_nUMB_x5fScrambler_fNO",
+	"_nUMB_x5fScrambler_fYES",
+	"StdForm");
+
+create_item ("UMB_Scrambler","UMB data scrambler",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_Scrambler",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fScrambler_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_Scrambler",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("NumBits","the number of input bits for data scrambling",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","100")),
+	create_parm ("ScramblingType","the scrambing type employed",
+		PARM_INT,
+		"_nUMB_x5fScrambler_fScramblingTypeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fScrambler_fF_x5fPBCCH","F_PBCCH")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fScrambler_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fScrambler_fYES","YES")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fScrambler_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fScrambler_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SFNCellID","9-bit SFN cell ID",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","12")),
+	create_parm ("SBCCHScramblingSeed","F-SBCCH Scrambling Seed",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("QPCHScramblingSeed","F-QPCH Scrambling Seed",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("MACID","the MAC ID of the terminal in the target sector",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from Frame#StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")));
+
+
+create_item ("UMB_Interleaver_S","UMB channel interleaver with simple input parameters",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_Interleaver_S",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fInterleaver_x5fS_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_Interleaver_S",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("NumPacketBits","the number of packet bits from SFP MAC Protocol including CRC bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","100")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fFL_x5fInterleaver_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fFL_x5fInterleaver_fSize_x5f4096",
+	"_nUMB_x5fFL_x5fInterleaver_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fInterleaver_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fInterleaver_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fInterleaver_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fInterleaver_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fInterleaver_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fInterleaver_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fInterleaver_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fInterleaver_fMode_x5f1",
+	"_nUMB_x5fFL_x5fInterleaver_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fInterleaver_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fInterleaver_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fInterleaver_fSize_x5f64",
+	"_nUMB_x5fFL_x5fInterleaver_fSize_x5f128",
+	"StdForm");
+
+create_item ("UMB_FL_Interleaver","forward link channel interleaver",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_Interleaver",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fInterleaver_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_Interleaver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fInterleaver_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fInterleaver_fSize_x5f8192","Size_8192")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fInterleaver_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fInterleaver_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fInterleaver_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fInterleaver_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fInterleaver_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fInterleaver_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_PFIndex","the packet format index for the data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_NodeID","the array of NodeID allocated to the data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("FDCH_NumFrames","the number of frames on which the data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fFL_x5fCRC_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fFL_x5fCRC_fSize_x5f4096",
+	"_nUMB_x5fFL_x5fCRC_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fCRC_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fCRC_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fCRC_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fCRC_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fCRC_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fCRC_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fCRC_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fCRC_fMode_x5f1",
+	"_nUMB_x5fFL_x5fCRC_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fCRC_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fCRC_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fCRC_fSize_x5f64",
+	"_nUMB_x5fFL_x5fCRC_fSize_x5f128",
+	"StdForm");
+
+create_item ("UMB_FL_CRC","forward link CRC generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_CRC",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fCRC_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_CRC",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCRC_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCRC_fSize_x5f8192","Size_8192")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCRC_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCRC_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCRC_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCRC_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCRC_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCRC_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_PFIndex","the packet format index for the data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_NodeID","the array of NodeID allocated to the data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("FDCH_NumFrames","the number of frames on which the data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fFL_x5fCoder_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fFL_x5fCoder_fSize_x5f4096",
+	"_nUMB_x5fFL_x5fCoder_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fCoder_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fCoder_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fCoder_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fCoder_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fCoder_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fCoder_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fCoder_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fCoder_fMode_x5f1",
+	"_nUMB_x5fFL_x5fCoder_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fCoder_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fCoder_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fCoder_fSize_x5f64",
+	"_nUMB_x5fFL_x5fCoder_fSize_x5f128",
+	"StdForm");
+
+create_item ("UMB_FL_Coder","forward link coder (rate-1/3 CC and rate-1/5 TC)",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_Coder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fCoder_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_Coder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCoder_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCoder_fSize_x5f8192","Size_8192")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCoder_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCoder_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCoder_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCoder_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fCoder_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fCoder_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_PFIndex","the packet format index for the data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_NodeID","the array of NodeID allocated to the data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("FDCH_NumFrames","the number of frames on which the data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fPICH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fPICH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fCDMA_x5fPICH_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fRL_x5fCDMA_x5fPICH_fNO",
+	"_nUMB_x5fRL_x5fCDMA_x5fPICH_fYES",
+	"StdForm");
+
+create_item ("UMB_RL_CDMA_PICH","reverse link CDMA pilot channel generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_RL_CDMA_PICH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fRL_x5fCDMA_x5fPICH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_RL_CDMA_PICH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCDMA_x5fPICH_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCDMA_x5fPICH_fYES","YES")),
+	create_parm ("RPICHScramblingSeed_MSB","the 17-bit MSBs of 49-bit RPICHScramblingSeed",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("RPICHScramblingSeed_LSB","the 32-bit LSBs of 49-bit RPICHScramblingSeed",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")),
+	create_parm ("RPICH_PowerDensity","the power density for R-PICH (defined as power(dBm) per modulation symbol)",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-16.0")));
+
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fACH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fACH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fCDMA_x5fACH_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fRL_x5fCDMA_x5fACH_fNO",
+	"_nUMB_x5fRL_x5fCDMA_x5fACH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fACH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fACH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fCDMA_x5fACH_fGloballySynchronousSet",
+	"_nUMB_x5fRL_x5fCDMA_x5fACH_fNO",
+	"_nUMB_x5fRL_x5fCDMA_x5fACH_fYES",
+	"StdForm");
+
+create_item ("UMB_RL_CDMA_ACH","reverse link CDMA access channel generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_RL_CDMA_ACH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fRL_x5fCDMA_x5fACH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_RL_CDMA_ACH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCDMA_x5fACH_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCDMA_x5fACH_fYES","YES")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCDMA_x5fACH_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCDMA_x5fACH_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("AccessScramblingID","the AccessScrambling ID",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")),
+	create_parm ("RACH_PowerDensity","the power density for R-PICH (defined as power(dBm) per modulation symbol)",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-16.0")));
+
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fDCCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fDCCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fCDMA_x5fDCCH_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fRL_x5fCDMA_x5fDCCH_fNO",
+	"_nUMB_x5fRL_x5fCDMA_x5fDCCH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fDCCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fDCCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fCDMA_x5fDCCH_fGloballySynchronousSet",
+	"_nUMB_x5fRL_x5fCDMA_x5fDCCH_fNO",
+	"_nUMB_x5fRL_x5fCDMA_x5fDCCH_fYES",
+	"StdForm");
+
+create_item ("UMB_RL_CDMA_DCCH","reverse link CDMA dedicated control channel generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_RL_CDMA_DCCH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fRL_x5fCDMA_x5fDCCH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_RL_CDMA_DCCH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCDMA_x5fDCCH_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCDMA_x5fDCCH_fYES","YES")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCDMA_x5fDCCH_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCDMA_x5fDCCH_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("MACID","the MACID of the terminal in the target sector",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SHOGID","the SHOG ID",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("RCDCCH_PowerDensity","the power density for R-CDCCH (defined as power(dBm) per modulation symbol)",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-16.0")));
+
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fNO",
+	"_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fGloballySynchronousSet",
+	"_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fNO",
+	"_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fYES",
+	"StdForm");
+
+create_item ("UMB_RL_CDMA_AuxPICH","reverse link CDMA auxiliary pilot channel generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_RL_CDMA_AuxPICH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_RL_CDMA_AuxPICH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fYES","YES")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fCDMA_x5fAuxPICH_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("MACID","the MACID of the terminal in the target sector",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("RAuxPICH_PowerDensity","the power density for R-AuxPICH (defined as power(dBm) per modulation symbol)",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-16.0")));
+
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFull_x5fSuperframe", 
+	"Full Superframe",
+	0,
+	"0",
+	"Full Superframe");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fCompact_x5fSuperframe", 
+	"Compact Superframe",
+	0,
+	"1",
+	"Compact Superframe");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fOutputFrameFormatSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFull_x5fSuperframe",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fCompact_x5fSuperframe",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f256", 
+	"FFT	256",
+	0,
+	"3",
+	"FFT	256");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fFFTSizeSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f2048",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f1024",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f512",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f256",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f64", 
+	"Size	64",
+	0,
+	"0",
+	"Size	64");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fSubzoneSizeSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f64",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f4096",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fGloballySynchronousSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fEnableHalfDuplexOperationSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fEnableRODCCHSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fEnableCDMASubsegmentsSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFormat_x5f0", 
+	"Format 0",
+	0,
+	"0",
+	"Format 0");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFormat_x5f1", 
+	"Format	1",
+	0,
+	"1",
+	"Format	1");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fDPICHFormatSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFormat_x5f0",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFormat_x5f1",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFL_x5fSize_x5f64", 
+	"FL Size 64",
+	0,
+	"0",
+	"FL Size 64");
+
+create_constant_form ("_nUMB_x5fRL_x5fMuxOFDMSym_fFL_x5fSize_x5f128", 
+	"FL Size 128",
+	0,
+	"1",
+	"FL Size 128");
+
+create_form_set("_nUMB_x5fRL_x5fMuxOFDMSym_fFL_x5fSubzoneSizeSet",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFL_x5fSize_x5f64",
+	"_nUMB_x5fRL_x5fMuxOFDMSym_fFL_x5fSize_x5f128",
+	"StdForm");
+
+create_item ("UMB_RL_MuxOFDMSym","reverse link PHY OFDM symbol multiplexer",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_RL_MuxOFDMSym",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fRL_x5fMuxOFDMSym_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_RL_MuxOFDMSym",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OutputFrameFormat","output superframe format",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fOutputFrameFormatSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fFull_x5fSuperframe","Full_Superframe")),
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f64","Size_64")),
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fSize_x5f8192","Size_8192")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fYES","YES")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("EnableHalfDuplexOperation","whether the half duplex operation is enabled",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fEnableHalfDuplexOperationSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fNO","NO")),
+	create_parm ("EnableRODCCH","whether the allocation of R-ODCCH is enabled",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fEnableRODCCHSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fYES","YES")),
+	create_parm ("NumRODCIndices","the number of Indices for R-ODCCH (the number of tiles for R-ODCCH is max(2,NumRODCIndices/2)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("RODCResourceIndex","the resource index for each R-ODCCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0}")),
+	create_parm ("RODCCH_PowerDensity","the power density for R-ODCCH (defined as power(dBm) per modulation symbol)",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-16.0")),
+	create_parm ("EnableCDMASubsegments","whether the allocation of CDMA subsegments is enabled",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fEnableCDMASubsegmentsSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fNO","NO")),
+	create_parm ("NumCDMASubsegments","number of allocated CDMA subsegments allocated, only valid when EnableCDMASubsegments is YES",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_PFIndex","the packet format index for R-ODCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_NodeID","the array of NodeID allocated to R-ODCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("RODCH_MACID","the MAC ID of the Access Terminal as associated with the RLSS",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_NumHARQTrans","the number of HARQ transmissions for the R-ODCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RODCH_HARQInterlace","the number of PHY frames in HARQ interlace structure for the R-ODCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("RODCH_StartingFrame","the starting frame index from which R-ODCH is allocated",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("RODCH_NumFrames","the number of frames on which R-ODCH is allocated",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("RODCH_PowerDensity","the power density for R-ODCH (defined as power(dBm) per modulation symbol)",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-16.0}")),
+	create_parm ("CodeOffset","code offset between 0 and 2 for Reverse Dedicated Pilot Channel",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("DPICHFormat","the Reverse Dedicated Pilot Channel format for OFDMA Data Channels",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fDPICHFormatSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fFormat_x5f0","Format_0")),
+	create_parm ("FL_SubzoneSize","the number of hop-ports in a FL subzone for determining hopping structures in RL PHY Frames",
+		PARM_INT,
+		"_nUMB_x5fRL_x5fMuxOFDMSym_fFL_x5fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fRL_x5fMuxOFDMSym_fFL_x5fSize_x5f64","FL_Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones in FL  for determining hopping structures in RL PHY Frames",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fOSICH_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fOSICH_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fOSICH_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fOSICH_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fOSICH_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fOSICH_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fOSICH_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fOSICH_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fOSICH_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fOSICH_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fOSICH_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fOSICH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fOSICH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fOSICH_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fFL_x5fOSICH_fNO",
+	"_nUMB_x5fFL_x5fOSICH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fOSICH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fOSICH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fOSICH_fGloballySynchronousSet",
+	"_nUMB_x5fFL_x5fOSICH_fNO",
+	"_nUMB_x5fFL_x5fOSICH_fYES",
+	"StdForm");
+
+create_item ("UMB_FL_OSICH","forward link OSICH generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_OSICH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fOSICH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_OSICH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fOSICH_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fOSICH_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fOSICH_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fOSICH_fYES","YES")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fOSICH_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fOSICH_fYES","YES")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("K_OSI","the OSIValue from the SFP MAC Protocol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("K_SD","the 9-bit AcqInfo block provided by the SFP MAC Protocol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FOSICH_Power","transmit unit power for F-OSICH in units of dBm",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10.0")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fACQCH_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fACQCH_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fACQCH_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fACQCH_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fACQCH_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fACQCH_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fACQCH_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fACQCH_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fACQCH_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fACQCH_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fACQCH_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fACQCH_fNcp_x5f1", 
+	"Ncp 1",
+	0,
+	"0",
+	"Ncp 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fACQCH_fNcp_x5f2", 
+	"Ncp 2",
+	0,
+	"1",
+	"Ncp 2");
+
+create_constant_form ("_nUMB_x5fFL_x5fACQCH_fNcp_x5f3", 
+	"Ncp 3",
+	0,
+	"2",
+	"Ncp 3");
+
+create_constant_form ("_nUMB_x5fFL_x5fACQCH_fNcp_x5f4", 
+	"Ncp 4",
+	0,
+	"3",
+	"Ncp 4");
+
+create_form_set("_nUMB_x5fFL_x5fACQCH_fNcpSet",
+	"_nUMB_x5fFL_x5fACQCH_fNcp_x5f1",
+	"_nUMB_x5fFL_x5fACQCH_fNcp_x5f2",
+	"_nUMB_x5fFL_x5fACQCH_fNcp_x5f3",
+	"_nUMB_x5fFL_x5fACQCH_fNcp_x5f4",
+	"StdForm");
+
+create_item ("UMB_FL_ACQCH","forward link ACQCH generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_ACQCH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fACQCH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_ACQCH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fACQCH_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fACQCH_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("Ncp","the index for Cyclic Prefix (Tcp=Ncp*FFTSize*Tchip/16)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fACQCH_fNcpSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fACQCH_fNcp_x5f1","Ncp_1")),
+	create_parm ("FACQCH_Power","transmit unit power for F-ACQCH in units of dBm",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10.0")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fQPCH_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fQPCH_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fQPCH_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fQPCH_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fQPCH_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fQPCH_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fQPCH_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fFL_x5fQPCH_fNO",
+	"_nUMB_x5fFL_x5fQPCH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fQPCH_fEnablePreambleFrequencyReuseSet",
+	"_nUMB_x5fFL_x5fQPCH_fNO",
+	"_nUMB_x5fFL_x5fQPCH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fQPCH_fEnableExpandedQPCHSet",
+	"_nUMB_x5fFL_x5fQPCH_fNO",
+	"_nUMB_x5fFL_x5fQPCH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fQPCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fQPCH_fGloballySynchronousSet",
+	"_nUMB_x5fFL_x5fQPCH_fNO",
+	"_nUMB_x5fFL_x5fQPCH_fYES",
+	"StdForm");
+
+create_item ("UMB_FL_QPCH","forward link QPCH (Quick Paging Channel) generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_QPCH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fQPCH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_QPCH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fQPCH_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fQPCH_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fQPCH_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fQPCH_fYES","YES")),
+	create_parm ("EnablePreambleFrequencyReuse","whether Preamble Frequency Reuse is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fQPCH_fEnablePreambleFrequencyReuseSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fQPCH_fNO","NO")),
+	create_parm ("EnableExpandedQPCH","whether QPCH is expanded",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fQPCH_fEnableExpandedQPCHSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fQPCH_fNO","NO")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fQPCH_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fQPCH_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")),
+	create_parm ("SFNCellID","9-bit SFN cell ID",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","11")),
+	create_parm ("PreambleUnitPower","transmit unit power for these channels in the first five OFDM symbols in units of dBm",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10.0")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fSBCCH_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fSBCCH_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fSBCCH_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fSBCCH_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fSBCCH_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fSBCCH_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fSBCCH_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fFL_x5fSBCCH_fNO",
+	"_nUMB_x5fFL_x5fSBCCH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fSBCCH_fEnablePreambleFrequencyReuseSet",
+	"_nUMB_x5fFL_x5fSBCCH_fNO",
+	"_nUMB_x5fFL_x5fSBCCH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fSBCCH_fEnableExpandedQPCHSet",
+	"_nUMB_x5fFL_x5fSBCCH_fNO",
+	"_nUMB_x5fFL_x5fSBCCH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fSBCCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fSBCCH_fGloballySynchronousSet",
+	"_nUMB_x5fFL_x5fSBCCH_fNO",
+	"_nUMB_x5fFL_x5fSBCCH_fYES",
+	"StdForm");
+
+create_item ("UMB_FL_SBCCH","forward link SBCCH generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_SBCCH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fSBCCH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_SBCCH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fSBCCH_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fSBCCH_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fSBCCH_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fSBCCH_fYES","YES")),
+	create_parm ("EnablePreambleFrequencyReuse","whether Preamble Frequency Reuse is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fSBCCH_fEnablePreambleFrequencyReuseSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fSBCCH_fNO","NO")),
+	create_parm ("EnableExpandedQPCH","whether QPCH is expanded",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fSBCCH_fEnableExpandedQPCHSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fSBCCH_fNO","NO")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fSBCCH_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fSBCCH_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")),
+	create_parm ("SFNCellID","9-bit SFN cell ID",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","11")),
+	create_parm ("PreambleUnitPower","transmit unit power for these channels in the first five OFDM symbols in units of dBm",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10.0")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fPBCCH_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fPBCCH_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fPBCCH_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fPBCCH_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fPBCCH_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fPBCCH_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fPBCCH_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fPBCCH_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fPBCCH_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fPBCCH_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fPBCCH_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fPBCCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fPBCCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fPBCCH_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fFL_x5fPBCCH_fNO",
+	"_nUMB_x5fFL_x5fPBCCH_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fPBCCH_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fPBCCH_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fPBCCH_fEnablePreambleFrequencyReuseSet",
+	"_nUMB_x5fFL_x5fPBCCH_fNO",
+	"_nUMB_x5fFL_x5fPBCCH_fYES",
+	"StdForm");
+
+create_item ("UMB_FL_PBCCH","forward link PBCCH generator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_PBCCH",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fPBCCH_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_PBCCH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fPBCCH_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fPBCCH_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fPBCCH_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fPBCCH_fYES","YES")),
+	create_parm ("EnablePreambleFrequencyReuse","whether Preamble Frequency Reuse is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fPBCCH_fEnablePreambleFrequencyReuseSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fPBCCH_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("PreambleUnitPower","transmit unit power for these channels in the first five OFDM symbols in units of dBm",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10.0")));
+
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fFull_x5fSuperframe", 
+	"Full Superframe",
+	0,
+	"0",
+	"Full Superframe");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fCompact_x5fSuperframe", 
+	"Compact Superframe",
+	0,
+	"1",
+	"Compact Superframe");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fOutputFrameFormatSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fFull_x5fSuperframe",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fCompact_x5fSuperframe",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fFFTSizeSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f2048",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f1024",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f512",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f256",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fMode_x5f1", 
+	"Mode 1",
+	0,
+	"0",
+	"Mode 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fMode_x5f2", 
+	"Mode 2",
+	0,
+	"1",
+	"Mode 2");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fRsChMuxModeSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fMode_x5f1",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fMode_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f64", 
+	"Size 64",
+	0,
+	"0",
+	"Size 64");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f128", 
+	"Size 128",
+	0,
+	"1",
+	"Size 128");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fSubzoneSizeSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f64",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f4096", 
+	"Size 4096",
+	0,
+	"0",
+	"Size 4096");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f8192", 
+	"Size 8192",
+	0,
+	"1",
+	"Size 8192");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fMaxPHYSubPacketSizeSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f4096",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f8192",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fSuperframeIdxIncreasedSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fGloballySynchronousSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fRandom", 
+	"Random",
+	0,
+	"0",
+	"Random");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fDeterministic", 
+	"Deterministic",
+	0,
+	"1",
+	"Deterministic");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fFCPICH_x5fHoppingModeSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fRandom",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fDeterministic",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fFormat_x5f0", 
+	"Format 0",
+	0,
+	"0",
+	"Format 0");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fFormat_x5f1", 
+	"Format 1",
+	0,
+	"1",
+	"Format 1");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fFormat_x5f2", 
+	"Format 2",
+	0,
+	"2",
+	"Format 2");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fDPICHFormatSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fFormat_x5f0",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fFormat_x5f1",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fFormat_x5f2",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fEnableBRCHSubzoneCyclingSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fEnableFLCSSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fFL_x5fMuxOFDMSym_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fFL_x5fMuxOFDMSym_fFLCS_x5fUseDRCHSet",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fNO",
+	"_nUMB_x5fFL_x5fMuxOFDMSym_fYES",
+	"StdForm");
+
+create_item ("UMB_FL_MuxOFDMSym","forward link PHY OFDM symbol multiplexer",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_FL_MuxOFDMSym",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fFL_x5fMuxOFDMSym_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_FL_MuxOFDMSym",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OutputFrameFormat","output superframe format",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fOutputFrameFormatSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fFull_x5fSuperframe","Full_Superframe")),
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fFFT_x5f512","FFT_512")),
+	create_parm ("GuardSize","the size of guard subcarriers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","32")),
+	create_parm ("RsChMuxMode","The mux mode for resource channels",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fRsChMuxModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fMode_x5f2","Mode_2")),
+	create_parm ("SubzoneSize","the number of hop-ports in each subzone (64 or 128)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fSubzoneSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f64","Size_64")),
+	create_parm ("NumDRCHSubzones","the number of DRCH subzones",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("MaxPHYSubPacketSize","the maximum subpacket size (4096 bits or 8192 bits)",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fMaxPHYSubPacketSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fSize_x5f8192","Size_8192")),
+	create_parm ("StartingSuperframe","the superframe index for the starting superframe",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SuperframeIdxIncreased","whether the superframe index is increased from superframe to superframe",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fSuperframeIdxIncreasedSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fYES","YES")),
+	create_parm ("GloballySynchronous","whether the sector is synchronized with GPS time",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fGloballySynchronousSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fNO","NO")),
+	create_parm ("PilotPN","9-bit pilot PN for different sectors",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FCPICH_HoppingMode","the hopping mode for F-CPICH",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fFCPICH_x5fHoppingModeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fRandom","Random")),
+	create_parm ("FCPICH_PilotSpacing","the subcarrier spacing for common pilots",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("FCPICH_PowerDensity","the power density for F-CPICH (defined as power(dBm) per modulation symbol)",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-16.0")),
+	create_parm ("CodeOffset","code offset between 0 and 2 for Forward Dedicated Pilot Channel",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("DPICHFormat","the Forward Dedicated Pilot Channel format for Forward Data Channel",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fDPICHFormatSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fFormat_x5f0","Format_0")),
+	create_parm ("EnableBRCHSubzoneCycling","whether the cycling for BRCH subzones is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fEnableBRCHSubzoneCyclingSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fNO","NO")),
+	create_parm ("EnableFLCS","whether the Forward Link Control Segment is enabled",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fEnableFLCSSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fNO","NO")),
+	create_parm ("FLCS_NumBlocks","the number of blocks (tiles) allocated for FLCS, only valid when EnableFLCS is YES",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("FLCS_UseDRCH","whether FLCS is on DRCH or on BRCH, only valid when EnableFLCS is YES",
+		PARM_INT,
+		"_nUMB_x5fFL_x5fMuxOFDMSym_fFLCS_x5fUseDRCHSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fFL_x5fMuxOFDMSym_fNO","NO")),
+	create_parm ("FLCS_PowerDensity","the power density for FLCS (defined as power(dBm) per modulation symbol), only valid when EnableFLCS is YES",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-16.0")),
+	create_parm ("FDCH_NumPackets","number of data packets transmitted in F-DCH At most four packets are supported",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_1_PFIndex","the packet format index for the first data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_1_NodeID","the array of NodeID allocated to the first data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{31}")),
+	create_parm ("FDCH_1_MACID","the MAC ID of the first data packet (Access Terminal) transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_1_NumHARQTrans","the number of HARQ transmissions for the first data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_1_HARQInterlace","the number of frames in HARQ interlace structure for the first data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FDCH_1_StartingFrame","the starting frame index for the first HARQ transmission from which the first data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_1_NumFrames","the number of frames for the first HARQ transmission on which the first data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FDCH_1_PowerDensity","the power density for the first data packet transmitted in F-DCH (defined as power(dBm) per modulation symbol)",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-16.0}")),
+	create_parm ("FDCH_2_PFIndex","the packet format index for the second data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_2_NodeID","the array of NodeID allocated to the second data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{32}")),
+	create_parm ("FDCH_2_MACID","the MAC ID of the second data packet (Access Terminal) transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("FDCH_2_NumHARQTrans","the number of HARQ transmissions for the second data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_2_HARQInterlace","the number of frames in HARQ interlace structure for the second data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FDCH_2_StartingFrame","the starting frame index for the first HARQ transmission from which the second data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_2_NumFrames","the number of frames for the first HARQ transmission on which the second data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FDCH_2_PowerDensity","the power density for the second data packet transmitted in F-DCH (defined as power(dBm) per modulation symbol)",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-16.0}")),
+	create_parm ("FDCH_3_PFIndex","the packet format index for the third data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_3_NodeID","the array of NodeID allocated to the third data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{33}")),
+	create_parm ("FDCH_3_MACID","the MAC ID of the third data packet (Access Terminal) transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("FDCH_3_NumHARQTrans","the number of HARQ transmissions for the third data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_3_HARQInterlace","the number of frames in HARQ interlace structure for the third data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FDCH_3_StartingFrame","the starting frame index for the first HARQ transmission from which the third data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_3_NumFrames","the number of frames for the first HARQ transmission on which the third data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FDCH_3_PowerDensity","the power density for the third data packet transmitted in F-DCH (defined as power(dBm) per modulation symbol)",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-16.0}")),
+	create_parm ("FDCH_4_PFIndex","the packet format index for the fourth data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_4_NodeID","the array of NodeID allocated to the fourth data packet transmitted in F-DCH",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{34}")),
+	create_parm ("FDCH_4_MACID","the MAC ID of the fourth data packet (Access Terminal) transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("FDCH_4_NumHARQTrans","the number of HARQ transmissions for the fourth data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FDCH_4_HARQInterlace","the number of frames in HARQ interlace structure for the fourth data packet transmitted in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FDCH_4_StartingFrame","the starting frame index for the first HARQ transmission from which the fourth data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FDCH_4_NumFrames","the number of frames for the first HARQ transmission on which the fourth data packet is allocated in F-DCH",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("FDCH_4_PowerDensity","the power density for the fourth data packet transmitted in F-DCH (defined as power(dBm) per modulation symbol)",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-16.0}")));
+
+
+create_item ("UMB_Commutator","Data commutator",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_Commutator",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fCommutator_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_Commutator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockSizes","Block sizes read from each input",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1}")),
+	create_parm ("BlockEnable","If each block is enabled to output (0: disable, 1: enable)",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1}")));
+
+
+create_item ("UMB_Distributor","Data distributor",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_Distributor",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fDistributor_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_Distributor",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockSizes","Block sizes for each output",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1}")),
+	create_parm ("BlockEnable","If each block is enabled to output (0: disable, 1: enable)",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1}")));
+
+
+create_constant_form ("_nUMB_x5fSymWindow_fFull_x5fSuperframe", 
+	"Full Superframe",
+	0,
+	"0",
+	"Full Superframe");
+
+create_constant_form ("_nUMB_x5fSymWindow_fCompact_x5fSuperframe", 
+	"Compact Superframe",
+	0,
+	"1",
+	"Compact Superframe");
+
+create_form_set("_nUMB_x5fSymWindow_fOutputFrameFormatSet",
+	"_nUMB_x5fSymWindow_fFull_x5fSuperframe",
+	"_nUMB_x5fSymWindow_fCompact_x5fSuperframe",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fSymWindow_fRatio_x5f1", 
+	"Ratio 1",
+	0,
+	"0",
+	"Ratio 1");
+
+create_constant_form ("_nUMB_x5fSymWindow_fRatio_x5f2", 
+	"Ratio 2",
+	0,
+	"1",
+	"Ratio 2");
+
+create_constant_form ("_nUMB_x5fSymWindow_fRatio_x5f4", 
+	"Ratio 4",
+	0,
+	"2",
+	"Ratio 4");
+
+create_constant_form ("_nUMB_x5fSymWindow_fRatio_x5f8", 
+	"Ratio 8",
+	0,
+	"3",
+	"Ratio 8");
+
+create_constant_form ("_nUMB_x5fSymWindow_fRatio_x5f16", 
+	"Ratio 16",
+	0,
+	"4",
+	"Ratio 16");
+
+create_constant_form ("_nUMB_x5fSymWindow_fRatio_x5f32", 
+	"Ratio 32",
+	0,
+	"5",
+	"Ratio 32");
+
+create_form_set("_nUMB_x5fSymWindow_fOversamplingOptionSet",
+	"_nUMB_x5fSymWindow_fRatio_x5f1",
+	"_nUMB_x5fSymWindow_fRatio_x5f2",
+	"_nUMB_x5fSymWindow_fRatio_x5f4",
+	"_nUMB_x5fSymWindow_fRatio_x5f8",
+	"_nUMB_x5fSymWindow_fRatio_x5f16",
+	"_nUMB_x5fSymWindow_fRatio_x5f32",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fSymWindow_fFFT_x5f2048", 
+	"FFT 2048",
+	0,
+	"0",
+	"FFT 2048");
+
+create_constant_form ("_nUMB_x5fSymWindow_fFFT_x5f1024", 
+	"FFT 1024",
+	0,
+	"1",
+	"FFT 1024");
+
+create_constant_form ("_nUMB_x5fSymWindow_fFFT_x5f512", 
+	"FFT 512",
+	0,
+	"2",
+	"FFT 512");
+
+create_constant_form ("_nUMB_x5fSymWindow_fFFT_x5f256", 
+	"FFT 256",
+	0,
+	"3",
+	"FFT 256");
+
+create_constant_form ("_nUMB_x5fSymWindow_fFFT_x5f128", 
+	"FFT 128",
+	0,
+	"4",
+	"FFT 128");
+
+create_form_set("_nUMB_x5fSymWindow_fFFTSizeSet",
+	"_nUMB_x5fSymWindow_fFFT_x5f2048",
+	"_nUMB_x5fSymWindow_fFFT_x5f1024",
+	"_nUMB_x5fSymWindow_fFFT_x5f512",
+	"_nUMB_x5fSymWindow_fFFT_x5f256",
+	"_nUMB_x5fSymWindow_fFFT_x5f128",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fSymWindow_fNcp_x5f1", 
+	"Ncp 1",
+	0,
+	"0",
+	"Ncp 1");
+
+create_constant_form ("_nUMB_x5fSymWindow_fNcp_x5f2", 
+	"Ncp 2",
+	0,
+	"1",
+	"Ncp 2");
+
+create_constant_form ("_nUMB_x5fSymWindow_fNcp_x5f3", 
+	"Ncp 3",
+	0,
+	"2",
+	"Ncp 3");
+
+create_constant_form ("_nUMB_x5fSymWindow_fNcp_x5f4", 
+	"Ncp 4",
+	0,
+	"3",
+	"Ncp 4");
+
+create_form_set("_nUMB_x5fSymWindow_fNcpSet",
+	"_nUMB_x5fSymWindow_fNcp_x5f1",
+	"_nUMB_x5fSymWindow_fNcp_x5f2",
+	"_nUMB_x5fSymWindow_fNcp_x5f3",
+	"_nUMB_x5fSymWindow_fNcp_x5f4",
+	"StdForm");
+
+create_constant_form ("_nUMB_x5fSymWindow_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nUMB_x5fSymWindow_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nUMB_x5fSymWindow_fEnableHalfDuplexOperationSet",
+	"_nUMB_x5fSymWindow_fNO",
+	"_nUMB_x5fSymWindow_fYES",
+	"StdForm");
+
+create_item ("UMB_SymWindow","OFDM Symbol windowing operation",
+	"U",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_UMB_SymWindow",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nUMB_x5fSymWindow_lsdfumbstars",
+	SPComponentAnnotFmt,
+	"SYM_UMB_SymWindow",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OutputFrameFormat","output superframe format",
+		PARM_INT,
+		"_nUMB_x5fSymWindow_fOutputFrameFormatSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fSymWindow_fFull_x5fSuperframe","Full_Superframe")),
+	create_parm ("StartingFrame","the starting frame index in each superframe from which this model will allocate the data",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("NumFrames","the number of frames on which this model will allocate the data starting from the StartingFrame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","25")),
+	create_parm ("OversamplingOption","Oversampling ratio option",
+		PARM_INT,
+		"_nUMB_x5fSymWindow_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fSymWindow_fRatio_x5f1","Ratio_1")),
+	create_parm ("FFTSize","the size of total subcarriers for FFT operation",
+		PARM_INT,
+		"_nUMB_x5fSymWindow_fFFTSizeSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fSymWindow_fFFT_x5f512","FFT_512")),
+	create_parm ("Ncp","the index for Cyclic Prefix (Tcp=Ncp*FFTSize*Tchip/16)",
+		PARM_INT,
+		"_nUMB_x5fSymWindow_fNcpSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fSymWindow_fNcp_x5f1","Ncp_1")),
+	create_parm ("EnableHalfDuplexOperation","whether the half duplex operation is enabled",
+		PARM_INT,
+		"_nUMB_x5fSymWindow_fEnableHalfDuplexOperationSet",
+		UNITLESS_UNIT,
+		prm("_nUMB_x5fSymWindow_fNO","NO")));

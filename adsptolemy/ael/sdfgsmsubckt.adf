@@ -1,0 +1,753 @@
+set_design_type( sigproc_net );
+
+create_item ("GSM_TDMA","TDMA Frame Construction",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_TDMA",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_TDMA",
+	SPDesignAnnotFmt,
+	"SYM_GSM_TDMA",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_TCHFS_Encoder","TCH/FS Channel Encoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_TCHFS_Encoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_TCHFS_Encoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_TCHFS_Encoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_TCHFS_Decoder","TCH/FS Channel Decoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_TCHFS_Decoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_TCHFS_Decoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_TCHFS_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_TCHF96_Encoder","TCH/F9.6 Channel Encoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_TCHF96_Encoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_TCHF96_Encoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_TCHF96_Encoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_TCHF96_Decoder","TCH/F9.6 Channel Decoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_TCHF96_Decoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_TCHF96_Decoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_TCHF96_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_TCHF48_Encoder","TCH/F4.8 Channel Encoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_TCHF48_Encoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_TCHF48_Encoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_TCHF48_Encoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_TCHF48_Decoder","TCH/F4.8 Channel Decoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_TCHF48_Decoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_TCHF48_Decoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_TCHF48_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_TCHF24_Encoder","TCH/F2.4 Channel Encoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_TCHF24_Encoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_TCHF24_Encoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_TCHF24_Encoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_TCHF24_Decoder","TCH/F2.4 Channel Decoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_TCHF24_Decoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_TCHF24_Decoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_TCHF24_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_constant_form ("_nGSM_x5fSynSBurst_fSampleRate_x5f4", 
+	"SampleRate 4",
+	0,
+	"0",
+	"4");
+
+create_constant_form ("_nGSM_x5fSynSBurst_fSampleRate_x5f8", 
+	"SampleRate 8",
+	0,
+	"1",
+	"8");
+
+create_constant_form ("_nGSM_x5fSynSBurst_fSampleRate_x5f16", 
+	"SampleRate 16",
+	0,
+	"2",
+	"16");
+
+create_form_set("_nGSM_x5fSynSBurst_fSampleRateSet",
+	"_nGSM_x5fSynSBurst_fSampleRate_x5f4",
+	"_nGSM_x5fSynSBurst_fSampleRate_x5f8",
+	"_nGSM_x5fSynSBurst_fSampleRate_x5f16",
+	"StdForm");
+
+create_item ("GSM_SynSBurst","Bit Synchronization for Synchronization Burst",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SynSBurst",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SynSBurst",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SynSBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampleRate","sample rate of modulated data per bit",
+		PARM_INT,
+		"_nGSM_x5fSynSBurst_fSampleRateSet",
+		UNITLESS_UNIT,
+		prm("_nGSM_x5fSynSBurst_fSampleRate_x5f16","SampleRate_16")));
+
+
+create_constant_form ("_nGSM_x5fSynNBurstTrNoMod_fSampleRate_x5f4", 
+	"SampleRate 4",
+	0,
+	"0",
+	"4");
+
+create_constant_form ("_nGSM_x5fSynNBurstTrNoMod_fSampleRate_x5f8", 
+	"SampleRate 8",
+	0,
+	"1",
+	"8");
+
+create_constant_form ("_nGSM_x5fSynNBurstTrNoMod_fSampleRate_x5f16", 
+	"SampleRate 16",
+	0,
+	"2",
+	"16");
+
+create_form_set("_nGSM_x5fSynNBurstTrNoMod_fSampleRateSet",
+	"_nGSM_x5fSynNBurstTrNoMod_fSampleRate_x5f4",
+	"_nGSM_x5fSynNBurstTrNoMod_fSampleRate_x5f8",
+	"_nGSM_x5fSynNBurstTrNoMod_fSampleRate_x5f16",
+	"StdForm");
+
+create_item ("GSM_SynNBurstTrNoMod","Bit Synchronization for Normal Burst ( Training Sequence Not Modulated ))",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SynNBurstTrNoMod",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SynNBurstTrNoMod",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SynNBurstTrNoMod",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampleRate","sample rate of modulated data per bit",
+		PARM_INT,
+		"_nGSM_x5fSynNBurstTrNoMod_fSampleRateSet",
+		UNITLESS_UNIT,
+		prm("_nGSM_x5fSynNBurstTrNoMod_fSampleRate_x5f16","SampleRate_16")),
+	create_parm ("TSCValue","training sequence code (integer ranges from 0 to 7)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_constant_form ("_nGSM_x5fSynNBurst_fSampleRate_x5f4", 
+	"SampleRate 4",
+	0,
+	"0",
+	"4");
+
+create_constant_form ("_nGSM_x5fSynNBurst_fSampleRate_x5f8", 
+	"SampleRate 8",
+	0,
+	"1",
+	"8");
+
+create_constant_form ("_nGSM_x5fSynNBurst_fSampleRate_x5f16", 
+	"SampleRate 16",
+	0,
+	"2",
+	"16");
+
+create_form_set("_nGSM_x5fSynNBurst_fSampleRateSet",
+	"_nGSM_x5fSynNBurst_fSampleRate_x5f4",
+	"_nGSM_x5fSynNBurst_fSampleRate_x5f8",
+	"_nGSM_x5fSynNBurst_fSampleRate_x5f16",
+	"StdForm");
+
+create_item ("GSM_SynNBurst","Bit Synchronization for Normal Burst",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SynNBurst",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SynNBurst",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SynNBurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampleRate","sample rate of modulated data per bit",
+		PARM_INT,
+		"_nGSM_x5fSynNBurst_fSampleRateSet",
+		UNITLESS_UNIT,
+		prm("_nGSM_x5fSynNBurst_fSampleRate_x5f16","SampleRate_16")),
+	create_parm ("TSCValue","training sequence code (integer ranges from 0 to 7)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_constant_form ("_nGSM_x5fSynABurst_fSampleRate_x5f4", 
+	"SampleRate 4",
+	0,
+	"0",
+	"4");
+
+create_constant_form ("_nGSM_x5fSynABurst_fSampleRate_x5f8", 
+	"SampleRate 8",
+	0,
+	"1",
+	"8");
+
+create_constant_form ("_nGSM_x5fSynABurst_fSampleRate_x5f16", 
+	"SampleRate 16",
+	0,
+	"2",
+	"16");
+
+create_form_set("_nGSM_x5fSynABurst_fSampleRateSet",
+	"_nGSM_x5fSynABurst_fSampleRate_x5f4",
+	"_nGSM_x5fSynABurst_fSampleRate_x5f8",
+	"_nGSM_x5fSynABurst_fSampleRate_x5f16",
+	"StdForm");
+
+create_item ("GSM_SynABurst","Bit Synchronization for Access Burst",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SynABurst",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SynABurst",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SynABurst",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampleRate","sample rate of modulated data per bit",
+		PARM_INT,
+		"_nGSM_x5fSynABurst_fSampleRateSet",
+		UNITLESS_UNIT,
+		prm("_nGSM_x5fSynABurst_fSampleRate_x5f16","SampleRate_16")));
+
+
+create_item ("GSM_SpeechEncoder","GSM Speech Encoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SpeechEncoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SpeechEncoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SpeechEncoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FrameSize","speech frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","160")),
+	create_parm ("SubFrameSize","speech sub-frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","40")),
+	create_parm ("RPE_Ratio","upsample or downsample ratio for regular pulse excitation",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")));
+
+
+create_item ("GSM_SpeechDecoder","GSM Speech Decoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SpeechDecoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SpeechDecoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SpeechDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FrameSize","speech frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","160")),
+	create_parm ("SubFrameSize","speech sub-frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","40")),
+	create_parm ("RPE_Ratio","upsample or downsample ratio for RPE",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")));
+
+
+create_item ("GSM_SCH_Encoder","Synchronization Channel Encoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SCH_Encoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SCH_Encoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SCH_Encoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_SCH_Decoder","Synchronization Channel Decoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SCH_Decoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SCH_Decoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SCH_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_SACCH_Encoder","Slow Associated Control Channel Encoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SACCH_Encoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SACCH_Encoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SACCH_Encoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_SACCH_Decoder","Slow Associated Control Channel Decoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_SACCH_Decoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_SACCH_Decoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_SACCH_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_ReceiverAB","Adaptive MLSE Receiver for Access Burst",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_ReceiverAB",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_ReceiverAB",
+	SPDesignAnnotFmt,
+	"SYM_GSM_ReceiverAB",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("L","maximum delay of channel in unit of Tb, the bit duration",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")));
+
+
+create_constant_form ("_nGSM_x5fReceiver_fNormal_x5fBurst", 
+	"Normal Burst",
+	0,
+	"0",
+	"NB");
+
+create_constant_form ("_nGSM_x5fReceiver_fSynchronization_x5fBurst", 
+	"Synchronization Burst",
+	0,
+	"1",
+	"SB");
+
+create_form_set("_nGSM_x5fReceiver_fBurstTypeSet",
+	"_nGSM_x5fReceiver_fNormal_x5fBurst",
+	"_nGSM_x5fReceiver_fSynchronization_x5fBurst",
+	"StdForm");
+
+create_constant_form ("_nGSM_x5fReceiver_fNot_x5fTracking", 
+	"Not Tracking",
+	0,
+	"0",
+	"NT");
+
+create_constant_form ("_nGSM_x5fReceiver_fTracking", 
+	"Tracking",
+	0,
+	"1",
+	"T");
+
+create_form_set("_nGSM_x5fReceiver_fTrackingFlagSet",
+	"_nGSM_x5fReceiver_fNot_x5fTracking",
+	"_nGSM_x5fReceiver_fTracking",
+	"StdForm");
+
+create_item ("GSM_Receiver","Adaptive MLSE Receiver",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_Receiver",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_Receiver",
+	SPDesignAnnotFmt,
+	"SYM_GSM_Receiver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TSC","training sequence code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("BurstType","burst type",
+		PARM_INT,
+		"_nGSM_x5fReceiver_fBurstTypeSet",
+		UNITLESS_UNIT,
+		prm("_nGSM_x5fReceiver_fNormal_x5fBurst","Normal_Burst")),
+	create_parm ("L","maximum delay of channel in unit of Tb, the bit duration",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")),
+	create_parm ("TrackingFlag","tracking option",
+		PARM_INT,
+		"_nGSM_x5fReceiver_fTrackingFlagSet",
+		UNITLESS_UNIT,
+		prm("_nGSM_x5fReceiver_fNot_x5fTracking","Not_Tracking")),
+	create_parm ("TrackingStart","start position of tracking",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","26")),
+	create_parm ("S_Step","step-size gain used in adjusting s, the equivalent channel coefficients",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("G_Step","step-size gain used in adjusting g, the matched filter taps",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")));
+
+
+create_item ("GSM_RACH_Encoder","Random Access Channel Encoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_RACH_Encoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_RACH_Encoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_RACH_Encoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_RACH_Decoder","Random Access Channel Decoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_RACH_Decoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_RACH_Decoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_RACH_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_constant_form ("_nGSM_x5fGMSKMod_fSampleRate_x5f4", 
+	"SampleRate 4",
+	0,
+	"0",
+	"4");
+
+create_constant_form ("_nGSM_x5fGMSKMod_fSampleRate_x5f8", 
+	"SampleRate 8",
+	0,
+	"1",
+	"8");
+
+create_constant_form ("_nGSM_x5fGMSKMod_fSampleRate_x5f16", 
+	"SampleRate 16",
+	0,
+	"2",
+	"16");
+
+create_form_set("_nGSM_x5fGMSKMod_fSampleRateSet",
+	"_nGSM_x5fGMSKMod_fSampleRate_x5f4",
+	"_nGSM_x5fGMSKMod_fSampleRate_x5f8",
+	"_nGSM_x5fGMSKMod_fSampleRate_x5f16",
+	"StdForm");
+
+create_item ("GSM_GMSKMod","Generation of GMSK Modulated Signal",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_GMSKMod",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_GMSKMod",
+	SPDesignAnnotFmt,
+	"SYM_GSM_GMSKMod",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SampleRate","number of samples in one bit interval",
+		PARM_INT,
+		"_nGSM_x5fGMSKMod_fSampleRateSet",
+		UNITLESS_UNIT,
+		prm("_nGSM_x5fGMSKMod_fSampleRate_x5f16","SampleRate_16")),
+	create_parm ("Fc","carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","45e6")),
+	create_parm ("Pc","power per modulating bit",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","1e-3")));
+
+
+create_item ("GSM_GMSKDemod","Demodulation of GMSK Modulated Signa",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_GMSKDemod",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_GMSKDemod",
+	SPDesignAnnotFmt,
+	"SYM_GSM_GMSKDemod",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_Filter","7-Pole Chebychev Filter",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_Filter",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_Filter",
+	SPDesignAnnotFmt,
+	"SYM_GSM_Filter",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_FACCH_Encoder","Fast Associated Control Channel Encoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_FACCH_Encoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_FACCH_Encoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_FACCH_Encoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_FACCH_Decoder","Fast Associated Control Channel Decoder",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_FACCH_Decoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_FACCH_Decoder",
+	SPDesignAnnotFmt,
+	"SYM_GSM_FACCH_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("GSM_DeTDMA","TDMA Frame Disassembly",
+	"G",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_GSM_DeTDMA",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"GSM_DeTDMA",
+	SPDesignAnnotFmt,
+	"SYM_GSM_DeTDMA",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);

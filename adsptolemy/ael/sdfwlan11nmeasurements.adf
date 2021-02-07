@@ -1,0 +1,220 @@
+set_design_type( sigproc_net );
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f11n_x5fEVM_x5f_fMirrorSpectrumSet",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fNO",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fOff", 
+	"Off",
+	0,
+	"0",
+	"Off");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fRMS_x5f_x5fVideo_x5f", 
+	"RMS (Video)",
+	0,
+	"1",
+	"RMS (Video)");
+
+create_form_set("_nWLAN_x5f11n_x5fEVM_x5f_fAverageTypeSet",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fOff",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fRMS_x5f_x5fVideo_x5f",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fAuto_x5fDetect_x5fGurad", 
+	"Auto Detect Gurad",
+	0,
+	"0",
+	"Auto Detect Gurad");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fManuOverride_x5fGuard", 
+	"ManuOverride Guard",
+	0,
+	"1",
+	"ManuOverride Guard");
+
+create_form_set("_nWLAN_x5f11n_x5fEVM_x5f_fGuardIntervalSelSet",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fAuto_x5fDetect_x5fGurad",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fManuOverride_x5fGuard",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f11n_x5fEVM_x5f_fTrackAmplitudeSet",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fNO",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f11n_x5fEVM_x5f_fTrackPhaseSet",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fNO",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f11n_x5fEVM_x5f_fTrackTimingSet",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fNO",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fBW20MHz", 
+	"BW20MHz",
+	0,
+	"0",
+	"20 MHz");
+
+create_constant_form ("_nWLAN_x5f11n_x5fEVM_x5f_fBW40MHz", 
+	"BW40MHz",
+	0,
+	"1",
+	"40 MHz");
+
+create_form_set("_nWLAN_x5f11n_x5fEVM_x5f_fBandwidthSet",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fBW20MHz",
+	"_nWLAN_x5f11n_x5fEVM_x5f_fBW40MHz",
+	"StdForm");
+
+create_item ("WLAN_11n_EVM_","WLAN 11n EVM measurement star",
+	"W",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_WLAN_11n_EVM_",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dTSDF_nWLAN_x5f11n_x5fEVM_x5f_lsdfwlan11nmeasurements",
+	SPComponentAnnotFmt,
+	"SYM_WLAN_11n_EVM_",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FCarrier","carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","5.0e9")),
+	create_parm ("MirrorSpectrum","Mirror frequency spectrum?",
+		PARM_INT,
+		"_nWLAN_x5f11n_x5fEVM_x5f_fMirrorSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f11n_x5fEVM_x5f_fNO","NO")),
+	create_parm ("Start","start time for data recording",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","DefaultTimeStart")),
+	create_parm ("AverageType","average type",
+		PARM_INT,
+		"_nWLAN_x5f11n_x5fEVM_x5f_fAverageTypeSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f11n_x5fEVM_x5f_fRMS_x5f_x5fVideo_x5f","RMS__Video_")),
+	create_parm ("FramesToAverage","number of frames that will be averaged if AverageType is RMS (Video)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","20")),
+	create_parm ("GuardIntervalSel","",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f11n_x5fEVM_x5f_fGuardIntervalSelSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f11n_x5fEVM_x5f_fAuto_x5fDetect_x5fGurad","Auto_Detect_Gurad")),
+	create_parm ("GuardInterval","guard interval time of data symbol, expressed as a fraction of the FFT time length",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.25")),
+	create_parm ("SearchLength","search length, should include more than 2 full frames",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","1.0e-3")),
+	create_parm ("MeasurementOffset","measurement offset (the first MeasurementOffset number of data symbols shall be excluded for EVM)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("MeasurementInterval","measurement interval of data symbols (0~21848, if 21848 all data symbols from MeasurementOffset to the end shall be used)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","21848")),
+	create_parm ("SubcarrierSpacing","spacing between subcarriers in Hz",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","312.5e3")),
+	create_parm ("SymbolTimingAdjust","amount of time (expressed as a percent of the FFT time length) to back away from the end of the symbol time when decidin...(Press Help for more info)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-3.125")),
+	create_parm ("TrackAmplitude","pilot amplitude tracking",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f11n_x5fEVM_x5f_fTrackAmplitudeSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f11n_x5fEVM_x5f_fNO","NO")),
+	create_parm ("TrackPhase","pilot phase tracking",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f11n_x5fEVM_x5f_fTrackPhaseSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f11n_x5fEVM_x5f_fYES","YES")),
+	create_parm ("TrackTiming","pilot timing tracking",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f11n_x5fEVM_x5f_fTrackTimingSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f11n_x5fEVM_x5f_fYES","YES")),
+	create_parm ("Bandwidth","band width",
+		PARM_INT,
+		"_nWLAN_x5f11n_x5fEVM_x5f_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f11n_x5fEVM_x5f_fBW20MHz","BW20MHz")),
+	create_parm ("NumTx","number of transmit chains (antennas)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));

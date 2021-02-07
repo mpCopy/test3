@@ -1,0 +1,49 @@
+#!/hped/builds/bin/perl -w
+#---------------------------------------------------------------------------
+#  Description:  This script generates one htm file for each pl file listed
+#                in the docpl file to be displayed at C++ Code button.
+# 
+#  Usage:        eesofspihtmgen pl_file spi_dir
+#  Author:       Parvin Babaeian    
+#  Created:      Oct 24, 2000
+#-------------------------------------------------------------------------
+use File::Basename;
+
+my $DEBUG = "FALSE";       # print debugging statement if this set to TRUE
+
+my $pl_file = $ARGV[0];
+my $spi_dir = $ARGV[1];
+my $htm_file =  basename ($pl_file);
+my $name = $htm_file;
+$name =~ s/\.pl$//;
+$htm_file =~ s/\.pl$/\.html/;
+$htm_file = $spi_dir . "/" . $htm_file;
+open (FP , $pl_file) || die ("Cannot open  $pl_file\n");
+open ( OFP , ">$htm_file") || die "Cannot open the file: $htm_file\n";
+print OFP "<html>\n<head>\n<title>C++ Code for $name</title>\n";
+print OFP "<script type=\"text/javascript\">\n<!-- hide the script from old browsers\nif((navigator.appName == \"Netscape\" && parseInt(navigator.appVersion) >= 3 && navigator.userAgent.indexOf(\"Opera\") == -1 && navigator.userAgent.indexOf(\"WebTV\") == -1) || (navigator.appName == \"Microsoft Internet Explorer\" && parseInt(navigator.appVersion) >= 4)) {\n   for(i = 0; i < parent.frames.length; i++) {\n      if(parent.frames[i].name == \"code\" && parent.frames[i].MTMLoaded) {\n           parent.frames[i].MTMTrack = true;\n           setTimeout(\"parent.frames[\" + i + \"].MTMDisplayMenu()\", 250);\n           break;\n       }\n    }\n}\n// End of script hiding -->\n</script>\n";
+print OFP "<script language=\"Javascript\">\n    function favoritestitle() { return \"C++ Code for $name\"; }\n</script>\n</head>\n";
+
+print OFP "<body bgcolor=\"#FFFFFF\">\n<a name=\"1000000\"> </a> <td width=\"110\">\n<h2><font color=\"#003366\" face=\"Verdana, Arial, Helvetica, sans-serif\">C++ Code for $name</font></h2>\n<p>\n<font  size=\"2\" face=\"Verdana, Arial, Helvetica, sans-serif\"><em><a href=\"$name.pl\">Click here to save pl file to disk</a></em></font>\n<p>\n";
+print OFP "<pre>\n";
+while (<FP>) {
+    $_ = &reformat ($_);
+    print OFP $_;
+}
+print OFP "</pre>\n</body>\n</html>";
+close (OFP);
+close (FP);
+
+
+#--------------------------------------------------------------------------
+#    eesof_reformat
+#    Parameters: $string
+#    Reformat a string, change &lt; to <   &gt; to > &amp; to &
+#--------------------------------------------------------------------------
+sub reformat {
+  my $s = shift;
+  $s =~ s/&/\&amp;/g;
+  $s =~ s/</\&lt;/g;  
+  $s =~ s/>/\&gt;/g;
+  return ($s);
+}

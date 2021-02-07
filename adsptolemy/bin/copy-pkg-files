@@ -1,0 +1,733 @@
+#! /usr/bin/perl
+###############################################################################
+#
+# File:         copy-pkg-files
+# RCS:          $Header: /cvs/wlv/src/cedamk/bin/copy-pkg-files,v 1.40 2008/03/07 16:29:11 build Exp $
+# Description:  Perl script to copy files to be packaged into the package
+#       build tree.
+# Author:       Darryl Okahata
+# Created:      Mon Jul 30 14:38:33 2001
+# Modified:     Mon Jun  9 14:55:07 2003 (Darryl Okahata) darrylo@soco.keysight.com
+# Language:     CPerl
+# Package:      N/A
+# Status:       Experimental (Do Not Distribute)
+#
+# (C) Copyright 2001, Keysight Technologies, all rights reserved.
+#
+###############################################################################
+
+
+use Cwd;
+use Cwd 'chdir';
+use Cwd 'abs_path';
+use File::Path;
+use File::Copy;
+use File::Basename;
+use Getopt::Long;
+
+umask 022;
+
+$BOTH32AND64BIT = 0;
+
+GetOptions(
+    'both32and64bit|b' => \$BOTH32AND64BIT
+);
+
+#
+# The current directory is $(OBJPATH)
+#
+# $ARGV[0] is $(LOCAL_ROOT)
+# $ARGV[1] is the name of the directory to use for the
+#          package file hierarchy.
+# $ARGV[2] is $(SRCPATH)
+# $ARGV[3] is $(CEDALIBVER)
+# $ARGV[4] is non-empty/non-zero for customer/opt builds
+#
+
+$top_dir = $ARGV[0];
+usage() if (!$top_dir);
+shift;
+
+$package_dir = $ARGV[0];
+usage() if (!$package_dir);
+shift;
+
+$srcpath = $ARGV[0];
+usage() if (!$srcpath);
+shift;
+
+$cedalibver = $ARGV[0];
+usage() if (!$cedalibver);
+shift;
+
+if ($ARGV[0] && $ARGV[0] ne '0') {
+    $build_type = 'opt';
+} else {
+    $build_type = 'debug';
+}
+shift;
+#print "BUILD_TYPE = $build_type\n";
+
+$arch = $BOTH32AND64BIT ? `sh -c "hped-arch -B"` : `sh -c hped-arch`;
+$CEDA_64_BIT = $BOTH32AND64BIT ? "1" : $ENV{CEDA_64_BIT};
+die "$0: Unable to execute \"hped-arch\"!\n" if (($? & 0xff) || ($? >> 8) != 0);
+chomp($arch);
+
+if ($arch eq "hpux10") {
+    $exe_suffix = '';
+    $lib_prefix = 'lib';
+    $sl_suffix = '.sl';
+    $lib_suffix = '.a';
+    $exp_suffix = '.exp';
+} elsif ($arch eq "hpux11") {
+    $exe_suffix = '';
+    $lib_prefix = 'lib';
+    $sl_suffix = '.sl';
+    $lib_suffix = '.a';
+    $exp_suffix = '.exp';
+} elsif ( $arch =~ m/win32/o  ) {
+    $exe_suffix = '.exe';
+    $lib_prefix = '';
+    $sl_suffix = '.dll';
+    $lib_suffix = '.lib';
+    $exp_suffix = '.lib';
+} elsif ($arch =~ /^sun/) {
+    $exe_suffix = '';
+    $lib_prefix = 'lib';
+    $sl_suffix = '.so';
+    $lib_suffix = '.a';
+    $exp_suffix = '.exp';
+} elsif ($arch eq "aix4") {
+    $exe_suffix = '';
+    $lib_prefix = 'lib';
+    $sl_suffix = '.so';
+    $lib_suffix = '.a';
+    $exp_suffix = '.exp';
+} elsif ( $arch =~ m/linux_x86/o  ) {
+    $exe_suffix = '';
+    $lib_prefix = 'lib';
+    $sl_suffix = '.so';
+    $lib_suffix = '.a';
+    $exp_suffix = '.exp';
+} else {
+    die "$0: Unknown architecture \"$arch\"!\n";
+}
+
+nextcommand:
+while (<>) {
+    chomp;
+    # Comment lines (lines where the first non-whitespace character is a #)
+    next if (/^\s*(\#.*)?$/);
+    getfilenames: {
+        $unzip = 0;
+        $unzap = 0;
+        $mytype = "UNKNOWN";
+        # TODO: What are we trying to match here?
+        # TODO: Is this used to determine if an action should only
+        # TODO: be done for debug or opt builds only?
+        if (/^\s*(!?\s*(debug|opt))_((?:\(?[^\s]\)?\|?)+)_([^\s]+\s.+)$/i)
+        {
+            $build = $1;
+            $prefix = $3;
+            $line = $4;
+            #print "Build = $build, Prefix = $prefix, line = \"$line\"\n";
+            if ( $build =~ /^!\s*(.*)/) {
+                $build = $1;
+                next nextcommand if ($build eq $build_type) && 
+                    ArchConditionsMet($prefix, $arch);
+            } else {
+                next nextcommand if ($build ne $build_type) ||
+                    !ArchConditionsMet($prefix, $arch);
+            }
+            $_ = $line;
+        }
+        # TODO:  What are we trying to match?
+        elsif (/^\s*(!?\s*(?:\(?[^\s]\)?\|?)+)_([^\s]+\s.+)$/i)
+        {
+            $prefix = $1;
+            $line = $2;
+            $mytype=$2;
+            $mytype =~ s/[ \t].*//;
+            #print "Prefix = $prefix, mytype=$mytype  line = \"$line\"\n";
+            if ( $prefix =~ /^!\s*(.*)/)
+            {
+                $prefix = $1;
+                if ($prefix eq 'debug' || $prefix eq 'opt') {
+                    next nextcommand if ($prefix eq $build_type);
+                } elsif (ArchConditionsMet($prefix, $arch)) {
+                    next nextcommand;
+                }
+            } else {
+                if ($prefix eq 'debug' || $prefix eq 'opt') {
+                    next nextcommand if ($prefix ne $build_type);
+                } elsif (! ArchConditionsMet($prefix, $arch)) {
+                    next nextcommand;
+                }
+            }
+            $_ = $line;
+        }
+
+        # SHLIB shlibfile [installdir]
+        if (/^\s*shlib\s+(.+)$/i) {
+            ($shlib, $remainder) = parse_file($1);
+            $mytype="SHLIB";
+            undef $dstdir;
+            if ($remainder) {
+                ($dstdir, $remainder) = parse_file($remainder);
+            }
+            
+            # If a relative path to the shlibfile is provided, separate the
+            # relative path from the shlibfile
+            if ($shlib =~ m|^(.+)/([^/]+)$|) {
+                $srcfile = "$1/$lib_prefix$2$sl_suffix";
+                if ( IsArchWindows($arch) ) {
+                    # For windows builds, we need to look first for the shlibfile
+                    # provided.  If it doesn't exist, then we need to look for
+                    # the shlibfile with the cedalibver appended to it.  The
+                    # destination file will always have the cedalibver appended
+                    # to it.
+                    if (-e $srcfile) {
+                        # shlibfile found without appending cedalibver
+                        if ($dstdir) {
+                            $dstfile = "$package_dir/$dstdir/$lib_prefix$2$cedalibver$sl_suffix";
+                        } else {
+                            if ( $arch eq 'win32_64' ) {
+                                $dstfile = "$package_dir/bin/${arch}/$lib_prefix$2$cedalibver$sl_suffix";
+                            }
+                            else {
+                                $dstfile = "$package_dir/bin/$lib_prefix$2$cedalibver$sl_suffix";
+                            }
+                        }
+                    }
+                    else {
+                        # shlibfile not found; need to append cedalibver
+                        $srcfile = "$1/$lib_prefix$2$cedalibver$sl_suffix";
+                        if ($dstdir) {
+                            $dstfile = "$package_dir/$dstdir/$lib_prefix$2$cedalibver$sl_suffix";
+                        } else {
+                            if ( $arch eq 'win32_64' ) {
+                                $dstfile = "$package_dir/bin/${arch}/$lib_prefix$2$cedalibver$sl_suffix";
+                            }
+                            else {
+                                $dstfile = "$package_dir/bin/$lib_prefix$2$cedalibver$sl_suffix";
+                            }
+                        }
+                    }
+                }
+                else {
+                    if ($dstdir) {
+                        $dstfile = "$package_dir/$dstdir/$lib_prefix$2$sl_suffix";
+                    } else {
+                        $dstfile = "$package_dir/lib/$arch/$lib_prefix$2$sl_suffix";
+                    }
+                }
+            }
+            # No relative path to the shlibfile was provided.
+            else {
+                # Since no relative path was provided, we look in several 
+                # locations based on priority.  The priority list differs
+                # based on architecture, where the Windows builds and
+                # the Unix builds differ.
+                #
+                # The priority list for Windows archs is:
+                #   1) $top_dir/bin, without cedalibver
+                #   2) $top_dir/lib.$(arch), with cedalibver
+                #   3) Current Object Directory, without cedalibver
+                #   4) Current Object Directory, with cedalibver
+                #
+                # The priority list for Unix archs is:
+                #   1) $top_dir/lib.$(arch)
+                #   2) Current Object Directory
+                #
+                if ( IsArchWindows($arch) ) {
+                    $srcfile = "$top_dir/bin/$lib_prefix$shlib$sl_suffix";
+
+                    undef $used_ver;
+                    if (! -e $srcfile) {
+                        $srcfile = "$top_dir/lib.$arch/$lib_prefix$shlib$cedalibver$sl_suffix";
+                        $used_ver = 1;
+                    }
+                    if (! -e $srcfile) {
+                        undef $used_ver;
+                        $srcfile = "$lib_prefix$shlib$sl_suffix";
+                    }
+                    if (! -e $srcfile) {
+                        $srcfile = "$lib_prefix$shlib$cedalibver$sl_suffix";
+                        $used_ver = 1;
+                    }
+
+                    if ($used_ver) {
+                        if ($dstdir) {
+                            $dstfile = "$package_dir/$dstdir/$lib_prefix$shlib$cedalibver$sl_suffix";
+                        } else {
+                            $dstfile = "$package_dir/bin/$lib_prefix$shlib$cedalibver$sl_suffix";
+                        }
+                    } else {
+                        if ($dstdir) {
+                            $dstfile = "$package_dir/$dstdir/$lib_prefix$shlib$sl_suffix";
+                        } else {
+                            $dstfile = "$package_dir/bin/$lib_prefix$shlib$cedalibver$sl_suffix";
+                        }
+                    }               
+                } else {
+                    $srcfile = "$top_dir/lib.$arch/$lib_prefix$shlib$sl_suffix";
+                
+                    if (! -e $srcfile) {
+                        $srcfile = "$lib_prefix$shlib$sl_suffix";
+                    }
+
+                    if ($dstdir) {
+                        $dstfile = "$package_dir/$dstdir/$lib_prefix$shlib$sl_suffix";
+                    } else {
+                        $dstfile = "$package_dir/lib/$arch/$lib_prefix$shlib$sl_suffix";
+                    }
+                }
+            }
+            
+            if (! -e $srcfile) {
+                print "\n$0: Unable to locate shared library \"$shlib\" for packaging -- skipped!\n\n";
+                next nextcommand;
+            }
+            $mode = 0555;
+            last getfilenames;
+        }
+        
+        # SHLIBEXP shlibexp [installdir]
+        if (/^\s*shlibexp\s+(.+)$/i) {
+            ($shlib, $junk) = parse_file($1);
+            $mytype = "SHLIBEXP";
+            undef $dstdir;
+            if ($remainder) {
+                ($dstdir, $remainder) = parse_file($remainder);
+            }
+            if ($shlib =~ m|^(.+)/([^/]+)$|) {
+                $srcfile = "$1/$lib_prefix$2$exp_suffix";
+                if ($dstdir) {
+                    $dstfile = "$package_dir/$dstdir/$lib_prefix$2$exp_suffix";
+                } else {
+                    $dstfile = "$package_dir/lib/$arch/$lib_prefix$2$exp_suffix";
+                }
+            } else {
+                $srcfile = "$top_dir/lib.$arch/$lib_prefix$shlib$exp_suffix";
+                if (! -e $srcfile) {
+                    $srcfile = "$lib_prefix$shlib$exp_suffix";
+                }
+                if ($dstdir) {
+                    $dstfile = "$package_dir/$dstdir/$lib_prefix$shlib$exp_suffix";
+                } else {
+                    $dstfile = "$package_dir/lib/$arch/$lib_prefix$shlib$exp_suffix";
+                }
+            }
+            if (! -e $srcfile) {
+                print "\n$0: Unable to locate shared library export file \"$shlib\" for packaging -- skipped!\n\n";
+                next nextcommand;
+            }
+            if ((-s $srcfile) == 0) {
+                # Skip file if zero length.
+                print "Zero length: $srcfile: skipped.\n";
+                next nextcommand;
+            }
+            $mode = 0555;
+            last getfilenames;
+        }
+        
+        # LIB libpath
+        if (/^\s*lib\s+(.+)$/i) {
+            $files = $1;
+            ($lib, $files) = parse_file($files);
+            $mytype = "LIB";
+            if ($lib =~ m|^(.+)/([^/]+)$|) {
+                $dir = $1;
+                $file = $2;
+                $srcfile = "$dir/$lib_prefix$file$lib_suffix";
+                $dstfile = "$package_dir/lib.$arch/$lib_prefix$file$lib_suffix";
+            } else {
+                $srcfile = "$top_dir/lib.$arch/$lib_prefix$lib$lib_suffix";
+                if (! -e $srcfile) {
+                    $srcfile = "$lib_prefix$lib$lib_suffix";
+                }
+                $dstfile = "$package_dir/lib.$arch/$lib_prefix$lib$lib_suffix";
+            }
+            if (! -e $srcfile) {
+                print "\n$0: Unable to locate archive lib \"$srcfile\" for packaging -- skipped!\n\n";
+                next nextcommand;
+            }
+            $mode = 0644;
+            last getfilenames;
+        }
+
+        # EXE program [installdir [newname]]
+        if (/^\s*exe\s+(.+)$/i) {
+            $mytype="EXE";
+            ($exe, $remainder) = parse_file($1);
+            $srcfile = "$top_dir/bin.$arch/$exe$exe_suffix";
+            if (! -e $srcfile) {
+                $srcfile = "$exe$exe_suffix";
+            }
+            if (! -e $srcfile) {
+                print "\n$0: Unable to locate program \"$exe\" for packaging -- skipped!\n\n";
+                next nextcommand;
+            }
+            undef $dstdir;
+            undef $dstfile;
+            if ($remainder) {
+                ($dstdir, $remainder) = parse_file($remainder);
+            }
+            if ($remainder) {
+                ($dstfile, $remainder) = parse_file($remainder);
+            }
+            if ($dstfile) {
+                # TODO : bin hardcode
+                if ($dstdir) {
+                    $dstfile = "$package_dir/$dstdir/$dstfile$exe_suffix";
+                } else {
+                    $dstfile = "$package_dir/bin/$dstfile$exe_suffix";
+                }
+            } else {
+                if ($dstdir) {
+                    if ($exe =~ m|^(.+)/([^/]+)$|) {
+                        $dstfile = "$package_dir/$dstdir/$2$exe_suffix";
+                    } else {
+                        $dstfile = "$package_dir/$dstdir/$exe$exe_suffix";
+                    }
+                } else {
+                    # TODO : bin hardcode
+                    if ($exe =~ m|^(.+)/([^/]+)$|) {
+                        $dstfile = "$package_dir/bin/$2$exe_suffix";
+                    } else {
+                        $dstfile = "$package_dir/bin/$exe$exe_suffix";
+                    }
+                }
+            }
+            $mode = 0555;
+            last getfilenames;
+        }
+
+        # FILE mode srcfile dstfile
+        if (/^\s*file\s+(.+)$/i) {
+            $files = $1;
+            ($mode, $files) = parse_file($files);
+            $mytype = "FILE";
+            if ($mode eq '-') {
+                $mode = 0444;
+            } else {
+                $mode = oct($mode);
+            }
+            ($srcbasefile, $files) = parse_file($files);
+            ($dstfile, $files) = parse_file($files);
+            $srcfile = "$srcbasefile";
+            if (! -e $srcfile) {
+                $srcfile = "$srcpath/$srcbasefile";
+            }
+            if (! -e $srcfile) {
+                print "\n$0: Unable to locate file \"$srcbasefile\" for packaging -- skipped!\n\n";
+                next nextcommand;
+            }
+            $dstfile = "$package_dir/$dstfile";
+            last getfilenames;
+        }
+
+        # UNZIP srczipfile dstdir
+        if (/^\s*unzip\s+(.+)$/i) {
+            $files = $1;
+            $mytype = "UNZIP";
+            ($srcbasefile, $files) = parse_file($files);
+            ($dstdir, $files) = parse_file($files);
+            $srcfile = "$srcbasefile";
+            if (! -e $srcfile) {
+                $srcfile = "$srcpath/$srcbasefile";
+            }
+            if (! -e $srcfile) {
+                print "\n$0: Unable to locate file \"$srcbasefile\" for packaging -- skipped!\n\n";
+                next nextcommand;
+            }
+            if ($dstdir)
+            {
+                if ($srcfile =~ m|^(.+)/([^/]+)/?$|) {
+                    $dstfile = "$package_dir/$dstdir/$2";
+                } else
+                {
+                    $dstfile = "$package_dir/$dstdir/$srcfile";
+                }
+            } else
+            {
+                if ($srcfile =~ m|^(.+)/([^/]+)/?$|) {
+                    $dstfile = "$package_dir/$2";
+                } else
+                {
+                    $dstfile = "$package_dir/$srcfile";
+                }
+            }
+            $unzip = 1;
+            last getfilenames;
+        }
+        
+        # UNZAP srczapfile dstdir
+        if (/^\s*unzap\s+(.+)$/i) {
+            $files = $1;
+            $mytype = "UNZAP";
+            ($srcbasefile, $files) = parse_file($files);
+            ($dstdir, $files) = parse_file($files);
+            $srcfile = "$srcbasefile";
+            if (! -e $srcfile) {
+                $srcfile = "$srcpath/$srcbasefile";
+            }
+            if (! -e $srcfile) {
+                print "\n$0: Unable to locate file \"$srcbasefile\" for packaging -- skipped!\n\n";
+                next nextcommand;
+            }
+            if ($dstdir)
+            {
+                if ($srcfile =~ m|^(.+)/([^/]+)/?$|) {
+                    $dstfile = "$package_dir/$dstdir/$2";
+                } else
+                {
+                    $dstfile = "$package_dir/$dstdir/$srcfile";
+                }
+            } else {
+                if ($srcfile =~ m|^(.+)/([^/]+)/?$|) {
+                    $dstfile = "$package_dir/$2";
+                } else {
+                    $dstfile = "$package_dir/$srcfile";
+                }
+            }
+            $unzap = 1;
+            last getfilenames;
+        }
+        
+        # COPYTREE srcdir dstdir [srconly]
+        if (/^\s*copytree\s+(.+)$/i) {
+            $files = $1;
+            $mytype = "COPYTREE";
+            ($srcbase, $files) = parse_file($files);
+            ($dstbase, $files) = parse_file($files);
+            if ($files) {
+                $sourceonly = 1;
+            } else {
+                $sourceonly = '';
+            }
+            if ($sourceonly) {
+                $src = "$srcpath/$srcbase";
+            } else {
+                $src = $srcbase;
+                if (! -e $src) {
+                    $src = "$srcpath/$srcbase";
+                }
+            }
+            if (! -d $src) {
+                print "\n$0: Unable to locate source tree \"$srcbase\" for packaging -- skipped!\n\n";
+                next nextcommand;
+            }
+            $package_dir_full = abs_path($package_dir);
+            $dst = munge_path("$package_dir_full/$dstbase");
+            if (-e $dst) {
+                if (!-d $dst) {
+                    print "\n$0: Destination directory \"$dst\" is not a directory! -- skipped!\n\n";
+                    next nextcommand;
+                }
+            } else {
+                mkpath($dst, '', 0755);
+            }
+            $cmd = "cd $src; cp -r -p -f . $dst";
+            print "Copying tree from \"$src\" to \"$dst\"\n";
+            xsystem("sh -c \"$cmd\"");
+            next nextcommand;
+        }
+
+        die "$0: Unknown package configuration line: \"$_\"!\n";
+    }
+
+    $dstfile = munge_path($dstfile);
+    if ($dstfile =~ m|^(.+)/([^/]+)$|) {
+        $dstdir = $1;
+        if (-e $dstdir) {
+            if (! -d $dstdir) {
+                print "\n$0: Destination directory \"$dstdir\" is not a directory! -- skipped!\n\n";
+            }
+        } else {
+            mkpath($dstdir, '', 0755);
+        }
+    }
+
+    chmod 0644, $dstfile;       # Needed for win32.  
+    unlink($dstfile);
+
+    copy($srcfile, $dstfile) || die "$0: copy $srcfile $dstfile failed: $!\n";
+    if ($unzip)
+    {
+        if ($dstfile =~ m|^(.+)/([^/]+)$|) {
+            $dstdir = $1;
+            $dstfile = $2;
+        } else
+        {
+            $dstdir = ".";
+        }
+        $cmd = "cd $dstdir; unzip $dstfile; rm -f $dstfile" . "\n";
+        xsystem("sh -c \"$cmd\"");
+        print "Unzipped: $dstdir/$dstfile\n";
+    }
+    elsif ($unzap) {
+        if ($dstfile =~ m|^(.+)/([^/]+)$|) {
+            $dstdir = $1;
+            $dstfile = $2;
+        } else
+        {
+            $dstdir = ".";
+        }
+        $cmd = "cd $dstdir; unzap -f -r -q $dstfile" . "\n"; 
+        xsystem("$cmd");
+        print "Unzapped: $dstdir/$dstfile\n";
+    } 
+    else {
+        fixtimestamp($srcfile, $dstfile);
+        chmod $mode, $dstfile || die "$0: chmod $mode $dstfile: $!\n";
+        if ( IsArchWindows($arch) ) {
+            copy("${srcfile}.manifest","${dstfile}.manifest") if ( -f "${srcfile}.manifest" );  }
+        print "Copied: $dstfile\n";
+    }
+}
+
+exit 0;
+
+
+###############################################################################
+
+sub usage
+{
+    die "usage: $0 <local root> <package-build-root> <package-build-dir> <srcpath> <cedalibver> <build_type_flag>\n";
+}
+
+
+sub munge_path
+{
+    my ($path) = @_;
+    my ($mypath) = @_;
+    my ($pre, $var, $suf,);
+
+    while ($path =~ m|^(.*)\$\(([a-z0-9_]+)\)(.*)$|i) {
+    $pre = $1;
+    $var = $2;
+    $suf = $3;
+    if ($var eq 'ARCH') {
+        $path = $pre . $arch . $suf;
+    } elsif ($var eq 'CEDALIBVER') {
+        $path = $pre . $cedalibver . $suf;
+    } elsif ($var eq 'PCCEDALIBVER') {
+          if ( IsArchWindows($arch) ) {
+        $path = $pre . $cedalibver . $suf;
+        } else {
+        $path = $pre . $suf;
+        }
+    } else {
+        $path = $pre . $suf;
+    }
+    }
+   $mypath=dirname($path);
+   $mypath=basename($mypath);
+   if ( $mypath eq "bin" and $CEDA_64_BIT )
+    {
+      $path =~ s/\/bin\//\/bin\/$arch\// if ( $mytype ne "FILE" );
+      #print "INFO: $path \n";
+    }
+    return ($path);
+}
+
+
+sub parse_file
+{
+    my($string) = @_;
+    my($file, $rest);
+
+    if ($string =~ /^\"/) {
+    if ($string !~ /^\"(.*?[^\\]|)\"(.+)$/) {
+        die "$0: Bad FILE syntax: \"$string\"\n";
+    }
+    $file = $1;
+    $rest = $2;
+    } else {
+    if ($string !~ /^([^ \t]+)(.*)$/) {
+        die "$0: Bad FILE syntax: \"$string\"\n";
+    }
+    $file = $1;
+    $rest = $2;
+    }
+    $rest =~ s/^\s+//;
+    return ($file, $rest);
+}
+
+
+sub fixtimestamp
+{
+    my($src, $dst) = @_;
+    my($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+       $atime,$mtime,$ctime,$blksize,$blocks);
+
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+     $atime,$mtime,$ctime,$blksize,$blocks) = stat($src);
+    utime $atime, $mtime, $dst;
+}
+
+sub ArchConditionsMet {
+    my $prefix = shift;
+    my $actualArch = shift;
+
+    my $valid = 0;
+
+    foreach $prefixArch ($prefix =~ /(\w+)/g) {
+        # Extract the platform from the architectures.  This means
+        # strip away any of the _64 or _32s attached to the architectures
+        $prefixArch =~ /([^_\s]+)/;
+        my $prefixPlatform = $1;
+        $actualArch =~ /([^_\s]+)/;
+        my $actualPlatform = $1;
+
+        if ($prefixPlatform eq $actualPlatform) {
+            # Now, does the prefix arch specify a 32 or 64 bit
+            # specific architecture?
+            if ($prefixArch =~ /(_32|_64)/) {
+                # Determine if either of the architectures are 64-bit.
+                my $actualArch64Bit = $actualArch =~ /_64/ ? 1 : 0;
+                my $prefixArch64Bit = $prefixArch =~ /_64/ ? 1: 0;
+
+                if ($prefixArch64Bit == $actualArch64Bit) {
+                    $valid = 1;
+                }
+            }
+            else {
+                $valid = 1;
+            }
+        }
+        last if $valid;
+    }
+    return $valid;
+}
+
+###############################################################################
+
+sub xsystem
+{
+    my($command) = @_;
+    my($signal, $status);
+
+    $status = system($command);
+    if ($status & 0xFF) {
+        if ($signal = $status & 0x7F) {
+        printf STDERR "$command: Signal %d", $signal;
+        } else {
+        print STDERR $command;
+        }
+        if ($status & 0x80) {
+        print STDERR " -- core dumped";
+        }
+        print STDERR "\n";
+        exit(128 + $signal);
+    }
+    $status = $status / 256;    
+    return ($status);
+}
+
+sub IsArchWindows {
+    my $arch = shift;
+
+    return ($arch eq 'win32' || $arch eq 'win32_64');
+}

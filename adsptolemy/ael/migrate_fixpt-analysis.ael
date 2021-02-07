@@ -1,0 +1,21 @@
+// Copyright 2000 - 2014 Keysight Technologies, Inc  
+// -*- c++ -*-
+// migrate fixpt-analysis components
+
+defun migrate_SinkSyn(design, instance) {
+  decl r = FALSE;
+  if (pt_migrateStartStop(design, instance, "Start", NULL, NULL, NULL,
+			  "DefaultNumericStart"))
+    r = TRUE;
+  if (pt_migrateStartStop(design,instance, "Stop", NULL, NULL, NULL,
+			  "DefaultNumericStop"))
+    r = TRUE;
+  if (r)
+    db_regenerate_instance_annotation(instance);
+  return(r);
+}
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_fixpt-analysis", 1,
+		     "SinkStimSyn", migrate_SinkSyn,
+		     "SinkRespSyn", migrate_SinkSyn));

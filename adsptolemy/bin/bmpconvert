@@ -1,0 +1,34 @@
+# @(#) $Source: /cvs/wlv/src/hptolemyaddons/src/sp-modelbuilder/bin/bmpconvert,v $ $Revision: 100.6 $ $Date: 2008/06/11 18:18:08 $
+# bmpconvert -u | -w  bmpfiles...
+
+die "Usage: $0 -u | -w inbmpfile outbmpfile\n"
+  if (($ARGV[0] ne '-u' && $ARGV[0] ne '-w') || @ARGV != 3);
+
+($type, $in, $out) = @ARGV; 
+open (B, $in) || die "Can't open $in: $!\n";
+$bd = join('',<B>);
+if ($bd =~ /static\s+char.*bits/ && $type eq '-w') {
+  $ENV{PATH} = "$ENV{HPEESOF_DIR}/adsptolemy/bin.$ENV{ARCH};$ENV{PATH}";
+  &sys("sh -c \"xbmtopbm $in | ppmtobmp -w > $out\"");
+} else {
+  print "cp $in $out\n";
+  open (A, $in) || die "$in: $!";
+  open (B, "> $out") || die "$out: $!";
+  binmode A; binmode B;
+  print B (<A>);
+}
+
+
+sub sys () {
+  print "$_[0]\n";
+  system($_[0]) && die("  Error: returned $?\n");
+}
+
+# Local Variables:
+# mode:perl
+# End: 
+
+   
+  
+  
+

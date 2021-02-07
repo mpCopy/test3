@@ -1,0 +1,66 @@
+#!/hped/builds/bin/perl -w
+# @(#) $Source: /cvs/wlv/src/hptolemyaddons/src/sp-modelbuilder/bin/checkSymbol,v $ $Revision: 100.7 $ $Date: 2002/09/06 17:55:55 $
+# Author: Jose Luis Pino
+#modified: on 12-27-00 Parvin Babaeian
+foreach $arg (@ARGV) {
+  open(DSN,"< $arg") or die "$arg: $!\n";
+  my $unit = 0;
+  my $prec = 0;
+  while (<DSN>) {
+    if (/ 
+	^20 \s+ 
+	([^\s]+) \s+ 
+	[^\s]+ \s+ 
+	[^\s]+ \s+ 
+	[^\s]+ \s+ 
+	[^\s]+ \s+ 
+	[^\s]+ \s+ 
+	[^\s]+ \s+ 
+	([^\s]+) \s+ 
+	([^\s]+) /x ) {
+      if ($1 == 0) {
+	$unit = $2;
+	$prec = $3;
+      }
+    }
+
+    if (/   
+	^42 \s+ 
+	[^\s]+ \s+ 
+	[^\s]+ \s+
+	\"([^\s]*)\" \s+
+	([^\s]+) \s+
+	[^\s]+ \s+
+	[^\s]+ \s+
+	([^\s]+) \s+
+	([^\s]+) \s+ /x ) {
+      my $name = $1;
+      my $number = $2;
+      my $x = $3;
+      my $y = $4;
+      my $mod = 125;
+      if (($unit!=2) || ($prec > -3)) {
+	print "Wrong percision or increment: $arg\tUnit = $unit\t$prec = $prec\n";
+      } 
+      else {
+	$mod = $mod * 10**(-3-$prec);
+      }
+      if ( ($number == 1) && ($x != 0) && ($y != 0) ) {
+        print "First pin not at (0,0) location: $arg\t$name\t$x\t$y\n"; 
+      } elsif ( (($x%$mod) != 0) || (($y%$mod) != 0) ) {
+	print "Pin in wrong location: $arg\t$name\t$x\t$y\n";
+      }
+      if ( $number < 1 ) {
+        print "Pin with wrong number: $arg\t$name\t$number\n";
+      }
+    }
+    if (/   
+	^10 \s+ 
+	([^\s]+) .*/x ) {
+      if ( $1 == 11 ) {
+         print "Wrong design type: $arg\t11 should be changed to -1\n";
+	   }
+    }
+  }
+  close DSN;
+}

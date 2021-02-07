@@ -1,0 +1,34 @@
+#!/hped/builds/bin/perl
+# Generate control file with variable substitution
+# $Header: /cvs/wlv/src/hptolemyaddons/src/sp-modelbuilder/bin/dpkg-gencontrol,v 100.29 2008/02/28 21:47:27 ikoyfman Exp $
+
+$usage = "Usage: $0 control-template root-directory\n";
+((($f,$root) = @ARGV) == 2) || die $usage;
+
+open(C, $f) || die "$f: $!\n";
+$cntl = join("",<C>);
+
+($vars{'architecture'} = `uname` =~ 'CYGWIN' ? 'win32' : `hpeesofarch`) ||
+  die "Couldn't exec hpeesofarch\n";
+chomp($vars{'architecture'});
+
+$vars{'architecture'} = "win32_64" if ( $ENV{CEDA_64_BIT} && `uname` =~ 'CYGWIN' );
+
+@nowtime=localtime(time);
+$nowtime[5]+=1900 if ($nowtime[5] < 1900); # Y2K compliant!
+$nowtime[4]++;
+$vars{'versiondate'} = join(".",@nowtime[5,4,3]);
+
+$vars{'hptolemydepend'} = "hptolemy3.1";
+$vars{'MARKETING_VER'} = $ENV{MARKETING_VER} || "2008" ; 
+$vars{'MARKETING_VER'} =~ s/\s//g;
+$vars{'REVISION'} = $ENV{REV} || "500" ; 
+
+for $v (keys %vars) { $cntl =~ s/\$\($v\)/$vars{$v}/g; }
+
+$nowtime=localtime;
+$du = `du -sk $root`; die "du failed: $?" if $?;
+$du = ($du =~ /(\d*)/)[0];
+$cntl =~ s/^(Version.*)$/$1\nBuilton: $nowtime\nInstalled-Size: $du/im;
+
+print $cntl;

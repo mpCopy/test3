@@ -1,0 +1,134 @@
+set_design_type( sigproc_net );
+
+create_constant_form ("_nOutputArgumentTimedT_fLinear", 
+	"Linear",
+	0,
+	"0",
+	"Linear");
+
+create_constant_form ("_nOutputArgumentTimedT_fLagrange", 
+	"Lagrange",
+	0,
+	"1",
+	"Lagrange");
+
+create_form_set("_nOutputArgumentTimedT_fInterpolationSet",
+	"_nOutputArgumentTimedT_fLinear",
+	"_nOutputArgumentTimedT_fLagrange",
+	"StdForm");
+
+create_item ("OutputArgumentTimedT","An input argument for a Ptolemy function call",
+	"O",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_OutputArgumentTimedT",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dTSDF_nOutputArgumentTimedT_ltdfapistars",
+	SPComponentAnnotFmt,
+	"SYM_OutputArgumentTimedT",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ArgName","Name of argument, if blank will default to name of instance",
+		PARM_STRING,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("Interpolation","Interpolation scheme to use",
+		PARM_INT,
+		"_nOutputArgumentTimedT_fInterpolationSet",
+		UNITLESS_UNIT,
+		prm("_nOutputArgumentTimedT_fLinear","Linear")));
+
+
+create_constant_form ("_nInputArgumentTimedT_fLinear", 
+	"Linear",
+	0,
+	"0",
+	"Linear");
+
+create_constant_form ("_nInputArgumentTimedT_fLagrange", 
+	"Lagrange",
+	0,
+	"1",
+	"Lagrange");
+
+create_form_set("_nInputArgumentTimedT_fInterpolationSet",
+	"_nInputArgumentTimedT_fLinear",
+	"_nInputArgumentTimedT_fLagrange",
+	"StdForm");
+
+create_item ("InputArgumentTimedT","An input argument for a Ptolemy function call",
+	"I",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_InputArgumentTimedT",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dTSDF_nInputArgumentTimedT_ltdfapistars",
+	SPComponentAnnotFmt,
+	"SYM_InputArgumentTimedT",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ArgName","Name of argument, if blank will default to name of instance",
+		PARM_STRING,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("Interpolation","Interpolation scheme to use",
+		PARM_INT,
+		"_nInputArgumentTimedT_fInterpolationSet",
+		UNITLESS_UNIT,
+		prm("_nInputArgumentTimedT_fLinear","Linear")),
+	create_parm ("TStep","TStep",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0")));
+
+
+create_constant_form ("_nArgumentTimedT_fLinear", 
+	"Linear",
+	0,
+	"0",
+	"Linear");
+
+create_constant_form ("_nArgumentTimedT_fLagrange", 
+	"Lagrange",
+	0,
+	"1",
+	"Lagrange");
+
+create_form_set("_nArgumentTimedT_fInterpolationSet",
+	"_nArgumentTimedT_fLinear",
+	"_nArgumentTimedT_fLagrange",
+	"StdForm");
+
+create_item ("ArgumentTimedT","An argument for a Ptolemy function call",
+	"A",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_ArgumentTimedT",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_v_dTSDF_nArgumentTimedT_ltdfapistars",
+	SPComponentAnnotFmt,
+	"SYM_ArgumentTimedT",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ArgName","Name of argument, if blank will default to name of instance",
+		PARM_STRING,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("Interpolation","Interpolation scheme to use",
+		PARM_INT,
+		"_nArgumentTimedT_fInterpolationSet",
+		UNITLESS_UNIT,
+		prm("_nArgumentTimedT_fLinear","Linear")));

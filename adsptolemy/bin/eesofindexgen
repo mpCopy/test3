@@ -1,0 +1,40 @@
+#!/hped/builds/bin/perl -w
+#---------------------------------------------------------------------------
+#  Description:  This script is designed to generate help server index files 
+#                to dispaly  documentation from ads.
+#                
+#                line format of this file is:
+#                component_name ! address to htm file !
+#                
+#                
+#  Usage:        eesofindexgen $install_root
+#  Author:       Parvin Babaeian     
+#  Created:      June 5,2000
+#-------------------------------------------------------------------------
+my $index_file = "hshpeesofsim_index";  #reference file from ads
+my $write_flag = 0;
+my $install_root = $ARGV[0];
+my $base = "$install_root/doc/compsp";
+my $index_dir = "$base/index";
+if ( -d $base ) {
+   open (IDXFP, ">$base/$index_file") || die ("Cannot open file $base/$index_file\n");
+    for $file (<$index_dir/*.idx>) {
+      # print "file: $file\n";
+       open (FP, $file) || die ("Couldn't open file: $file\n");
+       while (<FP>) {
+          $_ =~ s/\n//;
+          $_ =~ s/([^ ]*) [^ ]* ([^ ]*)/$1 ! compsp\/$2 !/; 
+          print  IDXFP "$_\n";
+          $write_flag = 1;
+    	}
+        close (FP);
+     }
+     close (IDXFP);
+     if ( $write_flag ) {
+         print "File: $base/$index_file has been created for ads on_line help reference\n";
+   } else {
+         unlink ("$base/$index_file") 
+   }    
+}
+ 
+  

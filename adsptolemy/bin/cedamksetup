@@ -1,0 +1,149 @@
+#!/bin/ksh
+set -e
+usage () {
+    echo "Usage: $progname [ARGS] [BUILD-DIRECTORY]
+  -m CEDA_MK_DIR  set ceda_mk_dir. Default is \$HPEESOF_DIR/../cedamk
+  -p PROJECT      set default project_mk_dir. Known projects: adsptolemy
+  -s SOURCEROOT   set source directory name. Default is projects
+  -b BUILD        set build directory name. Default is build" 
+}
+
+progname=$0
+# If the default for sourceroot is ever changed from "projects",
+# mk/m4/defs.mk will also have to be modified.
+sourceroot=projects
+build=build
+while [ -n "$1" ]
+do
+    case "$1" in
+    -b)
+	if [ "X$2" = "X" ]
+	then
+	    usage
+	    exit 1
+	fi
+	build="$2"
+    shift
+       ;;
+    -p)
+	if [ "X$2" = "X" ]
+	then
+	    usage
+	    exit 1
+	fi
+	project="$2"
+	shift
+	;;
+    -m)
+	if [ "X$2" = "X" ]
+	then
+	    usage
+	    exit 1
+	fi
+	cedamk="$2"
+	shift
+	;;
+    -s)
+	if [ "X$2" = "X" ]
+	then
+	    usage
+	    exit 1
+	fi
+	sourceroot="$2"
+	shift
+	;;
+    -h)
+	usage
+	exit 0
+	;;
+    -*)
+	usage
+	exit 1
+	;;
+    *)
+	if [ "X$2" = "X" ]
+	then
+	    usage
+	    exit 1
+	fi
+	build="$1"
+	;;
+    esac
+    shift
+done
+
+if [ -z "$HPEESOF_DIR" ] ; then
+    echo "Error: HPEESOF_DIR is not set." 1>&2
+    exit 1
+fi
+if [ -z "$ARCH" ]
+then
+if [ -x $HPEESOF_DIR/bin/hpeesofarch ]
+then
+    ARCH=`$HPEESOF_DIR/bin/hpeesofarch`
+elif [ \( "X$BUILD_PREFIX" != "X" \) -a \( -x $CEDA_DRIVE$BUILD_PREFIX/bin/hped-arch \) ]
+then
+    ARCH=`$BUILD_PREFIX/bin/hped-arch`
+elif [ -x $CEDA_DRIVE/hped/builds/bin/hped-arch ]
+then
+    ARCH=`$CEDA_DRIVE/hped/builds/bin/hped-arch`
+else
+    echo "$0: Unable to determine architecture!" >&2
+    exit 1
+fi
+fi
+
+case "$ARCH" in
+    win32|win32_64) cmd=make ;;
+    *) cmd=hpeesofmake ;;
+esac
+
+if [ -n "$project" ] ; then
+    case "$project" in
+	adsptolemy) project_mk_dir='$$(HPEESOF_DIR)/adsptolemy' ;;
+	*) echo "Unknown project $project" 1>&2 ; usage ; exit 1 ;;
+    esac
+    cmd="$cmd PROJECTMK=$project_mk_dir"
+fi
+
+if [ -n "$cedamk" ] ; then
+    cmd="$cmd CEDAMK=$cedamk"
+fi
+
+cmd="$cmd SOURCEROOT=$sourceroot"
+
+echo "Setting up in $build"
+
+if [ "X$ceda_mk_dir" = "X" ]
+then
+    if [ "$CEDA_MK_DIR" != "X" ]
+    then
+	# @#$%^&*()?! brain-dead Win32 ...
+	ceda_mk_dir="$CEDA_MK_DIR"
+	export ceda_mk_dir
+    fi
+fi
+
+if [ ! -d "${ceda_mk_dir:=$(dirname "$HPEESOF_DIR")/cedamk}" ] || \
+   [ ! -f "$ceda_mk_dir/mk/makefile.mk" ]; then
+    echo "Error: $ceda_mk_dir does not look valid." 1>&2
+    echo "   Is HPEESOF_DIR set correctly?" 1>&2
+    exit 1
+fi
+export ceda_mk_dir
+
+[ -d $build ] || mkdir $build
+cd $build
+echo DIRS=$sourceroot > make-defs
+rm -f makefile
+
+
+[ -d $sourceroot ] || mkdir $sourceroot
+if [ -f $sourceroot/make-defs ]
+  then 
+    : 
+  else 
+ echo DIRS= > $sourceroot/make-defs 
+fi 
+[ -f $sourceroot/makefile ] || echo "$cmd -f $ceda_mk_dir/mk/makefile.mk"; $cmd -f $ceda_mk_dir/mk/makefile.mk
+

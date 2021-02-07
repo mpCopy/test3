@@ -1,0 +1,2858 @@
+set_design_type( sigproc_net );
+
+create_item ("1xEV_RevCDP","Code domain power measurement for reverse link",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_RevCDP",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_RevCDP",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_RevCDP",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TestLength","number of Walsh periods for measurement",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","48")),
+	create_parm ("SampleRate","number of samples per chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("CDP_GroupNum","number of output CDP groups",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR38_x5f4kbps_x5f16_x5fslot", 
+	"R38.4kbps 16 slot",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR76_x5f8kbps_x5f8_x5fslot", 
+	"R76.8kbps 8 slot",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR153_x5f6kbps_x5f4_x5fslot", 
+	"R153.6kbps 4 slot",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR307_x5f2kbps_x5f2_x5fslot", 
+	"R307.2kbps 2 slot",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR614_x5f4kbps_x5f1_x5fslot", 
+	"R614.4kbps 1 slot",
+	0,
+	"4",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR307_x5f2kbps_x5f4_x5fslot", 
+	"R307.2kbps 4 slot",
+	0,
+	"5",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR614_x5f4kbps_x5f2_x5fslot", 
+	"R614.4kbps 2 slot",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR1228_x5f8kbps_x5f1_x5fslot", 
+	"R1228.8kbps 1 slot",
+	0,
+	"7",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR921_x5f6kbps_x5f2_x5fslot", 
+	"R921.6kbps 2 slot",
+	0,
+	"8",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR1843_x5f2kbps_x5f1_x5fslot", 
+	"R1843.2kbps 1 slot",
+	0,
+	"9",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR1228_x5f8kbps_x5f2_x5fslot", 
+	"R1228.8kbps 2 slot",
+	0,
+	"10",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fR2457_x5f6kbps_x5f1_x5fslot", 
+	"R2457.6kbps 1 slot",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdReceiver_fDataRateSet",
+	"_n1xEV_x5fFwdReceiver_fR38_x5f4kbps_x5f16_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR76_x5f8kbps_x5f8_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR153_x5f6kbps_x5f4_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR307_x5f2kbps_x5f2_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR614_x5f4kbps_x5f1_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR307_x5f2kbps_x5f4_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR614_x5f4kbps_x5f2_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR1228_x5f8kbps_x5f1_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR921_x5f6kbps_x5f2_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR1843_x5f2kbps_x5f1_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR1228_x5f8kbps_x5f2_x5fslot",
+	"_n1xEV_x5fFwdReceiver_fR2457_x5f6kbps_x5f1_x5fslot",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fHalfSlot", 
+	"HalfSlot",
+	0,
+	"0",
+	"HalfSlot");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fOneSlot", 
+	"OneSlot",
+	0,
+	"1",
+	"OneSlot");
+
+create_form_set("_n1xEV_x5fFwdReceiver_fEstimateWindowSet",
+	"_n1xEV_x5fFwdReceiver_fHalfSlot",
+	"_n1xEV_x5fFwdReceiver_fOneSlot",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fSine", 
+	"Sine",
+	0,
+	"0",
+	"Sine");
+
+create_constant_form ("_n1xEV_x5fFwdReceiver_fMinus_x5fSine", 
+	"Minus Sine",
+	0,
+	"1",
+	"Minus Sine");
+
+create_form_set("_n1xEV_x5fFwdReceiver_fQ_x5fPhaseSet",
+	"_n1xEV_x5fFwdReceiver_fSine",
+	"_n1xEV_x5fFwdReceiver_fMinus_x5fSine",
+	"StdForm");
+
+create_item ("1xEV_FwdReceiver","1xEV Foward link receiver subnetwork",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_FwdReceiver",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_FwdReceiver",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_FwdReceiver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataRate","data rate of the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdReceiver_fDataRateSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdReceiver_fR38_x5f4kbps_x5f16_x5fslot","R38_4kbps_16_slot")),
+	create_parm ("EstimateWindow","window size for estimating channel coefficients",
+		PARM_INT,
+		"_n1xEV_x5fFwdReceiver_fEstimateWindowSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdReceiver_fHalfSlot","HalfSlot")),
+	create_parm ("FingerNumber","finger number of rake receiver",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("Q_Phase","sign of sine",
+		PARM_INT,
+		"_n1xEV_x5fFwdReceiver_fQ_x5fPhaseSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdReceiver_fMinus_x5fSine","Minus_Sine")));
+
+
+create_constant_form ("_n1xEV_x5fTurboDecoder_fCodeRate1_x5f2", 
+	"CodeRate1/2",
+	0,
+	"0",
+	"CodeRate1/2");
+
+create_constant_form ("_n1xEV_x5fTurboDecoder_fCodeRate1_x5f3", 
+	"CodeRate1/3",
+	0,
+	"1",
+	"CodeRate1/3");
+
+create_constant_form ("_n1xEV_x5fTurboDecoder_fCodeRate1_x5f4", 
+	"CodeRate1/4",
+	0,
+	"2",
+	"CodeRate1/4");
+
+create_constant_form ("_n1xEV_x5fTurboDecoder_fCodeRate1_x5f5", 
+	"CodeRate1/5",
+	0,
+	"3",
+	"CodeRate1/5");
+
+create_form_set("_n1xEV_x5fTurboDecoder_fCodeRateSet",
+	"_n1xEV_x5fTurboDecoder_fCodeRate1_x5f2",
+	"_n1xEV_x5fTurboDecoder_fCodeRate1_x5f3",
+	"_n1xEV_x5fTurboDecoder_fCodeRate1_x5f4",
+	"_n1xEV_x5fTurboDecoder_fCodeRate1_x5f5",
+	"StdForm");
+
+create_item ("1xEV_TurboDecoder","4-Level turbo decoder",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_TurboDecoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_TurboDecoder",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_TurboDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PacketLength","output packet length (not including 6 tail bits)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","250")),
+	create_parm ("CodeRate","code rate of turbo code",
+		PARM_INT,
+		"_n1xEV_x5fTurboDecoder_fCodeRateSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fTurboDecoder_fCodeRate1_x5f2","CodeRate1_2")));
+
+
+create_constant_form ("_n1xEV_x5fTurboMAPDecoder_fCodeRate1_x5f2", 
+	"CodeRate1/2",
+	0,
+	"0",
+	"CodeRate1/2");
+
+create_constant_form ("_n1xEV_x5fTurboMAPDecoder_fCodeRate1_x5f3", 
+	"CodeRate1/3",
+	0,
+	"1",
+	"CodeRate1/3");
+
+create_constant_form ("_n1xEV_x5fTurboMAPDecoder_fCodeRate1_x5f4", 
+	"CodeRate1/4",
+	0,
+	"2",
+	"CodeRate1/4");
+
+create_constant_form ("_n1xEV_x5fTurboMAPDecoder_fCodeRate1_x5f5", 
+	"CodeRate1/5",
+	0,
+	"3",
+	"CodeRate1/5");
+
+create_form_set("_n1xEV_x5fTurboMAPDecoder_fCodeRateSet",
+	"_n1xEV_x5fTurboMAPDecoder_fCodeRate1_x5f2",
+	"_n1xEV_x5fTurboMAPDecoder_fCodeRate1_x5f3",
+	"_n1xEV_x5fTurboMAPDecoder_fCodeRate1_x5f4",
+	"_n1xEV_x5fTurboMAPDecoder_fCodeRate1_x5f5",
+	"StdForm");
+
+create_item ("1xEV_TurboMAPDecoder","MAP decoder for turbo decoder",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_TurboMAPDecoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_TurboMAPDecoder",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_TurboMAPDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PacketLength","output packet length (not including 6 tail bits)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","250")),
+	create_parm ("CodeRate","code rate of turbo code",
+		PARM_INT,
+		"_n1xEV_x5fTurboMAPDecoder_fCodeRateSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fTurboMAPDecoder_fCodeRate1_x5f2","CodeRate1_2")));
+
+
+create_constant_form ("_n1xEV_x5fTurboEncoder_fCodeRate1_x5f2", 
+	"CodeRate1/2",
+	0,
+	"0",
+	"CodeRate1/2");
+
+create_constant_form ("_n1xEV_x5fTurboEncoder_fCodeRate1_x5f3", 
+	"CodeRate1/3",
+	0,
+	"1",
+	"CodeRate1/3");
+
+create_constant_form ("_n1xEV_x5fTurboEncoder_fCodeRate1_x5f4", 
+	"CodeRate1/4",
+	0,
+	"2",
+	"CodeRate1/4");
+
+create_constant_form ("_n1xEV_x5fTurboEncoder_fCodeRate1_x5f5", 
+	"CodeRate1/5",
+	0,
+	"3",
+	"CodeRate1/5");
+
+create_form_set("_n1xEV_x5fTurboEncoder_fCodeRateSet",
+	"_n1xEV_x5fTurboEncoder_fCodeRate1_x5f2",
+	"_n1xEV_x5fTurboEncoder_fCodeRate1_x5f3",
+	"_n1xEV_x5fTurboEncoder_fCodeRate1_x5f4",
+	"_n1xEV_x5fTurboEncoder_fCodeRate1_x5f5",
+	"StdForm");
+
+create_item ("1xEV_TurboEncoder","Turbo Encoder",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_TurboEncoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_TurboEncoder",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_TurboEncoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PacketLength","input packet length including 6 tail bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","256")),
+	create_parm ("CodeRate","code rate of turbo code",
+		PARM_INT,
+		"_n1xEV_x5fTurboEncoder_fCodeRateSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fTurboEncoder_fCodeRate1_x5f2","CodeRate1_2")));
+
+
+create_item ("1xEV_TurboRSCEncoder","RSC Encoder",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_TurboRSCEncoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_TurboRSCEncoder",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_TurboRSCEncoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PacketLength","input packet length including 6 tail bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","256")));
+
+
+create_constant_form ("_n1xEV_x5fPwrMeasure_fBaseband_x5fsignal", 
+	"Baseband signal",
+	0,
+	"0",
+	"Baseband signal");
+
+create_constant_form ("_n1xEV_x5fPwrMeasure_fRF_x5fsignal", 
+	"RF signal",
+	0,
+	"1",
+	"RF signal");
+
+create_form_set("_n1xEV_x5fPwrMeasure_fSignalTypeSet",
+	"_n1xEV_x5fPwrMeasure_fBaseband_x5fsignal",
+	"_n1xEV_x5fPwrMeasure_fRF_x5fsignal",
+	"StdForm");
+
+create_item ("1xEV_PwrMeasure","1xEV Power measurement",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_PwrMeasure",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_PwrMeasure",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_PwrMeasure",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SamplesPerSymbol","samples per symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("NumHalfSlotsMeasured","number of half slots to be averaged",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")),
+	create_parm ("SignalType","signal type",
+		PARM_INT,
+		"_n1xEV_x5fPwrMeasure_fSignalTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fPwrMeasure_fBaseband_x5fsignal","Baseband_signal")),
+	create_parm ("RefR","reference resistance",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50.0")),
+	create_parm ("RTemp","temperature of resistor",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","-273.15")),
+	create_parm ("IgnoreNum","number of chips to be ignored",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_item ("1xEV_WalshModulator","Walsh code modulator",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_WalshModulator",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_WalshModulator",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_WalshModulator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("WalshLength","length of Walsh code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("WalshCodeIndex","index of Walsh code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_item ("1xEV_SimplexEncoder","1xEV simplex encoder",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_SimplexEncoder",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_SimplexEncoder",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_SimplexEncoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("1xEV_RevSrc","Reverse link signal generator",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_RevSrc",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_RevSrc",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_RevSrc",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataGain","gain of traffic channel",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("DRCGain","gain of DRC channel",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("ACKGain","gain of ACK channel",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_n1xEV_x5fRevRhoWithRef_fSine", 
+	"Sine",
+	0,
+	"0",
+	"Sine");
+
+create_constant_form ("_n1xEV_x5fRevRhoWithRef_fMinus_x5fSine", 
+	"Minus Sine",
+	0,
+	"1",
+	"Minus Sine");
+
+create_form_set("_n1xEV_x5fRevRhoWithRef_fQ_x5fPhaseSet",
+	"_n1xEV_x5fRevRhoWithRef_fSine",
+	"_n1xEV_x5fRevRhoWithRef_fMinus_x5fSine",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fRevRhoWithRef_fEVM_x5fRatio", 
+	"EVM_Ratio",
+	0,
+	"0",
+	"EVM as ratio ");
+
+create_constant_form ("_n1xEV_x5fRevRhoWithRef_fEVM_x5fPercent", 
+	"EVM_Percent",
+	0,
+	"1",
+	"EVM as percent");
+
+create_form_set("_n1xEV_x5fRevRhoWithRef_fEVMValueSet",
+	"_n1xEV_x5fRevRhoWithRef_fEVM_x5fRatio",
+	"_n1xEV_x5fRevRhoWithRef_fEVM_x5fPercent",
+	"StdForm");
+
+create_item ("1xEV_RevRhoWithRef","Rho measurement for reverse link",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_RevRhoWithRef",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_RevRhoWithRef",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_RevRhoWithRef",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Q_Phase","sign of sine",
+		PARM_INT,
+		"_n1xEV_x5fRevRhoWithRef_fQ_x5fPhaseSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fRevRhoWithRef_fSine","Sine")),
+	create_parm ("StartSym","start symbol for EVM measurement",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","256")),
+	create_parm ("SymBurstLen","number of symbols within burst to be measured for EVM",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1024")),
+	create_parm ("EVMValue","EVM value expression options",
+		PARM_INT,
+		"_n1xEV_x5fRevRhoWithRef_fEVMValueSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fRevRhoWithRef_fEVM_x5fRatio","EVM_Ratio")));
+
+
+create_constant_form ("_n1xEV_x5fQPSK_fSine", 
+	"Sine",
+	0,
+	"0",
+	"Sine");
+
+create_constant_form ("_n1xEV_x5fQPSK_fMinus_x5fSine", 
+	"Minus Sine",
+	0,
+	"1",
+	"Minus Sine");
+
+create_form_set("_n1xEV_x5fQPSK_fQ_x5fPhaseSet",
+	"_n1xEV_x5fQPSK_fSine",
+	"_n1xEV_x5fQPSK_fMinus_x5fSine",
+	"StdForm");
+
+create_item ("1xEV_QPSK","Quadrature spreading for 1xEV forward link",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_QPSK",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_QPSK",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_QPSK",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PN_Offset","offset of short PN code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("TransDelay","transmit delay",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("Q_Phase","sign of sine",
+		PARM_INT,
+		"_n1xEV_x5fQPSK_fQ_x5fPhaseSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fQPSK_fSine","Sine")));
+
+
+create_constant_form ("_n1xEV_x5fPhaseEqualizer_fTransmitter", 
+	"Transmitter",
+	0,
+	"0",
+	"Transmitter");
+
+create_constant_form ("_n1xEV_x5fPhaseEqualizer_fReceiver", 
+	"Receiver",
+	0,
+	"1",
+	"Receiver");
+
+create_form_set("_n1xEV_x5fPhaseEqualizer_fTypeSet",
+	"_n1xEV_x5fPhaseEqualizer_fTransmitter",
+	"_n1xEV_x5fPhaseEqualizer_fReceiver",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fPhaseEqualizer_fRate4", 
+	"Rate4",
+	0,
+	"0",
+	"Rate4");
+
+create_constant_form ("_n1xEV_x5fPhaseEqualizer_fRate5", 
+	"Rate5",
+	0,
+	"1",
+	"Rate5");
+
+create_constant_form ("_n1xEV_x5fPhaseEqualizer_fRate6", 
+	"Rate6",
+	0,
+	"2",
+	"Rate6");
+
+create_constant_form ("_n1xEV_x5fPhaseEqualizer_fRate8", 
+	"Rate8",
+	0,
+	"3",
+	"Rate8");
+
+create_form_set("_n1xEV_x5fPhaseEqualizer_fSampPerChipSet",
+	"_n1xEV_x5fPhaseEqualizer_fRate4",
+	"_n1xEV_x5fPhaseEqualizer_fRate5",
+	"_n1xEV_x5fPhaseEqualizer_fRate6",
+	"_n1xEV_x5fPhaseEqualizer_fRate8",
+	"StdForm");
+
+create_item ("1xEV_PhaseEqualizer","Filter to provide phase equalization",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_PhaseEqualizer",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_PhaseEqualizer",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_PhaseEqualizer",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Type","filter used at transmitter side or receiver side",
+		PARM_INT,
+		"_n1xEV_x5fPhaseEqualizer_fTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fPhaseEqualizer_fTransmitter","Transmitter")),
+	create_parm ("SampPerChip","samples per chip",
+		PARM_INT,
+		"_n1xEV_x5fPhaseEqualizer_fSampPerChipSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fPhaseEqualizer_fRate4","Rate4")));
+
+
+create_constant_form ("_n1xEV_x5fHPSK_fAccess_x5fChannel", 
+	"Access Channel",
+	0,
+	"0",
+	"Access Channel");
+
+create_constant_form ("_n1xEV_x5fHPSK_fReverse_x5fTraffic_x5fChannel", 
+	"Reverse Traffic Channel",
+	0,
+	"1",
+	"Reverse Traffic Channel");
+
+create_form_set("_n1xEV_x5fHPSK_fChannelTypeSet",
+	"_n1xEV_x5fHPSK_fAccess_x5fChannel",
+	"_n1xEV_x5fHPSK_fReverse_x5fTraffic_x5fChannel",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fHPSK_fSine", 
+	"Sine",
+	0,
+	"0",
+	"Sine");
+
+create_constant_form ("_n1xEV_x5fHPSK_fMinus_x5fSine", 
+	"Minus Sine",
+	0,
+	"1",
+	"Minus Sine");
+
+create_form_set("_n1xEV_x5fHPSK_fQ_x5fPhaseSet",
+	"_n1xEV_x5fHPSK_fSine",
+	"_n1xEV_x5fHPSK_fMinus_x5fSine",
+	"StdForm");
+
+create_item ("1xEV_HPSK","Quadrature spreading for 1xEV reverse link",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_HPSK",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_HPSK",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_HPSK",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ChannelType","type of channel",
+		PARM_INT,
+		"_n1xEV_x5fHPSK_fChannelTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fHPSK_fReverse_x5fTraffic_x5fChannel","Reverse_Traffic_Channel")),
+	create_parm ("ATI_low","lower 16 bits of access terminal identifier",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("ATI_high","higher 16 bits access terminal identifier",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("AccessCycleNumber","access cycle number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("ColorCode","color code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SectorID","sector ID",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("TransDelay","transmit delay",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("Q_Phase","sign of sine",
+		PARM_INT,
+		"_n1xEV_x5fHPSK_fQ_x5fPhaseSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fHPSK_fSine","Sine")));
+
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA01", 
+	"RateA01",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA02", 
+	"RateA02",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA03", 
+	"RateA03",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA04", 
+	"RateA04",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA05", 
+	"RateA05",
+	0,
+	"4",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA06", 
+	"RateA06",
+	0,
+	"5",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA07", 
+	"RateA07",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA08", 
+	"RateA08",
+	0,
+	"7",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA09", 
+	"RateA09",
+	0,
+	"8",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA10", 
+	"RateA10",
+	0,
+	"9",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA11", 
+	"RateA11",
+	0,
+	"10",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateA12", 
+	"RateA12",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdTDM_fDataRate1Set",
+	"_n1xEV_x5fFwdTDM_fRateA01",
+	"_n1xEV_x5fFwdTDM_fRateA02",
+	"_n1xEV_x5fFwdTDM_fRateA03",
+	"_n1xEV_x5fFwdTDM_fRateA04",
+	"_n1xEV_x5fFwdTDM_fRateA05",
+	"_n1xEV_x5fFwdTDM_fRateA06",
+	"_n1xEV_x5fFwdTDM_fRateA07",
+	"_n1xEV_x5fFwdTDM_fRateA08",
+	"_n1xEV_x5fFwdTDM_fRateA09",
+	"_n1xEV_x5fFwdTDM_fRateA10",
+	"_n1xEV_x5fFwdTDM_fRateA11",
+	"_n1xEV_x5fFwdTDM_fRateA12",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB01", 
+	"RateB01",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB02", 
+	"RateB02",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB03", 
+	"RateB03",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB04", 
+	"RateB04",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB05", 
+	"RateB05",
+	0,
+	"4",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB06", 
+	"RateB06",
+	0,
+	"5",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB07", 
+	"RateB07",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB08", 
+	"RateB08",
+	0,
+	"7",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB09", 
+	"RateB09",
+	0,
+	"8",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB10", 
+	"RateB10",
+	0,
+	"9",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB11", 
+	"RateB11",
+	0,
+	"10",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateB12", 
+	"RateB12",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdTDM_fDataRate2Set",
+	"_n1xEV_x5fFwdTDM_fRateB01",
+	"_n1xEV_x5fFwdTDM_fRateB02",
+	"_n1xEV_x5fFwdTDM_fRateB03",
+	"_n1xEV_x5fFwdTDM_fRateB04",
+	"_n1xEV_x5fFwdTDM_fRateB05",
+	"_n1xEV_x5fFwdTDM_fRateB06",
+	"_n1xEV_x5fFwdTDM_fRateB07",
+	"_n1xEV_x5fFwdTDM_fRateB08",
+	"_n1xEV_x5fFwdTDM_fRateB09",
+	"_n1xEV_x5fFwdTDM_fRateB10",
+	"_n1xEV_x5fFwdTDM_fRateB11",
+	"_n1xEV_x5fFwdTDM_fRateB12",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC01", 
+	"RateC01",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC02", 
+	"RateC02",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC03", 
+	"RateC03",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC04", 
+	"RateC04",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC05", 
+	"RateC05",
+	0,
+	"4",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC06", 
+	"RateC06",
+	0,
+	"5",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC07", 
+	"RateC07",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC08", 
+	"RateC08",
+	0,
+	"7",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC09", 
+	"RateC09",
+	0,
+	"8",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC10", 
+	"RateC10",
+	0,
+	"9",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC11", 
+	"RateC11",
+	0,
+	"10",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateC12", 
+	"RateC12",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdTDM_fDataRate3Set",
+	"_n1xEV_x5fFwdTDM_fRateC01",
+	"_n1xEV_x5fFwdTDM_fRateC02",
+	"_n1xEV_x5fFwdTDM_fRateC03",
+	"_n1xEV_x5fFwdTDM_fRateC04",
+	"_n1xEV_x5fFwdTDM_fRateC05",
+	"_n1xEV_x5fFwdTDM_fRateC06",
+	"_n1xEV_x5fFwdTDM_fRateC07",
+	"_n1xEV_x5fFwdTDM_fRateC08",
+	"_n1xEV_x5fFwdTDM_fRateC09",
+	"_n1xEV_x5fFwdTDM_fRateC10",
+	"_n1xEV_x5fFwdTDM_fRateC11",
+	"_n1xEV_x5fFwdTDM_fRateC12",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD01", 
+	"RateD01",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD02", 
+	"RateD02",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD03", 
+	"RateD03",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD04", 
+	"RateD04",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD05", 
+	"RateD05",
+	0,
+	"4",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD06", 
+	"RateD06",
+	0,
+	"5",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD07", 
+	"RateD07",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD08", 
+	"RateD08",
+	0,
+	"7",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD09", 
+	"RateD09",
+	0,
+	"8",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD10", 
+	"RateD10",
+	0,
+	"9",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD11", 
+	"RateD11",
+	0,
+	"10",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdTDM_fRateD12", 
+	"RateD12",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdTDM_fDataRate4Set",
+	"_n1xEV_x5fFwdTDM_fRateD01",
+	"_n1xEV_x5fFwdTDM_fRateD02",
+	"_n1xEV_x5fFwdTDM_fRateD03",
+	"_n1xEV_x5fFwdTDM_fRateD04",
+	"_n1xEV_x5fFwdTDM_fRateD05",
+	"_n1xEV_x5fFwdTDM_fRateD06",
+	"_n1xEV_x5fFwdTDM_fRateD07",
+	"_n1xEV_x5fFwdTDM_fRateD08",
+	"_n1xEV_x5fFwdTDM_fRateD09",
+	"_n1xEV_x5fFwdTDM_fRateD10",
+	"_n1xEV_x5fFwdTDM_fRateD11",
+	"_n1xEV_x5fFwdTDM_fRateD12",
+	"StdForm");
+
+create_item ("1xEV_FwdTDM","Time division multiplex for forward link",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_FwdTDM",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_FwdTDM",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_FwdTDM",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SlotState","state of each slot: 0 for idle, 1 for active",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 0 0 0\"")),
+	create_parm ("DataRate1","data rate of the first packet in the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdTDM_fDataRate1Set",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdTDM_fRateA01","RateA01")),
+	create_parm ("DataRate2","data rate of the second packet in the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdTDM_fDataRate2Set",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdTDM_fRateB01","RateB01")),
+	create_parm ("DataRate3","data rate of the third packet in the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdTDM_fDataRate3Set",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdTDM_fRateC01","RateC01")),
+	create_parm ("DataRate4","data rate of the fourth packet in the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdTDM_fDataRate4Set",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdTDM_fRateD01","RateD01")));
+
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR38_x5f4kbps_x5f16_x5fslot", 
+	"R38.4kbps 16 slot",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR76_x5f8kbps_x5f8_x5fslot", 
+	"R76.8kbps 8 slot",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR153_x5f6kbps_x5f4_x5fslot", 
+	"R153.6kbps 4 slot",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR307_x5f2kbps_x5f2_x5fslot", 
+	"R307.2kbps 2 slot",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR614_x5f4kbps_x5f1_x5fslot", 
+	"R614.4kbps 1 slot",
+	0,
+	"4",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR307_x5f2kbps_x5f4_x5fslot", 
+	"R307.2kbps 4 slot",
+	0,
+	"5",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR614_x5f4kbps_x5f2_x5fslot", 
+	"R614.4kbps 2 slot",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR1228_x5f8kbps_x5f1_x5fslot", 
+	"R1228.8kbps 1 slot",
+	0,
+	"7",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR921_x5f6kbps_x5f2_x5fslot", 
+	"R921.6kbps 2 slot",
+	0,
+	"8",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR1843_x5f2kbps_x5f1_x5fslot", 
+	"R1843.2kbps 1 slot",
+	0,
+	"9",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR1228_x5f8kbps_x5f2_x5fslot", 
+	"R1228.8kbps 2 slot",
+	0,
+	"10",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fR2457_x5f6kbps_x5f1_x5fslot", 
+	"R2457.6kbps 1 slot",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdSrc_fDataRateSet",
+	"_n1xEV_x5fFwdSrc_fR38_x5f4kbps_x5f16_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR76_x5f8kbps_x5f8_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR153_x5f6kbps_x5f4_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR307_x5f2kbps_x5f2_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR614_x5f4kbps_x5f1_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR307_x5f2kbps_x5f4_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR614_x5f4kbps_x5f2_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR1228_x5f8kbps_x5f1_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR921_x5f6kbps_x5f2_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR1843_x5f2kbps_x5f1_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR1228_x5f8kbps_x5f2_x5fslot",
+	"_n1xEV_x5fFwdSrc_fR2457_x5f6kbps_x5f1_x5fslot",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fC_x5fP9010", 
+	"C_P9010",
+	0,
+	"0",
+	"3GPP2 C.P9010 Sept. 2000");
+
+create_constant_form ("_n1xEV_x5fFwdSrc_fC_x5fS0024", 
+	"C_S0024",
+	0,
+	"1",
+	"3GPP2 C.S0024 Aug. 2001");
+
+create_form_set("_n1xEV_x5fFwdSrc_fVersionSet",
+	"_n1xEV_x5fFwdSrc_fC_x5fP9010",
+	"_n1xEV_x5fFwdSrc_fC_x5fS0024",
+	"StdForm");
+
+create_item ("1xEV_FwdSrc","Forword link signal generator",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_FwdSrc",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_FwdSrc",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_FwdSrc",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataRate","data rate of the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdSrc_fDataRateSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdSrc_fR38_x5f4kbps_x5f16_x5fslot","R38_4kbps_16_slot")),
+	create_parm ("SlotState","state of each slot: 0 for idle, 1 for active",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 0 0 0\"")),
+	create_parm ("Version","version of cdma2000 High Rate Packet Data Air Interface Specification",
+		PARM_INT,
+		"_n1xEV_x5fFwdSrc_fVersionSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdSrc_fC_x5fP9010","C_P9010")));
+
+
+create_constant_form ("_n1xEV_x5fFwdRhoWithRef_fpilot", 
+	"pilot",
+	0,
+	"0",
+	"pilot");
+
+create_constant_form ("_n1xEV_x5fFwdRhoWithRef_foverall_x5f1", 
+	"overall-1",
+	0,
+	"1",
+	"overall-1");
+
+create_constant_form ("_n1xEV_x5fFwdRhoWithRef_foverall_x5f2", 
+	"overall-2",
+	0,
+	"2",
+	"overall-2");
+
+create_form_set("_n1xEV_x5fFwdRhoWithRef_fTypeSet",
+	"_n1xEV_x5fFwdRhoWithRef_fpilot",
+	"_n1xEV_x5fFwdRhoWithRef_foverall_x5f1",
+	"_n1xEV_x5fFwdRhoWithRef_foverall_x5f2",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdRhoWithRef_fSine", 
+	"Sine",
+	0,
+	"0",
+	"Sine");
+
+create_constant_form ("_n1xEV_x5fFwdRhoWithRef_fMinus_x5fSine", 
+	"Minus Sine",
+	0,
+	"1",
+	"Minus Sine");
+
+create_form_set("_n1xEV_x5fFwdRhoWithRef_fQ_x5fPhaseSet",
+	"_n1xEV_x5fFwdRhoWithRef_fSine",
+	"_n1xEV_x5fFwdRhoWithRef_fMinus_x5fSine",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdRhoWithRef_fEVM_x5fRatio", 
+	"EVM_Ratio",
+	0,
+	"0",
+	"EVM as ratio ");
+
+create_constant_form ("_n1xEV_x5fFwdRhoWithRef_fEVM_x5fPercent", 
+	"EVM_Percent",
+	0,
+	"1",
+	"EVM as percent");
+
+create_form_set("_n1xEV_x5fFwdRhoWithRef_fEVMValueSet",
+	"_n1xEV_x5fFwdRhoWithRef_fEVM_x5fRatio",
+	"_n1xEV_x5fFwdRhoWithRef_fEVM_x5fPercent",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdRhoWithRef_fYes", 
+	"Yes",
+	0,
+	"0",
+	"Yes");
+
+create_constant_form ("_n1xEV_x5fFwdRhoWithRef_fNo", 
+	"No",
+	0,
+	"1",
+	"No");
+
+create_form_set("_n1xEV_x5fFwdRhoWithRef_fPhaseEqualizerSet",
+	"_n1xEV_x5fFwdRhoWithRef_fYes",
+	"_n1xEV_x5fFwdRhoWithRef_fNo",
+	"StdForm");
+
+create_item ("1xEV_FwdRhoWithRef","Rho measurement for forward link",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_FwdRhoWithRef",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_FwdRhoWithRef",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_FwdRhoWithRef",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Type","measurement rho type",
+		PARM_INT,
+		"_n1xEV_x5fFwdRhoWithRef_fTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdRhoWithRef_fpilot","pilot")),
+	create_parm ("Q_Phase","sign of sine",
+		PARM_INT,
+		"_n1xEV_x5fFwdRhoWithRef_fQ_x5fPhaseSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdRhoWithRef_fSine","Sine")),
+	create_parm ("EVMValue","EVM value expression options",
+		PARM_INT,
+		"_n1xEV_x5fFwdRhoWithRef_fEVMValueSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdRhoWithRef_fEVM_x5fRatio","EVM_Ratio")),
+	create_parm ("PhaseEqualizer","whether the phase equalizer is used at the transmitter",
+		PARM_INT,
+		"_n1xEV_x5fFwdRhoWithRef_fPhaseEqualizerSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdRhoWithRef_fNo","No")));
+
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fAll_x5fOn", 
+	"All On",
+	0,
+	"0",
+	"All On");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fDutyCycle75", 
+	"DutyCycle75",
+	0,
+	"1",
+	"DutyCycle75");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fDutyCycle50", 
+	"DutyCycle50",
+	0,
+	"2",
+	"DutyCycle50");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fDutyCycle25", 
+	"DutyCycle25",
+	0,
+	"3",
+	"DutyCycle25");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fAll_x5fOff", 
+	"All Off",
+	0,
+	"4",
+	"All Off");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fUserDefinedStatus", 
+	"UserDefinedStatus",
+	0,
+	"5",
+	"UserDefined");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlotStatusSet",
+	"_n1xEV_x5fFwdFrameSrc_fAll_x5fOn",
+	"_n1xEV_x5fFwdFrameSrc_fDutyCycle75",
+	"_n1xEV_x5fFwdFrameSrc_fDutyCycle50",
+	"_n1xEV_x5fFwdFrameSrc_fDutyCycle25",
+	"_n1xEV_x5fFwdFrameSrc_fAll_x5fOff",
+	"_n1xEV_x5fFwdFrameSrc_fUserDefinedStatus",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fAll_x5fQPSK", 
+	"All QPSK",
+	0,
+	"0",
+	"All QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fAll_x5f8PSK", 
+	"All 8PSK",
+	0,
+	"1",
+	"All 8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fAll_x5f16QAM", 
+	"All 16QAM",
+	0,
+	"2",
+	"All 16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fUserDefinedType", 
+	"UserDefinedType",
+	0,
+	"3",
+	"UserDefined");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fAll_x5fQPSK",
+	"_n1xEV_x5fFwdFrameSrc_fAll_x5f8PSK",
+	"_n1xEV_x5fFwdFrameSrc_fAll_x5f16QAM",
+	"_n1xEV_x5fFwdFrameSrc_fUserDefinedType",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK1", 
+	"Mod_QPSK1",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK1", 
+	"Mod_8PSK1",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM1", 
+	"Mod_16QAM1",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive1", 
+	"Inactive1",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot1ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK1",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK1",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM1",
+	"_n1xEV_x5fFwdFrameSrc_fInactive1",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK2", 
+	"Mod_QPSK2",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK2", 
+	"Mod_8PSK2",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM2", 
+	"Mod_16QAM2",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive2", 
+	"Inactive2",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot2ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK2",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK2",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM2",
+	"_n1xEV_x5fFwdFrameSrc_fInactive2",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK3", 
+	"Mod_QPSK3",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK3", 
+	"Mod_8PSK3",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM3", 
+	"Mod_16QAM3",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive3", 
+	"Inactive3",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot3ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK3",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK3",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM3",
+	"_n1xEV_x5fFwdFrameSrc_fInactive3",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK4", 
+	"Mod_QPSK4",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK4", 
+	"Mod_8PSK4",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM4", 
+	"Mod_16QAM4",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive4", 
+	"Inactive4",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot4ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK4",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK4",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM4",
+	"_n1xEV_x5fFwdFrameSrc_fInactive4",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK5", 
+	"Mod_QPSK5",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK5", 
+	"Mod_8PSK5",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM5", 
+	"Mod_16QAM5",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive5", 
+	"Inactive5",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot5ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK5",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK5",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM5",
+	"_n1xEV_x5fFwdFrameSrc_fInactive5",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK6", 
+	"Mod_QPSK6",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK6", 
+	"Mod_8PSK6",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM6", 
+	"Mod_16QAM6",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive6", 
+	"Inactive6",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot6ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK6",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK6",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM6",
+	"_n1xEV_x5fFwdFrameSrc_fInactive6",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK7", 
+	"Mod_QPSK7",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK7", 
+	"Mod_8PSK7",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM7", 
+	"Mod_16QAM7",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive7", 
+	"Inactive7",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot7ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK7",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK7",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM7",
+	"_n1xEV_x5fFwdFrameSrc_fInactive7",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK8", 
+	"Mod_QPSK8",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK8", 
+	"Mod_8PSK8",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM8", 
+	"Mod_16QAM8",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive8", 
+	"Inactive8",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot8ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK8",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK8",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM8",
+	"_n1xEV_x5fFwdFrameSrc_fInactive8",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK9", 
+	"Mod_QPSK9",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK9", 
+	"Mod_8PSK9",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM9", 
+	"Mod_16QAM9",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive9", 
+	"Inactive9",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot9ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK9",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK9",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM9",
+	"_n1xEV_x5fFwdFrameSrc_fInactive9",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK10", 
+	"Mod_QPSK10",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK10", 
+	"Mod_8PSK10",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM10", 
+	"Mod_16QAM10",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive10", 
+	"Inactive10",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot10ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK10",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK10",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM10",
+	"_n1xEV_x5fFwdFrameSrc_fInactive10",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK11", 
+	"Mod_QPSK11",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK11", 
+	"Mod_8PSK11",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM11", 
+	"Mod_16QAM11",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive11", 
+	"Inactive11",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot11ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK11",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK11",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM11",
+	"_n1xEV_x5fFwdFrameSrc_fInactive11",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK12", 
+	"Mod_QPSK12",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK12", 
+	"Mod_8PSK12",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM12", 
+	"Mod_16QAM12",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive12", 
+	"Inactive12",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot12ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK12",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK12",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM12",
+	"_n1xEV_x5fFwdFrameSrc_fInactive12",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK13", 
+	"Mod_QPSK13",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK13", 
+	"Mod_8PSK13",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM13", 
+	"Mod_16QAM13",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive13", 
+	"Inactive13",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot13ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK13",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK13",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM13",
+	"_n1xEV_x5fFwdFrameSrc_fInactive13",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK14", 
+	"Mod_QPSK14",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK14", 
+	"Mod_8PSK14",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM14", 
+	"Mod_16QAM14",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive14", 
+	"Inactive14",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot14ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK14",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK14",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM14",
+	"_n1xEV_x5fFwdFrameSrc_fInactive14",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK15", 
+	"Mod_QPSK15",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK15", 
+	"Mod_8PSK15",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM15", 
+	"Mod_16QAM15",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive15", 
+	"Inactive15",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot15ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK15",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK15",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM15",
+	"_n1xEV_x5fFwdFrameSrc_fInactive15",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK16", 
+	"Mod_QPSK16",
+	0,
+	"0",
+	"QPSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK16", 
+	"Mod_8PSK16",
+	0,
+	"1",
+	"8PSK");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM16", 
+	"Mod_16QAM16",
+	0,
+	"2",
+	"16QAM");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fInactive16", 
+	"Inactive16",
+	0,
+	"3",
+	"Inactive");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fSlot16ModTypeSet",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK16",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f8PSK16",
+	"_n1xEV_x5fFwdFrameSrc_fMod_x5f16QAM16",
+	"_n1xEV_x5fFwdFrameSrc_fInactive16",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fRA_x5fYes", 
+	"RA_Yes",
+	0,
+	"0",
+	"Yes");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fRA_x5fNo", 
+	"RA_No",
+	0,
+	"1",
+	"No");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fRA_x5fEnableSet",
+	"_n1xEV_x5fFwdFrameSrc_fRA_x5fYes",
+	"_n1xEV_x5fFwdFrameSrc_fRA_x5fNo",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fRPC_x5fYes", 
+	"RPC_Yes",
+	0,
+	"0",
+	"Yes");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fRPC_x5fNo", 
+	"RPC_No",
+	0,
+	"1",
+	"No");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fRPC_x5fEnableSet",
+	"_n1xEV_x5fFwdFrameSrc_fRPC_x5fYes",
+	"_n1xEV_x5fFwdFrameSrc_fRPC_x5fNo",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fSequential", 
+	"Sequential",
+	0,
+	"0",
+	"Sequential");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fRandom", 
+	"Random",
+	0,
+	"1",
+	"Random");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fUserDefined", 
+	"UserDefined",
+	0,
+	"2",
+	"UserDefined");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fRPC_x5fChSelectSet",
+	"_n1xEV_x5fFwdFrameSrc_fSequential",
+	"_n1xEV_x5fFwdFrameSrc_fRandom",
+	"_n1xEV_x5fFwdFrameSrc_fUserDefined",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fAll_x5f0s", 
+	"All 0s",
+	0,
+	"0",
+	"All 0s");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fAll_x5f1s", 
+	"All 1s",
+	0,
+	"1",
+	"All 1s");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fRandom_x5fValue", 
+	"Random Value",
+	0,
+	"2",
+	"Random Value");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fRPC_x5fValueSet",
+	"_n1xEV_x5fFwdFrameSrc_fAll_x5f0s",
+	"_n1xEV_x5fFwdFrameSrc_fAll_x5f1s",
+	"_n1xEV_x5fFwdFrameSrc_fRandom_x5fValue",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fC_x5fP9010", 
+	"C_P9010",
+	0,
+	"0",
+	"3GPP2 C.P9010 Sept. 2000");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fC_x5fS0024", 
+	"C_S0024",
+	0,
+	"1",
+	"3GPP2 C.S0024 Aug. 2001");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fVersionSet",
+	"_n1xEV_x5fFwdFrameSrc_fC_x5fP9010",
+	"_n1xEV_x5fFwdFrameSrc_fC_x5fS0024",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockYes", 
+	"DRC_LockYes",
+	0,
+	"0",
+	"Yes");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockNo", 
+	"DRC_LockNo",
+	0,
+	"1",
+	"No");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockEnableSet",
+	"_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockYes",
+	"_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockNo",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_f_x5f4_x5fTimes", 
+	"_4_Times",
+	0,
+	"0",
+	"4");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_f_x5f8_x5fTimes", 
+	"_8_Times",
+	0,
+	"1",
+	"8 ");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_f_x5f16_x5fTimes", 
+	"_16_Times",
+	0,
+	"2",
+	"16");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_f_x5f32_x5fTimes", 
+	"_32_Times",
+	0,
+	"3",
+	"32");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockLengthSet",
+	"_n1xEV_x5fFwdFrameSrc_f_x5f4_x5fTimes",
+	"_n1xEV_x5fFwdFrameSrc_f_x5f8_x5fTimes",
+	"_n1xEV_x5fFwdFrameSrc_f_x5f16_x5fTimes",
+	"_n1xEV_x5fFwdFrameSrc_f_x5f32_x5fTimes",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_f_x5f8_x5fSlots", 
+	"_8_Slots",
+	0,
+	"0",
+	"8 slots");
+
+create_constant_form ("_n1xEV_x5fFwdFrameSrc_f_x5f16_x5fSlots", 
+	"_16_Slots",
+	0,
+	"1",
+	"16 slots");
+
+create_form_set("_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockPeriodSet",
+	"_n1xEV_x5fFwdFrameSrc_f_x5f8_x5fSlots",
+	"_n1xEV_x5fFwdFrameSrc_f_x5f16_x5fSlots",
+	"StdForm");
+
+create_item ("1xEV_FwdFrameSrc","1xEV forward link signal source in the format of data frame",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_FwdFrameSrc",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_FwdFrameSrc",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_FwdFrameSrc",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SlotStatus","state of each slot in the frame",
+		PARM_INT,
+		"_n1xEV_x5fFwdFrameSrc_fSlotStatusSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fAll_x5fOn","All_On")),
+	create_parm ("ModType","modulation type for each slot",
+		PARM_INT,
+		"_n1xEV_x5fFwdFrameSrc_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fAll_x5fQPSK","All_QPSK")),
+	create_parm ("Slot1ModType","Status of the first slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot1ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK1","Mod_QPSK1")),
+	create_parm ("Slot2ModType","Status of the second slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot2ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK2","Mod_QPSK2")),
+	create_parm ("Slot3ModType","Status of the third slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot3ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK3","Mod_QPSK3")),
+	create_parm ("Slot4ModType","Status of the third slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot4ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK4","Mod_QPSK4")),
+	create_parm ("Slot5ModType","Status of the fourth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot5ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK5","Mod_QPSK5")),
+	create_parm ("Slot6ModType","Status of the sixth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot6ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK6","Mod_QPSK6")),
+	create_parm ("Slot7ModType","Status of the seventh slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot7ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK7","Mod_QPSK7")),
+	create_parm ("Slot8ModType","Status of the eighth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot8ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK8","Mod_QPSK8")),
+	create_parm ("Slot9ModType","Status of the ninth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot9ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK9","Mod_QPSK9")),
+	create_parm ("Slot10ModType","Status of the tenth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot10ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK10","Mod_QPSK10")),
+	create_parm ("Slot11ModType","Status of the eleventh slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot11ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK11","Mod_QPSK11")),
+	create_parm ("Slot12ModType","Status of the twelfth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot12ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK12","Mod_QPSK12")),
+	create_parm ("Slot13ModType","Status of the thirteenth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot13ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK13","Mod_QPSK13")),
+	create_parm ("Slot14ModType","Status of the fourteenth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot14ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK14","Mod_QPSK14")),
+	create_parm ("Slot15ModType","Status of the fifteenth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot15ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK15","Mod_QPSK15")),
+	create_parm ("Slot16ModType","Status of the sixteenth slot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fSlot16ModTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fMod_x5fQPSK16","Mod_QPSK16")),
+	create_parm ("RA_Enable","enable or disable RA channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdFrameSrc_fRA_x5fEnableSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fRA_x5fYes","RA_Yes")),
+	create_parm ("RAB_Length","the number of slots over which the Reverse Activity Bit is transmitted",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("RPC_Enable","enable or disable RPC channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdFrameSrc_fRPC_x5fEnableSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fRPC_x5fYes","RPC_Yes")),
+	create_parm ("RPC_ChNum","number of the reverse power control channel",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RPC_ChSelect","the way to set channel index of reverse power control channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdFrameSrc_fRPC_x5fChSelectSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fSequential","Sequential")),
+	create_parm ("RPC_Index","user-defined RPC index",
+		PARM_INTARRAY | PARM_NO_DISPLAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"5\"")),
+	create_parm ("RPC_Value","value of RPC bit in each RPC channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdFrameSrc_fRPC_x5fValueSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fAll_x5f0s","All_0s")),
+	create_parm ("Version","version of cdma2000 High Rate Packet Data Air Interface Specification",
+		PARM_INT,
+		"_n1xEV_x5fFwdFrameSrc_fVersionSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fC_x5fP9010","C_P9010")),
+	create_parm ("DRC_LockEnable","enable or disable DRCLock channel",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockEnableSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockYes","DRC_LockYes")),
+	create_parm ("DRC_LockLength","the number of times that a DRCLock bit is repeated",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockLengthSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_f_x5f8_x5fTimes","_8_Times")),
+	create_parm ("DRC_LockPeriod","the time interval in units of slots between transmission of two consecutive DRCLock bit",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_n1xEV_x5fFwdFrameSrc_fDRC_x5fLockPeriodSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdFrameSrc_f_x5f8_x5fSlots","_8_Slots")));
+
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA01", 
+	"RateA01",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA02", 
+	"RateA02",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA03", 
+	"RateA03",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA04", 
+	"RateA04",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA05", 
+	"RateA05",
+	0,
+	"4",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA06", 
+	"RateA06",
+	0,
+	"5",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA07", 
+	"RateA07",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA08", 
+	"RateA08",
+	0,
+	"7",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA09", 
+	"RateA09",
+	0,
+	"8",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA10", 
+	"RateA10",
+	0,
+	"9",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA11", 
+	"RateA11",
+	0,
+	"10",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateA12", 
+	"RateA12",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdDeTDM_fDataRate1Set",
+	"_n1xEV_x5fFwdDeTDM_fRateA01",
+	"_n1xEV_x5fFwdDeTDM_fRateA02",
+	"_n1xEV_x5fFwdDeTDM_fRateA03",
+	"_n1xEV_x5fFwdDeTDM_fRateA04",
+	"_n1xEV_x5fFwdDeTDM_fRateA05",
+	"_n1xEV_x5fFwdDeTDM_fRateA06",
+	"_n1xEV_x5fFwdDeTDM_fRateA07",
+	"_n1xEV_x5fFwdDeTDM_fRateA08",
+	"_n1xEV_x5fFwdDeTDM_fRateA09",
+	"_n1xEV_x5fFwdDeTDM_fRateA10",
+	"_n1xEV_x5fFwdDeTDM_fRateA11",
+	"_n1xEV_x5fFwdDeTDM_fRateA12",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB01", 
+	"RateB01",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB02", 
+	"RateB02",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB03", 
+	"RateB03",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB04", 
+	"RateB04",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB05", 
+	"RateB05",
+	0,
+	"4",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB06", 
+	"RateB06",
+	0,
+	"5",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB07", 
+	"RateB07",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB08", 
+	"RateB08",
+	0,
+	"7",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB09", 
+	"RateB09",
+	0,
+	"8",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB10", 
+	"RateB10",
+	0,
+	"9",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB11", 
+	"RateB11",
+	0,
+	"10",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateB12", 
+	"RateB12",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdDeTDM_fDataRate2Set",
+	"_n1xEV_x5fFwdDeTDM_fRateB01",
+	"_n1xEV_x5fFwdDeTDM_fRateB02",
+	"_n1xEV_x5fFwdDeTDM_fRateB03",
+	"_n1xEV_x5fFwdDeTDM_fRateB04",
+	"_n1xEV_x5fFwdDeTDM_fRateB05",
+	"_n1xEV_x5fFwdDeTDM_fRateB06",
+	"_n1xEV_x5fFwdDeTDM_fRateB07",
+	"_n1xEV_x5fFwdDeTDM_fRateB08",
+	"_n1xEV_x5fFwdDeTDM_fRateB09",
+	"_n1xEV_x5fFwdDeTDM_fRateB10",
+	"_n1xEV_x5fFwdDeTDM_fRateB11",
+	"_n1xEV_x5fFwdDeTDM_fRateB12",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC01", 
+	"RateC01",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC02", 
+	"RateC02",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC03", 
+	"RateC03",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC04", 
+	"RateC04",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC05", 
+	"RateC05",
+	0,
+	"4",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC06", 
+	"RateC06",
+	0,
+	"5",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC07", 
+	"RateC07",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC08", 
+	"RateC08",
+	0,
+	"7",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC09", 
+	"RateC09",
+	0,
+	"8",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC10", 
+	"RateC10",
+	0,
+	"9",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC11", 
+	"RateC11",
+	0,
+	"10",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateC12", 
+	"RateC12",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdDeTDM_fDataRate3Set",
+	"_n1xEV_x5fFwdDeTDM_fRateC01",
+	"_n1xEV_x5fFwdDeTDM_fRateC02",
+	"_n1xEV_x5fFwdDeTDM_fRateC03",
+	"_n1xEV_x5fFwdDeTDM_fRateC04",
+	"_n1xEV_x5fFwdDeTDM_fRateC05",
+	"_n1xEV_x5fFwdDeTDM_fRateC06",
+	"_n1xEV_x5fFwdDeTDM_fRateC07",
+	"_n1xEV_x5fFwdDeTDM_fRateC08",
+	"_n1xEV_x5fFwdDeTDM_fRateC09",
+	"_n1xEV_x5fFwdDeTDM_fRateC10",
+	"_n1xEV_x5fFwdDeTDM_fRateC11",
+	"_n1xEV_x5fFwdDeTDM_fRateC12",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD01", 
+	"RateD01",
+	0,
+	"0",
+	"R38.4kbps 16 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD02", 
+	"RateD02",
+	0,
+	"1",
+	"R76.8kbps 8 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD03", 
+	"RateD03",
+	0,
+	"2",
+	"R153.6kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD04", 
+	"RateD04",
+	0,
+	"3",
+	"R307.2kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD05", 
+	"RateD05",
+	0,
+	"4",
+	"R307.2kbps 4 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD06", 
+	"RateD06",
+	0,
+	"5",
+	"R614.4kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD07", 
+	"RateD07",
+	0,
+	"6",
+	"R614.4kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD08", 
+	"RateD08",
+	0,
+	"7",
+	"R921.6kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD09", 
+	"RateD09",
+	0,
+	"8",
+	"R1228.8kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD10", 
+	"RateD10",
+	0,
+	"9",
+	"R1228.8kbps 2 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD11", 
+	"RateD11",
+	0,
+	"10",
+	"R1843.2kbps 1 slot");
+
+create_constant_form ("_n1xEV_x5fFwdDeTDM_fRateD12", 
+	"RateD12",
+	0,
+	"11",
+	"R2457.6kbps 1 slot");
+
+create_form_set("_n1xEV_x5fFwdDeTDM_fDataRate4Set",
+	"_n1xEV_x5fFwdDeTDM_fRateD01",
+	"_n1xEV_x5fFwdDeTDM_fRateD02",
+	"_n1xEV_x5fFwdDeTDM_fRateD03",
+	"_n1xEV_x5fFwdDeTDM_fRateD04",
+	"_n1xEV_x5fFwdDeTDM_fRateD05",
+	"_n1xEV_x5fFwdDeTDM_fRateD06",
+	"_n1xEV_x5fFwdDeTDM_fRateD07",
+	"_n1xEV_x5fFwdDeTDM_fRateD08",
+	"_n1xEV_x5fFwdDeTDM_fRateD09",
+	"_n1xEV_x5fFwdDeTDM_fRateD10",
+	"_n1xEV_x5fFwdDeTDM_fRateD11",
+	"_n1xEV_x5fFwdDeTDM_fRateD12",
+	"StdForm");
+
+create_item ("1xEV_FwdDeTDM","Time division demultiplex for forward link",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_FwdDeTDM",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_FwdDeTDM",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_FwdDeTDM",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataRate1","data rate of the first packet in the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdDeTDM_fDataRate1Set",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdDeTDM_fRateA01","RateA01")),
+	create_parm ("DataRate2","data rate of the second packet in the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdDeTDM_fDataRate2Set",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdDeTDM_fRateB01","RateB01")),
+	create_parm ("DataRate3","data rate of the third packet in the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdDeTDM_fDataRate3Set",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdDeTDM_fRateC01","RateC01")),
+	create_parm ("DataRate4","data rate of the fourth packet in the forward traffic channel",
+		PARM_INT,
+		"_n1xEV_x5fFwdDeTDM_fDataRate4Set",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdDeTDM_fRateD01","RateD01")));
+
+
+create_constant_form ("_n1xEV_x5fFwdCDP_fData", 
+	"Data",
+	0,
+	"0",
+	"Data");
+
+create_constant_form ("_n1xEV_x5fFwdCDP_fMAC", 
+	"MAC",
+	0,
+	"1",
+	"MAC");
+
+create_form_set("_n1xEV_x5fFwdCDP_fTypeSet",
+	"_n1xEV_x5fFwdCDP_fData",
+	"_n1xEV_x5fFwdCDP_fMAC",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdCDP_fSine", 
+	"Sine",
+	0,
+	"0",
+	"Sine");
+
+create_constant_form ("_n1xEV_x5fFwdCDP_fMinus_x5fSine", 
+	"Minus Sine",
+	0,
+	"1",
+	"Minus Sine");
+
+create_form_set("_n1xEV_x5fFwdCDP_fQ_x5fPhaseSet",
+	"_n1xEV_x5fFwdCDP_fSine",
+	"_n1xEV_x5fFwdCDP_fMinus_x5fSine",
+	"StdForm");
+
+create_constant_form ("_n1xEV_x5fFwdCDP_fYes", 
+	"Yes",
+	0,
+	"0",
+	"Yes");
+
+create_constant_form ("_n1xEV_x5fFwdCDP_fNo", 
+	"No",
+	0,
+	"1",
+	"No");
+
+create_form_set("_n1xEV_x5fFwdCDP_fPhaseEqualizerSet",
+	"_n1xEV_x5fFwdCDP_fYes",
+	"_n1xEV_x5fFwdCDP_fNo",
+	"StdForm");
+
+create_item ("1xEV_FwdCDP","Code domain power measurement for forward link",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_FwdCDP",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_FwdCDP",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_FwdCDP",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Type","channel type for code domain power measurement",
+		PARM_INT,
+		"_n1xEV_x5fFwdCDP_fTypeSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdCDP_fData","Data")),
+	create_parm ("TestLength","number of slots for code domain power measurement",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("Q_Phase","sign of sine",
+		PARM_INT,
+		"_n1xEV_x5fFwdCDP_fQ_x5fPhaseSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdCDP_fSine","Sine")),
+	create_parm ("CDP_GroupNum","number of output CDP groups",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("PhaseEqualizer","whether the phase equalizer is used at the transmitter",
+		PARM_INT,
+		"_n1xEV_x5fFwdCDP_fPhaseEqualizerSet",
+		UNITLESS_UNIT,
+		prm("_n1xEV_x5fFwdCDP_fNo","No")));
+
+
+create_item ("1xEV_BaseFilter","Complex FIR baseband filter for 1xEV system",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_BaseFilter",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_BaseFilter",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_BaseFilter",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("1xEV_8PSKMod","Generation of 8PSK modulated signal",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_8PSKMod",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_8PSKMod",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_8PSKMod",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("1xEV_16QAMMod","Generation of 16QAM modulated signal",
+	"x",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_1xEV_16QAMMod",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"1xEV_16QAMMod",
+	SPDesignAnnotFmt,
+	"SYM_DSN_1xEV_16QAMMod",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);

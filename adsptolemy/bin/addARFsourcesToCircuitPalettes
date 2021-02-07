@@ -1,0 +1,26 @@
+#!/bin/ksh
+# Add DSP-based A/RF sources to circuit palettes
+
+set -e
+prog=$0
+
+usage () {
+    echo "Usage: $prog rec_file_name"
+}
+
+if [ "$1" = "" ]; then
+  echo "rec_file_name not provided."
+  usage
+  exit 1
+fi 
+
+if [ ! -f "$HPEESOF_DIR/circuit/records/hpeesof_rf.ctl" ] ; then
+  echo "$HPEESOF_DIR/circuit/records/hpeesof_rf.ctl file not found."
+  echo "DSP-based A/RF sources will not be added to circuit palettes."
+  exit 0
+fi
+
+sed '/^Sources-Modulated[^-]/a\
+Sources-Modulated-DSP-Based	'$1 circuit/records/hpeesof_rf.ctl > hpeesof_rf.ctl.tmpARFsource
+
+mv -f hpeesof_rf.ctl.tmpARFsource circuit/records/hpeesof_rf.ctl

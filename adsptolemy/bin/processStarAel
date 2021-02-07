@@ -1,0 +1,367 @@
+#!/eesof/bin/perl5
+# @(#) $Source: /cvs/wlv/src/hptolemyaddons/src/sp-modelbuilder/bin/processStarAel,v $ $Revision: 100.37 $ $Date: 2010/07/12 21:40:16 $
+# Author: Jose Luis Pino
+
+# Script to process AEL file created using hpeesofsim -S -ael.  
+# See on-line docs for more details.
+
+$oaLibrary{ "BOGUS_DUMMY" } = "BOGUS_DUMMY" ;
+$oaCell{ "BOGUS_DUMMY" } = "BOGUS_DUMMY" ;
+sub processItemMap
+{    
+    local $itemMapFile = @_[ 0 ] ; # "../../oalibs/library_translation/itemmap_test.txt" ;
+    open( ITEMMAPFILE,"< $itemMapFile") || die " $!   \n could not open input file $itemMapFile";
+
+    # %oaLibrary is the map from old DSN name to new libName
+    # %oaCell is the map from old dsn name to new cell name - old names must be unique
+    while ( my $line = <ITEMMAPFILE> )
+    {
+        if ( $line =~ /(\S+)\s+(\S+)\s+(\S+)/ ) 
+        {
+            my $old_name = $1;
+            my $lib_name = $2;
+            my $new_name = $3;
+#             $oaLibrary { $old_name } = $lib_name ;
+            ${ @_[ 1 ] }{ $old_name } = $lib_name ;
+#             $oaCell { $old_name } = $new_name ;
+            ${ @_[ 2 ] }{ $old_name } = $new_name ;
+        }
+    }
+    close( ITEMMAPFILE ); 
+}
+
+$wtb = 0;
+$arfSource = 0;
+
+for $i (0 .. $#ARGV) {
+  if ($ARGV[$i] =~ /^-default$/i) {
+    $defaultDevices = 1;
+  }
+  elsif ($ARGV[$i] =~ /^-hppalette/) {
+    hptolemy();
+    $hppaletteDefined = 1;
+    processPalettes("$hptolemy/lib/hppalettes");
+  }
+  elsif ($ARGV[$i] =~ /^-palette\w*=(.+)$/i) {
+    processPalettes($1);
+  }
+  elsif ($ARGV[$i] =~ /^-itemmap\w*=(.+)$/i) {
+    #  print "\n processStarAel has an argument $ARGV[$i] \n " ;
+    processItemMap( $1, \%oaLibrary, \%oaCell );
+  }
+  elsif ($ARGV[$i] =~ /^-wtb/i) {
+    $wtb = 1;
+  }
+  elsif ($ARGV[$i] =~ /^-arfSource/i) {
+    $arfSource = 1;
+  }
+  elsif ($ARGV[$i] =~ /^-/) {
+    die "Usage: $0 [-default] [-hppalette] [-palette=paletteFile] file1 file2 file3 ...\n";
+  }
+  else {
+    ((unlink("$ARGV[$i].new") ||
+      die "Couldn't remove $ARGV[$i].new: $!\n")) if (-f "$ARGV[$i].new");
+    push @files,$ARGV[$i];
+  }
+}
+
+for $i (0 .. $#files) {
+  open(AELFILE,"< $files[$i]");
+  open(STARSH, "> $files[$i].new") || die "$files[$i]: $!";
+  my $STARS = "STARSH";
+  my $name = "";
+  my $contents = join('',<AELFILE>);
+
+  # Remove comments from file
+  $contents =~ s,/\* .*? \*/,,xsg;
+  $contents =~ s,//.*$,,mg;
+
+  $contents =~ s,\\\\,\001,sg;
+  $contents =~ s,\\\",\002,sg;
+  
+  $contents =~ s,\"	        # quote -> ^C
+    ([^\"]* )	                # characters
+      \"			# quote -> ^D
+	,\003$1\004,gxs;
+
+  # FIXME ADS 1.3, hpedlibgen parser not robust with {} or ; in strings  - -> \005
+  while ($contents =~ s,\003 ([^\004]*) \; ,\003$1\005,xsg) {}
+
+  # while ($contents =~ s,\003 ([^\004]*) \{ , \003 $1 ( ,xsg) {}
+
+  # while ($contents =~ s,\003 ([^\004]*) \} , \003 $1 ) ,xsg) {}
+
+  for $cmd (split(';',$contents)) {
+    if ( $cmd =~ /create_item \s* \(
+	\s* \003 ([^\004]*) \004 \s*,
+	\s* \003 ([^\004]*) \004 \s*,
+	[^,]*,
+	[^,]*,
+	[^,]*,
+	\s* (?: NULL | \003 ([^\004]*) \004 ) \s*,
+	[^,]*,
+	[^,]*,
+	[^,]*,
+	\s* \003 ([^\004]*) \004 \s*,
+	/xs) {
+      my $name = decodeString($1);
+      $libName{ $name } = decodeString( $oaLibrary{ $name } );
+      $cellName{ $name } = decodeString( $oaCell{ $name } );
+      $desc{$name} = decodeString($2);
+      $bitmap{$name} = ($3 eq "NULL" ? $3 : decodeString($3));
+      my $netlistname = decodeString($4);
+      if ($netlistname =~ /^_v([^_]*)/) {
+		  $vendor{$name} = decodeString($1);
+      }
+      $cmd = decodeString($cmd) . ";\n";
+      print $STARS $cmd;
+    }
+    elsif ( $cmd =~ /library_group \s* \(
+	    \s* \003 ([^\004]*) \004 \s*,
+	    \s* \003 ([^\004]*) \004 \s*,
+	    \s* (.*) /xs ) {
+      my $group = decodeString($1);
+      my $members = $3;
+      $group =~ s/^\s+(\S)/$1/s;
+      $group =~ s/(\S)\s+$/$1/s;
+      $group =~ s/(\S)\s+(\S)/$1 $2/sg;
+
+# do not put component in a palette if location field is set to 
+# "Testing (for development use only)", "InformationComponent", 
+# or component is a WTB
+      if ($group ne "Testing (for development use only)" && $group ne "InformationComponent" && $wtb == 0 ) {
+		  while ($members =~ m,\003 ([^\004]*) \004,xsg) {
+			  my $name = decodeString($1);
+			  if ($name =~ /^\_/) {
+				  $library2{$group}[$libraryIndex2{$group}++] = $name;
+			  }
+			  else {
+				  $library{$group}[$libraryIndex{$group}++] = $name;
+                  if (!exists $oaLibrary{ $name } ) {
+                      # mapping for user defined components
+                      my $lib = $group;
+                      $lib =~ s/([^,]+),.*/$1/;
+                      $lib =~ s/\s/_/g;
+                      $libName{ $name } = $lib;
+                      $cellName{ $name } = $name;
+                  }
+			  }
+		  }
+      }
+    }
+    elsif (  (!($cmd =~ /^\s*$/)) && 
+	     (!($cmd =~ / palette_group \s* \( /xs)) ) {
+		$cmd = decodeString($cmd) . ";\n";
+		print $STARS $cmd;
+    }
+  }
+
+  if (%library) {
+    sortLibraries($files[$i],\%library);
+  }
+  
+  if (%library2) {
+    sortLibraries($files[$i],\%library2,"dsn");
+  }
+  
+  close $STARS;
+  close AELFILE;
+  ((unlink("$files[$i].bak") ||
+    die "Couldn't remove $files[$i].bak: $!\n")) if (-f "$files[$i].bak");
+  rename("$files[$i]","$files[$i].bak") || die "Couldn't rename $files[$i]: $!\n";
+  rename("$files[$i].new","$files[$i]") || die "Couldn't rename $files[$i].new: $!\n";
+}
+
+sub decodeString {
+  local($string) = @_;
+  $string =~ s,\001,\\\\,sg;
+  $string =~ s,\002,\\\",sg;
+  $string =~ s,\003,\",sg;
+  $string =~ s,\004,\",sg;
+  # FIXME ADS 1.3, hpedlibgen will support ; in "" 
+  # $string =~ s,\005,;,sg;
+  $string;
+}
+
+sub hptolemy {
+  if (defined($hptolemy)) {
+    return;
+  }
+  if (defined($ENV{HPTOLEMY})) {
+    $hptolemy = $ENV{HPTOLEMY};
+  }
+  elsif (defined($ENV{HPEESOF_DIR})) {
+    $hptolemy = "$ENV{HPEESOF_DIR}/adsptolemy/lib";
+  }
+  else {
+    die "The $$HPEESOF_DIR environment variable must be defined.\n";
+  }
+}
+
+sub processPalettes {
+  my $name = shift;
+  local *paletteFile;
+  open(paletteFile,"< $name") or die "$name: $!\n"; 
+  while (<paletteFile>) {
+    my $p = $_;
+    $p =~ s/\s*\/\/(.*)$//g;
+    $p =~ s/\s*$//g;
+    $p =~ s/^\s*//g;
+    if ($p ne "") {
+      push @palette,$p;
+    }
+  }
+  close paletteFile;
+}
+
+sub outputLibrary {
+  local ($CTLFILE,$BMPFILE,$fileprefix,$name,*subLibrary,$undefFlag) = @_;
+  my $hier = "";
+
+  if ($name =~ /^\s*([^,]+),\s*(.*)/) {
+    $hier = $1;
+    $subname = $2;
+  }
+  else {
+    $subname = $name;
+    if ( $arfSource == 0 ) {
+      $lasthier = "";
+    }
+    else {
+      $hier = "Analog/RF";
+    }
+  }
+
+  if ($hier ne "") {
+    if ($lasthier ne $hier) {
+      print $CTLFILE "#@ $hier\n";
+      $lasthier = $hier;
+      $libCount++;
+    }
+  }
+  else {
+    print $CTLFILE "#@ ";
+    $libCount++;
+  }
+
+  my $recordFile = "$fileprefix.rec";
+
+  # Remove directory path to file
+  $recordFile =~ s@.*\/([^/]+)@$1@g;
+
+  print $CTLFILE "$subname\t$recordFile\n";
+
+  open(RECFILEH,"> $fileprefix.rec") || die;
+  local $RECFILE = "RECFILEH";
+  
+  my @subLibraryS = sort @{$subLibrary{$name}};
+  my $j;
+  my $palette = "";
+  my $pal_libName = $libName{ $subLibraryS[$j] };
+  for $j (0 .. $#subLibraryS) {
+    if ( "$subLibraryS[$j]" ne "MeasEqn" ) {  # Apply a hammer to avoid MeasEqn in rec files..
+      if ( $arfSource == 0 ) {
+        print $RECFILE "$subLibraryS[$j] | $vendor{$subLibraryS[$j]} | $desc{$subLibraryS[$j]} | $name | NOLAYOUT\n\n";
+      } else {
+        print $RECFILE "$subLibraryS[$j] | $vendor{$subLibraryS[$j]} | $desc{$subLibraryS[$j]} | $name | NOLAYOUT\n\n";
+      }
+    }
+	$palette .= ",\n\t list( \"$libName{ $subLibraryS[$j] }\", \"$cellName{ $subLibraryS[$j] }\", NULL, \"$desc{$subLibraryS[$j]}\", \"$bitmap{$subLibraryS[$j]}\" )";
+  }
+  
+  if ($pal_libName && ($pal_libName ne "") && ($palette ne "")) {
+    $name =~ s/,//;
+    if ( $arfSource == 0 ) {
+	  print $BMPFILE "de_define_library_palette( \"$pal_libName\", SCHEM_WIN, \"sigproc_net\",\n\t\"$name\", \"$name\", -1$palette\n);\n\n";
+    }
+    else {
+	  print $BMPFILE "de_define_library_palette( \"$pal_libName\", SCHEM_WIN, \"analogRF_net\",\n\t\"$name\", \"$name\", -1$palette\n);\n\n";
+    }
+  }
+
+  close $RECFILE;
+}    
+
+sub splitCtlFile {
+  local ($CTLBASENAME, $CTLFILENAME) = @_;
+  local $CTLFILE;
+  local $SUBCTLFILE;
+
+  open(CTLFILE, "< $CTLFILENAME") || die "Failed to open $CTLFILENAME for input. \n";
+
+  while ( my $line = <CTLFILE> ) {
+    if ( $line =~ /^#@/ ) {
+      my $libname = "$line";
+      $libname =~ s/[\r\n]+$//;
+      $libname =~ s/^#@//; 
+      $libname =~ s/\t.*//;
+      $libname =~ s/(?<!\w) //g;
+      $libname =~ s/ /_/g;
+
+      if ( $libname eq "" ) {
+        die "Failed to find a valid library name in the CTL file $CTLFILENAME. \n";
+      }
+
+      if ( $lastLibrary ne "" ) {
+        close $SUBCTLFILE;
+      }
+
+      $lastLibrary = $libname;
+
+      open(SUBCTLFILE, "> $CTLBASENAME-$libname.ctl") || die "Failed to open $CTLBASENAME-$libname.ctl for output. \n";
+    }
+
+    print SUBCTLFILE "$line";
+  }
+
+  if ( $lastLibrary ne "" ) {
+    close $SUBCTLFILE;
+  }
+
+  close $CTLFILE;
+}
+
+sub sortLibraries {
+  $lasthier = "";
+  $libCount = 0;
+  local ($name,*subLibrary,$tag) = @_;
+  my $fileprefix = "$name";
+  $fileprefix =~ s/\.[^.]+$//g;
+  open(BMPFILEH, "> $fileprefix$tag-bmp.ael") || die;
+  local $BMPFILE = "BMPFILEH";
+  local $CTLBASENAME = "$fileprefix$tag";
+  local $CTLFILENAME = "$CTLBASENAME.ctl";
+  open(CTLFILEH,"> $CTLFILENAME") || die;
+  local $CTLFILE = "CTLFILEH";
+  my $i, $j;
+  
+  my @subLibraryNames, $name;
+  
+  foreach $name (keys %subLibrary) {
+    push @subLibraryNames,$name;
+  }
+  
+  my @subLibraryNamesSorted = sort @subLibraryNames;
+  
+  my $k = 0;
+
+  if (@palette) {
+    foreach $i (0 .. $#palette) {
+      $k++;
+      outputLibrary($CTLFILE,$BMPFILE,"$fileprefix$tag$k",$palette[$i],\%subLibrary,1);
+    }
+  }
+  
+  for $i (0 .. $#subLibraryNamesSorted) {
+    $k++;
+    outputLibrary($CTLFILE,$BMPFILE,"$fileprefix$tag$k",$subLibraryNamesSorted[$i],\%subLibrary,0);
+  }
+  
+  close $CTLFILE;
+  close $BMPFILE;
+  
+  if ( $libCount > 1 ) {
+    splitCtlFile($CTLBASENAME, $CTLFILENAME);
+  }
+
+}

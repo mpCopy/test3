@@ -1,0 +1,727 @@
+set_design_type( sigproc_net );
+
+create_item ("CDMA2K_PowerMeasure","Average Power Measurement",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_PowerMeasure",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_PowerMeasure",
+	SPDesignAnnotFmt,
+	"SYM_CDMA2K_PowerMeasure",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockSize","number of particles in a block",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")));
+
+
+create_item ("CDMA2K_BitsCx","Random comples data",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_BitsCx",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_BitsCx",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_BitsCx",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_constant_form ("_nCDMA2K_x5fRevPCBgenerator_fSR1", 
+	"SR1",
+	0,
+	"0",
+	"SR1");
+
+create_constant_form ("_nCDMA2K_x5fRevPCBgenerator_fSR3", 
+	"SR3",
+	0,
+	"1",
+	"SR3");
+
+create_form_set("_nCDMA2K_x5fRevPCBgenerator_fSpreadRateSet",
+	"_nCDMA2K_x5fRevPCBgenerator_fSR1",
+	"_nCDMA2K_x5fRevPCBgenerator_fSR3",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fRevPCBgenerator_fENABLE", 
+	"ENABLE",
+	0,
+	"0",
+	"ENABLE");
+
+create_constant_form ("_nCDMA2K_x5fRevPCBgenerator_fDISABLE", 
+	"DISABLE",
+	0,
+	"1",
+	"DISABLE");
+
+create_form_set("_nCDMA2K_x5fRevPCBgenerator_fOuterLoopSet",
+	"_nCDMA2K_x5fRevPCBgenerator_fENABLE",
+	"_nCDMA2K_x5fRevPCBgenerator_fDISABLE",
+	"StdForm");
+
+create_item ("CDMA2K_RevPCBgenerator","Power control bit generator for reverse link",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_RevPCBgenerator",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_RevPCBgenerator",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_RevPCBgenerator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SpreadRate","PN chip rate multiple of 1.2288 Mcps",
+		PARM_INT,
+		"_nCDMA2K_x5fRevPCBgenerator_fSpreadRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevPCBgenerator_fSR1","SR1")),
+	create_parm ("OuterLoop","outer loop power control enable",
+		PARM_INT,
+		"_nCDMA2K_x5fRevPCBgenerator_fOuterLoopSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevPCBgenerator_fDISABLE","DISABLE")),
+	create_parm ("SIR_Threshold","signal-to-interference ratio required",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_constant_form ("_nCDMA2K_x5fRevMapping_fReverse_x5fRC3", 
+	"Reverse RC3",
+	0,
+	"0",
+	"Reverse RC3");
+
+create_constant_form ("_nCDMA2K_x5fRevMapping_fReverse_x5fRC4", 
+	"Reverse RC4",
+	0,
+	"1",
+	"Reverse RC4");
+
+create_constant_form ("_nCDMA2K_x5fRevMapping_fReverse_x5fRC5", 
+	"Reverse RC5",
+	0,
+	"2",
+	"Reverse RC5");
+
+create_constant_form ("_nCDMA2K_x5fRevMapping_fReverse_x5fRC6", 
+	"Reverse RC6",
+	0,
+	"3",
+	"Reverse RC6");
+
+create_form_set("_nCDMA2K_x5fRevMapping_fRadioConfigSet",
+	"_nCDMA2K_x5fRevMapping_fReverse_x5fRC3",
+	"_nCDMA2K_x5fRevMapping_fReverse_x5fRC4",
+	"_nCDMA2K_x5fRevMapping_fReverse_x5fRC5",
+	"_nCDMA2K_x5fRevMapping_fReverse_x5fRC6",
+	"StdForm");
+
+create_item ("CDMA2K_RevMapping","reverse link IQ mapping subnetwork",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_RevMapping",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_RevMapping",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_RevMapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataRate","data rate in kbps",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9.6")),
+	create_parm ("RadioConfig","radio configuration for  reverse link respectively",
+		PARM_INT,
+		"_nCDMA2K_x5fRevMapping_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevMapping_fReverse_x5fRC3","Reverse_RC3")));
+
+
+create_constant_form ("_nCDMA2K_x5fRevDemapping_fReverse_x5fRC3", 
+	"Reverse RC3",
+	0,
+	"0",
+	"Reverse RC3");
+
+create_constant_form ("_nCDMA2K_x5fRevDemapping_fReverse_x5fRC4", 
+	"Reverse RC4",
+	0,
+	"1",
+	"Reverse RC4");
+
+create_constant_form ("_nCDMA2K_x5fRevDemapping_fReverse_x5fRC5", 
+	"Reverse RC5",
+	0,
+	"2",
+	"Reverse RC5");
+
+create_constant_form ("_nCDMA2K_x5fRevDemapping_fReverse_x5fRC6", 
+	"Reverse RC6",
+	0,
+	"3",
+	"Reverse RC6");
+
+create_form_set("_nCDMA2K_x5fRevDemapping_fRadioConfigSet",
+	"_nCDMA2K_x5fRevDemapping_fReverse_x5fRC3",
+	"_nCDMA2K_x5fRevDemapping_fReverse_x5fRC4",
+	"_nCDMA2K_x5fRevDemapping_fReverse_x5fRC5",
+	"_nCDMA2K_x5fRevDemapping_fReverse_x5fRC6",
+	"StdForm");
+
+create_item ("CDMA2K_RevDemapping","reverse link IQ demapping subnetwork",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_RevDemapping",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_RevDemapping",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_RevDemapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataRate","data rate in kbps",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9.6")),
+	create_parm ("RadioConfig","radio configuration for  reverse link respectively",
+		PARM_INT,
+		"_nCDMA2K_x5fRevDemapping_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevDemapping_fReverse_x5fRC3","Reverse_RC3")),
+	create_parm ("FingerNum","finger number of rake receiver",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdSTSmapping_fForward_x5fRC3", 
+	"Forward RC3",
+	0,
+	"0",
+	"Forward RC3");
+
+create_constant_form ("_nCDMA2K_x5fFwdSTSmapping_fForward_x5fRC4", 
+	"Forward RC4",
+	0,
+	"1",
+	"Forward RC4");
+
+create_constant_form ("_nCDMA2K_x5fFwdSTSmapping_fForward_x5fRC5", 
+	"Forward RC5",
+	0,
+	"2",
+	"Forward RC5");
+
+create_form_set("_nCDMA2K_x5fFwdSTSmapping_fRadioConfigSet",
+	"_nCDMA2K_x5fFwdSTSmapping_fForward_x5fRC3",
+	"_nCDMA2K_x5fFwdSTSmapping_fForward_x5fRC4",
+	"_nCDMA2K_x5fFwdSTSmapping_fForward_x5fRC5",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fFwdSTSmapping_fFunction0", 
+	"Function0",
+	0,
+	"0",
+	"Function0");
+
+create_constant_form ("_nCDMA2K_x5fFwdSTSmapping_fFunction1", 
+	"Function1",
+	0,
+	"1",
+	"Function1");
+
+create_constant_form ("_nCDMA2K_x5fFwdSTSmapping_fFunction2", 
+	"Function2",
+	0,
+	"2",
+	"Function2");
+
+create_constant_form ("_nCDMA2K_x5fFwdSTSmapping_fFunction3", 
+	"Function3",
+	0,
+	"3",
+	"Function3");
+
+create_form_set("_nCDMA2K_x5fFwdSTSmapping_fQuasiFunctionSet",
+	"_nCDMA2K_x5fFwdSTSmapping_fFunction0",
+	"_nCDMA2K_x5fFwdSTSmapping_fFunction1",
+	"_nCDMA2K_x5fFwdSTSmapping_fFunction2",
+	"_nCDMA2K_x5fFwdSTSmapping_fFunction3",
+	"StdForm");
+
+create_item ("CDMA2K_FwdSTSmapping","Foward link STS mapping subnetwork",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_FwdSTSmapping",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_FwdSTSmapping",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_FwdSTSmapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataRate","data rate in kbps",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9.6")),
+	create_parm ("RadioConfig","radio configuration for forward  link respectively",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdSTSmapping_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdSTSmapping_fForward_x5fRC3","Forward_RC3")),
+	create_parm ("TrffcIndex1","traffic Walsh  index for forward transmission from main antenna",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","61")),
+	create_parm ("TrffcIndex2","traffic Walsh  index for forward transmission from auxiliary antenna",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","62")),
+	create_parm ("QuasiFunction","quasi-funtion index",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdSTSmapping_fQuasiFunctionSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdSTSmapping_fFunction0","Function0")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdOTDmapping_fForward_x5fRC3", 
+	"Forward RC3",
+	0,
+	"0",
+	"Forward RC3");
+
+create_constant_form ("_nCDMA2K_x5fFwdOTDmapping_fForward_x5fRC4", 
+	"Forward RC4",
+	0,
+	"1",
+	"Forward RC4");
+
+create_constant_form ("_nCDMA2K_x5fFwdOTDmapping_fForward_x5fRC5", 
+	"Forward RC5",
+	0,
+	"2",
+	"Forward RC5");
+
+create_form_set("_nCDMA2K_x5fFwdOTDmapping_fRadioConfigSet",
+	"_nCDMA2K_x5fFwdOTDmapping_fForward_x5fRC3",
+	"_nCDMA2K_x5fFwdOTDmapping_fForward_x5fRC4",
+	"_nCDMA2K_x5fFwdOTDmapping_fForward_x5fRC5",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fFwdOTDmapping_fFunction0", 
+	"Function0",
+	0,
+	"0",
+	"Function0");
+
+create_constant_form ("_nCDMA2K_x5fFwdOTDmapping_fFunction1", 
+	"Function1",
+	0,
+	"1",
+	"Function1");
+
+create_constant_form ("_nCDMA2K_x5fFwdOTDmapping_fFunction2", 
+	"Function2",
+	0,
+	"2",
+	"Function2");
+
+create_constant_form ("_nCDMA2K_x5fFwdOTDmapping_fFunction3", 
+	"Function3",
+	0,
+	"3",
+	"Function3");
+
+create_form_set("_nCDMA2K_x5fFwdOTDmapping_fQuasiFunctionSet",
+	"_nCDMA2K_x5fFwdOTDmapping_fFunction0",
+	"_nCDMA2K_x5fFwdOTDmapping_fFunction1",
+	"_nCDMA2K_x5fFwdOTDmapping_fFunction2",
+	"_nCDMA2K_x5fFwdOTDmapping_fFunction3",
+	"StdForm");
+
+create_item ("CDMA2K_FwdOTDmapping","Foward link OTD mapping subnetwork",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_FwdOTDmapping",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_FwdOTDmapping",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_FwdOTDmapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataRate","data rate in kbps",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9.6")),
+	create_parm ("RadioConfig","radio configuration for forward  link respectively",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdOTDmapping_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdOTDmapping_fForward_x5fRC3","Forward_RC3")),
+	create_parm ("TrffcIndex1","traffic Walsh  index for forward transmission from main antenna",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","61")),
+	create_parm ("TrffcIndex2","traffic Walsh  index for forward transmission from auxiliary antenna",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","62")),
+	create_parm ("QuasiFunction","quasi-funtion index",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdOTDmapping_fQuasiFunctionSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdOTDmapping_fFunction0","Function0")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBgenerator_fSR1", 
+	"SR1",
+	0,
+	"0",
+	"SR1");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBgenerator_fSR3", 
+	"SR3",
+	0,
+	"1",
+	"SR3");
+
+create_form_set("_nCDMA2K_x5fFwdPCBgenerator_fSpreadRateSet",
+	"_nCDMA2K_x5fFwdPCBgenerator_fSR1",
+	"_nCDMA2K_x5fFwdPCBgenerator_fSR3",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBgenerator_fENABLE", 
+	"ENABLE",
+	0,
+	"0",
+	"ENABLE");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBgenerator_fDISABLE", 
+	"DISABLE",
+	0,
+	"1",
+	"DISABLE");
+
+create_form_set("_nCDMA2K_x5fFwdPCBgenerator_fOuterLoopSet",
+	"_nCDMA2K_x5fFwdPCBgenerator_fENABLE",
+	"_nCDMA2K_x5fFwdPCBgenerator_fDISABLE",
+	"StdForm");
+
+create_item ("CDMA2K_FwdPCBgenerator","Power control bit generator for forward link",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_FwdPCBgenerator",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_FwdPCBgenerator",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_FwdPCBgenerator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SpreadRate","PN chip rate multiple of 1.2288 Mcps",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdPCBgenerator_fSpreadRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdPCBgenerator_fSR1","SR1")),
+	create_parm ("WalshLength","Walsh code length used for spreading",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("OuterLoop","outer loop power control enable",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdPCBgenerator_fOuterLoopSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdPCBgenerator_fDISABLE","DISABLE")),
+	create_parm ("SIR_Threshold","signal-to-interference ratio required",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_item ("CDMA2K_FwdSTSmux","foward link STS mux subnetwork",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_FwdSTSmux",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_FwdSTSmux",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_FwdSTSmux",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("CDMA2K_FwdOTDmux","Foward link OTD mux subnetwork",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_FwdOTDmux",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_FwdOTDmux",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_FwdOTDmux",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDmapping_fForward_x5fRC3", 
+	"Forward RC3",
+	0,
+	"0",
+	"Forward RC3");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDmapping_fForward_x5fRC4", 
+	"Forward RC4",
+	0,
+	"1",
+	"Forward RC4");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDmapping_fForward_x5fRC5", 
+	"Forward RC5",
+	0,
+	"2",
+	"Forward RC5");
+
+create_form_set("_nCDMA2K_x5fFwdNonTDmapping_fRadioConfigSet",
+	"_nCDMA2K_x5fFwdNonTDmapping_fForward_x5fRC3",
+	"_nCDMA2K_x5fFwdNonTDmapping_fForward_x5fRC4",
+	"_nCDMA2K_x5fFwdNonTDmapping_fForward_x5fRC5",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDmapping_fFunction0", 
+	"Function0",
+	0,
+	"0",
+	"Function0");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDmapping_fFunction1", 
+	"Function1",
+	0,
+	"1",
+	"Function1");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDmapping_fFunction2", 
+	"Function2",
+	0,
+	"2",
+	"Function2");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDmapping_fFunction3", 
+	"Function3",
+	0,
+	"3",
+	"Function3");
+
+create_form_set("_nCDMA2K_x5fFwdNonTDmapping_fQuasiFunctionSet",
+	"_nCDMA2K_x5fFwdNonTDmapping_fFunction0",
+	"_nCDMA2K_x5fFwdNonTDmapping_fFunction1",
+	"_nCDMA2K_x5fFwdNonTDmapping_fFunction2",
+	"_nCDMA2K_x5fFwdNonTDmapping_fFunction3",
+	"StdForm");
+
+create_item ("CDMA2K_FwdNonTDmapping","Foward link NonTD mapping subnetwork",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_FwdNonTDmapping",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_FwdNonTDmapping",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_FwdNonTDmapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataRate","data rate in kbps",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9.6")),
+	create_parm ("RadioConfig","radio configuration for forward  link respectively",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdNonTDmapping_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdNonTDmapping_fForward_x5fRC3","Forward_RC3")),
+	create_parm ("TrffcIndex","traffic channel index",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","61")),
+	create_parm ("QuasiFunction","quasi-funtion index",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdNonTDmapping_fQuasiFunctionSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdNonTDmapping_fFunction0","Function0")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDdemapping_fForward_x5fRC3", 
+	"Forward RC3",
+	0,
+	"0",
+	"Forward RC3");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDdemapping_fForward_x5fRC4", 
+	"Forward RC4",
+	0,
+	"1",
+	"Forward RC4");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDdemapping_fForward_x5fRC5", 
+	"Forward RC5",
+	0,
+	"2",
+	"Forward RC5");
+
+create_form_set("_nCDMA2K_x5fFwdNonTDdemapping_fRadioConfigSet",
+	"_nCDMA2K_x5fFwdNonTDdemapping_fForward_x5fRC3",
+	"_nCDMA2K_x5fFwdNonTDdemapping_fForward_x5fRC4",
+	"_nCDMA2K_x5fFwdNonTDdemapping_fForward_x5fRC5",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDdemapping_fPilot", 
+	"Pilot",
+	0,
+	"0",
+	"Pilot");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDdemapping_fTDPilot", 
+	"TDPilot",
+	0,
+	"1",
+	"TDPilot");
+
+create_form_set("_nCDMA2K_x5fFwdNonTDdemapping_fPilotTypeSet",
+	"_nCDMA2K_x5fFwdNonTDdemapping_fPilot",
+	"_nCDMA2K_x5fFwdNonTDdemapping_fTDPilot",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDdemapping_fFunction0", 
+	"Function0",
+	0,
+	"0",
+	"Function0");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDdemapping_fFunction1", 
+	"Function1",
+	0,
+	"1",
+	"Function1");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDdemapping_fFunction2", 
+	"Function2",
+	0,
+	"2",
+	"Function2");
+
+create_constant_form ("_nCDMA2K_x5fFwdNonTDdemapping_fFunction3", 
+	"Function3",
+	0,
+	"3",
+	"Function3");
+
+create_form_set("_nCDMA2K_x5fFwdNonTDdemapping_fQuasiFunctionSet",
+	"_nCDMA2K_x5fFwdNonTDdemapping_fFunction0",
+	"_nCDMA2K_x5fFwdNonTDdemapping_fFunction1",
+	"_nCDMA2K_x5fFwdNonTDdemapping_fFunction2",
+	"_nCDMA2K_x5fFwdNonTDdemapping_fFunction3",
+	"StdForm");
+
+create_item ("CDMA2K_FwdNonTDdemapping","Foward link NonTD demapping subnetwork",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CDMA2K_FwdNonTDdemapping",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CDMA2K_FwdNonTDdemapping",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CDMA2K_FwdNonTDdemapping",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("DataRate","data rate in kbps",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9.6")),
+	create_parm ("RadioConfig","radio configuration for forward link",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdNonTDdemapping_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdNonTDdemapping_fForward_x5fRC3","Forward_RC3")),
+	create_parm ("TrffcIndex","traffic Walsh  index",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","61")),
+	create_parm ("FingerNum","finger number of rake receiver",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("PilotType","pilot type",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdNonTDdemapping_fPilotTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdNonTDdemapping_fPilot","Pilot")),
+	create_parm ("QuasiFunction","Quasi-function index",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdNonTDdemapping_fQuasiFunctionSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdNonTDdemapping_fFunction0","Function0")));

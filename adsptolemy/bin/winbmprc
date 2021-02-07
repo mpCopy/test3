@@ -1,0 +1,7 @@
+# generate .rc file for win32 bitmap dll          -*- perl -*-
+
+print "#include <windows.h>\n";
+for $_ (@ARGV) {
+    print "$` ICON \"$_\"\n" if /\.ico$/i;
+    print "$` BITMAP \"$_\"\n" if /\.bmp$/i;
+}

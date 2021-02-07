@@ -1,0 +1,1340 @@
+set_design_type( sigproc_net );
+
+create_constant_form ("_nCMMB_x5fSyncSequence_f_x5f8MHz", 
+	"_8MHz",
+	0,
+	"0",
+	"8MHz");
+
+create_constant_form ("_nCMMB_x5fSyncSequence_f_x5f2MHz", 
+	"_2MHz",
+	0,
+	"1",
+	"2MHz");
+
+create_form_set("_nCMMB_x5fSyncSequence_fBandwidthSet",
+	"_nCMMB_x5fSyncSequence_f_x5f8MHz",
+	"_nCMMB_x5fSyncSequence_f_x5f2MHz",
+	"StdForm");
+
+create_item ("CMMB_SyncSequence","CMMB synchronization sequence",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_SyncSequence",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_SyncSequence",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_SyncSequence",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_INT,
+		"_nCMMB_x5fSyncSequence_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSyncSequence_f_x5f8MHz","_8MHz")));
+
+
+create_constant_form ("_nCMMB_x5fContinuousPilot_f_x5f8MHz", 
+	"_8MHz",
+	0,
+	"0",
+	"8MHz");
+
+create_constant_form ("_nCMMB_x5fContinuousPilot_f_x5f2MHz", 
+	"_2MHz",
+	0,
+	"1",
+	"2MHz");
+
+create_form_set("_nCMMB_x5fContinuousPilot_fBandwidthSet",
+	"_nCMMB_x5fContinuousPilot_f_x5f8MHz",
+	"_nCMMB_x5fContinuousPilot_f_x5f2MHz",
+	"StdForm");
+
+create_item ("CMMB_ContinuousPilot","CMMB continuous pilot",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_ContinuousPilot",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_ContinuousPilot",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_ContinuousPilot",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_INT,
+		"_nCMMB_x5fContinuousPilot_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fContinuousPilot_f_x5f8MHz","_8MHz")));
+
+
+create_constant_form ("_nCMMB_x5fOversample_f_x5f8MHz", 
+	"_8MHz",
+	0,
+	"0",
+	"8MHz");
+
+create_constant_form ("_nCMMB_x5fOversample_f_x5f2MHz", 
+	"_2MHz",
+	0,
+	"1",
+	"2MHz");
+
+create_form_set("_nCMMB_x5fOversample_fBandwidthSet",
+	"_nCMMB_x5fOversample_f_x5f8MHz",
+	"_nCMMB_x5fOversample_f_x5f2MHz",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fOversample_fx1", 
+	"x1",
+	0,
+	"0",
+	"x1");
+
+create_constant_form ("_nCMMB_x5fOversample_fx2", 
+	"x2",
+	0,
+	"1",
+	"x2");
+
+create_constant_form ("_nCMMB_x5fOversample_fx4", 
+	"x4",
+	0,
+	"2",
+	"x4");
+
+create_form_set("_nCMMB_x5fOversample_fOversamplingOptionSet",
+	"_nCMMB_x5fOversample_fx1",
+	"_nCMMB_x5fOversample_fx2",
+	"_nCMMB_x5fOversample_fx4",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fOversample_fData", 
+	"Data",
+	0,
+	"0",
+	"Data");
+
+create_constant_form ("_nCMMB_x5fOversample_fSync", 
+	"Sync",
+	0,
+	"1",
+	"Sync");
+
+create_constant_form ("_nCMMB_x5fOversample_fTxID", 
+	"TxID",
+	0,
+	"2",
+	"TxID");
+
+create_form_set("_nCMMB_x5fOversample_fSymbolTypeSet",
+	"_nCMMB_x5fOversample_fData",
+	"_nCMMB_x5fOversample_fSync",
+	"_nCMMB_x5fOversample_fTxID",
+	"StdForm");
+
+create_item ("CMMB_Oversample","CMMB oversample component in frequency domain",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_Oversample",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_Oversample",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_Oversample",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_INT,
+		"_nCMMB_x5fOversample_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fOversample_f_x5f8MHz","_8MHz")),
+	create_parm ("OversamplingOption","Oversampling ratio (x1 is meaningless)",
+		PARM_INT,
+		"_nCMMB_x5fOversample_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fOversample_fx2","x2")),
+	create_parm ("SymbolType","OFDM symbol type (Data, Sync or TxID) selection",
+		PARM_INT,
+		"_nCMMB_x5fOversample_fSymbolTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fOversample_fData","Data")));
+
+
+create_constant_form ("_nCMMB_x5fSlot_f_x5f8MHz", 
+	"_8MHz",
+	0,
+	"0",
+	"8MHz");
+
+create_constant_form ("_nCMMB_x5fSlot_f_x5f2MHz", 
+	"_2MHz",
+	0,
+	"1",
+	"2MHz");
+
+create_form_set("_nCMMB_x5fSlot_fBandwidthSet",
+	"_nCMMB_x5fSlot_f_x5f8MHz",
+	"_nCMMB_x5fSlot_f_x5f2MHz",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSlot_fx1", 
+	"x1",
+	0,
+	"0",
+	"x1");
+
+create_constant_form ("_nCMMB_x5fSlot_fx2", 
+	"x2",
+	0,
+	"1",
+	"x2");
+
+create_constant_form ("_nCMMB_x5fSlot_fx4", 
+	"x4",
+	0,
+	"2",
+	"x4");
+
+create_form_set("_nCMMB_x5fSlot_fOversamplingOptionSet",
+	"_nCMMB_x5fSlot_fx1",
+	"_nCMMB_x5fSlot_fx2",
+	"_nCMMB_x5fSlot_fx4",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSlot_fOption0", 
+	"Option0",
+	0,
+	"0",
+	"Option0");
+
+create_constant_form ("_nCMMB_x5fSlot_fOption1", 
+	"Option1",
+	0,
+	"1",
+	"Option1");
+
+create_constant_form ("_nCMMB_x5fSlot_fOption2", 
+	"Option2",
+	0,
+	"2",
+	"Option2");
+
+create_constant_form ("_nCMMB_x5fSlot_fOption3", 
+	"Option3",
+	0,
+	"3",
+	"Option3");
+
+create_constant_form ("_nCMMB_x5fSlot_fOption4", 
+	"Option4",
+	0,
+	"4",
+	"Option4");
+
+create_constant_form ("_nCMMB_x5fSlot_fOption5", 
+	"Option5",
+	0,
+	"5",
+	"Option5");
+
+create_constant_form ("_nCMMB_x5fSlot_fOption6", 
+	"Option6",
+	0,
+	"6",
+	"Option6");
+
+create_constant_form ("_nCMMB_x5fSlot_fOption7", 
+	"Option7",
+	0,
+	"7",
+	"Option7");
+
+create_form_set("_nCMMB_x5fSlot_fScramblerInitSet",
+	"_nCMMB_x5fSlot_fOption0",
+	"_nCMMB_x5fSlot_fOption1",
+	"_nCMMB_x5fSlot_fOption2",
+	"_nCMMB_x5fSlot_fOption3",
+	"_nCMMB_x5fSlot_fOption4",
+	"_nCMMB_x5fSlot_fOption5",
+	"_nCMMB_x5fSlot_fOption6",
+	"_nCMMB_x5fSlot_fOption7",
+	"StdForm");
+
+create_item ("CMMB_Slot","CMMB slot generation",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_Slot",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_Slot",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_Slot",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_INT,
+		"_nCMMB_x5fSlot_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSlot_f_x5f8MHz","_8MHz")),
+	create_parm ("OversamplingOption","Oversampling ratio (x1 is meaningless)",
+		PARM_INT,
+		"_nCMMB_x5fSlot_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSlot_fx2","x2")),
+	create_parm ("ScramblerInit","Scrambler initial value",
+		PARM_INT,
+		"_nCMMB_x5fSlot_fScramblerInitSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSlot_fOption0","Option0")),
+	create_parm ("TxID","Tx ID",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("RegionID","Region ID",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_constant_form ("_nCMMB_x5fSlotMux_f_x5f8MHz", 
+	"_8MHz",
+	0,
+	"0",
+	"8MHz");
+
+create_constant_form ("_nCMMB_x5fSlotMux_f_x5f2MHz", 
+	"_2MHz",
+	0,
+	"1",
+	"2MHz");
+
+create_form_set("_nCMMB_x5fSlotMux_fBandwidthSet",
+	"_nCMMB_x5fSlotMux_f_x5f8MHz",
+	"_nCMMB_x5fSlotMux_f_x5f2MHz",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSlotMux_fx1", 
+	"x1",
+	0,
+	"0",
+	"x1");
+
+create_constant_form ("_nCMMB_x5fSlotMux_fx2", 
+	"x2",
+	0,
+	"1",
+	"x2");
+
+create_constant_form ("_nCMMB_x5fSlotMux_fx4", 
+	"x4",
+	0,
+	"2",
+	"x4");
+
+create_form_set("_nCMMB_x5fSlotMux_fOversamplingOptionSet",
+	"_nCMMB_x5fSlotMux_fx1",
+	"_nCMMB_x5fSlotMux_fx2",
+	"_nCMMB_x5fSlotMux_fx4",
+	"StdForm");
+
+create_item ("CMMB_SlotMux","CMMB Slot Mux",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_SlotMux",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_SlotMux",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_SlotMux",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Bandwidth","LDPC code rate",
+		PARM_INT,
+		"_nCMMB_x5fSlotMux_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSlotMux_f_x5f8MHz","_8MHz")),
+	create_parm ("OversamplingOption","Oversampling ratio (x1 is meaningless)",
+		PARM_INT,
+		"_nCMMB_x5fSlotMux_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSlotMux_fx2","x2")));
+
+
+create_constant_form ("_nCMMB_x5fGI_f_x5f8MHz", 
+	"_8MHz",
+	0,
+	"0",
+	"8MHz");
+
+create_constant_form ("_nCMMB_x5fGI_f_x5f2MHz", 
+	"_2MHz",
+	0,
+	"1",
+	"2MHz");
+
+create_form_set("_nCMMB_x5fGI_fBandwidthSet",
+	"_nCMMB_x5fGI_f_x5f8MHz",
+	"_nCMMB_x5fGI_f_x5f2MHz",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fGI_fx1", 
+	"x1",
+	0,
+	"0",
+	"x1");
+
+create_constant_form ("_nCMMB_x5fGI_fx2", 
+	"x2",
+	0,
+	"1",
+	"x2");
+
+create_constant_form ("_nCMMB_x5fGI_fx4", 
+	"x4",
+	0,
+	"2",
+	"x4");
+
+create_form_set("_nCMMB_x5fGI_fOversamplingOptionSet",
+	"_nCMMB_x5fGI_fx1",
+	"_nCMMB_x5fGI_fx2",
+	"_nCMMB_x5fGI_fx4",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fGI_fData", 
+	"Data",
+	0,
+	"0",
+	"Data");
+
+create_constant_form ("_nCMMB_x5fGI_fSync", 
+	"Sync",
+	0,
+	"1",
+	"Sync");
+
+create_constant_form ("_nCMMB_x5fGI_fTxID", 
+	"TxID",
+	0,
+	"2",
+	"TxID");
+
+create_form_set("_nCMMB_x5fGI_fSymbolTypeSet",
+	"_nCMMB_x5fGI_fData",
+	"_nCMMB_x5fGI_fSync",
+	"_nCMMB_x5fGI_fTxID",
+	"StdForm");
+
+create_item ("CMMB_GI","CMMB Guard Interval",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_GI",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_GI",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_GI",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_INT,
+		"_nCMMB_x5fGI_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fGI_f_x5f8MHz","_8MHz")),
+	create_parm ("OversamplingOption","Oversampling ratio (x1 is meaningless)",
+		PARM_INT,
+		"_nCMMB_x5fGI_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fGI_fx2","x2")),
+	create_parm ("SymbolType","OFDM symbol type (Data , Sync or TxID) selection",
+		PARM_INT,
+		"_nCMMB_x5fGI_fSymbolTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fGI_fData","Data")));
+
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nCMMB_x5fSource_x5fRF_fMirrorSpectrumSet",
+	"_nCMMB_x5fSource_x5fRF_fNO",
+	"_nCMMB_x5fSource_x5fRF_fYES",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fPN9", 
+	"PN9",
+	0,
+	"0",
+	"PN9");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fPN15", 
+	"PN15",
+	0,
+	"1",
+	"PN15");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fFIX4", 
+	"FIX4",
+	0,
+	"2",
+	"FIX4");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f4_x5f1_x5f4_x5f0", 
+	"_4_1_4_0",
+	0,
+	"3",
+	"_4_1_4_0");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f8_x5f1_x5f8_x5f0", 
+	"_8_1_8_0",
+	0,
+	"4",
+	"_8_1_8_0");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f16_x5f1_x5f16_x5f0", 
+	"_16_1_16_0",
+	0,
+	"5",
+	"_16_1_16_0");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f32_x5f1_x5f32_x5f0", 
+	"_32_1_32_0",
+	0,
+	"6",
+	"_32_1_32_0");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f64_x5f1_x5f64_x5f0", 
+	"_64_1_64_0",
+	0,
+	"7",
+	"_64_1_64_0");
+
+create_form_set("_nCMMB_x5fSource_x5fRF_fDataPatternSet",
+	"_nCMMB_x5fSource_x5fRF_fPN9",
+	"_nCMMB_x5fSource_x5fRF_fPN15",
+	"_nCMMB_x5fSource_x5fRF_fFIX4",
+	"_nCMMB_x5fSource_x5fRF_f_x5f4_x5f1_x5f4_x5f0",
+	"_nCMMB_x5fSource_x5fRF_f_x5f8_x5f1_x5f8_x5f0",
+	"_nCMMB_x5fSource_x5fRF_f_x5f16_x5f1_x5f16_x5f0",
+	"_nCMMB_x5fSource_x5fRF_f_x5f32_x5f1_x5f32_x5f0",
+	"_nCMMB_x5fSource_x5fRF_f_x5f64_x5f1_x5f64_x5f0",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f8MHz", 
+	"_8MHz",
+	0,
+	"0",
+	"8MHz");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f2MHz", 
+	"_2MHz",
+	0,
+	"1",
+	"2MHz");
+
+create_form_set("_nCMMB_x5fSource_x5fRF_fBandwidthSet",
+	"_nCMMB_x5fSource_x5fRF_f_x5f8MHz",
+	"_nCMMB_x5fSource_x5fRF_f_x5f2MHz",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fx1", 
+	"x1",
+	0,
+	"0",
+	"x1");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fx2", 
+	"x2",
+	0,
+	"1",
+	"x2");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fx4", 
+	"x4",
+	0,
+	"2",
+	"x4");
+
+create_form_set("_nCMMB_x5fSource_x5fRF_fOversamplingOptionSet",
+	"_nCMMB_x5fSource_x5fRF_fx1",
+	"_nCMMB_x5fSource_x5fRF_fx2",
+	"_nCMMB_x5fSource_x5fRF_fx4",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fHalf", 
+	"Half",
+	0,
+	"0",
+	"Half");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fThreeFourth", 
+	"ThreeFourth",
+	0,
+	"1",
+	"ThreeFourth");
+
+create_form_set("_nCMMB_x5fSource_x5fRF_fLDPC_x5fRateSet",
+	"_nCMMB_x5fSource_x5fRF_fHalf",
+	"_nCMMB_x5fSource_x5fRF_fThreeFourth",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f240", 
+	"_240",
+	0,
+	"0",
+	"_240");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f224", 
+	"_224",
+	0,
+	"1",
+	"_224");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f192", 
+	"_192",
+	0,
+	"2",
+	"_192");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f176", 
+	"_176",
+	0,
+	"3",
+	"_176");
+
+create_form_set("_nCMMB_x5fSource_x5fRF_fRS_x5fMSG_x5fLengthSet",
+	"_nCMMB_x5fSource_x5fRF_f_x5f240",
+	"_nCMMB_x5fSource_x5fRF_f_x5f224",
+	"_nCMMB_x5fSource_x5fRF_f_x5f192",
+	"_nCMMB_x5fSource_x5fRF_f_x5f176",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fBPSK", 
+	"BPSK",
+	0,
+	"0",
+	"BPSK");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fQPSK", 
+	"QPSK",
+	0,
+	"1",
+	"QPSK");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"2",
+	"16QAM");
+
+create_form_set("_nCMMB_x5fSource_x5fRF_fModTypeSet",
+	"_nCMMB_x5fSource_x5fRF_fBPSK",
+	"_nCMMB_x5fSource_x5fRF_fQPSK",
+	"_nCMMB_x5fSource_x5fRF_f_x5f16QAM",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fOption0", 
+	"Option0",
+	0,
+	"0",
+	"Option0");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fOption1", 
+	"Option1",
+	0,
+	"1",
+	"Option1");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fOption2", 
+	"Option2",
+	0,
+	"2",
+	"Option2");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fOption3", 
+	"Option3",
+	0,
+	"3",
+	"Option3");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fOption4", 
+	"Option4",
+	0,
+	"4",
+	"Option4");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fOption5", 
+	"Option5",
+	0,
+	"5",
+	"Option5");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fOption6", 
+	"Option6",
+	0,
+	"6",
+	"Option6");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fOption7", 
+	"Option7",
+	0,
+	"7",
+	"Option7");
+
+create_form_set("_nCMMB_x5fSource_x5fRF_fScramblerInitSet",
+	"_nCMMB_x5fSource_x5fRF_fOption0",
+	"_nCMMB_x5fSource_x5fRF_fOption1",
+	"_nCMMB_x5fSource_x5fRF_fOption2",
+	"_nCMMB_x5fSource_x5fRF_fOption3",
+	"_nCMMB_x5fSource_x5fRF_fOption4",
+	"_nCMMB_x5fSource_x5fRF_fOption5",
+	"_nCMMB_x5fSource_x5fRF_fOption6",
+	"_nCMMB_x5fSource_x5fRF_fOption7",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fMode_x5f1", 
+	"Mode_1",
+	0,
+	"0",
+	"Mode_1");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fMode_x5f2", 
+	"Mode_2",
+	0,
+	"1",
+	"Mode_2");
+
+create_constant_form ("_nCMMB_x5fSource_x5fRF_fMode_x5f3", 
+	"Mode_3",
+	0,
+	"2",
+	"Mode_3");
+
+create_form_set("_nCMMB_x5fSource_x5fRF_fInterleavingSet",
+	"_nCMMB_x5fSource_x5fRF_fMode_x5f1",
+	"_nCMMB_x5fSource_x5fRF_fMode_x5f2",
+	"_nCMMB_x5fSource_x5fRF_fMode_x5f3",
+	"StdForm");
+
+create_item ("CMMB_Source_RF","CMMB RF signal source",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_Source_RF",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_Source_RF",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_Source_RF",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ROut","Output resistance",
+		PARM_REAL,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","DefaultROut")),
+	create_parm ("RTemp","Temperature, in degrees C",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","-273.15")),
+	create_parm ("FCarrier","Carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","634 MHz")),
+	create_parm ("Power","Output power of modulator",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","0.01")),
+	create_parm ("MirrorSpectrum","Indication of mirror spectrum about carrier",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nCMMB_x5fSource_x5fRF_fMirrorSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_x5fRF_fNO","NO")),
+	create_parm ("GainImbalance","Gain imbalance in dB, Q channel relative to I channel",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("PhaseImbalance","Phase imbalance in degrees, Q channel relative to I channel",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("I_OriginOffset","I origin offset in percent with respect to output rms voltage",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("Q_OriginOffset","Q origin offset in percent with respect to output rms voltage",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("IQ_Rotation","IQ rotation in degrees",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("DataPattern","Data pattern",
+		PARM_INT,
+		"_nCMMB_x5fSource_x5fRF_fDataPatternSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_x5fRF_fPN9","PN9")),
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_INT,
+		"_nCMMB_x5fSource_x5fRF_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_x5fRF_f_x5f8MHz","_8MHz")),
+	create_parm ("OversamplingOption","Oversampling ratio (x1 is meaningless)",
+		PARM_INT,
+		"_nCMMB_x5fSource_x5fRF_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_x5fRF_fx2","x2")),
+	create_parm ("LDPC_Rate","LDPC code rate",
+		PARM_INT,
+		"_nCMMB_x5fSource_x5fRF_fLDPC_x5fRateSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_x5fRF_fHalf","Half")),
+	create_parm ("RS_MSG_Length","RS message length",
+		PARM_INT,
+		"_nCMMB_x5fSource_x5fRF_fRS_x5fMSG_x5fLengthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_x5fRF_f_x5f240","_240")),
+	create_parm ("ModType","Modulation type",
+		PARM_INT,
+		"_nCMMB_x5fSource_x5fRF_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_x5fRF_fBPSK","BPSK")),
+	create_parm ("ScramblerInit","Scrambler initial value",
+		PARM_INT,
+		"_nCMMB_x5fSource_x5fRF_fScramblerInitSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_x5fRF_fOption0","Option0")),
+	create_parm ("Interleaving","Interleaving mode",
+		PARM_INT,
+		"_nCMMB_x5fSource_x5fRF_fInterleavingSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_x5fRF_fMode_x5f1","Mode_1")));
+
+
+create_constant_form ("_nCMMB_x5fSLCH_f_x5f8MHz", 
+	"_8MHz",
+	0,
+	"0",
+	"8MHz");
+
+create_constant_form ("_nCMMB_x5fSLCH_f_x5f2MHz", 
+	"_2MHz",
+	0,
+	"1",
+	"2MHz");
+
+create_form_set("_nCMMB_x5fSLCH_fBandwidthSet",
+	"_nCMMB_x5fSLCH_f_x5f8MHz",
+	"_nCMMB_x5fSLCH_f_x5f2MHz",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSLCH_fHalf", 
+	"Half",
+	0,
+	"0",
+	"Half");
+
+create_constant_form ("_nCMMB_x5fSLCH_fThreeFourth", 
+	"ThreeFourth",
+	0,
+	"1",
+	"ThreeFourth");
+
+create_form_set("_nCMMB_x5fSLCH_fLDPC_x5fRateSet",
+	"_nCMMB_x5fSLCH_fHalf",
+	"_nCMMB_x5fSLCH_fThreeFourth",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSLCH_f_x5f240", 
+	"_240",
+	0,
+	"0",
+	"_240");
+
+create_constant_form ("_nCMMB_x5fSLCH_f_x5f224", 
+	"_224",
+	0,
+	"1",
+	"_224");
+
+create_constant_form ("_nCMMB_x5fSLCH_f_x5f192", 
+	"_192",
+	0,
+	"2",
+	"_192");
+
+create_constant_form ("_nCMMB_x5fSLCH_f_x5f176", 
+	"_176",
+	0,
+	"3",
+	"_176");
+
+create_form_set("_nCMMB_x5fSLCH_fRS_x5fMSG_x5fLengthSet",
+	"_nCMMB_x5fSLCH_f_x5f240",
+	"_nCMMB_x5fSLCH_f_x5f224",
+	"_nCMMB_x5fSLCH_f_x5f192",
+	"_nCMMB_x5fSLCH_f_x5f176",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSLCH_fBPSK", 
+	"BPSK",
+	0,
+	"0",
+	"BPSK");
+
+create_constant_form ("_nCMMB_x5fSLCH_fQPSK", 
+	"QPSK",
+	0,
+	"1",
+	"QPSK");
+
+create_constant_form ("_nCMMB_x5fSLCH_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"2",
+	"16QAM");
+
+create_form_set("_nCMMB_x5fSLCH_fModTypeSet",
+	"_nCMMB_x5fSLCH_fBPSK",
+	"_nCMMB_x5fSLCH_fQPSK",
+	"_nCMMB_x5fSLCH_f_x5f16QAM",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSLCH_fMode_x5f1", 
+	"Mode_1",
+	0,
+	"0",
+	"Mode_1");
+
+create_constant_form ("_nCMMB_x5fSLCH_fMode_x5f2", 
+	"Mode_2",
+	0,
+	"1",
+	"Mode_2");
+
+create_constant_form ("_nCMMB_x5fSLCH_fMode_x5f3", 
+	"Mode_3",
+	0,
+	"2",
+	"Mode_3");
+
+create_form_set("_nCMMB_x5fSLCH_fInterleavingSet",
+	"_nCMMB_x5fSLCH_fMode_x5f1",
+	"_nCMMB_x5fSLCH_fMode_x5f2",
+	"_nCMMB_x5fSLCH_fMode_x5f3",
+	"StdForm");
+
+create_item ("CMMB_SLCH","CMMB SLCH",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_SLCH",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_SLCH",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_SLCH",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_INT,
+		"_nCMMB_x5fSLCH_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSLCH_f_x5f8MHz","_8MHz")),
+	create_parm ("LDPC_Rate","LDPC code rate",
+		PARM_INT,
+		"_nCMMB_x5fSLCH_fLDPC_x5fRateSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSLCH_fHalf","Half")),
+	create_parm ("RS_MSG_Length","RS message length",
+		PARM_INT,
+		"_nCMMB_x5fSLCH_fRS_x5fMSG_x5fLengthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSLCH_f_x5f240","_240")),
+	create_parm ("ModType","Modulation type",
+		PARM_INT,
+		"_nCMMB_x5fSLCH_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSLCH_fBPSK","BPSK")),
+	create_parm ("Interleaving","Interleaving mode",
+		PARM_INT,
+		"_nCMMB_x5fSLCH_fInterleavingSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSLCH_fMode_x5f1","Mode_1")));
+
+
+create_constant_form ("_nCMMB_x5fSource_f_x5f8MHz", 
+	"_8MHz",
+	0,
+	"0",
+	"8MHz");
+
+create_constant_form ("_nCMMB_x5fSource_f_x5f2MHz", 
+	"_2MHz",
+	0,
+	"1",
+	"2MHz");
+
+create_form_set("_nCMMB_x5fSource_fBandwidthSet",
+	"_nCMMB_x5fSource_f_x5f8MHz",
+	"_nCMMB_x5fSource_f_x5f2MHz",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_fx1", 
+	"x1",
+	0,
+	"0",
+	"x1");
+
+create_constant_form ("_nCMMB_x5fSource_fx2", 
+	"x2",
+	0,
+	"1",
+	"x2");
+
+create_constant_form ("_nCMMB_x5fSource_fx4", 
+	"x4",
+	0,
+	"2",
+	"x4");
+
+create_form_set("_nCMMB_x5fSource_fOversamplingOptionSet",
+	"_nCMMB_x5fSource_fx1",
+	"_nCMMB_x5fSource_fx2",
+	"_nCMMB_x5fSource_fx4",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_fHalf", 
+	"Half",
+	0,
+	"0",
+	"Half");
+
+create_constant_form ("_nCMMB_x5fSource_fThreeFourth", 
+	"ThreeFourth",
+	0,
+	"1",
+	"ThreeFourth");
+
+create_form_set("_nCMMB_x5fSource_fLDPC_x5fRateSet",
+	"_nCMMB_x5fSource_fHalf",
+	"_nCMMB_x5fSource_fThreeFourth",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_f_x5f240", 
+	"_240",
+	0,
+	"0",
+	"_240");
+
+create_constant_form ("_nCMMB_x5fSource_f_x5f224", 
+	"_224",
+	0,
+	"1",
+	"_224");
+
+create_constant_form ("_nCMMB_x5fSource_f_x5f192", 
+	"_192",
+	0,
+	"2",
+	"_192");
+
+create_constant_form ("_nCMMB_x5fSource_f_x5f176", 
+	"_176",
+	0,
+	"3",
+	"_176");
+
+create_form_set("_nCMMB_x5fSource_fRS_x5fMSG_x5fLengthSet",
+	"_nCMMB_x5fSource_f_x5f240",
+	"_nCMMB_x5fSource_f_x5f224",
+	"_nCMMB_x5fSource_f_x5f192",
+	"_nCMMB_x5fSource_f_x5f176",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_fBPSK", 
+	"BPSK",
+	0,
+	"0",
+	"BPSK");
+
+create_constant_form ("_nCMMB_x5fSource_fQPSK", 
+	"QPSK",
+	0,
+	"1",
+	"QPSK");
+
+create_constant_form ("_nCMMB_x5fSource_f_x5f16QAM", 
+	"_16QAM",
+	0,
+	"2",
+	"16QAM");
+
+create_form_set("_nCMMB_x5fSource_fModTypeSet",
+	"_nCMMB_x5fSource_fBPSK",
+	"_nCMMB_x5fSource_fQPSK",
+	"_nCMMB_x5fSource_f_x5f16QAM",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_fOption0", 
+	"Option0",
+	0,
+	"0",
+	"Option0");
+
+create_constant_form ("_nCMMB_x5fSource_fOption1", 
+	"Option1",
+	0,
+	"1",
+	"Option1");
+
+create_constant_form ("_nCMMB_x5fSource_fOption2", 
+	"Option2",
+	0,
+	"2",
+	"Option2");
+
+create_constant_form ("_nCMMB_x5fSource_fOption3", 
+	"Option3",
+	0,
+	"3",
+	"Option3");
+
+create_constant_form ("_nCMMB_x5fSource_fOption4", 
+	"Option4",
+	0,
+	"4",
+	"Option4");
+
+create_constant_form ("_nCMMB_x5fSource_fOption5", 
+	"Option5",
+	0,
+	"5",
+	"Option5");
+
+create_constant_form ("_nCMMB_x5fSource_fOption6", 
+	"Option6",
+	0,
+	"6",
+	"Option6");
+
+create_constant_form ("_nCMMB_x5fSource_fOption7", 
+	"Option7",
+	0,
+	"7",
+	"Option7");
+
+create_form_set("_nCMMB_x5fSource_fScramblerInitSet",
+	"_nCMMB_x5fSource_fOption0",
+	"_nCMMB_x5fSource_fOption1",
+	"_nCMMB_x5fSource_fOption2",
+	"_nCMMB_x5fSource_fOption3",
+	"_nCMMB_x5fSource_fOption4",
+	"_nCMMB_x5fSource_fOption5",
+	"_nCMMB_x5fSource_fOption6",
+	"_nCMMB_x5fSource_fOption7",
+	"StdForm");
+
+create_constant_form ("_nCMMB_x5fSource_fMode_x5f1", 
+	"Mode_1",
+	0,
+	"0",
+	"Mode_1");
+
+create_constant_form ("_nCMMB_x5fSource_fMode_x5f2", 
+	"Mode_2",
+	0,
+	"1",
+	"Mode_2");
+
+create_constant_form ("_nCMMB_x5fSource_fMode_x5f3", 
+	"Mode_3",
+	0,
+	"2",
+	"Mode_3");
+
+create_form_set("_nCMMB_x5fSource_fInterleavingSet",
+	"_nCMMB_x5fSource_fMode_x5f1",
+	"_nCMMB_x5fSource_fMode_x5f2",
+	"_nCMMB_x5fSource_fMode_x5f3",
+	"StdForm");
+
+create_item ("CMMB_Source","CMMB baseband signal source",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_Source",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_Source",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_Source",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_INT,
+		"_nCMMB_x5fSource_fBandwidthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_f_x5f8MHz","_8MHz")),
+	create_parm ("OversamplingOption","Oversampling ratio (x1 is meaningless)",
+		PARM_INT,
+		"_nCMMB_x5fSource_fOversamplingOptionSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_fx2","x2")),
+	create_parm ("LDPC_Rate","LDPC code rate",
+		PARM_INT,
+		"_nCMMB_x5fSource_fLDPC_x5fRateSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_fHalf","Half")),
+	create_parm ("RS_MSG_Length","RS message length",
+		PARM_INT,
+		"_nCMMB_x5fSource_fRS_x5fMSG_x5fLengthSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_f_x5f240","_240")),
+	create_parm ("ModType","Modulation type",
+		PARM_INT,
+		"_nCMMB_x5fSource_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_fBPSK","BPSK")),
+	create_parm ("ScramblerInit","Scrambler initial value",
+		PARM_INT,
+		"_nCMMB_x5fSource_fScramblerInitSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_fOption0","Option0")),
+	create_parm ("Interleaving","Interleaving mode",
+		PARM_INT,
+		"_nCMMB_x5fSource_fInterleavingSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fSource_fMode_x5f1","Mode_1")));
+
+
+create_constant_form ("_nCMMB_x5fScrambler_fOption0", 
+	"Option0",
+	0,
+	"0",
+	"Option0");
+
+create_constant_form ("_nCMMB_x5fScrambler_fOption1", 
+	"Option1",
+	0,
+	"1",
+	"Option1");
+
+create_constant_form ("_nCMMB_x5fScrambler_fOption2", 
+	"Option2",
+	0,
+	"2",
+	"Option2");
+
+create_constant_form ("_nCMMB_x5fScrambler_fOption3", 
+	"Option3",
+	0,
+	"3",
+	"Option3");
+
+create_constant_form ("_nCMMB_x5fScrambler_fOption4", 
+	"Option4",
+	0,
+	"4",
+	"Option4");
+
+create_constant_form ("_nCMMB_x5fScrambler_fOption5", 
+	"Option5",
+	0,
+	"5",
+	"Option5");
+
+create_constant_form ("_nCMMB_x5fScrambler_fOption6", 
+	"Option6",
+	0,
+	"6",
+	"Option6");
+
+create_constant_form ("_nCMMB_x5fScrambler_fOption7", 
+	"Option7",
+	0,
+	"7",
+	"Option7");
+
+create_form_set("_nCMMB_x5fScrambler_fScramblerInitSet",
+	"_nCMMB_x5fScrambler_fOption0",
+	"_nCMMB_x5fScrambler_fOption1",
+	"_nCMMB_x5fScrambler_fOption2",
+	"_nCMMB_x5fScrambler_fOption3",
+	"_nCMMB_x5fScrambler_fOption4",
+	"_nCMMB_x5fScrambler_fOption5",
+	"_nCMMB_x5fScrambler_fOption6",
+	"_nCMMB_x5fScrambler_fOption7",
+	"StdForm");
+
+create_item ("CMMB_Scrambler","CMMB scrambler for TS bits",
+	"C",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_CMMB_Scrambler",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"CMMB_Scrambler",
+	SPDesignAnnotFmt,
+	"SYM_DSN_CMMB_Scrambler",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ScramblerInit","Scrambler initial value",
+		PARM_INT,
+		"_nCMMB_x5fScrambler_fScramblerInitSet",
+		UNITLESS_UNIT,
+		prm("_nCMMB_x5fScrambler_fOption0","Option0")),
+	create_parm ("Period","Scrambler period",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1000")));

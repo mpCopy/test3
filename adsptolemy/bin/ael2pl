@@ -1,0 +1,274 @@
+#!/eesof/bin/perl5
+# Author Dongni Chen
+# Script to process AEL file created using hpeesofsim -S -subckt.  
+# It is designed to pass the windows generated AEL files for subckts
+# and translated to pl. It won't work correctly if file has more
+# than one create_item. And it will lost some information
+# See on-line docs for more details.
+
+$domain="SDF"; # default domain
+%units= ( -2 => "STRING", -1 => "UNITLESS", 0 => "FREQUENCY",
+	  1 => "RESISTANCE", 2 => "CONDUCTANCE", 3=> "INDUCTANCE",
+	  4 => "CAPACITANCE", 5 => "LENGTH", 6=> "TIME",
+	  7 => "ANGEL", 8 => "POWER", 9 => "VOLTAGE",
+	  10 => "CURRENT", 11 => "DISTANCE", 12 => "TEMPERATURE",
+	  13 => "DB");
+for $i (0 .. $#ARGV) {
+  if ($ARGV[$i] =~ /^-domain:(.*)/i) {
+	$domain=$1;
+  }
+  elsif ($ARGV[$i] =~ /^-/) {
+    die "Usage: $0 [-domain:domainname] file1 file2 file3 ...\ndefault domain is SDF\n";
+  }
+  else {
+    push @files,$ARGV[$i];
+  }
+}
+
+for $i (0 .. $#files) {
+  if (!open(AELFILE,"< $files[$i]")) {
+	warn "Warning: $files[$i]- can't find $files[$i]\n";
+	next;
+  }
+  my $output=$files[$i];
+  @a=split('\.',$output);
+  $a[$#a]="pl";
+  $output =join('.',@a);
+  if (!open(STARSH, "> $output") ) {
+	warn "Warning: $output- $!";
+	next;
+  }
+  my $STARS = "STARSH";
+  my $name = "";
+  my $contents = join('',<AELFILE>);
+
+  # Remove comments from file
+  $contents =~ s,/\* .*? \*/,,xsg;
+  $contents =~ s,//.*$,,mg;
+
+  $contents =~ s,\\\\,\001,sg;
+  $contents =~ s,\\\",\002,sg;
+  
+  $contents =~ s,\"	        # quote -> ^C
+    ([^\"]* )	                # characters
+      \"			# quote -> ^D
+	,\003$1\004,gxs;
+
+  # FIXME ADS 1.3, hpedlibgen parser not robust with {} or ; in strings  - -> \005
+  while ($contents =~ s,\003 ([^\004]*) \; ,\003$1\005,xsg) {}
+
+  # while ($contents =~ s,\003 ([^\004]*) \{ , \003 $1 ( ,xsg) {}
+
+  # while ($contents =~ s,\003 ([^\004]*) \} , \003 $1 ) ,xsg) {}
+
+  for $cmd (split(';',$contents)) {
+    if ( $cmd =~ /create_item \s* \(
+	\s* \003 ([^\004]*) \004 \s*, #name
+	\s* \003 ([^\004]*) \004 \s*, #desc
+	[^,]*,
+	\s* ([^,]*), #attribute,data type
+	[^,]*,
+	\s* ([^,]*), # since *.ael may have this field as NULL
+	[^,]*,
+	[^,]*,
+	\s* ([^,]*),
+	[^,]*,
+	[^,]*,
+	[^,]*,
+	[^,]*,
+	[^,]*,
+	[^,]*[,]?
+        \s* (.*) /xs) {
+      if ($name) {
+	  warn "Warning: $output- only allow one CREATE_ITEM in ael files.\n";
+	  next;
+      }
+      $name = decodeString($1);
+      $desc{$name} = decodeString($2);
+      my $type=$3;
+      $attrib{$name}=$3;
+      $bitmap{$name} = decodeString($4);
+      my $netlistname = decodeString($5);
+      if ($netlistname =~ /^_v([^_]*)/) {
+	$vendor{$name} = decodeString($1);
+      }
+      if ($netlistname =~ /_d([^_]*)/) {
+	$domain = decodeString($1);
+      }
+      my $parm=$6;
+      my $i=0;
+      for $p ( split('\)\,',$parm)) {
+	 if ($p =~ /create_parm \s* \(
+	    \s* \003 ([^\004]*) \004 \s*,
+	    \s* \003 ([^\004]*) \004 \s*,
+	    \s* ([^,]*),
+	    \s* \003 ([^\004]*) \004 \s*,
+	    \s* ([^,]*),
+	    \s* prm \s* \(
+	    \s* \003 ([^\004]*) \004 \s*,
+	    \s* \003 ([^\004]*) \004 \s*
+            \s* .* /xs) {
+		$parmname[$i]=decodeString($1);
+		$parmdesc[$i]=decodeString($2);
+		my $type=$3;
+		if ($type & 65536) {
+			$parmvaltp[$i]="float";
+		}
+		elsif ($type & 131072) {
+			$parmvaltp[$i]="int";
+		}
+		elsif ($type & 262144) {
+			$parmvaltp[$i]="string";
+		}
+		elsif ($type & 524288) {
+			$parmvaltp[$i]="complex";
+		}
+		elsif ($type & 1048576) {
+			$parmvaltp[$i]="stringreference";
+		}
+		elsif ($type & 4194304) {
+			$parmvaltp[$i]="fix";
+		}
+		elsif ($type & 8388608) {
+			$parmvaltp[$i]="precision";
+		}
+		elsif ($type & 16777216) {
+			$parmvaltp[$i]="intarray";
+		}
+		elsif ($type & 33554432) {
+			$parmvaltp[$i]="fixarray";
+		}
+		elsif ($type & 67108864) {
+			$parmvaltp[$i]="floatarray";
+		}
+		elsif ($type & 134217728) {
+			$parmvaltp[$i]="complexarray";
+		}
+		elsif ($type & 268435456) {
+			$parmvaltp[$i]="stringarray";
+		}
+		$parmformset[$i]=decodeString($4);
+		my $type=$5;
+		$parmtp[$i]=$5;
+		$parmtype[$i]=decodeString($6);
+		my $default=decodeString($7);
+		if ($default =~ /\\([^\\]*)\\ /xs) {
+			$default=$1."\"";
+		}
+		$parmdefault[$i]=$default;
+		$i++;
+         }
+      }
+    }
+    elsif ( $cmd =~ /create_constant_form \s* \(
+	\s* \003 ([^\004]*) \004 \s*,
+	\s* \003 ([^\004]*) \004 \s*,
+	 /xs) {
+	push @enumlist,decodeString($1);
+ 	my $label=decodeString($2);
+	chop $label;
+        push @enumlabel,$label;
+    }
+    elsif ( $cmd =~ /library_group \s* \(
+	    \s* \003 ([^\004]*) \004 \s*,
+	    \s* \003 ([^\004]*) \004 \s*,
+	    \s* (.*) /xs ) {
+        if (($1 ne $group) && ($1 ne "*") ) {
+		$group = decodeString($1);
+	}
+    }
+  }
+
+  print $STARS "defstar{\n";
+  if ($name) {
+	print $STARS "\tname { ".$name." }\n";
+  }
+  else {
+	warn  "Warning: $output- no CREATE_ITEM in files, wrong format.\n";
+	next;
+  }
+  print $STARS "\tdomain { ".$domain." }\n";
+  print $STARS "\tdesc { ".$desc{$name}." }\n";
+  if ($group) {
+	print $STARS "\tlocation { ".$group." }\n";
+  }
+  print $STARS "\tcopyright { \n\t\tCopyright (c) Hewlett-Packard Company 1998";
+  print $STARS "\n\t\tAll rights reserved.\n\t}\n"; 
+  if ($vendor) {
+	print $STARS "\tvendor { ".$vendor{$name}." }\n"; 
+  }
+  for $i (0 .. $#parmname) {
+	print $STARS "\tdefstate {\n";
+	print $STARS "\t\tname { ".$parmname[$i]." }\n";
+	if (($parmformset[$i] =~  /^StdFormSet/s) || 
+	    ($parmformset[$i] =~  /^StringAndReferenceSet/s)) {
+		print $STARS "\t\ttype { ".$parmvaltp[$i]." }\n";
+	} 
+	else {
+		print $STARS "\t\ttype { enum }\n";
+		print $STARS "\t\tenumlist { ";
+		for $i (0..$#enumlist) {
+			print $STARS $enumlist[$i];
+			if ($i != $#enumlist) {
+				print $STARS ",";
+			}
+		}
+		print $STARS "}\n";
+		print $STARS "\t\tenumlabels { ";
+		for $i (0..$#enumlabel) {
+			print $STARS $enumlabel[$i];
+			if ($i != $#enumlabel) {
+				print $STARS ",";
+			}
+		}
+		print $STARS "}\n";
+		$parmdefault[$i]="\"".$parmdefault[$i]."\"";
+	}
+	if ($parmdefault[$i]) {
+		print $STARS "\t\tdefault { ".$parmdefault[$i]." }\n";
+	}
+	if ($parmtp[$i]) {
+		if ($unit{$parmtp[$i]}) {
+			print $STARS "\t\tunits { ".$unit{$parmtp[$i]}."_UNITS }\n";
+		} 
+		elsif ($parmtp[$i] =~ /UNIT$/s) {
+			print $STARS "\t\tunits { ".$parmtp[$i]." }\n";
+		}
+	}
+	if ($parmdesc[$i]) {
+		print $STARS "\t\tdesc { ".$parmdesc[$i]." }\n";
+	}
+  	print $STARS "\t}\n";
+  }
+  print $STARS "}\n";
+ 
+  close $STARS;
+  close AELFILE;
+}
+
+sub decodeString {
+  local($string) = @_;
+  $string =~ s,\001,\\\\,sg;
+  $string =~ s,\002,\\\",sg;
+  $string =~ s,\003,\",sg;
+  $string =~ s,\004,\",sg;
+  # FIXME ADS 1.3, hpedlibgen will support ; in "" 
+  # $string =~ s,\005,;,sg;
+  $string;
+}
+
+sub hptolemy {
+  if (defined($hptolemy)) {
+    return;
+  }
+  if (defined($ENV{HPTOLEMY})) {
+    $hptolemy = $ENV{HPTOLEMY};
+  }
+  elsif (defined($ENV{HPEESOF_DIR})) {
+    $hptolemy = "$ENV{HPEESOF_DIR}/adsptolemy/lib";
+  }
+  else {
+    die "The $$HPEESOF_DIR environment variable must be defined.\n";
+  }
+}
+

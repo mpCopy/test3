@@ -1,0 +1,224 @@
+// Copyright  2000 - 2017 Keysight Technologies, Inc  
+// -*- c++ -*-
+// migrate timed components
+
+decl pt_dfstart = NULL;
+decl pt_dfstop = NULL;
+decl pt_dfunit = NULL;
+
+defun migrate_DF_start(instance, newstartname, val, unit) {
+  decl newval;
+  if (!strcmp(unit,"sec") && index(val,"sec")>=0)
+    newval = val;
+  else if (listlen(parse(val)) > 1)
+    newval = sprintf("(%s) %s", val, unit);
+  else
+    newval = sprintf("%s %s", val, unit);
+  pt_add_instance_parm(instance, newstartname, newval);
+}
+
+defun migrate_DF(design, instance) {
+  decl start = pt_get_instance_parm(instance, "DefaultStart");
+  decl stop = pt_get_instance_parm(instance, "DefaultStop");
+  decl unit = pt_get_instance_parm(instance, "DefaultTimeUnit");
+  if (!start || !stop || !unit)
+    return(FALSE);
+
+  pt_add_instance_parm(instance, "DefaultNumericStart", start);
+  pt_add_instance_parm(instance, "DefaultNumericStop", stop);
+
+  decl newunit = "sec";
+  if (!strcmp(unit, "Timenanosec"))
+    newunit = "nsec";
+  else if (!strcmp(unit, "Timemicrosec"))
+    newunit = "usec";
+  else if (!strcmp(unit, "Timemilisec")) // sic
+    newunit = "msec";
+  pt_dfstart = start;
+  pt_dfstop = stop;
+  pt_dfunit = newunit;
+  migrate_DF_start(instance, "DefaultTimeStart", start, newunit);
+  migrate_DF_start(instance, "DefaultTimeStop", stop, newunit);
+  return(TRUE);
+}
+
+defun migrate_DF_2(design, instance) {
+  decl schVal = pt_get_instance_parm( instance, "SchedulerType" );
+
+  if ( !strcmp( schVal, "_nDF_fAcyclicLoop" ) ) {
+    pt_set_instance_parm( instance, "SchedulerType", "_nDF_fHierarchical" );
+    db_regenerate_instance_annotation( instance );
+    return (TRUE);
+  }
+  return(FALSE);
+}
+
+defun migrate_setPlotToNone(design, instance) {
+  // only set Plot if it's not there
+  if (pt_get_instance_parm(instance, "Plot") == NULL)
+    pt_add_instance_parm(instance, "Plot", "None");
+}
+
+defun migrate_NumericSink(design, instance) {
+  decl r = FALSE;
+  if (pt_migrateStartStop(design, instance, "Start", NULL, NULL, NULL,
+			  "DefaultNumericStart"))
+    r = TRUE;
+  if (pt_migrateStartStop(design,instance, "Stop", NULL, NULL, NULL,
+			  "DefaultNumericStop"))
+    r = TRUE;
+  if (migrate_setPlotToNone(design, instance))
+    r = TRUE;
+  return(r);
+}
+
+defun migrate_TimedStartStop(design, instance) {
+  decl r = FALSE;
+  if (pt_migrateStartStop(design, instance, "Start", "TimeUnit",
+			  pt_dfstart, pt_dfunit, "DefaultTimeStart"))
+    r = TRUE;
+  if (pt_migrateStartStop(design, instance, "Stop", "TimeUnit",
+			  pt_dfstop, pt_dfunit, "DefaultTimeStop"))
+    r = TRUE;
+  if (migrate_setPlotToNone(design, instance))
+    r = TRUE;
+  return(r);
+}
+
+defun migrate_TimedSink(design, instance) {
+  decl r = FALSE;
+  if (migrate_TimedStartStop(design, instance))
+    r = TRUE;
+  decl attr = db_get_instance_attribute(instance, INST_SPECIAL);
+  if (!(attr & INST_DESIGN)) {
+    attr |= INST_DESIGN;
+    db_set_instance_attribute(instance, INST_SPECIAL, attr);
+    r = TRUE;
+  }
+  if (migrate_setPlotToNone(design, instance))
+    r = TRUE;
+  return(r);
+}
+
+defun migrate_ber(design, instance) {
+  decl r = FALSE;
+  if (migrate_TimedSink(design, instance))
+    r = TRUE;
+  if (pt_migrateStartStop(design, instance, "SymbolTime", "TimeUnit",
+			  NULL, pt_dfunit, "1.0"))
+    r = TRUE;
+  if (pt_migrateStartStop(design, instance, "DelayBound", "TimeUnit",
+			  NULL, pt_dfunit, "-1.0"))
+    r = TRUE;
+  return(r);
+}
+
+defun migrate_ErrVecMeas(design, instance) {
+  decl r = FALSE;
+  if (migrate_TimedStartStop(design, instance))
+    r = TRUE;
+  if (pt_migrateStartStop(design, instance, "SymbolTime", "TimeUnit",
+			  NULL, pt_dfunit, "1.0"))
+    r = TRUE;
+  return(r);
+}
+
+defun migrate_Sinad_2(design, instance) {
+  decl r = FALSE;
+  if (pt_migrateStartStop(design, instance, "SignalFrequency", "SignalFreqUnit",
+			  NULL, NULL, "1.0"))
+    r = TRUE;
+  if (pt_migrateStartStop(design, instance, "BandRejectSpan", "SignalFreqUnit",
+			  NULL, NULL, "0.0"))
+    r = TRUE;
+  return(r);
+}
+
+defun migrate_FM_DemodExtOsc(design, instance) {
+  decl sensitivity = pt_get_instance_parm( instance, "Sensitivity" );
+  if ( !sensitivity )
+    return( FALSE );
+  else {
+    decl new_sensitivity;
+    new_sensitivity = sprintf( "-(%s)", sensitivity );
+    pt_set_instance_parm( instance, "Sensitivity", new_sensitivity );
+    db_regenerate_instance_annotation( instance );
+    return( TRUE );
+  }
+}
+
+
+
+defun migrate_SpectrumAnalyzer( design, instance ) {
+
+  decl r = FALSE;
+  decl windowVal = pt_get_instance_parm( instance, "Window" );
+
+  if ( !strcmp( windowVal, "_nSpectrumAnalyzer_fHP8510_x5f6_x5f0" ) ) {
+    pt_set_instance_parm( instance, "Window", "_nSpectrumAnalyzer_f_x5f8510_x5f6_x5f0" );
+    db_regenerate_instance_annotation( instance );
+    r = TRUE;
+  }
+
+  return( r );
+}
+
+
+
+defun rename_SpectrumAnalyzerResBW_H( design, instance ) {
+
+  re_mangle_parameters( instance, "SpectrumAnalyzerResBW_H", "SpectrumAnalyzerResBW" );
+  db_set_instance_attribute( instance, INST_DESIGN_NAME, "SpectrumAnalyzerResBW" );
+
+  decl windowVal = pt_get_instance_parm( instance, "Window" );
+
+  if ( !strcmp( windowVal, "_nSpectrumAnalyzerResBW_fHP8510_x5f6_x5f0" ) ) {
+    pt_set_instance_parm( instance, "Window", "_nSpectrumAnalyzerResBW_f_x5f8510_x5f6_x5f0" );
+  }
+
+  db_regenerate_instance_annotation( instance );
+  return( TRUE );
+}
+
+
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_timed_df", 1,
+		     "DF", migrate_DF));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_timed_df", 2,
+		     "DF", migrate_DF_2));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_timed", 1,
+		     "NumericSink", migrate_NumericSink,
+		     "TimedSink", migrate_TimedSink,
+		     "berIS", migrate_ber,
+		     "berMC", migrate_ber,
+		     "berMC4", migrate_ber,
+		     "Sinad", migrate_TimedSink,
+		     "ErrVecMeas", migrate_ErrVecMeas,
+		     "FFTAnalyzer", migrate_TimedStartStop,
+		     "SpecAnalyzer", migrate_TimedStartStop,
+		     "OutFile", migrate_TimedStartStop));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_timed", 2,
+		     "Sinad", migrate_Sinad_2));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_timed", 3,
+		     "FM_DemodExtOsc", migrate_FM_DemodExtOsc));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_timed", 4,
+		     "EnvOutSelector", ael_mangling,
+		     "EnvOutShort", ael_mangling));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_timed", 5,
+		     "SpectrumAnalyzer", migrate_SpectrumAnalyzer,
+		     "SpectrumAnalyzerResBW_H", rename_SpectrumAnalyzerResBW_H,
+		     "RF_Modulator", migrate_R_Temp_Noise,
+		     "RF_ModulatorRC", migrate_R_Temp_Noise));

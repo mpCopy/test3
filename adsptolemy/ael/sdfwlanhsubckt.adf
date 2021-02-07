@@ -1,0 +1,1644 @@
+set_design_type( sigproc_net );
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f6", 
+	"Mbps_6",
+	0,
+	"0",
+	"Mbps_6");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f9", 
+	"Mbps_9",
+	0,
+	"1",
+	"Mbps_9");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f12", 
+	"Mbps_12",
+	0,
+	"2",
+	"Mbps_12");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f18", 
+	"Mbps_18",
+	0,
+	"3",
+	"Mbps_18");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f24", 
+	"Mbps_24",
+	0,
+	"4",
+	"Mbps_24");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f27", 
+	"Mbps_27",
+	0,
+	"5",
+	"Mbps_27");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f36", 
+	"Mbps_36",
+	0,
+	"6",
+	"Mbps_36");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f48", 
+	"Mbps_48",
+	0,
+	"7",
+	"Mbps_48");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f54", 
+	"Mbps_54",
+	0,
+	"8",
+	"Mbps_54");
+
+create_form_set("_nWLAN_x5f11a_x5fRF_x5fCCDF_fRateSet",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f6",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f9",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f12",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f18",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f24",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f27",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f36",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f48",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f54",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f2", 
+	"T/2",
+	0,
+	"0",
+	"T/2");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f4", 
+	"T/4",
+	0,
+	"1",
+	"T/4");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f8", 
+	"T/8",
+	0,
+	"2",
+	"T/8");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f16", 
+	"T/16",
+	0,
+	"3",
+	"T/16");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f32", 
+	"T/32",
+	0,
+	"4",
+	"T/32");
+
+create_constant_form ("_nWLAN_x5f11a_x5fRF_x5fCCDF_fUserDefined", 
+	"UserDefined",
+	0,
+	"5",
+	"UserDefined");
+
+create_form_set("_nWLAN_x5f11a_x5fRF_x5fCCDF_fGuardTypeSet",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f2",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f4",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f8",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f16",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f32",
+	"_nWLAN_x5f11a_x5fRF_x5fCCDF_fUserDefined",
+	"StdForm");
+
+create_item ("WLAN_11a_RF_CCDF","RF signal complementary cumulative distribution function",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_11a_RF_CCDF",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_11a_RF_CCDF",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_11a_RF_CCDF",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RLoad","Reference resistor",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50.0")),
+	create_parm ("RTemp","Temperature, in degrees C",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","- 273.15")),
+	create_parm ("FCarrier","Carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","3407 MHz")),
+	create_parm ("TStep","Sample time interval",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0 sec")),
+	create_parm ("Length","Octet number of PSDU",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","256")),
+	create_parm ("Rate","Data rate",
+		PARM_INT,
+		"_nWLAN_x5f11a_x5fRF_x5fCCDF_fRateSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f11a_x5fRF_x5fCCDF_fMbps_x5f6","Mbps_6")),
+	create_parm ("Order","FFT points=2^Order",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("GuardType","Type of guard interval",
+		PARM_INT,
+		"_nWLAN_x5f11a_x5fRF_x5fCCDF_fGuardTypeSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f11a_x5fRF_x5fCCDF_fT_x5f4","T_4")),
+	create_parm ("GuardInterval","Guard interval defined by user",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("Idle","Padded number of zeros between two bursts",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("StartSym","Symbol from which measurement begins",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","80")),
+	create_parm ("BurstLen","Length of input signal burst",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","80")),
+	create_parm ("OutputPoints","Output precision",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1200")),
+	create_parm ("NumBursts","Number of bursts",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","30")));
+
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fMpbs_x5f1", 
+	"Mpbs_1",
+	0,
+	"0",
+	"Mpbs_1");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fMbps_x5f2", 
+	"Mbps_2",
+	0,
+	"1",
+	"Mbps_2");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fMbps_x5f5_x5f5", 
+	"Mbps_5.5",
+	0,
+	"2",
+	"Mbps_5.5");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fMbps_x5f11", 
+	"Mbps_11",
+	0,
+	"3",
+	"Mbps_11");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fConstellation_fDataRateSet",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fMpbs_x5f1",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fMbps_x5f2",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fMbps_x5f5_x5f5",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fMbps_x5f11",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fCCK", 
+	"CCK",
+	0,
+	"0",
+	"CCK");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fPBCC", 
+	"PBCC",
+	0,
+	"1",
+	"PBCC");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fConstellation_fModulationSet",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fCCK",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fPBCC",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fLong", 
+	"Long",
+	0,
+	"0",
+	"Long");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fShort", 
+	"Short",
+	0,
+	"1",
+	"Short");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fConstellation_fPreambleFormatSet",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fLong",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fShort",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fConstellation_fClkLockedFlagSet",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fNO",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fNone", 
+	"None",
+	0,
+	"0",
+	"None");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fLinear", 
+	"Linear",
+	0,
+	"1",
+	"Linear");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fCosine", 
+	"Cosine",
+	0,
+	"2",
+	"Cosine");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fConstellation_fPwrRampSet",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fNone",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fLinear",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fCosine",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fNoneFilter", 
+	"NoneFilter",
+	0,
+	"0",
+	"NoneFilter");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fGaussian", 
+	"Gaussian",
+	0,
+	"1",
+	"Gaussian");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fRoot_x5fCosine", 
+	"Root Cosine",
+	0,
+	"2",
+	"Root Cosine");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fIdeal_x5fLowpass", 
+	"Ideal Lowpass",
+	0,
+	"3",
+	"Ideal Lowpass");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fConstellation_fFilterTypeSet",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fNoneFilter",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fGaussian",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fRoot_x5fCosine",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fIdeal_x5fLowpass",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fPN9", 
+	"PN9",
+	0,
+	"0",
+	"PN9");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fPN15", 
+	"PN15",
+	0,
+	"1",
+	"PN15");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_fFIX4", 
+	"FIX4",
+	0,
+	"2",
+	"FIX4");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f4_x5f1_x5f4_x5f0", 
+	"_4_1_4_0",
+	0,
+	"3",
+	"_4_1_4_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f8_x5f1_x5f8_x5f0", 
+	"_8_1_8_0",
+	0,
+	"4",
+	"_8_1_8_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f16_x5f1_x5f16_x5f0", 
+	"_16_1_16_0",
+	0,
+	"5",
+	"_16_1_16_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f32_x5f1_x5f32_x5f0", 
+	"_32_1_32_0",
+	0,
+	"6",
+	"_32_1_32_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f64_x5f1_x5f64_x5f0", 
+	"_64_1_64_0",
+	0,
+	"7",
+	"_64_1_64_0");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fConstellation_fDataTypeSet",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fPN9",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fPN15",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_fFIX4",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f4_x5f1_x5f4_x5f0",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f8_x5f1_x5f8_x5f0",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f16_x5f1_x5f16_x5f0",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f32_x5f1_x5f32_x5f0",
+	"_nWLAN_x5f802_x5f11b_x5fConstellation_f_x5f64_x5f1_x5f64_x5f0",
+	"StdForm");
+
+create_item ("WLAN_802_11b_Constellation","WLAN 802.11b TX constellation measurement",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_802_11b_Constellation",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_802_11b_Constellation",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_802_11b_Constellation",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OversamplingRatio","Oversampling ratio",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("DataRate","Data rate (Mbps)",
+		PARM_INT,
+		"_nWLAN_x5f802_x5f11b_x5fConstellation_fDataRateSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fConstellation_fMbps_x5f11","Mbps_11")),
+	create_parm ("Modulation","Modulation format",
+		PARM_INT,
+		"_nWLAN_x5f802_x5f11b_x5fConstellation_fModulationSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fConstellation_fCCK","CCK")),
+	create_parm ("PreambleFormat","Preamble/header format",
+		PARM_INT,
+		"_nWLAN_x5f802_x5f11b_x5fConstellation_fPreambleFormatSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fConstellation_fLong","Long")),
+	create_parm ("ClkLockedFlag","Lock header clock?",
+		PARM_INT,
+		"_nWLAN_x5f802_x5f11b_x5fConstellation_fClkLockedFlagSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fConstellation_fYES","YES")),
+	create_parm ("PwrRamp","RF burst shape",
+		PARM_INT,
+		"_nWLAN_x5f802_x5f11b_x5fConstellation_fPwrRampSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fConstellation_fLinear","Linear")),
+	create_parm ("IdleInterval","Burst idle interval",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","50usec")),
+	create_parm ("FilterType","Shaping filter type",
+		PARM_INT,
+		"_nWLAN_x5f802_x5f11b_x5fConstellation_fFilterTypeSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fConstellation_fGaussian","Gaussian")),
+	create_parm ("RRC_Alpha","RRC roll-off factor",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.22")),
+	create_parm ("GaussianFilter_bT","Gaussian filter bT coefficient",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.5")),
+	create_parm ("FilterLength","Filter symbol length (symbols)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")),
+	create_parm ("DataType","Payload data type",
+		PARM_INT,
+		"_nWLAN_x5f802_x5f11b_x5fConstellation_fDataTypeSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fConstellation_fPN9","PN9")),
+	create_parm ("DataLength","Data length (bytes per burst)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1024")),
+	create_parm ("Constellation_ForwardTaps","Number of equalizer forward taps",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("Constellation_FeedbackTaps","Number of equalizer feedback taps",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("Constellation_EquAlpha","LMS algorithm scale factor",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0006")),
+	create_parm ("ConstellationStartBurst","Constellation measurement start burst",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("ConstellationBursts","Constellation measurement bursts",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")));
+
+
+create_item ("WLAN_802_11a_RX_ACR_Info","802.11a RX ACR information",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_802_11a_RX_ACR_Info",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_802_11a_RX_ACR_Info",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_802_11a_RX_ACR_Info",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("WLAN_802_11b_TX_Info","802.11b TX information",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_802_11b_TX_Info",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_802_11b_TX_Info",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_802_11b_TX_Info",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_fNoiseSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fNO",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCH1_x5f2412_x5f0MHz", 
+	"CH1_2412.0MHz",
+	0,
+	"2412.0MHz",
+	"2412.0MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCH3_x5f2422_x5f0MHz", 
+	"CH3_2422.0MHz",
+	0,
+	"2422.0MHz",
+	"2422.0MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCH5_x5f2432_x5f0MHz", 
+	"CH5_2432.0MHz",
+	0,
+	"2432.0MHz",
+	"2432.0MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCH6_x5f2437_x5f0MHz", 
+	"CH6_2437.0MHz",
+	0,
+	"2437.0MHz",
+	"2437.0MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCH7_x5f2442_x5f0MHz", 
+	"CH7_2442.0MHz",
+	0,
+	"2442.0MHz",
+	"2442.0MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCH9_x5f2452_x5f0MHz", 
+	"CH9_2452.0MHz",
+	0,
+	"2452.0MHz",
+	"2452.0MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCH11_x5f2462_x5f0MHz", 
+	"CH11_2462.0MHz",
+	0,
+	"2462.0MHz",
+	"2462.0MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCH13_x5f2472_x5f0MHz", 
+	"CH13_2472.0MHz",
+	0,
+	"2472.0MHz",
+	"2472.0MHz");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_f_x5fFCarrierSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCH1_x5f2412_x5f0MHz",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCH3_x5f2422_x5f0MHz",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCH5_x5f2432_x5f0MHz",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCH6_x5f2437_x5f0MHz",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCH7_x5f2442_x5f0MHz",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCH9_x5f2452_x5f0MHz",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCH11_x5f2462_x5f0MHz",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCH13_x5f2472_x5f0MHz",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_fMirrorSpectrumSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fNO",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fMbps_x5f1", 
+	"Mbps_1",
+	0,
+	"0",
+	"Mbps_1");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fMbps_x5f2", 
+	"Mbps_2",
+	0,
+	"1",
+	"Mbps_2");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fMbps_x5f5_x5f5", 
+	"Mbps_5.5",
+	0,
+	"2",
+	"Mbps_5.5");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fMbps_x5f11", 
+	"Mbps_11",
+	0,
+	"3",
+	"Mbps_11");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_fDataRateSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fMbps_x5f1",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fMbps_x5f2",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fMbps_x5f5_x5f5",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fMbps_x5f11",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCCK", 
+	"CCK",
+	0,
+	"0",
+	"CCK");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fPBCC", 
+	"PBCC",
+	0,
+	"1",
+	"PBCC");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_fModulationSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCCK",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fPBCC",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fLong", 
+	"Long",
+	0,
+	"0",
+	"Long");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fShort", 
+	"Short",
+	0,
+	"1",
+	"Short");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_fPreambleFormatSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fLong",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fShort",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_fClkLockedFlagSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fNO",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fNone", 
+	"None",
+	0,
+	"0",
+	"None");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fLinear", 
+	"Linear",
+	0,
+	"1",
+	"Linear");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fCosine", 
+	"Cosine",
+	0,
+	"2",
+	"Cosine");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_fPwrRampSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fNone",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fLinear",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fCosine",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fNoneFilter", 
+	"NoneFilter",
+	0,
+	"0",
+	"NoneFilter");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fGaussian", 
+	"Gaussian",
+	0,
+	"1",
+	"Gaussian");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fRoot_x5fCosine", 
+	"Root Cosine",
+	0,
+	"2",
+	"Root Cosine");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fIdeal_x5fLowpass", 
+	"Ideal Lowpass",
+	0,
+	"3",
+	"Ideal Lowpass");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_fFilterTypeSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fNoneFilter",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fGaussian",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fRoot_x5fCosine",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fIdeal_x5fLowpass",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fPN9", 
+	"PN9",
+	0,
+	"0",
+	"PN9");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fPN15", 
+	"PN15",
+	0,
+	"1",
+	"PN15");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_fFIX4", 
+	"FIX4",
+	0,
+	"2",
+	"FIX4");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_f_x5f4_x5f1_x5f4_x5f0", 
+	"_4_1_4_0",
+	0,
+	"3",
+	"_4_1_4_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_f_x5f8_x5f1_x5f8_x5f0", 
+	"_8_1_8_0",
+	0,
+	"4",
+	"_8_1_8_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_f_x5f16_x5f1_x5f16_x5f0", 
+	"_16_1_16_0",
+	0,
+	"5",
+	"_16_1_16_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_f_x5f32_x5f1_x5f32_x5f0", 
+	"_32_1_32_0",
+	0,
+	"6",
+	"_32_1_32_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11b_x5fRF_f_x5f64_x5f1_x5f64_x5f0", 
+	"_64_1_64_0",
+	0,
+	"7",
+	"_64_1_64_0");
+
+create_form_set("_nWLAN_x5f802_x5f11b_x5fRF_fDataTypeSet",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fPN9",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fPN15",
+	"_nWLAN_x5f802_x5f11b_x5fRF_fFIX4",
+	"_nWLAN_x5f802_x5f11b_x5fRF_f_x5f4_x5f1_x5f4_x5f0",
+	"_nWLAN_x5f802_x5f11b_x5fRF_f_x5f8_x5f1_x5f8_x5f0",
+	"_nWLAN_x5f802_x5f11b_x5fRF_f_x5f16_x5f1_x5f16_x5f0",
+	"_nWLAN_x5f802_x5f11b_x5fRF_f_x5f32_x5f1_x5f32_x5f0",
+	"_nWLAN_x5f802_x5f11b_x5fRF_f_x5f64_x5f1_x5f64_x5f0",
+	"StdForm");
+
+create_item ("WLAN_802_11b_RF","WLAN 802.11b signal source",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_802_11b_RF",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_802_11b_RF",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_802_11b_RF",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("R","Source resistance",
+		PARM_REAL,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50Ohm")),
+	create_parm ("Temp","Source resistor temperature",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","-273.15")),
+	create_parm ("Noise","Enable thermal noise?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11b_x5fRF_fNoiseSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fNO","NO")),
+	create_parm ("FCarrier","Carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"_nWLAN_x5f802_x5f11b_x5fRF_f_x5fFCarrierSet",
+		FREQUENCY_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fCH1_x5f2412_x5f0MHz","CH1_2412_0MHz")),
+	create_parm ("Power","Power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","0.04")),
+	create_parm ("MirrorSpectrum","Mirror spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11b_x5fRF_fMirrorSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fNO","NO")),
+	create_parm ("GainImbalance","Gain imbalance, Q vs I(dB)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("PhaseImbalance","Phase imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("I_OriginOffset","I origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("Q_OriginOffset","Q origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("IQ_Rotation","IQ rotation",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("OversamplingRatio","Oversampling ratio",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("DataRate","Data rate (Mbps)",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11b_x5fRF_fDataRateSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fMbps_x5f11","Mbps_11")),
+	create_parm ("Modulation","Modulation format",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11b_x5fRF_fModulationSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fCCK","CCK")),
+	create_parm ("PreambleFormat","Preamble/header format",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11b_x5fRF_fPreambleFormatSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fLong","Long")),
+	create_parm ("ClkLockedFlag","Lock header clock?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11b_x5fRF_fClkLockedFlagSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fYES","YES")),
+	create_parm ("PwrRamp","RF power ramp shape",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11b_x5fRF_fPwrRampSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fNone","None")),
+	create_parm ("IdleInterval","Burst idle interval",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","10usec")),
+	create_parm ("FilterType","Shaping filter type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11b_x5fRF_fFilterTypeSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fGaussian","Gaussian")),
+	create_parm ("RRC_Alpha","RRC roll-off factor",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.2")),
+	create_parm ("GaussianFilter_bT","Gaussian filter bT coefficient",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.3")),
+	create_parm ("FilterLength","Filter length (Chips)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("DataType","Payload data type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11b_x5fRF_fDataTypeSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11b_x5fRF_fPN9","PN9")),
+	create_parm ("DataLength","Data length (bytes per burst)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","100")));
+
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f802_x5f11a_x5fRF_fNoiseSet",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fNO",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH1_x5f2412_x5f0MHz", 
+	"CH1_2412.0MHz",
+	0,
+	"2412MHz",
+	"2412MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH3_x5f2422_x5f0MHz", 
+	"CH3_2422.0MHz",
+	0,
+	"2422MHz",
+	"2422MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH5_x5f2432_x5f0MHz", 
+	"CH5_2432.0MHz",
+	0,
+	"2432MHz",
+	"2432MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH6_x5f2437_x5f0MHz", 
+	"CH6_2437.0MHz",
+	0,
+	"2437MHz",
+	"2437MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH7_x5f2442_x5f0MHz", 
+	"CH7_2442.0MHz",
+	0,
+	"2442MHz",
+	"2442MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH9_x5f2452_x5f0MHz", 
+	"CH9_2452.0MHz",
+	0,
+	"2452MHz",
+	"2452MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH11_x5f2462_x5f0MHz", 
+	"CH11_2462.0MHz",
+	0,
+	"2462MHz",
+	"2462MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH13_x5f2472_x5f0MHz", 
+	"CH13_2472.0MHz",
+	0,
+	"2472MHz",
+	"2472MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH36_x5f5180_x5f0MHz", 
+	"CH36_5180.0MHz",
+	0,
+	"5180MHz",
+	"5180MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH40_x5f5200_x5f0MHz", 
+	"CH40_5200.0MHz",
+	0,
+	"5200MHz",
+	"5200MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH44_x5f5220_x5f0MHz", 
+	"CH44_5220.0MHz",
+	0,
+	"5220MHz",
+	"5220MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH48_x5f5240_x5f0MHz", 
+	"CH48_5240.0MHz",
+	0,
+	"5240MHz",
+	"5240MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH52_x5f5260_x5f0MHz", 
+	"CH52_5260.0MHz",
+	0,
+	"5260MHz",
+	"5260MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH56_x5f5280_x5f0MHz", 
+	"CH56_5280.0MHz",
+	0,
+	"5280MHz",
+	"5280MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH60_x5f5300_x5f0MHz", 
+	"CH60_5300.0MHz",
+	0,
+	"5300MHz",
+	"5300MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH64_x5f5320_x5f0MHz", 
+	"CH64_5320.0MHz",
+	0,
+	"5320MHz",
+	"5320MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH149_x5f5745_x5f0MHz", 
+	"CH149_5745.0MHz",
+	0,
+	"5745MHz",
+	"5745MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH153_x5f5765_x5f0MHz", 
+	"CH153_5765.0MHz",
+	0,
+	"5765MHz",
+	"5765MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH157_x5f5785_x5f0MHz", 
+	"CH157_5785.0MHz",
+	0,
+	"5785MHz",
+	"5785MHz");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fCH161_x5f5805_x5f0MHz", 
+	"CH161_5805.0MHz",
+	0,
+	"5805MHz",
+	"5805MHz");
+
+create_form_set("_nWLAN_x5f802_x5f11a_x5fRF_f_x5fFCarrierSet",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH1_x5f2412_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH3_x5f2422_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH5_x5f2432_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH6_x5f2437_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH7_x5f2442_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH9_x5f2452_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH11_x5f2462_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH13_x5f2472_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH36_x5f5180_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH40_x5f5200_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH44_x5f5220_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH48_x5f5240_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH52_x5f5260_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH56_x5f5280_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH60_x5f5300_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH64_x5f5320_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH149_x5f5745_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH153_x5f5765_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH157_x5f5785_x5f0MHz",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fCH161_x5f5805_x5f0MHz",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nWLAN_x5f802_x5f11a_x5fRF_fMirrorSpectrumSet",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fNO",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fYES",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f1", 
+	"OversamplingRatio_1",
+	0,
+	"0",
+	"OversamplingRatio_1");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f2", 
+	"OversamplingRatio_2",
+	0,
+	"1",
+	"OversamplingRatio_2");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f4", 
+	"OversamplingRatio_4",
+	0,
+	"2",
+	"OversamplingRatio_4");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f8", 
+	"OversamplingRatio_8",
+	0,
+	"3",
+	"OversamplingRatio_8");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f16", 
+	"OversamplingRatio_16",
+	0,
+	"4",
+	"OversamplingRatio_16");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f32", 
+	"OversamplingRatio_32",
+	0,
+	"5",
+	"OversamplingRatio_32");
+
+create_form_set("_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatioSet",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f1",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f2",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f4",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f8",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f16",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f32",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f6", 
+	"Mbps_6",
+	0,
+	"0",
+	"Mbps_6");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f9", 
+	"Mbps_9",
+	0,
+	"1",
+	"Mbps_9");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f12", 
+	"Mbps_12",
+	0,
+	"2",
+	"Mbps_12");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f18", 
+	"Mbps_18",
+	0,
+	"3",
+	"Mbps_18");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f24", 
+	"Mbps_24",
+	0,
+	"4",
+	"Mbps_24");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f27", 
+	"Mbps_27",
+	0,
+	"5",
+	"Mbps_27");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f36", 
+	"Mbps_36",
+	0,
+	"6",
+	"Mbps_36");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f48", 
+	"Mbps_48",
+	0,
+	"7",
+	"Mbps_48");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f54", 
+	"Mbps_54",
+	0,
+	"8",
+	"Mbps_54");
+
+create_form_set("_nWLAN_x5f802_x5f11a_x5fRF_fDataRateSet",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f6",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f9",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f12",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f18",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f24",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f27",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f36",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f48",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f54",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fPN9", 
+	"PN9",
+	0,
+	"0",
+	"PN9");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fPN15", 
+	"PN15",
+	0,
+	"1",
+	"PN15");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_fFIX4", 
+	"FIX4",
+	0,
+	"2",
+	"FIX4");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_f_x5f4_x5f1_x5f4_x5f0", 
+	"_4_1_4_0",
+	0,
+	"3",
+	"_4_1_4_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_f_x5f8_x5f1_x5f8_x5f0", 
+	"_8_1_8_0",
+	0,
+	"4",
+	"_8_1_8_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_f_x5f16_x5f1_x5f16_x5f0", 
+	"_16_1_16_0",
+	0,
+	"5",
+	"_16_1_16_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_f_x5f32_x5f1_x5f32_x5f0", 
+	"_32_1_32_0",
+	0,
+	"6",
+	"_32_1_32_0");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fRF_f_x5f64_x5f1_x5f64_x5f0", 
+	"_64_1_64_0",
+	0,
+	"7",
+	"_64_1_64_0");
+
+create_form_set("_nWLAN_x5f802_x5f11a_x5fRF_fDataTypeSet",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fPN9",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fPN15",
+	"_nWLAN_x5f802_x5f11a_x5fRF_fFIX4",
+	"_nWLAN_x5f802_x5f11a_x5fRF_f_x5f4_x5f1_x5f4_x5f0",
+	"_nWLAN_x5f802_x5f11a_x5fRF_f_x5f8_x5f1_x5f8_x5f0",
+	"_nWLAN_x5f802_x5f11a_x5fRF_f_x5f16_x5f1_x5f16_x5f0",
+	"_nWLAN_x5f802_x5f11a_x5fRF_f_x5f32_x5f1_x5f32_x5f0",
+	"_nWLAN_x5f802_x5f11a_x5fRF_f_x5f64_x5f1_x5f64_x5f0",
+	"StdForm");
+
+create_item ("WLAN_802_11a_RF","WLAN 802.11a signal source",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_802_11a_RF",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_802_11a_RF",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_802_11a_RF",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("R","Source resistance",
+		PARM_REAL,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50")),
+	create_parm ("Temp","Temperature",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","-273.15")),
+	create_parm ("Noise","Enable thermal noise?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11a_x5fRF_fNoiseSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11a_x5fRF_fNO","NO")),
+	create_parm ("FCarrier","Carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"_nWLAN_x5f802_x5f11a_x5fRF_f_x5fFCarrierSet",
+		FREQUENCY_UNIT,
+		prm("_nWLAN_x5f802_x5f11a_x5fRF_fCH40_x5f5200_x5f0MHz","CH40_5200_0MHz")),
+	create_parm ("Power","Power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","0.04")),
+	create_parm ("MirrorSpectrum","Mirror spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11a_x5fRF_fMirrorSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11a_x5fRF_fNO","NO")),
+	create_parm ("GainImbalance","Gain imbalance, Q vs I (dB)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("PhaseImbalance","Phase imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("I_OriginOffset","I origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("Q_OriginOffset","Q origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("IQ_Rotation","IQ rotation",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("OversamplingRatio","Oversampling ratio",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatioSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11a_x5fRF_fOversamplingRatio_x5f4","OversamplingRatio_4")),
+	create_parm ("DataRate","Data rate (Mbps)",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11a_x5fRF_fDataRateSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11a_x5fRF_fMbps_x5f54","Mbps_54")),
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","20MHz")),
+	create_parm ("IdleInterval","Burst idle interval",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","4.0usec")),
+	create_parm ("DataType","Payload data type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nWLAN_x5f802_x5f11a_x5fRF_fDataTypeSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11a_x5fRF_fPN9","PN9")),
+	create_parm ("DataLength","Data length (bytes per burst)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","100")),
+	create_parm ("GuardInterval","Guard interval (frac FFT size)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.25")));
+
+
+create_item ("WLAN_802_11b_RX_Sensitivity_Info","802.11b RX sensitivity information",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_802_11b_RX_Sensitivity_Info",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_802_11b_RX_Sensitivity_Info",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_802_11b_RX_Sensitivity_Info",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("WLAN_802_11a_RX_Sensitivity_Info","802.11a RX sensitivity information",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_802_11a_RX_Sensitivity_Info",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_802_11a_RX_Sensitivity_Info",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_802_11a_RX_Sensitivity_Info",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("WLAN_802_11a_TX_Info","802.11a TX information",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_802_11a_TX_Info",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_802_11a_TX_Info",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_802_11a_TX_Info",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f1", 
+	"OversamplingRatio_1",
+	0,
+	"0",
+	"OversamplingRatio_1");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f2", 
+	"OversamplingRatio_2",
+	0,
+	"1",
+	"OversamplingRatio_2");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f4", 
+	"OversamplingRatio_4",
+	0,
+	"2",
+	"OversamplingRatio_4");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f8", 
+	"OversamplingRatio_8",
+	0,
+	"3",
+	"OversamplingRatio_8");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f16", 
+	"OversamplingRatio_16",
+	0,
+	"4",
+	"OversamplingRatio_16");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f32", 
+	"OversamplingRatio_32",
+	0,
+	"5",
+	"OversamplingRatio_32");
+
+create_form_set("_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatioSet",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f1",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f2",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f4",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f8",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f16",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f32",
+	"StdForm");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f6", 
+	"Mbps_6",
+	0,
+	"0",
+	"Mbps_6");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f9", 
+	"Mbps_9",
+	0,
+	"1",
+	"Mbps_9");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f12", 
+	"Mbps_12",
+	0,
+	"2",
+	"Mbps_12");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f18", 
+	"Mbps_18",
+	0,
+	"3",
+	"Mbps_18");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f24", 
+	"Mbps_24",
+	0,
+	"4",
+	"Mbps_24");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f27", 
+	"Mbps_27",
+	0,
+	"5",
+	"Mbps_27");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f36", 
+	"Mbps_36",
+	0,
+	"6",
+	"Mbps_36");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f48", 
+	"Mbps_48",
+	0,
+	"7",
+	"Mbps_48");
+
+create_constant_form ("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f54", 
+	"Mbps_54",
+	0,
+	"8",
+	"Mbps_54");
+
+create_form_set("_nWLAN_x5f802_x5f11a_x5fConstellation_fDataRateSet",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f6",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f9",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f12",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f18",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f24",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f27",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f36",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f48",
+	"_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f54",
+	"StdForm");
+
+create_item ("WLAN_802_11a_Constellation","802.11a constellation Measurement",
+	"W",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST,
+	-1,
+	"BMP_WLAN_802_11a_Constellation",
+	"Component Parameters",
+	NULL,
+	SPDesignNetlistFmt,
+	"WLAN_802_11a_Constellation",
+	SPDesignAnnotFmt,
+	"SYM_DSN_WLAN_802_11a_Constellation",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RLoad","Source resistance",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50")),
+	create_parm ("RTemp","Temperature",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","-273.15")),
+	create_parm ("StartBurst","Constellation measurement start burst",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("BurstsMeasured","Bursts measured",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","5")),
+	create_parm ("OversamplingRatio","Oversampling ratio",
+		PARM_INT,
+		"_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatioSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11a_x5fConstellation_fOversamplingRatio_x5f2","OversamplingRatio_2")),
+	create_parm ("DataRate","data rate (Mbps)",
+		PARM_INT,
+		"_nWLAN_x5f802_x5f11a_x5fConstellation_fDataRateSet",
+		UNITLESS_UNIT,
+		prm("_nWLAN_x5f802_x5f11a_x5fConstellation_fMbps_x5f54","Mbps_54")),
+	create_parm ("Bandwidth","Bandwidth",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","20MHz")),
+	create_parm ("IdleInterval","Burst idle interval",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","4usec")),
+	create_parm ("DataLength","Data length (bytes per burst)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","100")),
+	create_parm ("GuardInterval","Guard interval (frac FFT size)",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.25")),
+	create_parm ("FreqOffset","actual frequency offset",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","0.0")));

@@ -1,0 +1,973 @@
+set_design_type( sigproc_net );
+
+create_constant_form ("_nRMSE_fRMS", 
+	"RMS",
+	0,
+	"0",
+	"RMS");
+
+create_constant_form ("_nRMSE_fdB", 
+	"dB",
+	0,
+	"1",
+	"dB");
+
+create_form_set("_nRMSE_fDisplayOptionSet",
+	"_nRMSE_fRMS",
+	"_nRMSE_fdB",
+	"StdForm");
+
+create_item ("RMSE","Root Mean Square Error",
+	"R",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_RMSE",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nRMSE_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_RMSE",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("StartFrame","Start frame",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FramesToAverage","Number of frames for the average RMSE",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("FrameLength","Frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4096")),
+	create_parm ("DisplayOption","Display option",
+		PARM_INT,
+		"_nRMSE_fDisplayOptionSet",
+		UNITLESS_UNIT,
+		prm("_nRMSE_fRMS","RMS")));
+
+
+create_constant_form ("_nConvolutionalCoder_frate_x5f1_x5f2", 
+	"rate_1_2",
+	0,
+	"0",
+	"rate 1/2");
+
+create_constant_form ("_nConvolutionalCoder_frate_x5f1_x5f3", 
+	"rate_1_3",
+	0,
+	"1",
+	"rate 1/3");
+
+create_constant_form ("_nConvolutionalCoder_frate_x5f1_x5f4", 
+	"rate_1_4",
+	0,
+	"2",
+	"rate 1/4");
+
+create_constant_form ("_nConvolutionalCoder_frate_x5f1_x5f5", 
+	"rate_1_5",
+	0,
+	"3",
+	"rate 1/5");
+
+create_constant_form ("_nConvolutionalCoder_frate_x5f1_x5f6", 
+	"rate_1_6",
+	0,
+	"4",
+	"rate 1/6");
+
+create_constant_form ("_nConvolutionalCoder_frate_x5f1_x5f7", 
+	"rate_1_7",
+	0,
+	"5",
+	"rate 1/7");
+
+create_constant_form ("_nConvolutionalCoder_frate_x5f1_x5f8", 
+	"rate_1_8",
+	0,
+	"6",
+	"rate 1/8");
+
+create_form_set("_nConvolutionalCoder_fCodingRateSet",
+	"_nConvolutionalCoder_frate_x5f1_x5f2",
+	"_nConvolutionalCoder_frate_x5f1_x5f3",
+	"_nConvolutionalCoder_frate_x5f1_x5f4",
+	"_nConvolutionalCoder_frate_x5f1_x5f5",
+	"_nConvolutionalCoder_frate_x5f1_x5f6",
+	"_nConvolutionalCoder_frate_x5f1_x5f7",
+	"_nConvolutionalCoder_frate_x5f1_x5f8",
+	"StdForm");
+
+create_constant_form ("_nConvolutionalCoder_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nConvolutionalCoder_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nConvolutionalCoder_fZeroTailSet",
+	"_nConvolutionalCoder_fNO",
+	"_nConvolutionalCoder_fYES",
+	"StdForm");
+
+create_item ("ConvolutionalCoder","Convolutional coder",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_ConvolutionalCoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nConvolutionalCoder_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_ConvolutionalCoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingRate","Coding rate",
+		PARM_INT,
+		"_nConvolutionalCoder_fCodingRateSet",
+		UNITLESS_UNIT,
+		prm("_nConvolutionalCoder_frate_x5f1_x5f2","rate_1_2")),
+	create_parm ("ConstraintLength","Constraint length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","7")),
+	create_parm ("Polynomial","Generator polynomial",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0133, 0171}")),
+	create_parm ("ZeroTail","Zero tail used to convert convolutional code to block code",
+		PARM_INT,
+		"_nConvolutionalCoder_fZeroTailSet",
+		UNITLESS_UNIT,
+		prm("_nConvolutionalCoder_fNO","NO")),
+	create_parm ("BitSequenceLength","Length of bit squence not including tail bits, valid when ZeroTail=YES",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","88")));
+
+
+create_constant_form ("_nViterbiDecoder_frate_x5f1_x5f2", 
+	"rate_1_2",
+	0,
+	"0",
+	"rate 1/2");
+
+create_constant_form ("_nViterbiDecoder_frate_x5f1_x5f3", 
+	"rate_1_3",
+	0,
+	"1",
+	"rate 1/3");
+
+create_constant_form ("_nViterbiDecoder_frate_x5f1_x5f4", 
+	"rate_1_4",
+	0,
+	"2",
+	"rate 1/4");
+
+create_constant_form ("_nViterbiDecoder_frate_x5f1_x5f5", 
+	"rate_1_5",
+	0,
+	"3",
+	"rate 1/5");
+
+create_constant_form ("_nViterbiDecoder_frate_x5f1_x5f6", 
+	"rate_1_6",
+	0,
+	"4",
+	"rate 1/6");
+
+create_constant_form ("_nViterbiDecoder_frate_x5f1_x5f7", 
+	"rate_1_7",
+	0,
+	"5",
+	"rate 1/7");
+
+create_constant_form ("_nViterbiDecoder_frate_x5f1_x5f8", 
+	"rate_1_8",
+	0,
+	"6",
+	"rate 1/8");
+
+create_form_set("_nViterbiDecoder_fCodingRateSet",
+	"_nViterbiDecoder_frate_x5f1_x5f2",
+	"_nViterbiDecoder_frate_x5f1_x5f3",
+	"_nViterbiDecoder_frate_x5f1_x5f4",
+	"_nViterbiDecoder_frate_x5f1_x5f5",
+	"_nViterbiDecoder_frate_x5f1_x5f6",
+	"_nViterbiDecoder_frate_x5f1_x5f7",
+	"_nViterbiDecoder_frate_x5f1_x5f8",
+	"StdForm");
+
+create_constant_form ("_nViterbiDecoder_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nViterbiDecoder_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nViterbiDecoder_fZeroTailSet",
+	"_nViterbiDecoder_fNO",
+	"_nViterbiDecoder_fYES",
+	"StdForm");
+
+create_constant_form ("_nViterbiDecoder_fNegative_x5fto_x5flogic_x5f1", 
+	"Negative to logic 1",
+	0,
+	"0",
+	"Negative to logic 1");
+
+create_constant_form ("_nViterbiDecoder_fNegative_x5fto_x5flogic_x5f0", 
+	"Negative to logic 0",
+	0,
+	"1",
+	"Negative to logic 0");
+
+create_form_set("_nViterbiDecoder_fPolaritySet",
+	"_nViterbiDecoder_fNegative_x5fto_x5flogic_x5f1",
+	"_nViterbiDecoder_fNegative_x5fto_x5flogic_x5f0",
+	"StdForm");
+
+create_constant_form ("_nViterbiDecoder_fZero_x5fstate", 
+	"Zero state",
+	0,
+	"0",
+	"Zero state");
+
+create_constant_form ("_nViterbiDecoder_fNon_x5fzero_x5fstate", 
+	"Non-zero state",
+	0,
+	"1",
+	"Non-zero state");
+
+create_form_set("_nViterbiDecoder_fInitialStateSet",
+	"_nViterbiDecoder_fZero_x5fstate",
+	"_nViterbiDecoder_fNon_x5fzero_x5fstate",
+	"StdForm");
+
+create_item ("ViterbiDecoder","Viterbi decoder for convolutional code",
+	"V",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_ViterbiDecoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nViterbiDecoder_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_ViterbiDecoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodingRate","Coding rate",
+		PARM_INT,
+		"_nViterbiDecoder_fCodingRateSet",
+		UNITLESS_UNIT,
+		prm("_nViterbiDecoder_frate_x5f1_x5f2","rate_1_2")),
+	create_parm ("ConstraintLength","Constraint length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","7")),
+	create_parm ("Polynomial","Generator polynomial",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0133, 0171}")),
+	create_parm ("ZeroTail","Zero tail used to convert convolutional code to block code",
+		PARM_INT,
+		"_nViterbiDecoder_fZeroTailSet",
+		UNITLESS_UNIT,
+		prm("_nViterbiDecoder_fNO","NO")),
+	create_parm ("BitSequenceLength","Length of bit squence not including tail bits, valid when ZeroTail=YES",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","88")),
+	create_parm ("MaxSurvivorLength","Maximum length of survivor, in bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","35")),
+	create_parm ("Polarity","Mapping mode from NRZ to logic signal",
+		PARM_INT,
+		"_nViterbiDecoder_fPolaritySet",
+		UNITLESS_UNIT,
+		prm("_nViterbiDecoder_fNegative_x5fto_x5flogic_x5f1","Negative_to_logic_1")),
+	create_parm ("InitialState","Initial state of convolutional encoder",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nViterbiDecoder_fInitialStateSet",
+		UNITLESS_UNIT,
+		prm("_nViterbiDecoder_fZero_x5fstate","Zero_state")),
+	create_parm ("IgnoreNumber","Number of data points to be ignored",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_item ("Deinterleaver802","Deinterleave the input data",
+	"D",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_Deinterleaver802",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nDeinterleaver802_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_Deinterleaver802",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("s","modular factor of interleaving",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("l","divisor factor of interleaving",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("NCBPS","Number of coded bits per OFDM symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","48")));
+
+
+create_item ("Interleaver802","Interleave the input bits",
+	"I",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_Interleaver802",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nInterleaver802_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_Interleaver802",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("s","modular factor of interleaving",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("l","divisor factor of interleaving",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("NCBPS","Number of coded bits per OFDM symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","48")));
+
+
+create_constant_form ("_nDemapper_fBPSK", 
+	"BPSK",
+	0,
+	"0",
+	"BPSK");
+
+create_constant_form ("_nDemapper_fQPSK", 
+	"QPSK",
+	0,
+	"1",
+	"QPSK");
+
+create_constant_form ("_nDemapper_fPSK8", 
+	"PSK8",
+	0,
+	"2",
+	"PSK8");
+
+create_constant_form ("_nDemapper_fQAM16", 
+	"QAM16",
+	0,
+	"3",
+	"QAM16");
+
+create_constant_form ("_nDemapper_fQAM32", 
+	"QAM32",
+	0,
+	"4",
+	"QAM32");
+
+create_constant_form ("_nDemapper_fQAM64", 
+	"QAM64",
+	0,
+	"5",
+	"QAM64");
+
+create_constant_form ("_nDemapper_fQAM128", 
+	"QAM128",
+	0,
+	"6",
+	"QAM128");
+
+create_constant_form ("_nDemapper_fQAM256", 
+	"QAM256",
+	0,
+	"7",
+	"QAM256");
+
+create_constant_form ("_nDemapper_fUser_x5fDefined", 
+	"User_Defined",
+	0,
+	"8",
+	"User defined");
+
+create_form_set("_nDemapper_fModTypeSet",
+	"_nDemapper_fBPSK",
+	"_nDemapper_fQPSK",
+	"_nDemapper_fPSK8",
+	"_nDemapper_fQAM16",
+	"_nDemapper_fQAM32",
+	"_nDemapper_fQAM64",
+	"_nDemapper_fQAM128",
+	"_nDemapper_fQAM256",
+	"_nDemapper_fUser_x5fDefined",
+	"StdForm");
+
+create_item ("Demapper","Demodulator for BPSK, QPSK, 8PSK, 16QAM, 32QAM, 64QAM, 128QAM, and 256QAM or demapping according to user defined table",
+	"D",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_Demapper",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nDemapper_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_Demapper",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","Modulation type",
+		PARM_INT,
+		"_nDemapper_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nDemapper_fQPSK","QPSK")),
+	create_parm ("MappingTable","Constellation table",
+		PARM_COMPLEXARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")));
+
+
+create_constant_form ("_nMapper_fBPSK", 
+	"BPSK",
+	0,
+	"0",
+	"BPSK");
+
+create_constant_form ("_nMapper_fQPSK", 
+	"QPSK",
+	0,
+	"1",
+	"QPSK");
+
+create_constant_form ("_nMapper_fPSK8", 
+	"PSK8",
+	0,
+	"2",
+	"PSK8");
+
+create_constant_form ("_nMapper_fQAM16", 
+	"QAM16",
+	0,
+	"3",
+	"QAM16");
+
+create_constant_form ("_nMapper_fQAM32", 
+	"QAM32",
+	0,
+	"4",
+	"QAM32");
+
+create_constant_form ("_nMapper_fQAM64", 
+	"QAM64",
+	0,
+	"5",
+	"QAM64");
+
+create_constant_form ("_nMapper_fQAM128", 
+	"QAM128",
+	0,
+	"6",
+	"QAM128");
+
+create_constant_form ("_nMapper_fQAM256", 
+	"QAM256",
+	0,
+	"7",
+	"QAM256");
+
+create_constant_form ("_nMapper_fUser_x5fDefined", 
+	"User_Defined",
+	0,
+	"8",
+	"User defined");
+
+create_form_set("_nMapper_fModTypeSet",
+	"_nMapper_fBPSK",
+	"_nMapper_fQPSK",
+	"_nMapper_fPSK8",
+	"_nMapper_fQAM16",
+	"_nMapper_fQAM32",
+	"_nMapper_fQAM64",
+	"_nMapper_fQAM128",
+	"_nMapper_fQAM256",
+	"_nMapper_fUser_x5fDefined",
+	"StdForm");
+
+create_item ("Mapper","Modulator for BPSK, QPSK, 8PSK, 16QAM, 32QAM, 64QAM, 128QAM, and 256QAM or mapping according to user defined table",
+	"M",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_Mapper",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nMapper_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_Mapper",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModType","Modulation type",
+		PARM_INT,
+		"_nMapper_fModTypeSet",
+		UNITLESS_UNIT,
+		prm("_nMapper_fQPSK","QPSK")),
+	create_parm ("MappingTable","Constellation table",
+		PARM_COMPLEXARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")));
+
+
+create_constant_form ("_nCRC_x5fDecoder_fTail", 
+	"Tail",
+	0,
+	"0",
+	"Tail");
+
+create_constant_form ("_nCRC_x5fDecoder_fHead", 
+	"Head",
+	0,
+	"1",
+	"Head");
+
+create_form_set("_nCRC_x5fDecoder_fParityPositionSet",
+	"_nCRC_x5fDecoder_fTail",
+	"_nCRC_x5fDecoder_fHead",
+	"StdForm");
+
+create_constant_form ("_nCRC_x5fDecoder_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nCRC_x5fDecoder_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nCRC_x5fDecoder_fReverseDataSet",
+	"_nCRC_x5fDecoder_fNO",
+	"_nCRC_x5fDecoder_fYES",
+	"StdForm");
+
+create_constant_form ("_nCRC_x5fDecoder_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nCRC_x5fDecoder_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nCRC_x5fDecoder_fReverseParitySet",
+	"_nCRC_x5fDecoder_fNO",
+	"_nCRC_x5fDecoder_fYES",
+	"StdForm");
+
+create_constant_form ("_nCRC_x5fDecoder_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nCRC_x5fDecoder_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nCRC_x5fDecoder_fComplementParitySet",
+	"_nCRC_x5fDecoder_fNO",
+	"_nCRC_x5fDecoder_fYES",
+	"StdForm");
+
+create_item ("CRC_Decoder","CRC Decoder",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CRC_Decoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_v_dSDF_nCRC_x5fDecoder_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_CRC_Decoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ParityPosition","Parity bits position",
+		PARM_INT,
+		"_nCRC_x5fDecoder_fParityPositionSet",
+		UNITLESS_UNIT,
+		prm("_nCRC_x5fDecoder_fTail","Tail")),
+	create_parm ("ReverseData","reverse the data sequence or not",
+		PARM_INT,
+		"_nCRC_x5fDecoder_fReverseDataSet",
+		UNITLESS_UNIT,
+		prm("_nCRC_x5fDecoder_fNO","NO")),
+	create_parm ("ReverseParity","reverse the parity bits or not",
+		PARM_INT,
+		"_nCRC_x5fDecoder_fReverseParitySet",
+		UNITLESS_UNIT,
+		prm("_nCRC_x5fDecoder_fNO","NO")),
+	create_parm ("ComplementParity","complement parity bits or not",
+		PARM_INT,
+		"_nCRC_x5fDecoder_fComplementParitySet",
+		UNITLESS_UNIT,
+		prm("_nCRC_x5fDecoder_fNO","NO")),
+	create_parm ("MessageLength","input message length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","172")),
+	create_parm ("InitialState","initial state of encoder",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0x0")),
+	create_parm ("Polynomial","generator polynomial",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0x1f13")));
+
+
+create_constant_form ("_nCRC_x5fCoder_fTail", 
+	"Tail",
+	0,
+	"0",
+	"Tail");
+
+create_constant_form ("_nCRC_x5fCoder_fHead", 
+	"Head",
+	0,
+	"1",
+	"Head");
+
+create_form_set("_nCRC_x5fCoder_fParityPositionSet",
+	"_nCRC_x5fCoder_fTail",
+	"_nCRC_x5fCoder_fHead",
+	"StdForm");
+
+create_constant_form ("_nCRC_x5fCoder_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nCRC_x5fCoder_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nCRC_x5fCoder_fReverseDataSet",
+	"_nCRC_x5fCoder_fNO",
+	"_nCRC_x5fCoder_fYES",
+	"StdForm");
+
+create_constant_form ("_nCRC_x5fCoder_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nCRC_x5fCoder_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nCRC_x5fCoder_fReverseParitySet",
+	"_nCRC_x5fCoder_fNO",
+	"_nCRC_x5fCoder_fYES",
+	"StdForm");
+
+create_constant_form ("_nCRC_x5fCoder_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nCRC_x5fCoder_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nCRC_x5fCoder_fComplementParitySet",
+	"_nCRC_x5fCoder_fNO",
+	"_nCRC_x5fCoder_fYES",
+	"StdForm");
+
+create_item ("CRC_Coder","CRC generator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CRC_Coder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_v_dSDF_nCRC_x5fCoder_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_CRC_Coder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ParityPosition","Parity bits position",
+		PARM_INT,
+		"_nCRC_x5fCoder_fParityPositionSet",
+		UNITLESS_UNIT,
+		prm("_nCRC_x5fCoder_fTail","Tail")),
+	create_parm ("ReverseData","reverse the data sequence or not",
+		PARM_INT,
+		"_nCRC_x5fCoder_fReverseDataSet",
+		UNITLESS_UNIT,
+		prm("_nCRC_x5fCoder_fNO","NO")),
+	create_parm ("ReverseParity","reverse the parity bits or not",
+		PARM_INT,
+		"_nCRC_x5fCoder_fReverseParitySet",
+		UNITLESS_UNIT,
+		prm("_nCRC_x5fCoder_fNO","NO")),
+	create_parm ("ComplementParity","complement parity bits or not",
+		PARM_INT,
+		"_nCRC_x5fCoder_fComplementParitySet",
+		UNITLESS_UNIT,
+		prm("_nCRC_x5fCoder_fNO","NO")),
+	create_parm ("MessageLength","input message length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","172")),
+	create_parm ("InitialState","initial state of encoder",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0x0")),
+	create_parm ("Polynomial","generator polynomial",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0x1f13")));
+
+
+create_item ("MuxOFDMSym802","generic OFDM symbol multiplexer",
+	"M",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_MuxOFDMSym802",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nMuxOFDMSym802_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_MuxOFDMSym802",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Carriers","Number of subcarriers per OFDM symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","52")),
+	create_parm ("DataCarriers","Number of data subcarriers per OFDM symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","48")),
+	create_parm ("PilotPosition","Standard pilots positions",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-21, -7, 7, 21}")),
+	create_parm ("PilotValue","Standard pilots values",
+		PARM_COMPLEXARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{1.0, 1.0, 1.0, -1.0}")),
+	create_parm ("GuardCarrierPosition","Guard carriers positions",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("GuardCarrierValue","Guard carriers values",
+		PARM_COMPLEXARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")));
+
+
+create_constant_form ("_nLoadIFFTBuff802_fOFF", 
+	"OFF",
+	0,
+	"0",
+	"OFF");
+
+create_constant_form ("_nLoadIFFTBuff802_fON", 
+	"ON",
+	0,
+	"1",
+	"ON");
+
+create_form_set("_nLoadIFFTBuff802_fDCCarrierSet",
+	"_nLoadIFFTBuff802_fOFF",
+	"_nLoadIFFTBuff802_fON",
+	"StdForm");
+
+create_constant_form ("_nLoadIFFTBuff802_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+create_constant_form ("_nLoadIFFTBuff802_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+create_form_set("_nLoadIFFTBuff802_fFullSubcarriersSet",
+	"_nLoadIFFTBuff802_fNO",
+	"_nLoadIFFTBuff802_fYES",
+	"StdForm");
+
+create_item ("LoadIFFTBuff802","Subcarriers loader into IFFT buffer",
+	"L",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_LoadIFFTBuff802",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nLoadIFFTBuff802_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_LoadIFFTBuff802",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("Carriers","Number of subcarriers per OFDM symbol",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","52")),
+	create_parm ("DCCarrier","DC carrier",
+		PARM_INT,
+		"_nLoadIFFTBuff802_fDCCarrierSet",
+		UNITLESS_UNIT,
+		prm("_nLoadIFFTBuff802_fOFF","OFF")),
+	create_parm ("DCPilotValue","DC Pilot Value",
+		PARM_COMPLEX,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1.333333+j*0.0")),
+	create_parm ("FullSubcarriers","Active all sub-carriers",
+		PARM_INT,
+		"_nLoadIFFTBuff802_fFullSubcarriersSet",
+		UNITLESS_UNIT,
+		prm("_nLoadIFFTBuff802_fYES","YES")),
+	create_parm ("SubcarrierList","Sub-carrier list",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{-21, -7, 7, 21}")),
+	create_parm ("Order","IFFT points in 2^Order",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","7")));
+
+
+create_item ("AddGuard","Guard insertion of OFDM symbol",
+	"A",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_AddGuard",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nAddGuard_lsdfadvcommstars",
+	SPComponentAnnotFmt,
+	"SYM_AddGuard",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("IFFTSize","IFFT size",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("PreGuard","Pre-guard length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("PostGuard","Post-guard length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("Intersection","Guard intersection length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));

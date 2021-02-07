@@ -1,0 +1,4624 @@
+set_design_type( sigproc_net );
+
+create_item ("CDMA2K_SyncChSARSublayer","Sync channel Segmentation and Reassembly (SAR) Sublayer process, add MSG_LENGTH, CRC and segment into fragments and add SOM bit",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_SyncChSARSublayer",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fSyncChSARSublayer_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_SyncChSARSublayer",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_item ("CDMA2K_SyncChUtilitySublayer","Sync channel Utility Sublayer process, add MSG_TYPE and PDU_PADDING to meet the PDU length 8k+2",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_SyncChUtilitySublayer",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fSyncChUtilitySublayer_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_SyncChUtilitySublayer",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX 
+);
+
+
+create_constant_form ("_nCDMA2K_x5fSyncChSource_fHex_x5fArray", 
+	"Hex Array",
+	0,
+	"0",
+	"Hex Array");
+
+create_constant_form ("_nCDMA2K_x5fSyncChSource_fDate", 
+	"Date",
+	0,
+	"1",
+	"Date & Time");
+
+create_form_set("_nCDMA2K_x5fSyncChSource_fSYS_x5fTIME_x5fModeSet",
+	"_nCDMA2K_x5fSyncChSource_fHex_x5fArray",
+	"_nCDMA2K_x5fSyncChSource_fDate",
+	"StdForm");
+
+create_item ("CDMA2K_SyncChSource","Sync channel source generation",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_SyncChSource",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fSyncChSource_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_SyncChSource",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("P_REV","Protocol revision level, length is 8 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("MIN_P_REV","Minimum protocol revision level, lenght is 8 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("SID","System ID, length is 15 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","331")),
+	create_parm ("NID","Network ID, length is 16 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("PILOT_PN","PN Offset for the cell in units of 64 PN chips, length is 9 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","12")),
+	create_parm ("SYS_TIME_Mode","the mode to set the Init_SYS_TIME parameter, Hex Array will let you input a hex array into the Init_SYS_TIME, the order ...(Press Help for more info)",
+		PARM_INT,
+		"_nCDMA2K_x5fSyncChSource_fSYS_x5fTIME_x5fModeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fSyncChSource_fHex_x5fArray","Hex_Array")),
+	create_parm ("Init_SYS_TIME","the System Time as of four Sync Channel superframes (320 ms) after the end of the last superframe containing any part of...(Press Help for more info)",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","{0X02, 0X4F, 0X3B, 0X97, 0XBB}")),
+	create_parm ("LP_SEC","The number of leap seconds that have occurred since the start of System Time, lenght is 8 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("LTM_OFF","Offset of local time from System Time, lenght is 6 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("DAYLT","Daylight savings time indicator, lenght is 1 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("PRAT","Paging Channel data rate, lenght is 2 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("CDMA_FREQ","Frequency assignment, length is 11 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","525")),
+	create_parm ("EXT_CDMA_FREQ","Extended frequency assignment, length is 11 bits",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","525")));
+
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fConvolutional_x5fConvolutional", 
+	"Convolutional Convolutional",
+	0,
+	"0",
+	"Convolutional Convolutional");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fConvolutional_x5fTurbo", 
+	"Convolutional Turbo",
+	0,
+	"1",
+	"Convolutional Turbo");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fTurbo_x5fConvolutional", 
+	"Turbo Convolutional",
+	0,
+	"2",
+	"Turbo Convolutional");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fTurbo_x5fTurbo", 
+	"Turbo Turbo",
+	0,
+	"3",
+	"Turbo Turbo");
+
+create_form_set("_nCDMA2K_x5fRevPowerAllocation_x5fU_fCodingSet",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fConvolutional_x5fConvolutional",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fConvolutional_x5fTurbo",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fTurbo_x5fConvolutional",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fTurbo_x5fTurbo",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fRC3", 
+	"RC3",
+	0,
+	"0",
+	"RC3");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fRC4", 
+	"RC4",
+	0,
+	"1",
+	"RC4");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fRC5", 
+	"RC5",
+	0,
+	"2",
+	"RC5");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fRC6", 
+	"RC6",
+	0,
+	"3",
+	"RC6");
+
+create_form_set("_nCDMA2K_x5fRevPowerAllocation_x5fU_fRadioConfigSet",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fRC3",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fRC4",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fRC5",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fRC6",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fEnable", 
+	"Enable",
+	0,
+	"0",
+	"Enable");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_x5fU_fDisable", 
+	"Disable",
+	0,
+	"1",
+	"Disable");
+
+create_form_set("_nCDMA2K_x5fRevPowerAllocation_x5fU_fFlexDataRateSet",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fEnable",
+	"_nCDMA2K_x5fRevPowerAllocation_x5fU_fDisable",
+	"StdForm");
+
+create_item ("CDMA2K_RevPowerAllocation_U","Relative power allocator for reverse channel, spec",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_RevPowerAllocation_U",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fRevPowerAllocation_x5fU_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_RevPowerAllocation_U",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PilotPower","power of pilot channel",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1.0")),
+	create_parm ("ChannelEnable","enable or disable the channels RFC, RSC1, RSC2, RDCC and REAC_RCCC",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 0 0 0 0\"")),
+	create_parm ("DataRate","data rate of channels RFC, RSC1, RSC2, RDCC and REAC_RCCC used when ChannelEnable=1",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"9600 9600 9600 9600 9600\"")),
+	create_parm ("FrameLength","frame length of channels RFC, RSC1, RSC2, RDCC and REAC_RCCC used when ChannelEnable=1",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		TIME_UNIT,
+		prm("StringAndReference","\"20 20 20 20 20\"")),
+	create_parm ("Coding","code used in RSC1 and RSC2 used when ChannelEnable=1",
+		PARM_INT,
+		"_nCDMA2K_x5fRevPowerAllocation_x5fU_fCodingSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevPowerAllocation_x5fU_fConvolutional_x5fConvolutional","Convolutional_Convolutional")),
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fRevPowerAllocation_x5fU_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevPowerAllocation_x5fU_fRC3","RC3")),
+	create_parm ("FlexDataRate","radio config",
+		PARM_INT,
+		"_nCDMA2K_x5fRevPowerAllocation_x5fU_fFlexDataRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevPowerAllocation_x5fU_fDisable","Disable")));
+
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunction_x5f0", 
+	"Function 0",
+	0,
+	"0",
+	"Function 0");
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunction_x5f1", 
+	"Function 1",
+	0,
+	"1",
+	"Function 1");
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunction_x5f2", 
+	"Function 2",
+	0,
+	"2",
+	"Function 2");
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunction_x5f3", 
+	"Function 3",
+	0,
+	"3",
+	"Function 3");
+
+create_form_set("_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunctionIndexSet",
+	"_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunction_x5f0",
+	"_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunction_x5f1",
+	"_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunction_x5f2",
+	"_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunction_x5f3",
+	"StdForm");
+
+create_item ("CDMA2K_QuasiOrthMask_U","Quasi-orthogonal mask generator, spec",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_QuasiOrthMask_U",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fQuasiOrthMask_x5fU_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_QuasiOrthMask_U",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FunctionIndex","quasi-orthogonal function index",
+		PARM_INT,
+		"_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunctionIndexSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fQuasiOrthMask_x5fU_fFunction_x5f0","Function_0")));
+
+
+create_constant_form ("_nCDMA2K_x5fPNCode_x5fU_fSR1_x5fI_x5fphase", 
+	"SR1 I phase",
+	0,
+	"0",
+	"SR1 I phase");
+
+create_constant_form ("_nCDMA2K_x5fPNCode_x5fU_fSR1_x5fQ_x5fphase", 
+	"SR1 Q phase",
+	0,
+	"1",
+	"SR1 Q phase");
+
+create_constant_form ("_nCDMA2K_x5fPNCode_x5fU_fSR3_x5fI_x5fphase", 
+	"SR3 I phase",
+	0,
+	"2",
+	"SR3 I phase");
+
+create_constant_form ("_nCDMA2K_x5fPNCode_x5fU_fSR3_x5fQ_x5fphase", 
+	"SR3 Q phase",
+	0,
+	"3",
+	"SR3 Q phase");
+
+create_form_set("_nCDMA2K_x5fPNCode_x5fU_fCodeTypeSet",
+	"_nCDMA2K_x5fPNCode_x5fU_fSR1_x5fI_x5fphase",
+	"_nCDMA2K_x5fPNCode_x5fU_fSR1_x5fQ_x5fphase",
+	"_nCDMA2K_x5fPNCode_x5fU_fSR3_x5fI_x5fphase",
+	"_nCDMA2K_x5fPNCode_x5fU_fSR3_x5fQ_x5fphase",
+	"StdForm");
+
+create_item ("CDMA2K_PNCode_U","PN code generator, spec",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_PNCode_U",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fPNCode_x5fU_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_PNCode_U",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PN_Offset","base station PN code offset",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("CodeType","type of PN code",
+		PARM_INT,
+		"_nCDMA2K_x5fPNCode_x5fU_fCodeTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fPNCode_x5fU_fSR1_x5fI_x5fphase","SR1_I_phase")));
+
+
+create_constant_form ("_nCDMA2K_x5fPCBgenerator_fENABLE", 
+	"ENABLE",
+	0,
+	"0",
+	"ENABLE");
+
+create_constant_form ("_nCDMA2K_x5fPCBgenerator_fDISABLE", 
+	"DISABLE",
+	0,
+	"1",
+	"DISABLE");
+
+create_form_set("_nCDMA2K_x5fPCBgenerator_fOuterLoopSet",
+	"_nCDMA2K_x5fPCBgenerator_fENABLE",
+	"_nCDMA2K_x5fPCBgenerator_fDISABLE",
+	"StdForm");
+
+create_item ("CDMA2K_PCBgenerator","Power control bit generator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_PCBgenerator",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fPCBgenerator_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_PCBgenerator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("OuterLoop","outer loop power control enable",
+		PARM_INT,
+		"_nCDMA2K_x5fPCBgenerator_fOuterLoopSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fPCBgenerator_fDISABLE","DISABLE")),
+	create_parm ("SIR_Threshold","signal-to-interference ratio required",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SIR_AdjustStep","signal-to-interference ratio adjustment",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1.0 0.2 0.1 0.02\"")),
+	create_parm ("FER_Threshold","minimum frame error rate required",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.007")),
+	create_parm ("IgnoreNum","number of initially ignored firings",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdPwrAlloc_fNON_x5fTD", 
+	"NON_TD",
+	0,
+	"0",
+	"NON_TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPwrAlloc_fTD", 
+	"TD",
+	0,
+	"1",
+	"TD");
+
+create_form_set("_nCDMA2K_x5fFwdPwrAlloc_fTransmitDiversitySet",
+	"_nCDMA2K_x5fFwdPwrAlloc_fNON_x5fTD",
+	"_nCDMA2K_x5fFwdPwrAlloc_fTD",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fFwdPwrAlloc_fYes", 
+	"Yes",
+	0,
+	"0",
+	"Yes");
+
+create_constant_form ("_nCDMA2K_x5fFwdPwrAlloc_fNo", 
+	"No",
+	0,
+	"1",
+	"No");
+
+create_form_set("_nCDMA2K_x5fFwdPwrAlloc_fPowerControlSet",
+	"_nCDMA2K_x5fFwdPwrAlloc_fYes",
+	"_nCDMA2K_x5fFwdPwrAlloc_fNo",
+	"StdForm");
+
+create_item ("CDMA2K_FwdPwrAlloc","Power allocator for base station channels",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdPwrAlloc",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdPwrAlloc_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdPwrAlloc",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TransmitDiversity","transmit diversity enable",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdPwrAlloc_fTransmitDiversitySet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdPwrAlloc_fNON_x5fTD","NON_TD")),
+	create_parm ("PilotPowerRatio","pilot channel power to total power ratio",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.2")),
+	create_parm ("SyncPowerRatio","sync channel power to total power ratio",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.025")),
+	create_parm ("PagingPowerRatio","paging channel power to total power ratio",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.063")),
+	create_parm ("TDPilotPowerRatio","transmit diversity pilot channel power to total power ratio",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.2")),
+	create_parm ("WalshLength","length of Walsh code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("PermitdActiveUr","number of permitted active users in forward link",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","30")),
+	create_parm ("OrthogonalChNum","number of the orthogonal channel to form the noise, in TD mode, it will be double of number of orthogonal users",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","29")),
+	create_parm ("PowerControl","enable the power control",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdPwrAlloc_fPowerControlSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdPwrAlloc_fYes","Yes")),
+	create_parm ("TrafficAdjustStep","traffic channel power adjust step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("IgnoreNum","number of initially ignored firings",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC1", 
+	"RC1",
+	0,
+	"0",
+	"RC1");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC2", 
+	"RC2",
+	0,
+	"1",
+	"RC2");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC3_x5fNon_x5fTD", 
+	"RC3 Non TD",
+	0,
+	"2",
+	"RC3 Non TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC3_x5fTD", 
+	"RC3 TD",
+	0,
+	"3",
+	"RC3 TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC4", 
+	"RC4",
+	0,
+	"4",
+	"RC4");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC5_x5fNon_x5fTD", 
+	"RC5 Non TD",
+	0,
+	"5",
+	"RC5 Non TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC5_x5fTD", 
+	"RC5 TD",
+	0,
+	"6",
+	"RC5 TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC6", 
+	"RC6",
+	0,
+	"7",
+	"RC6");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC7", 
+	"RC7",
+	0,
+	"8",
+	"RC7");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC8", 
+	"RC8",
+	0,
+	"9",
+	"RC8");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC9", 
+	"RC9",
+	0,
+	"10",
+	"RC9");
+
+create_form_set("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRadioConfigSet",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC1",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC2",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC3_x5fNon_x5fTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC3_x5fTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC4",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC5_x5fNon_x5fTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC5_x5fTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC6",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC7",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC8",
+	"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC9",
+	"StdForm");
+
+create_item ("CDMA2K_FwdPCBitPuncture_U","Forward power control bit puncture, spec",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdPCBitPuncture_U",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdPCBitPuncture_x5fU_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdPCBitPuncture_U",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdPCBitPuncture_x5fU_fRC1","RC1")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC1", 
+	"RC1",
+	0,
+	"0",
+	"RC1");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC2", 
+	"RC2",
+	0,
+	"1",
+	"RC2");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC3_x5fNon_x5fTD", 
+	"RC3 Non TD",
+	0,
+	"2",
+	"RC3 Non TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC3_x5fTD", 
+	"RC3 TD",
+	0,
+	"3",
+	"RC3 TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC4", 
+	"RC4",
+	0,
+	"4",
+	"RC4");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC5_x5fNon_x5fTD", 
+	"RC5 Non TD",
+	0,
+	"5",
+	"RC5 Non TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC5_x5fTD", 
+	"RC5 TD",
+	0,
+	"6",
+	"RC5 TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC6", 
+	"RC6",
+	0,
+	"7",
+	"RC6");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC7", 
+	"RC7",
+	0,
+	"8",
+	"RC7");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC8", 
+	"RC8",
+	0,
+	"9",
+	"RC8");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC9", 
+	"RC9",
+	0,
+	"10",
+	"RC9");
+
+create_form_set("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRadioConfigSet",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC1",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC2",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC3_x5fNon_x5fTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC3_x5fTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC4",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC5_x5fNon_x5fTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC5_x5fTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC6",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC7",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC8",
+	"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC9",
+	"StdForm");
+
+create_item ("CDMA2K_FwdPCBitExtraction_U","Power control bit extractor for forward link, spec",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdPCBitExtraction_U",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdPCBitExtraction_x5fU_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdPCBitExtraction_U",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdPCBitExtraction_x5fU_fRC1","RC1")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdOCNS_fNON_x5fTD", 
+	"NON_TD",
+	0,
+	"0",
+	"NON_TD");
+
+create_constant_form ("_nCDMA2K_x5fFwdOCNS_fTD", 
+	"TD",
+	0,
+	"1",
+	"TD");
+
+create_form_set("_nCDMA2K_x5fFwdOCNS_fTransmitDiversitySet",
+	"_nCDMA2K_x5fFwdOCNS_fNON_x5fTD",
+	"_nCDMA2K_x5fFwdOCNS_fTD",
+	"StdForm");
+
+create_item ("CDMA2K_FwdOCNS","Orthogonal channel noise simulator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdOCNS",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdOCNS_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdOCNS",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TransmitDiversity","transmit diversity enable",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdOCNS_fTransmitDiversitySet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdOCNS_fNON_x5fTD","NON_TD")),
+	create_parm ("WalshLength","length of Walsh code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("OrthogonalChNum","number of the orthogonal channel to form the noise, in TD mode, it will be double of number of orthogonal users",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","29")),
+	create_parm ("TestChIdx","the Walsh index for traffic channel(s) to be tested",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"61\"")));
+
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC3", 
+	"Forward RC3",
+	0,
+	"0",
+	"Forward RC3");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC4", 
+	"Forward RC4",
+	0,
+	"1",
+	"Forward RC4");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC5", 
+	"Forward RC5",
+	0,
+	"2",
+	"Forward RC5");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC6", 
+	"Forward RC6",
+	0,
+	"3",
+	"Forward RC6");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC7", 
+	"Forward RC7",
+	0,
+	"4",
+	"Forward RC7");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC8", 
+	"Forward RC8",
+	0,
+	"5",
+	"Forward RC8");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC9", 
+	"Forward RC9",
+	0,
+	"6",
+	"Forward RC9");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fReverse_x5fRC3", 
+	"Reverse RC3",
+	0,
+	"7",
+	"Reverse RC3");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fReverse_x5fRC4", 
+	"Reverse RC4",
+	0,
+	"8",
+	"Reverse RC4");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fReverse_x5fRC5", 
+	"Reverse RC5",
+	0,
+	"9",
+	"Reverse RC5");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fReverse_x5fRC6", 
+	"Reverse RC6",
+	0,
+	"10",
+	"Reverse RC6");
+
+create_form_set("_nCDMA2K_x5fFR_x5fRateMatch_fRadioConfigSet",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC3",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC4",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC5",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC6",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC7",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC8",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC9",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fReverse_x5fRC3",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fReverse_x5fRC4",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fReverse_x5fRC5",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fReverse_x5fRC6",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fFundamentalorSupplemental", 
+	"FundamentalorSupplemental",
+	0,
+	"0",
+	"FundamentalorSupplemental");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateMatch_fDedicatedControl", 
+	"DedicatedControl",
+	0,
+	"1",
+	"DedicatedControl");
+
+create_form_set("_nCDMA2K_x5fFR_x5fRateMatch_fChTypeSet",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fFundamentalorSupplemental",
+	"_nCDMA2K_x5fFR_x5fRateMatch_fDedicatedControl",
+	"StdForm");
+
+create_item ("CDMA2K_FR_RateMatch","Flexible and variable rate repeat and puncture",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FR_RateMatch",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFR_x5fRateMatch_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FR_RateMatch",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodedFrmLen","number of specified encoded symbols per frame at encoder output",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","768")),
+	create_parm ("AssignBitNumPerFrm","maximum assigned number of channel bits per frame after coding",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","768")),
+	create_parm ("RadioConfig","radio configurations for forward and reverse link respectively",
+		PARM_INT,
+		"_nCDMA2K_x5fFR_x5fRateMatch_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFR_x5fRateMatch_fForward_x5fRC3","Forward_RC3")),
+	create_parm ("ChType","fundamental supplemental or dedicated control channel",
+		PARM_INT,
+		"_nCDMA2K_x5fFR_x5fRateMatch_fChTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFR_x5fRateMatch_fFundamentalorSupplemental","FundamentalorSupplemental")));
+
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC3", 
+	"Forward RC3",
+	0,
+	"0",
+	"Forward RC3");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC4", 
+	"Forward RC4",
+	0,
+	"1",
+	"Forward RC4");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC5", 
+	"Forward RC5",
+	0,
+	"2",
+	"Forward RC5");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC6", 
+	"Forward RC6",
+	0,
+	"3",
+	"Forward RC6");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC7", 
+	"Forward RC7",
+	0,
+	"4",
+	"Forward RC7");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC8", 
+	"Forward RC8",
+	0,
+	"5",
+	"Forward RC8");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC9", 
+	"Forward RC9",
+	0,
+	"6",
+	"Forward RC9");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fReverse_x5fRC3", 
+	"Reverse RC3",
+	0,
+	"7",
+	"Reverse RC3");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fReverse_x5fRC4", 
+	"Reverse RC4",
+	0,
+	"8",
+	"Reverse RC4");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fReverse_x5fRC5", 
+	"Reverse RC5",
+	0,
+	"9",
+	"Reverse RC5");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fReverse_x5fRC6", 
+	"Reverse RC6",
+	0,
+	"10",
+	"Reverse RC6");
+
+create_form_set("_nCDMA2K_x5fFR_x5fRateDematch_fRadioConfigSet",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC3",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC4",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC5",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC6",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC7",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC8",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC9",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fReverse_x5fRC3",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fReverse_x5fRC4",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fReverse_x5fRC5",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fReverse_x5fRC6",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fFundamentalorSupplemental", 
+	"FundamentalorSupplemental",
+	0,
+	"0",
+	"FundamentalorSupplemental");
+
+create_constant_form ("_nCDMA2K_x5fFR_x5fRateDematch_fDedicatedControl", 
+	"DedicatedControl",
+	0,
+	"1",
+	"DedicatedControl");
+
+create_form_set("_nCDMA2K_x5fFR_x5fRateDematch_fChTypeSet",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fFundamentalorSupplemental",
+	"_nCDMA2K_x5fFR_x5fRateDematch_fDedicatedControl",
+	"StdForm");
+
+create_item ("CDMA2K_FR_RateDematch","Flexible and variable rate de-puncture and combine repeated bits",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FR_RateDematch",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFR_x5fRateDematch_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FR_RateDematch",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("CodedFrmLen","number of specified encoded symbols per frame at encoder output",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","768")),
+	create_parm ("AssignBitNumPerFrm","maximum assigned number of channel bits per frame after coding",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","768")),
+	create_parm ("RadioConfig","radio configurations for forward and reverse link respectively",
+		PARM_INT,
+		"_nCDMA2K_x5fFR_x5fRateDematch_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFR_x5fRateDematch_fForward_x5fRC3","Forward_RC3")),
+	create_parm ("ChType","fundamental supplemental or dedicated control channel",
+		PARM_INT,
+		"_nCDMA2K_x5fFR_x5fRateDematch_fChTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFR_x5fRateDematch_fFundamentalorSupplemental","FundamentalorSupplemental")));
+
+
+create_constant_form ("_nCDMA2K_x5fDataScrambling_x5fU_fRC1_x5fTo_x5fRC2", 
+	"RC1 To RC2",
+	0,
+	"0",
+	"RC1 To RC2");
+
+create_constant_form ("_nCDMA2K_x5fDataScrambling_x5fU_fRC3_x5fTo_x5fRC5_x5fNon_x5fTD", 
+	"RC3 To RC5 Non TD",
+	0,
+	"1",
+	"RC3 To RC5 Non TD");
+
+create_constant_form ("_nCDMA2K_x5fDataScrambling_x5fU_fRC3_x5fTo_x5fRC5_x5fTD", 
+	"RC3 To RC5 TD",
+	0,
+	"2",
+	"RC3 To RC5 TD");
+
+create_constant_form ("_nCDMA2K_x5fDataScrambling_x5fU_fRC6_x5fTo_x5fRC9_x5fMC", 
+	"RC6 To RC9 MC",
+	0,
+	"3",
+	"RC6 To RC9 MC");
+
+create_form_set("_nCDMA2K_x5fDataScrambling_x5fU_fRadioConfigSet",
+	"_nCDMA2K_x5fDataScrambling_x5fU_fRC1_x5fTo_x5fRC2",
+	"_nCDMA2K_x5fDataScrambling_x5fU_fRC3_x5fTo_x5fRC5_x5fNon_x5fTD",
+	"_nCDMA2K_x5fDataScrambling_x5fU_fRC3_x5fTo_x5fRC5_x5fTD",
+	"_nCDMA2K_x5fDataScrambling_x5fU_fRC6_x5fTo_x5fRC9_x5fMC",
+	"StdForm");
+
+create_item ("CDMA2K_DataScrambling_U","Data scrambler and descrambler for forward link, spec",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_DataScrambling_U",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fDataScrambling_x5fU_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_DataScrambling_U",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fDataScrambling_x5fU_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fDataScrambling_x5fU_fRC1_x5fTo_x5fRC2","RC1_To_RC2")));
+
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC1", 
+	"Fwd RC1",
+	0,
+	"0",
+	"Fwd RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC2", 
+	"Fwd RC2",
+	0,
+	"1",
+	"Fwd RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC3", 
+	"Fwd RC3",
+	0,
+	"2",
+	"Fwd RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC4", 
+	"Fwd RC4",
+	0,
+	"3",
+	"Fwd RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC5", 
+	"Fwd RC5",
+	0,
+	"4",
+	"Fwd RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC6", 
+	"Fwd RC6",
+	0,
+	"5",
+	"Fwd RC6");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC7", 
+	"Fwd RC7",
+	0,
+	"6",
+	"Fwd RC7");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC8", 
+	"Fwd RC8",
+	0,
+	"7",
+	"Fwd RC8");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC9", 
+	"Fwd RC9",
+	0,
+	"8",
+	"Fwd RC9");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC1", 
+	"Rev RC1",
+	0,
+	"9",
+	"Rev RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC2", 
+	"Rev RC2",
+	0,
+	"10",
+	"Rev RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC3", 
+	"Rev RC3",
+	0,
+	"11",
+	"Rev RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC4", 
+	"Rev RC4",
+	0,
+	"12",
+	"Rev RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC5", 
+	"Rev RC5",
+	0,
+	"13",
+	"Rev RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC6", 
+	"Rev RC6",
+	0,
+	"14",
+	"Rev RC6");
+
+create_form_set("_nCDMA2K_x5fVR_x5fSrc_fRadioConfigSet",
+	"_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC6",
+	"_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC7",
+	"_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC8",
+	"_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC9",
+	"_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fSrc_fRev_x5fRC6",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fRandom", 
+	"Random",
+	0,
+	"0",
+	"Random");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fConstant_x5ffull_x5frate", 
+	"Constant full rate",
+	0,
+	"1",
+	"Constant full rate");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fConstant_x5fhalf_x5frate", 
+	"Constant half rate",
+	0,
+	"2",
+	"Constant half rate");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fConstant_x5frate_x5f1_x5f4", 
+	"Constant rate 1_4",
+	0,
+	"3",
+	"Constant rate 1_4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fSrc_fConstant_x5frate_x5f1_x5f8", 
+	"Constant rate 1_8",
+	0,
+	"4",
+	"Constant rate 1_8");
+
+create_form_set("_nCDMA2K_x5fVR_x5fSrc_fRateTypeSet",
+	"_nCDMA2K_x5fVR_x5fSrc_fRandom",
+	"_nCDMA2K_x5fVR_x5fSrc_fConstant_x5ffull_x5frate",
+	"_nCDMA2K_x5fVR_x5fSrc_fConstant_x5fhalf_x5frate",
+	"_nCDMA2K_x5fVR_x5fSrc_fConstant_x5frate_x5f1_x5f4",
+	"_nCDMA2K_x5fVR_x5fSrc_fConstant_x5frate_x5f1_x5f8",
+	"StdForm");
+
+create_item ("CDMA2K_VR_Src","Variable data rate source for fundamental channel",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_VR_Src",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fVR_x5fSrc_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_VR_Src",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fSrc_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fSrc_fFwd_x5fRC1","Fwd_RC1")),
+	create_parm ("RateType","data rate type",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fSrc_fRateTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fSrc_fRandom","Random")));
+
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC1", 
+	"Fwd RC1",
+	0,
+	"0",
+	"Fwd RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC2", 
+	"Fwd RC2",
+	0,
+	"1",
+	"Fwd RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC3", 
+	"Fwd RC3",
+	0,
+	"2",
+	"Fwd RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC4", 
+	"Fwd RC4",
+	0,
+	"3",
+	"Fwd RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC5", 
+	"Fwd RC5",
+	0,
+	"4",
+	"Fwd RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC6", 
+	"Fwd RC6",
+	0,
+	"5",
+	"Fwd RC6");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC7", 
+	"Fwd RC7",
+	0,
+	"6",
+	"Fwd RC7");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC8", 
+	"Fwd RC8",
+	0,
+	"7",
+	"Fwd RC8");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC9", 
+	"Fwd RC9",
+	0,
+	"8",
+	"Fwd RC9");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC1", 
+	"Rev RC1",
+	0,
+	"9",
+	"Rev RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC2", 
+	"Rev RC2",
+	0,
+	"10",
+	"Rev RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC3", 
+	"Rev RC3",
+	0,
+	"11",
+	"Rev RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC4", 
+	"Rev RC4",
+	0,
+	"12",
+	"Rev RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC5", 
+	"Rev RC5",
+	0,
+	"13",
+	"Rev RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC6", 
+	"Rev RC6",
+	0,
+	"14",
+	"Rev RC6");
+
+create_form_set("_nCDMA2K_x5fVR_x5fRateMatch_fRadioConfigSet",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC6",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC7",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC8",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC9",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fRateMatch_fRev_x5fRC6",
+	"StdForm");
+
+create_item ("CDMA2K_VR_RateMatch","Rate matching for fundamental channel",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_VR_RateMatch",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fVR_x5fRateMatch_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_VR_RateMatch",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio Configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fRateMatch_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fRateMatch_fFwd_x5fRC1","Fwd_RC1")));
+
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC1", 
+	"Fwd RC1",
+	0,
+	"0",
+	"Fwd RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC2", 
+	"Fwd RC2",
+	0,
+	"1",
+	"Fwd RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC3", 
+	"Fwd RC3",
+	0,
+	"2",
+	"Fwd RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC4", 
+	"Fwd RC4",
+	0,
+	"3",
+	"Fwd RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC5", 
+	"Fwd RC5",
+	0,
+	"4",
+	"Fwd RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC6", 
+	"Fwd RC6",
+	0,
+	"5",
+	"Fwd RC6");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC7", 
+	"Fwd RC7",
+	0,
+	"6",
+	"Fwd RC7");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC8", 
+	"Fwd RC8",
+	0,
+	"7",
+	"Fwd RC8");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC9", 
+	"Fwd RC9",
+	0,
+	"8",
+	"Fwd RC9");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC1", 
+	"Rev RC1",
+	0,
+	"9",
+	"Rev RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC2", 
+	"Rev RC2",
+	0,
+	"10",
+	"Rev RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC3", 
+	"Rev RC3",
+	0,
+	"11",
+	"Rev RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC4", 
+	"Rev RC4",
+	0,
+	"12",
+	"Rev RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC5", 
+	"Rev RC5",
+	0,
+	"13",
+	"Rev RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC6", 
+	"Rev RC6",
+	0,
+	"14",
+	"Rev RC6");
+
+create_form_set("_nCDMA2K_x5fVR_x5fRateDeMatch_fRadioConfigSet",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC6",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC7",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC8",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC9",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fRev_x5fRC6",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fFull_x5fRate", 
+	"Full Rate",
+	0,
+	"0",
+	"Full Rate");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fHalf_x5fRate", 
+	"Half Rate",
+	0,
+	"1",
+	"Half Rate");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fRate_x5f1_x5f4", 
+	"Rate 1_4",
+	0,
+	"2",
+	"Rate 1_4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fRateDeMatch_fRate_x5f1_x5f8", 
+	"Rate 1_8",
+	0,
+	"3",
+	"Rate 1_8");
+
+create_form_set("_nCDMA2K_x5fVR_x5fRateDeMatch_fDataRateSet",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fFull_x5fRate",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fHalf_x5fRate",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fRate_x5f1_x5f4",
+	"_nCDMA2K_x5fVR_x5fRateDeMatch_fRate_x5f1_x5f8",
+	"StdForm");
+
+create_item ("CDMA2K_VR_RateDeMatch","Rate dematching",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_VR_RateDeMatch",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fVR_x5fRateDeMatch_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_VR_RateDeMatch",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fRateDeMatch_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fRateDeMatch_fFwd_x5fRC1","Fwd_RC1")),
+	create_parm ("DataRate","data rate of input frame",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fRateDeMatch_fDataRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fRateDeMatch_fFull_x5fRate","Full_Rate")));
+
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC1", 
+	"Fwd RC1",
+	0,
+	"0",
+	"Fwd RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC2", 
+	"Fwd RC2",
+	0,
+	"1",
+	"Fwd RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC3", 
+	"Fwd RC3",
+	0,
+	"2",
+	"Fwd RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC4", 
+	"Fwd RC4",
+	0,
+	"3",
+	"Fwd RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC5", 
+	"Fwd RC5",
+	0,
+	"4",
+	"Fwd RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC6", 
+	"Fwd RC6",
+	0,
+	"5",
+	"Fwd RC6");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC7", 
+	"Fwd RC7",
+	0,
+	"6",
+	"Fwd RC7");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC8", 
+	"Fwd RC8",
+	0,
+	"7",
+	"Fwd RC8");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC9", 
+	"Fwd RC9",
+	0,
+	"8",
+	"Fwd RC9");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC1", 
+	"Rev RC1",
+	0,
+	"9",
+	"Rev RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC2", 
+	"Rev RC2",
+	0,
+	"10",
+	"Rev RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC3", 
+	"Rev RC3",
+	0,
+	"11",
+	"Rev RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC4", 
+	"Rev RC4",
+	0,
+	"12",
+	"Rev RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC5", 
+	"Rev RC5",
+	0,
+	"13",
+	"Rev RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC6", 
+	"Rev RC6",
+	0,
+	"14",
+	"Rev RC6");
+
+create_form_set("_nCDMA2K_x5fVR_x5fFraming_fRadioConfigSet",
+	"_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC6",
+	"_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC7",
+	"_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC8",
+	"_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC9",
+	"_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fFraming_fRev_x5fRC6",
+	"StdForm");
+
+create_item ("CDMA2K_VR_Framing","Variable rate framing for fundamental channel",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_VR_Framing",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fVR_x5fFraming_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_VR_Framing",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fFraming_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fFraming_fFwd_x5fRC1","Fwd_RC1")));
+
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC1", 
+	"Fwd RC1",
+	0,
+	"0",
+	"Fwd RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC2", 
+	"Fwd RC2",
+	0,
+	"1",
+	"Fwd RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC3", 
+	"Fwd RC3",
+	0,
+	"2",
+	"Fwd RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC4", 
+	"Fwd RC4",
+	0,
+	"3",
+	"Fwd RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC5", 
+	"Fwd RC5",
+	0,
+	"4",
+	"Fwd RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC6", 
+	"Fwd RC6",
+	0,
+	"5",
+	"Fwd RC6");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC7", 
+	"Fwd RC7",
+	0,
+	"6",
+	"Fwd RC7");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC8", 
+	"Fwd RC8",
+	0,
+	"7",
+	"Fwd RC8");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC9", 
+	"Fwd RC9",
+	0,
+	"8",
+	"Fwd RC9");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC1", 
+	"Rev RC1",
+	0,
+	"9",
+	"Rev RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC2", 
+	"Rev RC2",
+	0,
+	"10",
+	"Rev RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC3", 
+	"Rev RC3",
+	0,
+	"11",
+	"Rev RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC4", 
+	"Rev RC4",
+	0,
+	"12",
+	"Rev RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC5", 
+	"Rev RC5",
+	0,
+	"13",
+	"Rev RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC6", 
+	"Rev RC6",
+	0,
+	"14",
+	"Rev RC6");
+
+create_form_set("_nCDMA2K_x5fVR_x5fDeFraming_fRadioConfigSet",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC6",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC7",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC8",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC9",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fDeFraming_fRev_x5fRC6",
+	"StdForm");
+
+create_item ("CDMA2K_VR_DeFraming","Variable rate deframing for fundamental channel",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_VR_DeFraming",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fVR_x5fDeFraming_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_VR_DeFraming",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fDeFraming_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fDeFraming_fFwd_x5fRC1","Fwd_RC1")));
+
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC1", 
+	"Fwd RC1",
+	0,
+	"0",
+	"Fwd RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC2", 
+	"Fwd RC2",
+	0,
+	"1",
+	"Fwd RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC3", 
+	"Fwd RC3",
+	0,
+	"2",
+	"Fwd RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC4", 
+	"Fwd RC4",
+	0,
+	"3",
+	"Fwd RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC5", 
+	"Fwd RC5",
+	0,
+	"4",
+	"Fwd RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC6", 
+	"Fwd RC6",
+	0,
+	"5",
+	"Fwd RC6");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC7", 
+	"Fwd RC7",
+	0,
+	"6",
+	"Fwd RC7");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC8", 
+	"Fwd RC8",
+	0,
+	"7",
+	"Fwd RC8");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC9", 
+	"Fwd RC9",
+	0,
+	"8",
+	"Fwd RC9");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC1", 
+	"Rev RC1",
+	0,
+	"9",
+	"Rev RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC2", 
+	"Rev RC2",
+	0,
+	"10",
+	"Rev RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC3", 
+	"Rev RC3",
+	0,
+	"11",
+	"Rev RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC4", 
+	"Rev RC4",
+	0,
+	"12",
+	"Rev RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC5", 
+	"Rev RC5",
+	0,
+	"13",
+	"Rev RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC6", 
+	"Rev RC6",
+	0,
+	"14",
+	"Rev RC6");
+
+create_form_set("_nCDMA2K_x5fVR_x5fDCCwithTail_fRadioConfigSet",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC6",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC7",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC8",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC9",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fDCCwithTail_fRev_x5fRC6",
+	"StdForm");
+
+create_item ("CDMA2K_VR_DCCwithTail","Variable data rate Viterbi decoder for convolutional code with tail",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_VR_DCCwithTail",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fVR_x5fDCCwithTail_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_VR_DCCwithTail",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fDCCwithTail_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fDCCwithTail_fFwd_x5fRC1","Fwd_RC1")));
+
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC1", 
+	"Fwd RC1",
+	0,
+	"0",
+	"Fwd RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC2", 
+	"Fwd RC2",
+	0,
+	"1",
+	"Fwd RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC3", 
+	"Fwd RC3",
+	0,
+	"2",
+	"Fwd RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC4", 
+	"Fwd RC4",
+	0,
+	"3",
+	"Fwd RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC5", 
+	"Fwd RC5",
+	0,
+	"4",
+	"Fwd RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC6", 
+	"Fwd RC6",
+	0,
+	"5",
+	"Fwd RC6");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC7", 
+	"Fwd RC7",
+	0,
+	"6",
+	"Fwd RC7");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC8", 
+	"Fwd RC8",
+	0,
+	"7",
+	"Fwd RC8");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC9", 
+	"Fwd RC9",
+	0,
+	"8",
+	"Fwd RC9");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC1", 
+	"Rev RC1",
+	0,
+	"9",
+	"Rev RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC2", 
+	"Rev RC2",
+	0,
+	"10",
+	"Rev RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC3", 
+	"Rev RC3",
+	0,
+	"11",
+	"Rev RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC4", 
+	"Rev RC4",
+	0,
+	"12",
+	"Rev RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC5", 
+	"Rev RC5",
+	0,
+	"13",
+	"Rev RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC6", 
+	"Rev RC6",
+	0,
+	"14",
+	"Rev RC6");
+
+create_form_set("_nCDMA2K_x5fVR_x5fCompare_fRadioConfigSet",
+	"_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC6",
+	"_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC7",
+	"_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC8",
+	"_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC9",
+	"_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fCompare_fRev_x5fRC6",
+	"StdForm");
+
+create_item ("CDMA2K_VR_Compare","BER calculator for blind rate detection",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_VR_Compare",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fVR_x5fCompare_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_VR_Compare",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio Configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fCompare_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fCompare_fFwd_x5fRC1","Fwd_RC1")));
+
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC1", 
+	"Fwd RC1",
+	0,
+	"0",
+	"Fwd RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC2", 
+	"Fwd RC2",
+	0,
+	"1",
+	"Fwd RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC3", 
+	"Fwd RC3",
+	0,
+	"2",
+	"Fwd RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC4", 
+	"Fwd RC4",
+	0,
+	"3",
+	"Fwd RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC5", 
+	"Fwd RC5",
+	0,
+	"4",
+	"Fwd RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC6", 
+	"Fwd RC6",
+	0,
+	"5",
+	"Fwd RC6");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC7", 
+	"Fwd RC7",
+	0,
+	"6",
+	"Fwd RC7");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC8", 
+	"Fwd RC8",
+	0,
+	"7",
+	"Fwd RC8");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC9", 
+	"Fwd RC9",
+	0,
+	"8",
+	"Fwd RC9");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC1", 
+	"Rev RC1",
+	0,
+	"9",
+	"Rev RC1");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC2", 
+	"Rev RC2",
+	0,
+	"10",
+	"Rev RC2");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC3", 
+	"Rev RC3",
+	0,
+	"11",
+	"Rev RC3");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC4", 
+	"Rev RC4",
+	0,
+	"12",
+	"Rev RC4");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC5", 
+	"Rev RC5",
+	0,
+	"13",
+	"Rev RC5");
+
+create_constant_form ("_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC6", 
+	"Rev RC6",
+	0,
+	"14",
+	"Rev RC6");
+
+create_form_set("_nCDMA2K_x5fVR_x5fCCwithTail_fRadioConfigSet",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC6",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC7",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC8",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC9",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC1",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC2",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC3",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC4",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC5",
+	"_nCDMA2K_x5fVR_x5fCCwithTail_fRev_x5fRC6",
+	"StdForm");
+
+create_item ("CDMA2K_VR_CCwithTail","Variable data rate convolutional encoder with tail",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_VR_CCwithTail",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fVR_x5fCCwithTail_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_VR_CCwithTail",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fVR_x5fCCwithTail_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fVR_x5fCCwithTail_fFwd_x5fRC1","Fwd_RC1")));
+
+
+create_item ("CDMA2K_VL_Walsh","Variable length Walsh code generator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_VL_Walsh",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fVL_x5fWalsh_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_VL_Walsh",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("WalshLength","length of Walsh code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("WalshCodeIndex","index of Walsh code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_constant_form ("_nCDMA2K_x5fTurboMux_fCodeRate1_x5f2", 
+	"CodeRate1/2",
+	0,
+	"0",
+	"CodeRate1/2");
+
+create_constant_form ("_nCDMA2K_x5fTurboMux_fCodeRate1_x5f3", 
+	"CodeRate1/3",
+	0,
+	"1",
+	"CodeRate1/3");
+
+create_constant_form ("_nCDMA2K_x5fTurboMux_fCodeRate1_x5f4", 
+	"CodeRate1/4",
+	0,
+	"2",
+	"CodeRate1/4");
+
+create_form_set("_nCDMA2K_x5fTurboMux_fCodeRateSet",
+	"_nCDMA2K_x5fTurboMux_fCodeRate1_x5f2",
+	"_nCDMA2K_x5fTurboMux_fCodeRate1_x5f3",
+	"_nCDMA2K_x5fTurboMux_fCodeRate1_x5f4",
+	"StdForm");
+
+create_item ("CDMA2K_TurboMux","Multiplexer for turbo code",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_TurboMux",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fTurboMux_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_TurboMux",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("InputFrameLen","input frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","384")),
+	create_parm ("CodeRate","code rate of turbo code",
+		PARM_INT,
+		"_nCDMA2K_x5fTurboMux_fCodeRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fTurboMux_fCodeRate1_x5f2","CodeRate1_2")));
+
+
+create_item ("CDMA2K_TurboIntlvr","Interleaver for turbo code",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_TurboIntlvr",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fTurboIntlvr_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_TurboIntlvr",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockSize","number of particles in a block",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","378")));
+
+
+create_constant_form ("_nCDMA2K_x5fTurboDeMux_fCodeRate1_x5f2", 
+	"CodeRate1/2",
+	0,
+	"0",
+	"CodeRate1/2");
+
+create_constant_form ("_nCDMA2K_x5fTurboDeMux_fCodeRate1_x5f3", 
+	"CodeRate1/3",
+	0,
+	"1",
+	"CodeRate1/3");
+
+create_constant_form ("_nCDMA2K_x5fTurboDeMux_fCodeRate1_x5f4", 
+	"CodeRate1/4",
+	0,
+	"2",
+	"CodeRate1/4");
+
+create_form_set("_nCDMA2K_x5fTurboDeMux_fCodeRateSet",
+	"_nCDMA2K_x5fTurboDeMux_fCodeRate1_x5f2",
+	"_nCDMA2K_x5fTurboDeMux_fCodeRate1_x5f3",
+	"_nCDMA2K_x5fTurboDeMux_fCodeRate1_x5f4",
+	"StdForm");
+
+create_item ("CDMA2K_TurboDeMux","De-puncture and de-mux for turbo decoder",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_TurboDeMux",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fTurboDeMux_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_TurboDeMux",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockSize","number of particles in a block",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","768")),
+	create_parm ("CodeRate","code rate of turbo encoder",
+		PARM_INT,
+		"_nCDMA2K_x5fTurboDeMux_fCodeRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fTurboDeMux_fCodeRate1_x5f2","CodeRate1_2")));
+
+
+create_item ("CDMA2K_TurboDeIntlvr","De-interleaver for turbo code",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_TurboDeIntlvr",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fTurboDeIntlvr_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_TurboDeIntlvr",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockSize","number of particles in a block",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","378")));
+
+
+create_item ("CDMA2K_SymCyclicShift","Cyclic shifter for MC Mode interleaver",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_SymCyclicShift",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fSymCyclicShift_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_SymCyclicShift",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockSize","number of particles in a block",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","576")),
+	create_parm ("CyclicFormat","cyclic shifter format",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"2 9\"")));
+
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_fConvolutional_x5fConvolutional", 
+	"Convolutional Convolutional",
+	0,
+	"0",
+	"Convolutional Convolutional");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_fConvolutional_x5fTurbo", 
+	"Convolutional Turbo",
+	0,
+	"1",
+	"Convolutional Turbo");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_fTurbo_x5fConvolutional", 
+	"Turbo Convolutional",
+	0,
+	"2",
+	"Turbo Convolutional");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_fTurbo_x5fTurbo", 
+	"Turbo Turbo",
+	0,
+	"3",
+	"Turbo Turbo");
+
+create_form_set("_nCDMA2K_x5fRevPowerAllocation_fCodingSet",
+	"_nCDMA2K_x5fRevPowerAllocation_fConvolutional_x5fConvolutional",
+	"_nCDMA2K_x5fRevPowerAllocation_fConvolutional_x5fTurbo",
+	"_nCDMA2K_x5fRevPowerAllocation_fTurbo_x5fConvolutional",
+	"_nCDMA2K_x5fRevPowerAllocation_fTurbo_x5fTurbo",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_fRC3", 
+	"RC3",
+	0,
+	"0",
+	"RC3");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_fRC4", 
+	"RC4",
+	0,
+	"1",
+	"RC4");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_fRC5", 
+	"RC5",
+	0,
+	"2",
+	"RC5");
+
+create_constant_form ("_nCDMA2K_x5fRevPowerAllocation_fRC6", 
+	"RC6",
+	0,
+	"3",
+	"RC6");
+
+create_form_set("_nCDMA2K_x5fRevPowerAllocation_fRadioConfigSet",
+	"_nCDMA2K_x5fRevPowerAllocation_fRC3",
+	"_nCDMA2K_x5fRevPowerAllocation_fRC4",
+	"_nCDMA2K_x5fRevPowerAllocation_fRC5",
+	"_nCDMA2K_x5fRevPowerAllocation_fRC6",
+	"StdForm");
+
+create_item ("CDMA2K_RevPowerAllocation","Relative power allocator for reverse channel",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_RevPowerAllocation",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fRevPowerAllocation_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_RevPowerAllocation",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PilotPower","power of pilot channel",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1.0")),
+	create_parm ("ChannelEnable","enable or disable the channels RFC, RSC1, RSC2, RDCC and REAC_RCCC",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 0 0 0 0\"")),
+	create_parm ("DataRate","data rate of channels RFC, RSC1, RSC2, RDCC and REAC_RCCC used when ChannelEnable=1",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"9600 9600 9600 9600 9600\"")),
+	create_parm ("FrameLength","frame length of channels RFC, RSC1, RSC2, RDCC and REAC_RCCC used when ChannelEnable=1",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		TIME_UNIT,
+		prm("StringAndReference","\"20 20 20 20 20\"")),
+	create_parm ("Coding","code used in RSC1 and RSC2 used when ChannelEnable=1",
+		PARM_INT,
+		"_nCDMA2K_x5fRevPowerAllocation_fCodingSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevPowerAllocation_fConvolutional_x5fConvolutional","Convolutional_Convolutional")),
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fRevPowerAllocation_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevPowerAllocation_fRC3","RC3")));
+
+
+create_item ("CDMA2K_RevPowerAdjust","Power adjuster for mobile station channels",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_RevPowerAdjust",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fRevPowerAdjust_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_RevPowerAdjust",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("TrafficAdjustStep","power adjust step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("BlockSize","number of particles in a block",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6144")),
+	create_parm ("IgnoreNum","number of initially ignored firings",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nCDMA2K_x5fRevPCBitPuncture_fSR1", 
+	"SR1",
+	0,
+	"0",
+	"SR1");
+
+create_constant_form ("_nCDMA2K_x5fRevPCBitPuncture_fSR3", 
+	"SR3",
+	0,
+	"1",
+	"SR3");
+
+create_form_set("_nCDMA2K_x5fRevPCBitPuncture_fSpreadRateSet",
+	"_nCDMA2K_x5fRevPCBitPuncture_fSR1",
+	"_nCDMA2K_x5fRevPCBitPuncture_fSR3",
+	"StdForm");
+
+create_item ("CDMA2K_RevPCBitPuncture","Reverse power control bit puncture",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_RevPCBitPuncture",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fRevPCBitPuncture_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_RevPCBitPuncture",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SpreadRate","PN chip rate multiple of 1.2288 Mcps",
+		PARM_INT,
+		"_nCDMA2K_x5fRevPCBitPuncture_fSpreadRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevPCBitPuncture_fSR1","SR1")));
+
+
+create_constant_form ("_nCDMA2K_x5fRevCohReceiver_fSR1", 
+	"SR1",
+	0,
+	"0",
+	"SR1");
+
+create_constant_form ("_nCDMA2K_x5fRevCohReceiver_fSR3", 
+	"SR3",
+	0,
+	"1",
+	"SR3");
+
+create_form_set("_nCDMA2K_x5fRevCohReceiver_fSpreadRateSet",
+	"_nCDMA2K_x5fRevCohReceiver_fSR1",
+	"_nCDMA2K_x5fRevCohReceiver_fSR3",
+	"StdForm");
+
+create_item ("CDMA2K_RevCohReceiver","Reverse link Rake receiver",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_RevCohReceiver",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fRevCohReceiver_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_RevCohReceiver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxSearchPathNum","range for searching strongest paths",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","30")),
+	create_parm ("SampleRate","number of samples per chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("FingerNum","number of fingers in Rake receiver",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("WalshLength","Walsh code length used for spreading",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("SpreadRate","PN chip rate, multiple of 1.2288 Mcps",
+		PARM_INT,
+		"_nCDMA2K_x5fRevCohReceiver_fSpreadRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevCohReceiver_fSR1","SR1")));
+
+
+create_constant_form ("_nCDMA2K_x5fRevChnlEstimate_fSR1", 
+	"SR1",
+	0,
+	"0",
+	"SR1");
+
+create_constant_form ("_nCDMA2K_x5fRevChnlEstimate_fSR3", 
+	"SR3",
+	0,
+	"1",
+	"SR3");
+
+create_form_set("_nCDMA2K_x5fRevChnlEstimate_fSpreadRateSet",
+	"_nCDMA2K_x5fRevChnlEstimate_fSR1",
+	"_nCDMA2K_x5fRevChnlEstimate_fSR3",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fRevChnlEstimate_fPD3200", 
+	"PD3200",
+	0,
+	"0",
+	"PD3200");
+
+create_constant_form ("_nCDMA2K_x5fRevChnlEstimate_fPD6400", 
+	"PD6400",
+	0,
+	"1",
+	"PD6400");
+
+create_constant_form ("_nCDMA2K_x5fRevChnlEstimate_fPD9600", 
+	"PD9600",
+	0,
+	"2",
+	"PD9600");
+
+create_constant_form ("_nCDMA2K_x5fRevChnlEstimate_fPD12800", 
+	"PD12800",
+	0,
+	"3",
+	"PD12800");
+
+create_form_set("_nCDMA2K_x5fRevChnlEstimate_fPhaseDetectRateSet",
+	"_nCDMA2K_x5fRevChnlEstimate_fPD3200",
+	"_nCDMA2K_x5fRevChnlEstimate_fPD6400",
+	"_nCDMA2K_x5fRevChnlEstimate_fPD9600",
+	"_nCDMA2K_x5fRevChnlEstimate_fPD12800",
+	"StdForm");
+
+create_item ("CDMA2K_RevChnlEstimate","Reverse link channel estimator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_RevChnlEstimate",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fRevChnlEstimate_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_RevChnlEstimate",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxSearchPathNum","range for searching strongest paths",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","30")),
+	create_parm ("SampleRate","number of samples per chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("FilterOrder","filter order",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","48")),
+	create_parm ("FingerNum","number of fingers in Rake receiver",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("SpreadRate","PN chip rate, multiple of 1.2288 Mcps",
+		PARM_INT,
+		"_nCDMA2K_x5fRevChnlEstimate_fSpreadRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevChnlEstimate_fSR1","SR1")),
+	create_parm ("PhaseDetectRate","phase detection rate",
+		PARM_INT,
+		"_nCDMA2K_x5fRevChnlEstimate_fPhaseDetectRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fRevChnlEstimate_fPD3200","PD3200")));
+
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_fSR1", 
+	"SR1",
+	0,
+	"0",
+	"SR1");
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_fSR3_x5fMC", 
+	"SR3 MC",
+	0,
+	"1",
+	"SR3 MC");
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_fSR3_x5fDS", 
+	"SR3 DS",
+	0,
+	"2",
+	"SR3 DS");
+
+create_form_set("_nCDMA2K_x5fQuasiOrthMask_fSpreadRateSet",
+	"_nCDMA2K_x5fQuasiOrthMask_fSR1",
+	"_nCDMA2K_x5fQuasiOrthMask_fSR3_x5fMC",
+	"_nCDMA2K_x5fQuasiOrthMask_fSR3_x5fDS",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_fFunction_x5f0", 
+	"Function 0",
+	0,
+	"0",
+	"Function 0");
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_fFunction_x5f1", 
+	"Function 1",
+	0,
+	"1",
+	"Function 1");
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_fFunction_x5f2", 
+	"Function 2",
+	0,
+	"2",
+	"Function 2");
+
+create_constant_form ("_nCDMA2K_x5fQuasiOrthMask_fFunction_x5f3", 
+	"Function 3",
+	0,
+	"3",
+	"Function 3");
+
+create_form_set("_nCDMA2K_x5fQuasiOrthMask_fFunctionIndexSet",
+	"_nCDMA2K_x5fQuasiOrthMask_fFunction_x5f0",
+	"_nCDMA2K_x5fQuasiOrthMask_fFunction_x5f1",
+	"_nCDMA2K_x5fQuasiOrthMask_fFunction_x5f2",
+	"_nCDMA2K_x5fQuasiOrthMask_fFunction_x5f3",
+	"StdForm");
+
+create_item ("CDMA2K_QuasiOrthMask","Quasi-orthogonal mask generator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_QuasiOrthMask",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fQuasiOrthMask_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_QuasiOrthMask",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SpreadRate","PN chip rate multiple of 1.2288 Mcps",
+		PARM_INT,
+		"_nCDMA2K_x5fQuasiOrthMask_fSpreadRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fQuasiOrthMask_fSR1","SR1")),
+	create_parm ("FunctionIndex","quasi-orthogonal function index",
+		PARM_INT,
+		"_nCDMA2K_x5fQuasiOrthMask_fFunctionIndexSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fQuasiOrthMask_fFunction_x5f0","Function_0")));
+
+
+create_constant_form ("_nCDMA2K_x5fPuncture_fChoose_x5fPuncturePattern_x5ffrom_x5flist", 
+	"Choose PuncturePattern from list",
+	0,
+	"0",
+	"Choose PuncturePattern from list");
+
+create_constant_form ("_nCDMA2K_x5fPuncture_fUser_x5fdefined", 
+	"User defined",
+	0,
+	"1",
+	"User defined");
+
+create_form_set("_nCDMA2K_x5fPuncture_fModeSelectSet",
+	"_nCDMA2K_x5fPuncture_fChoose_x5fPuncturePattern_x5ffrom_x5flist",
+	"_nCDMA2K_x5fPuncture_fUser_x5fdefined",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fPuncture_fP_x5f2_x5fof_x5f6_x5f110101", 
+	"P 2 of 6 110101",
+	0,
+	"0",
+	"P 2 of 6 110101");
+
+create_constant_form ("_nCDMA2K_x5fPuncture_fP_x5f1_x5fof_x5f5_x5f11110", 
+	"P 1 of 5 11110",
+	0,
+	"1",
+	"P 1 of 5 11110");
+
+create_constant_form ("_nCDMA2K_x5fPuncture_fP_x5f1_x5fof_x5f9_x5f111111110", 
+	"P 1 of 9 111111110",
+	0,
+	"2",
+	"P 1 of 9 111111110");
+
+create_constant_form ("_nCDMA2K_x5fPuncture_fP_x5f4_x5fof_x5f12_x5f110110011011", 
+	"P 4 of 12 110110011011",
+	0,
+	"3",
+	"P 4 of 12 110110011011");
+
+create_constant_form ("_nCDMA2K_x5fPuncture_fP_x5f2_x5fof_x5f18_x5f111011111111111110", 
+	"P 2 of 18 111011111111111110",
+	0,
+	"4",
+	"P 2 of 18 111011111111111110");
+
+create_constant_form ("_nCDMA2K_x5fPuncture_fP_x5f8_x5fof_x5f24_x5f111010111011101011101010", 
+	"P 8 of 24 111010111011101011101010",
+	0,
+	"5",
+	"P 8 of 24 111010111011101011101010");
+
+create_form_set("_nCDMA2K_x5fPuncture_fPuncturePatternSet",
+	"_nCDMA2K_x5fPuncture_fP_x5f2_x5fof_x5f6_x5f110101",
+	"_nCDMA2K_x5fPuncture_fP_x5f1_x5fof_x5f5_x5f11110",
+	"_nCDMA2K_x5fPuncture_fP_x5f1_x5fof_x5f9_x5f111111110",
+	"_nCDMA2K_x5fPuncture_fP_x5f4_x5fof_x5f12_x5f110110011011",
+	"_nCDMA2K_x5fPuncture_fP_x5f2_x5fof_x5f18_x5f111011111111111110",
+	"_nCDMA2K_x5fPuncture_fP_x5f8_x5fof_x5f24_x5f111010111011101011101010",
+	"StdForm");
+
+create_item ("CDMA2K_Puncture","Symbol puncture for input stream",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_Puncture",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fPuncture_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_Puncture",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModeSelect","mode for setting parameters",
+		PARM_INT,
+		"_nCDMA2K_x5fPuncture_fModeSelectSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fPuncture_fChoose_x5fPuncturePattern_x5ffrom_x5flist","Choose_PuncturePattern_from_list")),
+	create_parm ("PuncturePattern","puncture pattern used when ModeSelect=Choose PuncturePattern from list",
+		PARM_INT,
+		"_nCDMA2K_x5fPuncture_fPuncturePatternSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fPuncture_fP_x5f2_x5fof_x5f6_x5f110101","P_2_of_6_110101")),
+	create_parm ("UserDefPattern","puncture pattern used when ModeSelect=User defined",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 0 1 0 1\"")));
+
+
+create_item ("CDMA2K_PowerControl","Power controller",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_PowerControl",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fPowerControl_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_PowerControl",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SIR_Threshold","signal-to-interference ratio required",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SIR_AdjustStep","signal-to-interference ratio adjustment",
+		PARM_REALARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1.0 0.2 0.1 0.02\"")),
+	create_parm ("FER_Threshold","minimum frame error rate required",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.007")),
+	create_parm ("IgnoreNum","number of initially ignored firings",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nCDMA2K_x5fPNCode_fSR1_x5fI_x5fphase", 
+	"SR1 I phase",
+	0,
+	"0",
+	"SR1 I phase");
+
+create_constant_form ("_nCDMA2K_x5fPNCode_fSR1_x5fQ_x5fphase", 
+	"SR1 Q phase",
+	0,
+	"1",
+	"SR1 Q phase");
+
+create_constant_form ("_nCDMA2K_x5fPNCode_fSR3_x5fI_x5fphase", 
+	"SR3 I phase",
+	0,
+	"2",
+	"SR3 I phase");
+
+create_constant_form ("_nCDMA2K_x5fPNCode_fSR3_x5fQ_x5fphase", 
+	"SR3 Q phase",
+	0,
+	"3",
+	"SR3 Q phase");
+
+create_form_set("_nCDMA2K_x5fPNCode_fCodeTypeSet",
+	"_nCDMA2K_x5fPNCode_fSR1_x5fI_x5fphase",
+	"_nCDMA2K_x5fPNCode_fSR1_x5fQ_x5fphase",
+	"_nCDMA2K_x5fPNCode_fSR3_x5fI_x5fphase",
+	"_nCDMA2K_x5fPNCode_fSR3_x5fQ_x5fphase",
+	"StdForm");
+
+create_item ("CDMA2K_PNCode","PN code generator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_PNCode",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fPNCode_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_PNCode",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PN_Offset","base station PN code offset",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("CodeType","type of PN code",
+		PARM_INT,
+		"_nCDMA2K_x5fPNCode_fCodeTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fPNCode_fSR1_x5fI_x5fphase","SR1_I_phase")));
+
+
+create_item ("CDMA2K_MSTX","Mobile station transmitter",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_MSTX",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fMSTX_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_MSTX",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MS_Power","output power of mobile station",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","0.2")));
+
+
+create_item ("CDMA2K_MAPDecoder2","MAP decoder 2 for turbo decoder",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_MAPDecoder2",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fMAPDecoder2_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_MAPDecoder2",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockSize","number of particles in a block",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","378")),
+	create_parm ("ConstraintLength","constraint length of RSC encoder in turbo encoder",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("Polynomial","generator polynomial",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"015 013 017\"")));
+
+
+create_item ("CDMA2K_MAPDecoder1","MAP decoder 1 for turbo decoder",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_MAPDecoder1",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fMAPDecoder1_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_MAPDecoder1",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockSize","number of particles in a block",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","378")),
+	create_parm ("ConstraintLength","constraint length of RSC encoder in turbo encoder",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("Polynomial","generator polynomial",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"015 013 017\"")));
+
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fAccess_x5fChannel", 
+	"Access Channel",
+	0,
+	"0",
+	"Access Channel");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fReverse_x5fTraffic_x5fChannel_x5fRC1_x5fTo_x5fRC2", 
+	"Reverse Traffic Channel RC1 To RC2",
+	0,
+	"1",
+	"Reverse Traffic Channel RC1 To RC2");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fEnhanced_x5fAccess_x5fChannel_x5fHeader", 
+	"Enhanced Access Channel Header",
+	0,
+	"2",
+	"Enhanced Access Channel Header");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fReverse_x5fCommon_x5fControl_x5fChannel_x5fReservation", 
+	"Reverse Common Control Channel Reservation",
+	0,
+	"3",
+	"Reverse Common Control Channel Reservation");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fReverse_x5fTraffic_x5fChannel_x5fRC3_x5fTo_x5fRC6", 
+	"Reverse Traffic Channel RC3 To RC6",
+	0,
+	"4",
+	"Reverse Traffic Channel RC3 To RC6");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fPaging_x5fChannel", 
+	"Paging Channel",
+	0,
+	"5",
+	"Paging Channel");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fBroadcast_x5fChannel", 
+	"Broadcast Channel",
+	0,
+	"6",
+	"Broadcast Channel");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fCommon_x5fPower_x5fControl_x5fChannel", 
+	"Common Power Control Channel",
+	0,
+	"7",
+	"Common Power Control Channel");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fCommon_x5fAssignment_x5fChannel", 
+	"Common Assignment Channel",
+	0,
+	"8",
+	"Common Assignment Channel");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fForward_x5fCommon_x5fControl_x5fChannel", 
+	"Forward Common Control Channel",
+	0,
+	"9",
+	"Forward Common Control Channel");
+
+create_constant_form ("_nCDMA2K_x5fLongCodeGenerator_fForward_x5fTraffic_x5fChannel", 
+	"Forward Traffic Channel",
+	0,
+	"10",
+	"Forward Traffic Channel");
+
+create_form_set("_nCDMA2K_x5fLongCodeGenerator_fChannelTypeSet",
+	"_nCDMA2K_x5fLongCodeGenerator_fAccess_x5fChannel",
+	"_nCDMA2K_x5fLongCodeGenerator_fReverse_x5fTraffic_x5fChannel_x5fRC1_x5fTo_x5fRC2",
+	"_nCDMA2K_x5fLongCodeGenerator_fEnhanced_x5fAccess_x5fChannel_x5fHeader",
+	"_nCDMA2K_x5fLongCodeGenerator_fReverse_x5fCommon_x5fControl_x5fChannel_x5fReservation",
+	"_nCDMA2K_x5fLongCodeGenerator_fReverse_x5fTraffic_x5fChannel_x5fRC3_x5fTo_x5fRC6",
+	"_nCDMA2K_x5fLongCodeGenerator_fPaging_x5fChannel",
+	"_nCDMA2K_x5fLongCodeGenerator_fBroadcast_x5fChannel",
+	"_nCDMA2K_x5fLongCodeGenerator_fCommon_x5fPower_x5fControl_x5fChannel",
+	"_nCDMA2K_x5fLongCodeGenerator_fCommon_x5fAssignment_x5fChannel",
+	"_nCDMA2K_x5fLongCodeGenerator_fForward_x5fCommon_x5fControl_x5fChannel",
+	"_nCDMA2K_x5fLongCodeGenerator_fForward_x5fTraffic_x5fChannel",
+	"StdForm");
+
+create_item ("CDMA2K_LongCodeGenerator","Long code generator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_LongCodeGenerator",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fLongCodeGenerator_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_LongCodeGenerator",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ChannelType","type of channel",
+		PARM_INT,
+		"_nCDMA2K_x5fLongCodeGenerator_fChannelTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fLongCodeGenerator_fAccess_x5fChannel","Access_Channel")),
+	create_parm ("CodeChannelIndex","code channel index",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("ACN","access channel number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("PCN","paging channel number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("BASE_ID","base station identification",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("PILOT_PN","pilot PN code offset index for the forward channel",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("ESN1","first 16-bit electronic serial number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("ESN2","last 16-bit electronic serial number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("EACN","enhanced access channel number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("FCCCN","forward common control channel number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("RCCCN","reverse common control channel number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SLOT_OFFSET","slot offset for enhanced access channel",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("BCN","broadcast channel number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("CPCCN","common power control channel number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("CACN","common assignment channel number",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")));
+
+
+create_item ("CDMA2K_Interpolation","Lagrange interpolator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_Interpolation",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fInterpolation_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_Interpolation",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("InterpolRate","interpolation rate",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("InterpolOrder","interpolation polynomial order",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("OutputSamples","output samples in each firing",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6144")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdPowerAllocation_fYes", 
+	"Yes",
+	0,
+	"0",
+	"Yes");
+
+create_constant_form ("_nCDMA2K_x5fFwdPowerAllocation_fNo", 
+	"No",
+	0,
+	"1",
+	"No");
+
+create_form_set("_nCDMA2K_x5fFwdPowerAllocation_fPowerControlSet",
+	"_nCDMA2K_x5fFwdPowerAllocation_fYes",
+	"_nCDMA2K_x5fFwdPowerAllocation_fNo",
+	"StdForm");
+
+create_item ("CDMA2K_FwdPowerAllocation","Power allocator for base station channels",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdPowerAllocation",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdPowerAllocation_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdPowerAllocation",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("PilotPowerRatio","pilot channel power to total power ratio",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.2")),
+	create_parm ("SyncPowerRatio","sync channel power to total power ratio",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.025")),
+	create_parm ("PagingPowerRatio","paging channel power to total power ratio",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.063")),
+	create_parm ("WalshLength","length of Walsh code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("PermitdActiveUr","number of users in forward link",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","30")),
+	create_parm ("PowerControl","enable the power control",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdPowerAllocation_fPowerControlSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdPowerAllocation_fYes","Yes")),
+	create_parm ("TrafficAdjustStep","traffic channel power adjust step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("BlockSize","number of particles in a block",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1536")),
+	create_parm ("IgnoreNum","number of initially ignored firings",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC1", 
+	"RC1",
+	0,
+	"0",
+	"RC1");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC2", 
+	"RC2",
+	0,
+	"1",
+	"RC2");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC3_x5fNon_x5fOTD", 
+	"RC3 Non OTD",
+	0,
+	"2",
+	"RC3 Non OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC3_x5fOTD", 
+	"RC3 OTD",
+	0,
+	"3",
+	"RC3 OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC4", 
+	"RC4",
+	0,
+	"4",
+	"RC4");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC5_x5fNon_x5fOTD", 
+	"RC5 Non OTD",
+	0,
+	"5",
+	"RC5 Non OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC5_x5fOTD", 
+	"RC5 OTD",
+	0,
+	"6",
+	"RC5 OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC6_x5fDS_x5fNon_x5fOTD", 
+	"RC6 DS Non OTD",
+	0,
+	"7",
+	"RC6 DS Non OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC6_x5fDS_x5fOTD", 
+	"RC6 DS OTD",
+	0,
+	"8",
+	"RC6 DS OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC6_x5fMC", 
+	"RC6 MC",
+	0,
+	"9",
+	"RC6 MC");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC7_x5fDS", 
+	"RC7 DS",
+	0,
+	"10",
+	"RC7 DS");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC7_x5fMC", 
+	"RC7 MC",
+	0,
+	"11",
+	"RC7 MC");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC8_x5fDS_x5fNon_x5fOTD", 
+	"RC8 DS Non OTD",
+	0,
+	"12",
+	"RC8 DS Non OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC8_x5fDS_x5fOTD", 
+	"RC8 DS OTD",
+	0,
+	"13",
+	"RC8 DS OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC8_x5fMC", 
+	"RC8 MC",
+	0,
+	"14",
+	"RC8 MC");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC9_x5fDS", 
+	"RC9 DS",
+	0,
+	"15",
+	"RC9 DS");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitPuncture_fRC9_x5fMC", 
+	"RC9 MC",
+	0,
+	"16",
+	"RC9 MC");
+
+create_form_set("_nCDMA2K_x5fFwdPCBitPuncture_fRadioConfigSet",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC1",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC2",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC3_x5fNon_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC3_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC4",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC5_x5fNon_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC5_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC6_x5fDS_x5fNon_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC6_x5fDS_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC6_x5fMC",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC7_x5fDS",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC7_x5fMC",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC8_x5fDS_x5fNon_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC8_x5fDS_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC8_x5fMC",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC9_x5fDS",
+	"_nCDMA2K_x5fFwdPCBitPuncture_fRC9_x5fMC",
+	"StdForm");
+
+create_item ("CDMA2K_FwdPCBitPuncture","Forward power control bit puncture",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdPCBitPuncture",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdPCBitPuncture_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdPCBitPuncture",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdPCBitPuncture_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdPCBitPuncture_fRC1","RC1")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC1", 
+	"RC1",
+	0,
+	"0",
+	"RC1");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC2", 
+	"RC2",
+	0,
+	"1",
+	"RC2");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC3_x5fNon_x5fOTD", 
+	"RC3 Non OTD",
+	0,
+	"2",
+	"RC3 Non OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC3_x5fOTD", 
+	"RC3 OTD",
+	0,
+	"3",
+	"RC3 OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC4", 
+	"RC4",
+	0,
+	"4",
+	"RC4");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC5_x5fNon_x5fOTD", 
+	"RC5 Non OTD",
+	0,
+	"5",
+	"RC5 Non OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC5_x5fOTD", 
+	"RC5 OTD",
+	0,
+	"6",
+	"RC5 OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC6_x5fDS_x5fNon_x5fOTD", 
+	"RC6 DS Non OTD",
+	0,
+	"7",
+	"RC6 DS Non OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC6_x5fDS_x5fOTD", 
+	"RC6 DS OTD",
+	0,
+	"8",
+	"RC6 DS OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC6_x5fMC", 
+	"RC6 MC",
+	0,
+	"9",
+	"RC6 MC");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC7_x5fDS", 
+	"RC7 DS",
+	0,
+	"10",
+	"RC7 DS");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC7_x5fMC", 
+	"RC7 MC",
+	0,
+	"11",
+	"RC7 MC");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC8_x5fDS_x5fNon_x5fOTD", 
+	"RC8 DS Non OTD",
+	0,
+	"12",
+	"RC8 DS Non OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC8_x5fDS_x5fOTD", 
+	"RC8 DS OTD",
+	0,
+	"13",
+	"RC8 DS OTD");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC8_x5fMC", 
+	"RC8 MC",
+	0,
+	"14",
+	"RC8 MC");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC9_x5fDS", 
+	"RC9 DS",
+	0,
+	"15",
+	"RC9 DS");
+
+create_constant_form ("_nCDMA2K_x5fFwdPCBitExtraction_fRC9_x5fMC", 
+	"RC9 MC",
+	0,
+	"16",
+	"RC9 MC");
+
+create_form_set("_nCDMA2K_x5fFwdPCBitExtraction_fRadioConfigSet",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC1",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC2",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC3_x5fNon_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC3_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC4",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC5_x5fNon_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC5_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC6_x5fDS_x5fNon_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC6_x5fDS_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC6_x5fMC",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC7_x5fDS",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC7_x5fMC",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC8_x5fDS_x5fNon_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC8_x5fDS_x5fOTD",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC8_x5fMC",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC9_x5fDS",
+	"_nCDMA2K_x5fFwdPCBitExtraction_fRC9_x5fMC",
+	"StdForm");
+
+create_item ("CDMA2K_FwdPCBitExtraction","Power control bit extractor for forward link",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdPCBitExtraction",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdPCBitExtraction_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdPCBitExtraction",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdPCBitExtraction_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdPCBitExtraction_fRC1","RC1")));
+
+
+create_item ("CDMA2K_FwdMultiUserSrc","Multiuser data source for forward link",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdMultiUserSrc",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdMultiUserSrc_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdMultiUserSrc",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("WalshLength","length of Walsh code",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("UserNumber","user number for forward link",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("UserIndex","index of user to be tested (= Walsh code index of the user)",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("PilotPowerRatio","pilot channel power to total power ratio",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.20")));
+
+
+create_item ("CDMA2K_FwdCohReceiver","Forward coherent combiner",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdCohReceiver",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdCohReceiver_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdCohReceiver",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("EstimateWindow","window size for estimating channel coefficients in terms of symbols",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FingerNum","number of Rake receiver fingers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("SampleRate","number of samples per chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("FilterOrder","filter order",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","48")),
+	create_parm ("WalshLength","Walsh code length used for spreading",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")));
+
+
+create_constant_form ("_nCDMA2K_x5fFwdChnlEstimate_fPD3200", 
+	"PD3200",
+	0,
+	"0",
+	"PD3200");
+
+create_constant_form ("_nCDMA2K_x5fFwdChnlEstimate_fPD6400", 
+	"PD6400",
+	0,
+	"1",
+	"PD6400");
+
+create_constant_form ("_nCDMA2K_x5fFwdChnlEstimate_fPD9600", 
+	"PD9600",
+	0,
+	"2",
+	"PD9600");
+
+create_constant_form ("_nCDMA2K_x5fFwdChnlEstimate_fPD12800", 
+	"PD12800",
+	0,
+	"3",
+	"PD12800");
+
+create_form_set("_nCDMA2K_x5fFwdChnlEstimate_fPhaseDetectRateSet",
+	"_nCDMA2K_x5fFwdChnlEstimate_fPD3200",
+	"_nCDMA2K_x5fFwdChnlEstimate_fPD6400",
+	"_nCDMA2K_x5fFwdChnlEstimate_fPD9600",
+	"_nCDMA2K_x5fFwdChnlEstimate_fPD12800",
+	"StdForm");
+
+create_item ("CDMA2K_FwdChnlEstimate","Forward channel estimator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FwdChnlEstimate",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFwdChnlEstimate_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FwdChnlEstimate",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("MaxSearchPathNum","range for searching strongest paths",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","30")),
+	create_parm ("EstimateWindow","window size for estimating channel coefficients in terms of symbols",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","6")),
+	create_parm ("FingerNum","number of Rake receiver fingers",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("SampleRate","number of samples per chip",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("FilterOrder","filter order",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","48")),
+	create_parm ("WalshLength","Walsh code length used for spreading",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","64")),
+	create_parm ("PhaseDetectRate","phase detection rate",
+		PARM_INT,
+		"_nCDMA2K_x5fFwdChnlEstimate_fPhaseDetectRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFwdChnlEstimate_fPD3200","PD3200")));
+
+
+create_constant_form ("_nCDMA2K_x5fFIR_fSR1", 
+	"SR1",
+	0,
+	"0",
+	"SR1");
+
+create_constant_form ("_nCDMA2K_x5fFIR_fSR3", 
+	"SR3",
+	0,
+	"1",
+	"SR3");
+
+create_form_set("_nCDMA2K_x5fFIR_fSpreadRateSet",
+	"_nCDMA2K_x5fFIR_fSR1",
+	"_nCDMA2K_x5fFIR_fSR3",
+	"StdForm");
+
+create_item ("CDMA2K_FIR","FIR baseband filter",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_FIR",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fFIR_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_FIR",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SpreadRate","PN chip rate multiple of 1.2288 Mcps",
+		PARM_INT,
+		"_nCDMA2K_x5fFIR_fSpreadRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fFIR_fSR1","SR1")));
+
+
+create_item ("CDMA2K_Delay","Signal delay based on channel tapped-delay line model",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_Delay",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fDelay_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_Delay",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("SamplingRate","sampling rate",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4915200")),
+	create_parm ("Delay","delay time",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","50n")));
+
+
+create_constant_form ("_nCDMA2K_x5fDePuncture_fChoose_x5fPuncturePattern_x5ffrom_x5flist", 
+	"Choose PuncturePattern from list",
+	0,
+	"0",
+	"Choose PuncturePattern from list");
+
+create_constant_form ("_nCDMA2K_x5fDePuncture_fUser_x5fdefined", 
+	"User defined",
+	0,
+	"1",
+	"User defined");
+
+create_form_set("_nCDMA2K_x5fDePuncture_fModeSelectSet",
+	"_nCDMA2K_x5fDePuncture_fChoose_x5fPuncturePattern_x5ffrom_x5flist",
+	"_nCDMA2K_x5fDePuncture_fUser_x5fdefined",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fDePuncture_fP_x5f0", 
+	"P 0",
+	0,
+	"0",
+	"P 0");
+
+create_constant_form ("_nCDMA2K_x5fDePuncture_fP_x5f2_x5fof_x5f6_x5f110101", 
+	"P 2 of 6 110101",
+	0,
+	"1",
+	"P 2 of 6 110101");
+
+create_constant_form ("_nCDMA2K_x5fDePuncture_fP_x5f1_x5fof_x5f5_x5f11110", 
+	"P 1 of 5 11110",
+	0,
+	"2",
+	"P 1 of 5 11110");
+
+create_constant_form ("_nCDMA2K_x5fDePuncture_fP_x5f1_x5fof_x5f9_x5f111111110", 
+	"P 1 of 9 111111110",
+	0,
+	"3",
+	"P 1 of 9 111111110");
+
+create_constant_form ("_nCDMA2K_x5fDePuncture_fP_x5f4_x5fof_x5f12_x5f110110011011", 
+	"P 4 of 12 110110011011",
+	0,
+	"4",
+	"P 4 of 12 110110011011");
+
+create_constant_form ("_nCDMA2K_x5fDePuncture_fP_x5f2_x5fof_x5f18_x5f111011111111111110", 
+	"P 2 of 18 111011111111111110",
+	0,
+	"5",
+	"P 2 of 18 111011111111111110");
+
+create_constant_form ("_nCDMA2K_x5fDePuncture_fP_x5f8_x5fof_x5f24_x5f111010111011101011101010", 
+	"P 8 of 24 111010111011101011101010",
+	0,
+	"6",
+	"P 8 of 24 111010111011101011101010");
+
+create_form_set("_nCDMA2K_x5fDePuncture_fPuncturePatternSet",
+	"_nCDMA2K_x5fDePuncture_fP_x5f0",
+	"_nCDMA2K_x5fDePuncture_fP_x5f2_x5fof_x5f6_x5f110101",
+	"_nCDMA2K_x5fDePuncture_fP_x5f1_x5fof_x5f5_x5f11110",
+	"_nCDMA2K_x5fDePuncture_fP_x5f1_x5fof_x5f9_x5f111111110",
+	"_nCDMA2K_x5fDePuncture_fP_x5f4_x5fof_x5f12_x5f110110011011",
+	"_nCDMA2K_x5fDePuncture_fP_x5f2_x5fof_x5f18_x5f111011111111111110",
+	"_nCDMA2K_x5fDePuncture_fP_x5f8_x5fof_x5f24_x5f111010111011101011101010",
+	"StdForm");
+
+create_item ("CDMA2K_DePuncture","Zero inserter for de-punctured input stream",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_DePuncture",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fDePuncture_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_DePuncture",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModeSelect","mode for setting parameters",
+		PARM_INT,
+		"_nCDMA2K_x5fDePuncture_fModeSelectSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fDePuncture_fChoose_x5fPuncturePattern_x5ffrom_x5flist","Choose_PuncturePattern_from_list")),
+	create_parm ("PuncturePattern","puncture pattern used when ModeSelect=Choose PuncturePattern from list",
+		PARM_INT,
+		"_nCDMA2K_x5fDePuncture_fPuncturePatternSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fDePuncture_fP_x5f2_x5fof_x5f6_x5f110101","P_2_of_6_110101")),
+	create_parm ("UserDefPattern","puncture pattern used when ModeSelect=User defined",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"1 1 0 1 0 1\"")));
+
+
+create_constant_form ("_nCDMA2K_x5fDataScrambling_fRC1_x5fTo_x5fRC2", 
+	"RC1 To RC2",
+	0,
+	"0",
+	"RC1 To RC2");
+
+create_constant_form ("_nCDMA2K_x5fDataScrambling_fRC3_x5fTo_x5fRC9_x5fNon_x5fOTD", 
+	"RC3 To RC9 Non OTD",
+	0,
+	"1",
+	"RC3 To RC9 Non OTD");
+
+create_constant_form ("_nCDMA2K_x5fDataScrambling_fRC3_x5fTo_x5fRC9_x5fOTD", 
+	"RC3 To RC9 OTD",
+	0,
+	"2",
+	"RC3 To RC9 OTD");
+
+create_constant_form ("_nCDMA2K_x5fDataScrambling_fRC3_x5fTo_x5fRC9_x5fMC", 
+	"RC3 To RC9 MC",
+	0,
+	"3",
+	"RC3 To RC9 MC");
+
+create_form_set("_nCDMA2K_x5fDataScrambling_fRadioConfigSet",
+	"_nCDMA2K_x5fDataScrambling_fRC1_x5fTo_x5fRC2",
+	"_nCDMA2K_x5fDataScrambling_fRC3_x5fTo_x5fRC9_x5fNon_x5fOTD",
+	"_nCDMA2K_x5fDataScrambling_fRC3_x5fTo_x5fRC9_x5fOTD",
+	"_nCDMA2K_x5fDataScrambling_fRC3_x5fTo_x5fRC9_x5fMC",
+	"StdForm");
+
+create_item ("CDMA2K_DataScrambling","Data scrambler and descrambler for forward link",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_DataScrambling",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fDataScrambling_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_DataScrambling",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RadioConfig","radio configuration",
+		PARM_INT,
+		"_nCDMA2K_x5fDataScrambling_fRadioConfigSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fDataScrambling_fRC1_x5fTo_x5fRC2","RC1_To_RC2")));
+
+
+create_constant_form ("_nCDMA2K_x5fDCC_x5fWithTail_fChoose_x5fCCType_x5ffrom_x5flist", 
+	"Choose CCType from list",
+	0,
+	"0",
+	"Choose CCType from list");
+
+create_constant_form ("_nCDMA2K_x5fDCC_x5fWithTail_fUser_x5fdefined", 
+	"User defined",
+	0,
+	"1",
+	"User defined");
+
+create_form_set("_nCDMA2K_x5fDCC_x5fWithTail_fModeSelectSet",
+	"_nCDMA2K_x5fDCC_x5fWithTail_fChoose_x5fCCType_x5ffrom_x5flist",
+	"_nCDMA2K_x5fDCC_x5fWithTail_fUser_x5fdefined",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fDCC_x5fWithTail_frate_x5f1_x5f2_x5fK_x5f9_x5fg0_x5f0753_x5fg1_x5f0561", 
+	"rate 1/2 K 9 g0 0753 g1 0561",
+	0,
+	"0",
+	"rate 1/2 K 9 g0 0753 g1 0561");
+
+create_constant_form ("_nCDMA2K_x5fDCC_x5fWithTail_frate_x5f1_x5f3_x5fK_x5f9_x5fg0_x5f0557_x5fg1_x5f0663_x5fg2_x5f0711", 
+	"rate 1/3 K 9 g0 0557 g1 0663 g2 0711",
+	0,
+	"1",
+	"rate 1/3 K 9 g0 0557 g1 0663 g2 0711");
+
+create_constant_form ("_nCDMA2K_x5fDCC_x5fWithTail_frate_x5f1_x5f4_x5fK_x5f9_x5fg0_x5f0765_x5fg1_x5f0671_x5fg2_x5f0513_x5fg3_x5f0473", 
+	"rate 1/4 K 9 g0 0765 g1 0671 g2 0513 g3 0473",
+	0,
+	"2",
+	"rate 1/4 K 9 g0 0765 g1 0671 g2 0513 g3 0473");
+
+create_constant_form ("_nCDMA2K_x5fDCC_x5fWithTail_frate_x5f1_x5f6_x5fK_x5f9_x5fg0_x5f0457_x5fg1_x5f0755_x5fg2_x5f0551_x5fg3_x5f0637_x5fg4_x5f0625_x5fg5_x5f0727", 
+	"rate 1/6 K 9 g0 0457 g1 0755 g2 0551 g3 0637 g4 0625 g5_0727",
+	0,
+	"3",
+	"rate 1/6 K 9 g0 0457 g1 0755 g2 0551 g3 0637 g4 0625 g5_0727");
+
+create_form_set("_nCDMA2K_x5fDCC_x5fWithTail_fCCTypeSet",
+	"_nCDMA2K_x5fDCC_x5fWithTail_frate_x5f1_x5f2_x5fK_x5f9_x5fg0_x5f0753_x5fg1_x5f0561",
+	"_nCDMA2K_x5fDCC_x5fWithTail_frate_x5f1_x5f3_x5fK_x5f9_x5fg0_x5f0557_x5fg1_x5f0663_x5fg2_x5f0711",
+	"_nCDMA2K_x5fDCC_x5fWithTail_frate_x5f1_x5f4_x5fK_x5f9_x5fg0_x5f0765_x5fg1_x5f0671_x5fg2_x5f0513_x5fg3_x5f0473",
+	"_nCDMA2K_x5fDCC_x5fWithTail_frate_x5f1_x5f6_x5fK_x5f9_x5fg0_x5f0457_x5fg1_x5f0755_x5fg2_x5f0551_x5fg3_x5f0637_x5fg4_x5f0625_x5fg5_x5f0727",
+	"StdForm");
+
+create_item ("CDMA2K_DCC_WithTail","Viterbi decoder for convolutional code with tail",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_DCC_WithTail",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fDCC_x5fWithTail_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_DCC_WithTail",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModeSelect","mode for setting parameters",
+		PARM_INT,
+		"_nCDMA2K_x5fDCC_x5fWithTail_fModeSelectSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fDCC_x5fWithTail_fChoose_x5fCCType_x5ffrom_x5flist","Choose_CCType_from_list")),
+	create_parm ("CCType","convolutional code type used when ModeSelect=Choose CCType from list",
+		PARM_INT,
+		"_nCDMA2K_x5fDCC_x5fWithTail_fCCTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fDCC_x5fWithTail_frate_x5f1_x5f2_x5fK_x5f9_x5fg0_x5f0753_x5fg1_x5f0561","rate_1_2_K_9_g0_0753_g1_0561")),
+	create_parm ("ConstraintLength","constraint length of convolutional code use when ModeSelect=User defined",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9")),
+	create_parm ("Polynomial","generator polynomial",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"0753 0561\"")),
+	create_parm ("OutputFrameLen","output frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","96")));
+
+
+create_constant_form ("_nCDMA2K_x5fCoefDownSample_fPD3200", 
+	"PD3200",
+	0,
+	"0",
+	"PD3200");
+
+create_constant_form ("_nCDMA2K_x5fCoefDownSample_fPD6400", 
+	"PD6400",
+	0,
+	"1",
+	"PD6400");
+
+create_constant_form ("_nCDMA2K_x5fCoefDownSample_fPD9600", 
+	"PD9600",
+	0,
+	"2",
+	"PD9600");
+
+create_constant_form ("_nCDMA2K_x5fCoefDownSample_fPD12800", 
+	"PD12800",
+	0,
+	"3",
+	"PD12800");
+
+create_form_set("_nCDMA2K_x5fCoefDownSample_fPhaseDetectRateSet",
+	"_nCDMA2K_x5fCoefDownSample_fPD3200",
+	"_nCDMA2K_x5fCoefDownSample_fPD6400",
+	"_nCDMA2K_x5fCoefDownSample_fPD9600",
+	"_nCDMA2K_x5fCoefDownSample_fPD12800",
+	"StdForm");
+
+create_item ("CDMA2K_CoefDownSample","Down sample coefficients",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_CoefDownSample",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fCoefDownSample_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_CoefDownSample",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("FingerNum","number of fingers in Rake receiver",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("PhaseDetectRate","phase detection rate",
+		PARM_INT,
+		"_nCDMA2K_x5fCoefDownSample_fPhaseDetectRateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fCoefDownSample_fPD3200","PD3200")));
+
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fChoose_x5fCRCType_x5ffrom_x5flist", 
+	"Choose CRCType from list",
+	0,
+	"0",
+	"Choose CRCType from list");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fUser_x5fdefined", 
+	"User defined",
+	0,
+	"1",
+	"User defined");
+
+create_form_set("_nCDMA2K_x5fCRC_x5fDeCoder_fModeSelectSet",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fChoose_x5fCRCType_x5ffrom_x5flist",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fUser_x5fdefined",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fCRC16_x5f0x1c867", 
+	"CRC16 0x1c867",
+	0,
+	"0",
+	"CRC16 0x1c867");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fCRC12_x5f0x1f13", 
+	"CRC12 0x1f13",
+	0,
+	"1",
+	"CRC12 0x1f13");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fCRC10_x5f0x7d9", 
+	"CRC10 0x7d9",
+	0,
+	"2",
+	"CRC10 0x7d9");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fCRC8_x5f0x19b", 
+	"CRC8 0x19b",
+	0,
+	"3",
+	"CRC8 0x19b");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fCRC6_x5f0x47", 
+	"CRC6 0x47",
+	0,
+	"4",
+	"CRC6 0x47");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fCRC6_x5f0x67", 
+	"CRC6 0x67",
+	0,
+	"5",
+	"CRC6 0x67");
+
+create_form_set("_nCDMA2K_x5fCRC_x5fDeCoder_fCRCTypeSet",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fCRC16_x5f0x1c867",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fCRC12_x5f0x1f13",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fCRC10_x5f0x7d9",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fCRC8_x5f0x19b",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fCRC6_x5f0x47",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fCRC6_x5f0x67",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fall_x5f1_x5fs", 
+	"all 1's",
+	0,
+	"0",
+	"all 1's");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fDeCoder_fall_x5f0_x5fs", 
+	"all 0's",
+	0,
+	"1",
+	"all 0's");
+
+create_form_set("_nCDMA2K_x5fCRC_x5fDeCoder_fInitialStateSet",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fall_x5f1_x5fs",
+	"_nCDMA2K_x5fCRC_x5fDeCoder_fall_x5f0_x5fs",
+	"StdForm");
+
+create_item ("CDMA2K_CRC_DeCoder","CRC bit eraser with frame quality check",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_CRC_DeCoder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fCRC_x5fDeCoder_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_CRC_DeCoder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("InputFrameLen","input frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","184")),
+	create_parm ("ModeSelect","mode for setting parameters",
+		PARM_INT,
+		"_nCDMA2K_x5fCRC_x5fDeCoder_fModeSelectSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fCRC_x5fDeCoder_fChoose_x5fCRCType_x5ffrom_x5flist","Choose_CRCType_from_list")),
+	create_parm ("CRCType","CRC generator polynomial use when ModeSelect=Choose CRCType from list",
+		PARM_INT,
+		"_nCDMA2K_x5fCRC_x5fDeCoder_fCRCTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fCRC_x5fDeCoder_fCRC12_x5f0x1f13","CRC12_0x1f13")),
+	create_parm ("InitialState","initial state of encoder(use when ModeSelect=User defined)",
+		PARM_INT,
+		"_nCDMA2K_x5fCRC_x5fDeCoder_fInitialStateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fCRC_x5fDeCoder_fall_x5f1_x5fs","all_1_s")),
+	create_parm ("Polynomial","generator polynomial in hex format used when ModeSelect=User defined",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0x1f13")));
+
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fChoose_x5fCRCType_x5ffrom_x5flist", 
+	"Choose CRCType from list",
+	0,
+	"0",
+	"Choose CRCType from list");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fUser_x5fdefined", 
+	"User defined",
+	0,
+	"1",
+	"User defined");
+
+create_form_set("_nCDMA2K_x5fCRC_x5fCoder_fModeSelectSet",
+	"_nCDMA2K_x5fCRC_x5fCoder_fChoose_x5fCRCType_x5ffrom_x5flist",
+	"_nCDMA2K_x5fCRC_x5fCoder_fUser_x5fdefined",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fCRC16_x5f0x1c867", 
+	"CRC16 0x1c867",
+	0,
+	"0",
+	"CRC16 0x1c867");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fCRC12_x5f0x1f13", 
+	"CRC12 0x1f13",
+	0,
+	"1",
+	"CRC12 0x1f13");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fCRC10_x5f0x7d9", 
+	"CRC10 0x7d9",
+	0,
+	"2",
+	"CRC10 0x7d9");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fCRC8_x5f0x19b", 
+	"CRC8 0x19b",
+	0,
+	"3",
+	"CRC8 0x19b");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fCRC6_x5f0x47", 
+	"CRC6 0x47",
+	0,
+	"4",
+	"CRC6 0x47");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fCRC6_x5f0x67", 
+	"CRC6 0x67",
+	0,
+	"5",
+	"CRC6 0x67");
+
+create_form_set("_nCDMA2K_x5fCRC_x5fCoder_fCRCTypeSet",
+	"_nCDMA2K_x5fCRC_x5fCoder_fCRC16_x5f0x1c867",
+	"_nCDMA2K_x5fCRC_x5fCoder_fCRC12_x5f0x1f13",
+	"_nCDMA2K_x5fCRC_x5fCoder_fCRC10_x5f0x7d9",
+	"_nCDMA2K_x5fCRC_x5fCoder_fCRC8_x5f0x19b",
+	"_nCDMA2K_x5fCRC_x5fCoder_fCRC6_x5f0x47",
+	"_nCDMA2K_x5fCRC_x5fCoder_fCRC6_x5f0x67",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fall_x5f1_x5fs", 
+	"all 1's",
+	0,
+	"0",
+	"all 1's");
+
+create_constant_form ("_nCDMA2K_x5fCRC_x5fCoder_fall_x5f0_x5fs", 
+	"all 0's",
+	0,
+	"1",
+	"all 0's");
+
+create_form_set("_nCDMA2K_x5fCRC_x5fCoder_fInitialStateSet",
+	"_nCDMA2K_x5fCRC_x5fCoder_fall_x5f1_x5fs",
+	"_nCDMA2K_x5fCRC_x5fCoder_fall_x5f0_x5fs",
+	"StdForm");
+
+create_item ("CDMA2K_CRC_Coder","CRC generator",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_CRC_Coder",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fCRC_x5fCoder_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_CRC_Coder",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("InputFrameLen","input frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","172")),
+	create_parm ("ModeSelect","mode for setting parameters",
+		PARM_INT,
+		"_nCDMA2K_x5fCRC_x5fCoder_fModeSelectSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fCRC_x5fCoder_fChoose_x5fCRCType_x5ffrom_x5flist","Choose_CRCType_from_list")),
+	create_parm ("CRCType","CRC generator polynomial use when ModeSelect=Choose CRCType from list",
+		PARM_INT,
+		"_nCDMA2K_x5fCRC_x5fCoder_fCRCTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fCRC_x5fCoder_fCRC12_x5f0x1f13","CRC12_0x1f13")),
+	create_parm ("InitialState","initial state of encoder(use when ModeSelect=User defined)",
+		PARM_INT,
+		"_nCDMA2K_x5fCRC_x5fCoder_fInitialStateSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fCRC_x5fCoder_fall_x5f1_x5fs","all_1_s")),
+	create_parm ("Polynomial","generator polynomial in hex format used when ModeSelect=User defined",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0x1f13")));
+
+
+create_constant_form ("_nCDMA2K_x5fCC_x5fWithTail_fChoose_x5fCCType_x5ffrom_x5flist", 
+	"Choose CCType from list",
+	0,
+	"0",
+	"Choose CCType from list");
+
+create_constant_form ("_nCDMA2K_x5fCC_x5fWithTail_fUser_x5fdefined", 
+	"User defined",
+	0,
+	"1",
+	"User defined");
+
+create_form_set("_nCDMA2K_x5fCC_x5fWithTail_fModeSelectSet",
+	"_nCDMA2K_x5fCC_x5fWithTail_fChoose_x5fCCType_x5ffrom_x5flist",
+	"_nCDMA2K_x5fCC_x5fWithTail_fUser_x5fdefined",
+	"StdForm");
+
+create_constant_form ("_nCDMA2K_x5fCC_x5fWithTail_frate_x5f1_x5f2_x5fK_x5f9_x5fg0_x5f0753_x5fg1_x5f0561", 
+	"rate 1/2 K 9 g0 0753 g1 0561",
+	0,
+	"0",
+	"rate 1/2 K 9 g0 0753 g1 0561");
+
+create_constant_form ("_nCDMA2K_x5fCC_x5fWithTail_frate_x5f1_x5f3_x5fK_x5f9_x5fg0_x5f0557_x5fg1_x5f0663_x5fg2_x5f0711", 
+	"rate 1/3 K 9 g0 0557 g1 0663 g2 0711",
+	0,
+	"1",
+	"rate 1/3 K 9 g0 0557 g1 0663 g2 0711");
+
+create_constant_form ("_nCDMA2K_x5fCC_x5fWithTail_frate_x5f1_x5f4_x5fK_x5f9_x5fg0_x5f0765_x5fg1_x5f0671_x5fg2_x5f0513_x5fg3_x5f0473", 
+	"rate 1/4 K 9 g0 0765 g1 0671 g2 0513 g3 0473",
+	0,
+	"2",
+	"rate 1/4 K 9 g0 0765 g1 0671 g2 0513 g3 0473");
+
+create_constant_form ("_nCDMA2K_x5fCC_x5fWithTail_frate_x5f1_x5f6_x5fK_x5f9_x5fg0_x5f0457_x5fg1_x5f0755_x5fg2_x5f0551_x5fg3_x5f0637_x5fg4_x5f0625_x5fg5_x5f0727", 
+	"rate 1/6 K 9 g0 0457 g1 0755 g2 0551 g3 0637 g4 0625 g5_0727",
+	0,
+	"3",
+	"rate 1/6 K 9 g0 0457 g1 0755 g2 0551 g3 0637 g4 0625 g5_0727");
+
+create_form_set("_nCDMA2K_x5fCC_x5fWithTail_fCCTypeSet",
+	"_nCDMA2K_x5fCC_x5fWithTail_frate_x5f1_x5f2_x5fK_x5f9_x5fg0_x5f0753_x5fg1_x5f0561",
+	"_nCDMA2K_x5fCC_x5fWithTail_frate_x5f1_x5f3_x5fK_x5f9_x5fg0_x5f0557_x5fg1_x5f0663_x5fg2_x5f0711",
+	"_nCDMA2K_x5fCC_x5fWithTail_frate_x5f1_x5f4_x5fK_x5f9_x5fg0_x5f0765_x5fg1_x5f0671_x5fg2_x5f0513_x5fg3_x5f0473",
+	"_nCDMA2K_x5fCC_x5fWithTail_frate_x5f1_x5f6_x5fK_x5f9_x5fg0_x5f0457_x5fg1_x5f0755_x5fg2_x5f0551_x5fg3_x5f0637_x5fg4_x5f0625_x5fg5_x5f0727",
+	"StdForm");
+
+create_item ("CDMA2K_CC_WithTail","Convolutional encoder with tail",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_CC_WithTail",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fCC_x5fWithTail_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_CC_WithTail",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("ModeSelect","mode for setting parameters",
+		PARM_INT,
+		"_nCDMA2K_x5fCC_x5fWithTail_fModeSelectSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fCC_x5fWithTail_fChoose_x5fCCType_x5ffrom_x5flist","Choose_CCType_from_list")),
+	create_parm ("CCType","convolutional code type used when ModeSelect=Choose CCType from list",
+		PARM_INT,
+		"_nCDMA2K_x5fCC_x5fWithTail_fCCTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fCC_x5fWithTail_frate_x5f1_x5f2_x5fK_x5f9_x5fg0_x5f0753_x5fg1_x5f0561","rate_1_2_K_9_g0_0753_g1_0561")),
+	create_parm ("ConstraintLength","constraint length of convolutional code use when ModeSelect=User defined",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","9")),
+	create_parm ("Polynomial","generator polynomial",
+		PARM_INTARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"0753 0561\"")),
+	create_parm ("InputFrameLen","input frame length",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","96")));
+
+
+create_constant_form ("_nCDMA2K_x5fBlockIntlvr_fBROIntlvr", 
+	"BROIntlvr",
+	0,
+	"0",
+	"BROIntlvr");
+
+create_constant_form ("_nCDMA2K_x5fBlockIntlvr_fFwd_x5fBackwards", 
+	"Fwd_Backwards",
+	0,
+	"1",
+	"Fwd_Backwards");
+
+create_form_set("_nCDMA2K_x5fBlockIntlvr_fIntlvrTypeSet",
+	"_nCDMA2K_x5fBlockIntlvr_fBROIntlvr",
+	"_nCDMA2K_x5fBlockIntlvr_fFwd_x5fBackwards",
+	"StdForm");
+
+create_item ("CDMA2K_BlockIntlvr","Block interleaver",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_BlockIntlvr",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fBlockIntlvr_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_BlockIntlvr",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockRow_m","interleaver block row equal to 2^Blockrow_m",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("BlockColumn_J","interleaver block column",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("IntlvrType","interleaver type",
+		PARM_INT,
+		"_nCDMA2K_x5fBlockIntlvr_fIntlvrTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fBlockIntlvr_fBROIntlvr","BROIntlvr")));
+
+
+create_constant_form ("_nCDMA2K_x5fBlockDeIntlvr_fBROIntlvr", 
+	"BROIntlvr",
+	0,
+	"0",
+	"BROIntlvr");
+
+create_constant_form ("_nCDMA2K_x5fBlockDeIntlvr_fFwd_x5fBackwards", 
+	"Fwd_Backwards",
+	0,
+	"1",
+	"Fwd_Backwards");
+
+create_form_set("_nCDMA2K_x5fBlockDeIntlvr_fIntlvrTypeSet",
+	"_nCDMA2K_x5fBlockDeIntlvr_fBROIntlvr",
+	"_nCDMA2K_x5fBlockDeIntlvr_fFwd_x5fBackwards",
+	"StdForm");
+
+create_item ("CDMA2K_BlockDeIntlvr","Block de-interleaver",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_BlockDeIntlvr",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fBlockDeIntlvr_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_BlockDeIntlvr",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BlockRow_m","interleaver block row equal to 2^Blockrow_m",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","4")),
+	create_parm ("BlockColumn_J","interleaver block column",
+		PARM_INT | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("IntlvrType","interleaver type",
+		PARM_INT,
+		"_nCDMA2K_x5fBlockDeIntlvr_fIntlvrTypeSet",
+		UNITLESS_UNIT,
+		prm("_nCDMA2K_x5fBlockDeIntlvr_fBROIntlvr","BROIntlvr")));
+
+
+create_item ("CDMA2K_BSTX","Base station transmitter",
+	"C",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_CDMA2K_BSTX",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nCDMA2K_x5fBSTX_lsdfcdma2kstars",
+	SPComponentAnnotFmt,
+	"SYM_CDMA2K_BSTX",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("BS_Power","base station transmission power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","10.0")));

@@ -1,0 +1,140 @@
+#!/opt/hpeesofRD/bin/perl
+
+use Getopt::Long;
+
+$state = "adsptolemy/lib/ptupdatemk/state";
+$dirname = "adsptolemy/mk/dirname.mk";
+$packagemk = "adsptolemy/mk/packagemk.mk";
+
+Getopt::Long::config('no_require_order');
+$usage = "Usage:
+$0 add [OPTIONS] --package=PACKAGE [--file=FILE] [--dir=DIR ...] \\
+  [--depends=PACKAGE,[,PACKAGE...]]
+$0 remove --package=PACKAGE
+$0 rewrite
+Options:
+  --dev             use -dev settings
+  --state=FILE      use FILE instead of $state
+  --dirname=FILE    use FILE instead of $dirname
+  --packagemk=FILE  use FILE instead of $packagemk
+";
+
+%optctl = ();
+GetOptions(\%optctl, "package=s", "file=s", "dir=s@", "depends=s",
+	   "state=s", "dirname=s", "packagemk=s", "dev") || die $usage;
+if ($optctl{dev}) {
+  ($state, $dirname, $packagemk) =
+    ("include/adsptolemy/lib/ptupdatemk/state-dev",
+     "include/adsptolemy/mk/dirname.mk",
+     "include/adsptolemy/mk/packagemk.mk");
+}
+$state = $optctl{state} if $optctl{state};
+$dirname = $optctl{dirname} if $optctl{dirname};
+$packagemk = $optctl{packagemk} if $optctl{packagemk};
+$hpeesof_dir = $ENV{"HPEESOF_DIR_ARCH"} || $ENV{"HPEESOF_DIR"};
+$state = "$hpeesof_dir/$state";
+$dirname = "$hpeesof_dir/$dirname";
+$packagemk = "$hpeesof_dir/$packagemk";
+
+&mkdirp($state);
+&mkdirp($dirname);
+&mkdirp($packagemk);
+
+if (-f $state) {
+  `chmod +w $state`;
+  open(S, $state) || die "$state: $!\n";
+  $/="";
+  while (<S>) {
+    ($p) = /^p (.*)/m;
+    ($d) = /^d (.*)/m;
+    ($f) = /^f (.*)/m;
+    $d{$p}{'file'} = $f;
+    $d{$p}{'depends'} = $d{$p}{'depstate'} = $d;
+    while (/^r\s*(.*)\s*/mg) {
+      unshift(@{$d{$p}{'dirs'}}, $1);
+    }
+  }
+}
+
+
+if ($ARGV[0] eq 'add') {
+  die $usage if (!$optctl{'package'});
+  $d{$optctl{'package'}}{'file'} = $optctl{'file'};
+  $d{$optctl{'package'}}{'depends'} = $d{$optctl{'package'}}{'depstate'} =
+    $optctl{'depends'};
+  $d{$optctl{'package'}}{'dirs'} = $optctl{'dir'};
+}
+elsif ($ARGV[0] eq 'remove') {
+  die $usage if (!$optctl{'package'});
+  delete $d{$optctl{'package'}};
+}
+elsif ($ARGV[0] eq 'rewrite') {}
+else {
+  die $usage;
+}
+
+`chmod +w $state` if (-f $state);
+`chmod +w $dirname` if (-f $dirname);
+`chmod +w $packagemk` if (-f $packagemk);
+open(D, "> $dirname") || die "$dirname: $!\n";
+open(P, "> $packagemk") || die "$packagemk: $!\n";
+open(S, "> $state") || die "$state: $!\n";
+
+while ($p = &nextpack) {
+  for $d (@{$d{$p}{'dirs'}}) {
+    ($dn,$dv) = ($d =~ /(.*)=(.*)/);
+    print D  " ifndef ${dn}_dir
+ ${dn}_dir=\$(HPTOLEMY_DEV_ROOT)/$dv
+ endif
+
+";
+  }
+  print P " ifndef ${p}.mk_dir
+ ${p}.mk_dir=\$(HPTOLEMY_DEV_ROOT)
+ include \$(${p}.mk_dir)/mk/${d{$p}{file}}
+ endif
+
+" if ($d{$p}{file} !~ /^\s*$/);
+
+  print S "p $p
+d $d{$p}{depends}
+f $d{$p}{file}\n";
+  for $d (@{$d{$p}{'dirs'}}) {
+    print S "r $d\n";
+  }
+  print S "\n";
+}
+
+
+sub nextpack () {
+  my $done = 1;
+  for $p (keys %d) {
+    if (! $d{$p}{'depstate'}) {
+      for $q (keys %d) {
+	$d{$q}{'depstate'} =~ s/,?$p,?//;
+      }
+      $d{$p}{'depstate'} = "_";
+      return $p;
+    }
+    elsif ($d{$p}{'depstate'} ne "_") {
+      $done = 0;
+    }
+  }
+  return undef if $done;
+  for $p (keys %d) {
+    warn "$p depends on $d{$p}{depstate}\n"
+      if ($d{$p}{'depstate'} ne "_");
+  }
+  die "Circular or unmet dependency!\n";
+}
+
+
+sub mkdirp () {
+  my($dir) = @_;
+  $dir =~ s,/[^/]*$,,;
+  my($d,$dirhead);
+  for $d (split("/",$dir)) {
+    $dirhead .= "$d/";
+    (-d $dirhead) || mkdir($dirhead,0755) || die "mkdir $dirhead: $!";
+  }
+}

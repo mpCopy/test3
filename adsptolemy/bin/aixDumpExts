@@ -1,0 +1,8 @@
+#!/bin/sh
+# @(#) $Source: /cvs/wlv/src/cedamk/bin/aixDumpExts,v $ $Revision: 100.4 $ $Date: 2001/08/31 00:05:16 $
+# Dump symbols in AIX .ext file format
+# Usage: aixDumpExts FILE OBJS > LIBNAME.ext
+set -e
+echo \#\! $1
+shift
+nm -BCgh "$@" | awk '{if ($3 && $2 != "U") print $3}' | sed -e s/^\\.// | sort -u | grep -v '^_ptrgl$'

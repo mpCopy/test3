@@ -1,0 +1,2928 @@
+set_design_type( sigproc_net );
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fMirrorSourceSpectrumSet",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fMirrorMeasSpectrumSet",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS0", 
+	"TS0",
+	0,
+	"0",
+	"TS0");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS2", 
+	"TS2",
+	0,
+	"1",
+	"TS2");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS3", 
+	"TS3",
+	0,
+	"2",
+	"TS3");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS4", 
+	"TS4",
+	0,
+	"3",
+	"TS4");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS5", 
+	"TS5",
+	0,
+	"4",
+	"TS5");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS6", 
+	"TS6",
+	0,
+	"5",
+	"TS6");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fActiveTimeslotSet",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS0",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS2",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS3",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS4",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS5",
+	"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS6",
+	"StdForm");
+
+
+create_item ("TDSCDMA_DnLnk_RX_ACS","TD-SCDMA downlink RX ACS",
+	"TDSCDMA_DnLnk_RX_ACS",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST | ITEM_UNIQUE,
+	-1,
+	"BMP_TDSCDMA_DnLnk_RX_ACS",
+	"Component Parameters",
+	NULL,
+	ARFWTBNetlistFmt,
+	"TDSCDMA_DnLnk_RX_ACS",
+	SPDesignAnnotFmt,
+	"SYM_DSN_TDSCDMA_DnLnk_RX_ACS",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RequiredParameters","Required Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("CE_TimeStep","Circuit envelope simulation time step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","1/1.28 MHz/8")),
+	create_parm ("WTB_TimeStep","Set CE_TimeStep <= 1/1.28e6/SamplesPerChip. <br> SamplesPerChip is in Signal Parameters tab.",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("FSource","Source carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("SourcePower","Source power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","dbmtow(-91.0)")),
+	create_parm ("FMeasurement","Measurement carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("BasicParameters","Basic Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("SourceR","Source resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("SourceTemp","Source resistor temperature",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","16.85")),
+	create_parm ("MeasR","Measurement resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("MirrorSourceSpectrum","Mirror source spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fMirrorSourceSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fNO","NO")),
+	create_parm ("MirrorMeasSpectrum","Mirror meas spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fMirrorMeasSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fNO","NO")),
+	create_parm ("TestBenchSeed","Random number generator seed",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1234567")),
+	create_parm ("SignalParameters","Signal Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("GainImbalance","Gain imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("PhaseImbalance","Phase imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("I_OriginOffset","I origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("Q_OriginOffset","Q origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("IQ_Rotation","IQ rotation",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("SamplesPerChip","Samples per chip",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("ActiveTimeslot","Active Timeslot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fActiveTimeslotSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fRX_x5fACS_fTS0","TS0")),
+	create_parm ("RRC_FilterLength","RRC filter length (chips)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","12")),
+	create_parm ("BasicMidambleID","Basic midamble index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("MidambleID","Midamble index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("MaxMidambleShift","Max midamble shift",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("MinSF","Minimum spreading factor",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("SpreadCode1","Spread code index for first channel",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("SpreadCode2","Spread code index for second channel",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("AdjChSignalParameters","Adjacent Channel Selectivity",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("AdjChFSourceOffset","Adjacent channel carrier frequency offset",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1.6 MHz")),
+	create_parm ("AdjChPower","Adjacent channel power",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","dbmtow(-54.0)")),
+	create_parm ("MeasurementParameters","Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("DisplayPages","RX downlink ACS measurement display pages: <br> TDSCDMA_DnLnk_RX_ACS Tables/Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("StartBlock","Start block",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("StopBlock","Stop block",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","50")));
+
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fMirrorSourceSpectrumSet",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fMirrorMeasSpectrumSet",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS1", 
+	"TS1",
+	0,
+	"0",
+	"TS1");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS2", 
+	"TS2",
+	0,
+	"1",
+	"TS2");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS3", 
+	"TS3",
+	0,
+	"2",
+	"TS3");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS4", 
+	"TS4",
+	0,
+	"3",
+	"TS4");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS5", 
+	"TS5",
+	0,
+	"4",
+	"TS5");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS6", 
+	"TS6",
+	0,
+	"5",
+	"TS6");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fActiveTimeslotSet",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS1",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS2",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS3",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS4",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS5",
+	"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS6",
+	"StdForm");
+
+
+create_item ("TDSCDMA_UpLnk_RX_Sensitivity","TD-SCDMA uplink RX sensitivity",
+	"TDSCDMA_UpLnk_RX_Sensitivity",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST | ITEM_UNIQUE,
+	-1,
+	"BMP_TDSCDMA_UpLnk_RX_Sensitivity",
+	"Component Parameters",
+	NULL,
+	ARFWTBNetlistFmt,
+	"TDSCDMA_UpLnk_RX_Sensitivity",
+	SPDesignAnnotFmt,
+	"SYM_DSN_TDSCDMA_UpLnk_RX_Sensitivity",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RequiredParameters","Required Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("CE_TimeStep","Circuit envelope simulation time step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","1/1.28 MHz/8")),
+	create_parm ("WTB_TimeStep","Set CE_TimeStep <= 1/1.28e6/SamplesPerChip. <br> SamplesPerChip is in Signal Parameters tab.",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("FSource","Source carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("SourcePower","Source power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","dbmtow(-110.0)")),
+	create_parm ("FMeasurement","Measurement carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("BasicParameters","Basic Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("SourceR","Source resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("SourceTemp","Source resistor temperature",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","16.85")),
+	create_parm ("MeasR","Measurement resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("MirrorSourceSpectrum","Mirror source spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fMirrorSourceSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fNO","NO")),
+	create_parm ("MirrorMeasSpectrum","Mirror meas spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fMirrorMeasSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fNO","NO")),
+	create_parm ("TestBenchSeed","Random number generator seed",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1234567")),
+	create_parm ("SignalParameters","Signal Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("GainImbalance","Gain imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("PhaseImbalance","Phase imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("I_OriginOffset","I origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("Q_OriginOffset","Q origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("IQ_Rotation","IQ rotation",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("SamplesPerChip","Samples per chip",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("ActiveTimeslot","Active Timeslot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fActiveTimeslotSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fRX_x5fSensitivity_fTS1","TS1")),
+	create_parm ("RRC_FilterLength","RRC filter length (chips)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","12")),
+	create_parm ("BasicMidambleID","Basic midamble index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("MidambleID","Midamble index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("MaxMidambleShift","Max midamble shift",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("MinSF","Minimum spreading factor",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("SpreadCode","Spread code index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("MeasurementParameters","Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("DisplayPages","RX uplink sensitivity measurement display pages: <br> TDSCDMA_Uplnk_RX_Sensitivity Tables/Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("StartBlock","Start block",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("StopBlock","Stop block",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","50")));
+
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fPowerMeasurementSet",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fSpectrumMeasurementSet",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fEnableSourceNoiseSet",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fMirrorSourceSpectrumSet",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fMirrorMeasSpectrumSet",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fRF_x5fMirrorFreqSet",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fMeasMirrorFreqSet",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS0", 
+	"TS0",
+	0,
+	"0",
+	"TS0");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS2", 
+	"TS2",
+	0,
+	"1",
+	"TS2");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS3", 
+	"TS3",
+	0,
+	"2",
+	"TS3");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS4", 
+	"TS4",
+	0,
+	"3",
+	"TS4");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS5", 
+	"TS5",
+	0,
+	"4",
+	"TS5");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS6", 
+	"TS6",
+	0,
+	"5",
+	"TS6");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fActiveTimeslotSet",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS0",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS2",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS3",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS4",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS5",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS6",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fnone", 
+	"none",
+	0,
+	"0",
+	"none");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fHamming_x5f0_x5f54", 
+	"Hamming 0.54",
+	0,
+	"1",
+	"Hamming 0.54");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fHanning_x5f0_x5f50", 
+	"Hanning 0.50",
+	0,
+	"2",
+	"Hanning 0.50");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fGaussian_x5f0_x5f75", 
+	"Gaussian 0.75",
+	0,
+	"3",
+	"Gaussian 0.75");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fKaiser_x5f7_x5f865", 
+	"Kaiser 7.865",
+	0,
+	"4",
+	"Kaiser 7.865");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_f_x5f8510_x5f6_x5f0", 
+	"_8510 6.0",
+	0,
+	"5",
+	"8510 6.0");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fBlackman", 
+	"Blackman",
+	0,
+	"6",
+	"Blackman");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fBlackman_x5fHarris", 
+	"Blackman-Harris",
+	0,
+	"7",
+	"Blackman-Harris");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fSpecMeasWindowSet",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fnone",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fHamming_x5f0_x5f54",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fHanning_x5f0_x5f50",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fGaussian_x5f0_x5f75",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fKaiser_x5f7_x5f865",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_f_x5f8510_x5f6_x5f0",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fBlackman",
+	"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fBlackman_x5fHarris",
+	"StdForm");
+
+
+create_item ("TDSCDMA_DnLnk_MultiCarrier_TX","TD-SCDMA downlink multi-carrier TX test",
+	"TDSCDMA_DnLnk_MultiCarrier_TX",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST | ITEM_UNIQUE,
+	-1,
+	"BMP_TDSCDMA_DnLnk_MultiCarrier_TX",
+	"Component Parameters",
+	NULL,
+	ARFWTBNetlistFmt,
+	"TDSCDMA_DnLnk_MultiCarrier_TX",
+	SPDesignAnnotFmt,
+	"SYM_DSN_TDSCDMA_DnLnk_MultiCarrier_TX",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RequiredParameters","Required Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("CE_TimeStep","Circuit envelope simulation time step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","1/1.28 MHz/16")),
+	create_parm ("WTB_TimeStep","Set CE_TimeStep <= 1/1.28e6/SamplesPerChip. <br> SamplesPerChip is in Signal Parameters tab.",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("FSource","Source carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("SourcePower","Source power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","dbmtow(-20.0)")),
+	create_parm ("FMeasurement","Measurement carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("MeasurementInfo","Available Measurements <br> Each measurement has parameters on its tab/category below.",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("PowerMeasurement","Enable power measurements?",
+		PARM_INT,
+		"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fPowerMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fYES","YES")),
+	create_parm ("SpectrumMeasurement","Enable spectrum measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fSpectrumMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO","NO")),
+	create_parm ("BasicParameters","Basic Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("SourceR","Source resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("SourceTemp","Source resistor temperature",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","-273.15")),
+	create_parm ("EnableSourceNoise","Enable source thermal noise?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fEnableSourceNoiseSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO","NO")),
+	create_parm ("MeasR","Measurement resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("MirrorSourceSpectrum","Mirror source spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fMirrorSourceSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO","NO")),
+	create_parm ("MirrorMeasSpectrum","Mirror meas spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fMirrorMeasSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO","NO")),
+	create_parm ("RF_MirrorFreq","Mirror source frequency for spectrum/envelope measurement?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fRF_x5fMirrorFreqSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO","NO")),
+	create_parm ("MeasMirrorFreq","Mirror meas frequency for spectrum/envelope measurement?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fMeasMirrorFreqSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fNO","NO")),
+	create_parm ("TestBenchSeed","Random number generator seed",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1234567")),
+	create_parm ("SignalParameters","Signal Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("GainImbalance","Gain imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("PhaseImbalance","Phase imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("I_OriginOffset","I origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("Q_OriginOffset","Q origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("IQ_Rotation","IQ rotation",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("SamplesPerChip","Samples per chip",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("RRC_FilterLength","RRC filter length (chips)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("ActiveTimeslot","Active Timeslot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fActiveTimeslotSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fTS6","TS6")),
+	create_parm ("PowerMeasurementParameters","Power Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("PowerDisplayPages","Power measurement display pages: <br> TDSCDMA_DnLnk_MultiCarrier_TX Power Tables/Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("PowerSubframes","Number of subframes averaged",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("SpectrumMeasurementParameters","Spectrum Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("SpecMeasDisplayPages","Spectrum measurement display pages: <br> TDSCDMA_DnLnk_MultiCarrier_TX Spectrum Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("SpecMeasStart","Spectrum measurement start",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("SpecMeasStop","Spectrum measurement stop",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","5.0 msec")),
+	create_parm ("SpecMeasSubframes","Spectrum measurement subframes",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("SpecMeasResBW","Spectrum resolution bandwidth",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","30 kHz")),
+	create_parm ("SpecMeasWindow","Window type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fSpecMeasWindowSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fMultiCarrier_x5fTX_fnone","none")));
+
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fRF_x5fEnvelopeMeasurementSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fConstellationSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fPowerMeasurementSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fSpectrumMeasurementSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fEVM_x5fMeasurementSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fEnableSourceNoiseSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fMirrorSourceSpectrumSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fMirrorMeasSpectrumSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fRF_x5fMirrorFreqSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fMeasMirrorFreqSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fUE_x5fSpecific", 
+	"UE_Specific",
+	0,
+	"0",
+	"UE_Specific");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fCommon", 
+	"Common",
+	0,
+	"1",
+	"Common");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fDefault", 
+	"Default",
+	0,
+	"2",
+	"Default");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fMidambleAllocSchemeSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fUE_x5fSpecific",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fCommon",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fDefault",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fTS1", 
+	"TS1",
+	0,
+	"0",
+	"TS1");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fTS2", 
+	"TS2",
+	0,
+	"1",
+	"TS2");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fTS3", 
+	"TS3",
+	0,
+	"2",
+	"TS3");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fTS4", 
+	"TS4",
+	0,
+	"3",
+	"TS4");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fTS5", 
+	"TS5",
+	0,
+	"4",
+	"TS5");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fTS6", 
+	"TS6",
+	0,
+	"5",
+	"TS6");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fActiveTimeslotSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fTS1",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fTS2",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fTS3",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fTS4",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fTS5",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fTS6",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fnone", 
+	"none",
+	0,
+	"0",
+	"none");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fHamming_x5f0_x5f54", 
+	"Hamming 0.54",
+	0,
+	"1",
+	"Hamming 0.54");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fHanning_x5f0_x5f50", 
+	"Hanning 0.50",
+	0,
+	"2",
+	"Hanning 0.50");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fGaussian_x5f0_x5f75", 
+	"Gaussian 0.75",
+	0,
+	"3",
+	"Gaussian 0.75");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fKaiser_x5f7_x5f865", 
+	"Kaiser 7.865",
+	0,
+	"4",
+	"Kaiser 7.865");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_f_x5f8510_x5f6_x5f0", 
+	"_8510 6.0",
+	0,
+	"5",
+	"8510 6.0");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fBlackman", 
+	"Blackman",
+	0,
+	"6",
+	"Blackman");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fBlackman_x5fHarris", 
+	"Blackman-Harris",
+	0,
+	"7",
+	"Blackman-Harris");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fSpecMeasWindowSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fnone",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fHamming_x5f0_x5f54",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fHanning_x5f0_x5f50",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fGaussian_x5f0_x5f75",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fKaiser_x5f7_x5f865",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_f_x5f8510_x5f6_x5f0",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fBlackman",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fBlackman_x5fHarris",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fOff", 
+	"Off",
+	0,
+	"0",
+	"Off");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fRMS_x5f_x5fVideo_x5f", 
+	"RMS (Video)",
+	0,
+	"1",
+	"RMS (Video)");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fEVM_x5fAverageTypeSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fOff",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fRMS_x5f_x5fVideo_x5f",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fEnableESGSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fInternal", 
+	"Internal",
+	0,
+	"0",
+	"Internal");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fExternal", 
+	"External",
+	0,
+	"1",
+	"External");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fClkRefSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fInternal",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fExternal",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fthrough", 
+	"through",
+	0,
+	"0",
+	"through");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_ffilter_x5f2100kHz", 
+	"filter_2100kHz",
+	0,
+	"1",
+	"filter_2100kHz");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_ffilter_x5f40MHz", 
+	"filter_40MHz",
+	0,
+	"2",
+	"filter_40MHz");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fIQFilterSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fthrough",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_ffilter_x5f2100kHz",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_ffilter_x5f40MHz",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fAutoScalingSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fArbOnSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fRFPowOnSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fNeither", 
+	"Neither",
+	0,
+	"0",
+	"Neither");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fEvent1", 
+	"Event1",
+	0,
+	"1",
+	"Event1");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fEvent2", 
+	"Event2",
+	0,
+	"2",
+	"Event2");
+
+
+create_constant_form ("_nTDSCDMA_x5fUpLnk_x5fTX_fBoth", 
+	"Both",
+	0,
+	"3",
+	"Both");
+
+
+create_form_set("_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fEventMarkerTypeSet",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fNeither",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fEvent1",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fEvent2",
+	"_nTDSCDMA_x5fUpLnk_x5fTX_fBoth",
+	"StdForm");
+
+
+create_item ("TDSCDMA_UpLnk_TX","TD-SCDMA uplink TX test",
+	"TDSCDMA_UpLnk_TX",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST | ITEM_UNIQUE,
+	-1,
+	"BMP_TDSCDMA_UpLnk_TX",
+	"Component Parameters",
+	NULL,
+	ARFWTBNetlistFmt,
+	"TDSCDMA_UpLnk_TX",
+	SPDesignAnnotFmt,
+	"SYM_DSN_TDSCDMA_UpLnk_TX",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RequiredParameters","Required Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("CE_TimeStep","Circuit envelope simulation time step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","1/1.28 MHz/8")),
+	create_parm ("WTB_TimeStep","Set CE_TimeStep <= 1/1.28e6/SamplesPerChip. <br> SamplesPerChip is in Signal Parameters tab.",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("FSource","Source carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("SourcePower","Source power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","dbmtow(-20.0)")),
+	create_parm ("FMeasurement","Measurement carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("MeasurementInfo","Available Measurements <br> Each measurement has parameters on its tab/category below.",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("RF_EnvelopeMeasurement","Enable RF envelope measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fRF_x5fEnvelopeMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fYES","YES")),
+	create_parm ("Constellation","Enable constellation measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fConstellationSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("PowerMeasurement","Enable power measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fPowerMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("SpectrumMeasurement","Enable spectrum measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fSpectrumMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("EVM_Measurement","Enable EVM measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fEVM_x5fMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("BasicParameters","Basic Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("SourceR","Source resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("SourceTemp","Source resistor temperature",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","-273.15")),
+	create_parm ("EnableSourceNoise","Enable source thermal noise?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fEnableSourceNoiseSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("MeasR","Measurement resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("MirrorSourceSpectrum","Mirror source spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fMirrorSourceSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("MirrorMeasSpectrum","Mirror meas spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fMirrorMeasSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("RF_MirrorFreq","Mirror source frequency for spectrum/envelope measurement?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fRF_x5fMirrorFreqSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("MeasMirrorFreq","Mirror meas frequency for spectrum/envelope measurement?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fMeasMirrorFreqSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("TestBenchSeed","Random number generator seed",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1234567")),
+	create_parm ("SignalParameters","Signal Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("GainImbalance","Gain imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("PhaseImbalance","Phase imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("I_OriginOffset","I origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("Q_OriginOffset","Q origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("IQ_Rotation","IQ rotation",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("SamplesPerChip","Samples per chip",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("RRC_FilterLength","RRC filter length (chips)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","12")),
+	create_parm ("MidambleAllocScheme","Midamble allocation scheme",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fMidambleAllocSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fCommon","Common")),
+	create_parm ("BasicMidambleID","Basic midamble index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("MidambleID","Midamble index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("MaxMidambleShift","Max midamble shift",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("ActiveTimeslot","Active Timeslot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fActiveTimeslotSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fTS1","TS1")),
+	create_parm ("SpreadCode","Spread code index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RF_EnvelopeMeasurementParameters","RF Envelope Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("RF_EnvelopeDisplayPages","RF envelope measurement display pages: <br> TDSCDMA_UpLnk_TX Envelope Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("RF_EnvelopeStart","RF envelope measurement start",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("RF_EnvelopeStop","RF envelope measurement stop",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","5.0 msec")),
+	create_parm ("RF_EnvelopeSubframes","RF envelope measurement subframes",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("ConstellationParameters","Constellation",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("ConstellationDisplayPages","Constellation measurement display pages: <br> TDSCDMA_UpLnk_TX Constellation Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("ConstellationSubframes","Constellation measurement subframes",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("PowerMeasurementParameters","Power Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("PowerDisplayPages","Power measurement display pages: <br> TDSCDMA_UpLnk_TX Power Tables <br> TDSCDMA_UpLnk_TX Power RF Figures <br> TDSCDMA_UpLnk_TX Power  RF Equations <br> TDSCDMA_UpLnk_TX Power Meas Figures <br> TDSCDMA_UpLnk_TX Power Meas Equations",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("PowerSubframeMeasured","Subframes measured",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("SpectrumMeasurementParameters","Spectrum Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("SpecMeasDisplayPages","Spectrum measurement display pages: <br> TDSCDMA_UpLnk_TX Spectrum Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("SpecMeasStart","Spectrum measurement start",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("SpecMeasStop","Spectrum measurement stop",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","5.0 msec")),
+	create_parm ("SpecMeasSubframes","Spectrum measurement subframes",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("SpecMeasResBW","Spectrum resolution bandwidth",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SpecMeasWindow","Window type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fSpecMeasWindowSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fnone","none")),
+	create_parm ("EVM_MeasurementParameters","EVM Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("EVM_DisplayPages","EVM measurement display pages: <br> TDSCDMA_UpLnk_TX EVM RF Tables <br> TDSCDMA_UpLnk_TX EVM Meas Tables",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("EVM_StartTime","EVM measurement start",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("EVM_AverageType","Average type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fEVM_x5fAverageTypeSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fRMS_x5f_x5fVideo_x5f","RMS__Video_")),
+	create_parm ("EVM_SubframesToAverage","Subframes used for RMS averaging",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("EVM_ActiveSlotThreshold","Active slot threshold (dBc)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-30.0")),
+	create_parm ("SignalToESG_Parameters","Signal to ESG",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("EnableESG","Enable signal to ESG?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fEnableESGSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fNO","NO")),
+	create_parm ("ESG_Instrument","ESG instrument address",
+		PARM_STRING | PARM_NO_DISPLAY,
+		"InstrumentFormSet",
+		UNITLESS_UNIT,
+		prm("InstrumentForm","\"[GPIB0::19::INSTR][localhost][4790]\"")),
+	create_parm ("ESG_Start","Signal start",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("ESG_Stop","Signal stop",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","5.0 msec")),
+	create_parm ("ESG_Subframes","Subframes to ESG",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("ESG_Power","ESG RF ouput power (dBm)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-20")),
+	create_parm ("ESG_ClkRef","Waveform clock reference",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fClkRefSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fInternal","Internal")),
+	create_parm ("ESG_ExtClkRefFreq","External clock reference freq",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","10 MHz")),
+	create_parm ("ESG_IQFilter","IQ filter",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fIQFilterSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fthrough","through")),
+	create_parm ("ESG_SampleClkRate","Sequencer sample clock rate",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","10.24 MHz")),
+	create_parm ("ESG_Filename","ESG waveform storage filename",
+		PARM_STRING | PARM_NO_DISPLAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"TDSCDMA_UL\"")),
+	create_parm ("ESG_AutoScaling","Activate auto scaling?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fAutoScalingSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fYES","YES")),
+	create_parm ("ESG_ArbOn","Select waveform and turn ArbOn after download?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fArbOnSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fYES","YES")),
+	create_parm ("ESG_RFPowOn","Turn RF ON after download?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fRFPowOnSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fYES","YES")),
+	create_parm ("ESG_EventMarkerType","Event marker type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fUpLnk_x5fTX_fESG_x5fEventMarkerTypeSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fUpLnk_x5fTX_fEvent1","Event1")),
+	create_parm ("ESG_MarkerLength","ESG marker length",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")));
+
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fRF_x5fEnvelopeMeasurementSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fConstellationSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fPowerMeasurementSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fSpectrumMeasurementSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fEVM_x5fMeasurementSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fEnableSourceNoiseSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fMirrorSourceSpectrumSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fMirrorMeasSpectrumSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fRF_x5fMirrorFreqSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fMeasMirrorFreqSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fUE_x5fSpecific", 
+	"UE_Specific",
+	0,
+	"0",
+	"UE_Specific");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fCommon", 
+	"Common",
+	0,
+	"1",
+	"Common");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fDefault", 
+	"Default",
+	0,
+	"2",
+	"Default");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fMidambleAllocSchemeSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fUE_x5fSpecific",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fCommon",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fDefault",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fTS0", 
+	"TS0",
+	0,
+	"0",
+	"TS0");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fTS2", 
+	"TS2",
+	0,
+	"1",
+	"TS2");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fTS3", 
+	"TS3",
+	0,
+	"2",
+	"TS3");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fTS4", 
+	"TS4",
+	0,
+	"3",
+	"TS4");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fTS5", 
+	"TS5",
+	0,
+	"4",
+	"TS5");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fTS6", 
+	"TS6",
+	0,
+	"5",
+	"TS6");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fActiveTimeslotSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fTS0",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fTS2",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fTS3",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fTS4",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fTS5",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fTS6",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fS1", 
+	"S1",
+	0,
+	"0",
+	"S1");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fS2", 
+	"S2",
+	0,
+	"1",
+	"S2");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fModPhaseSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fS1",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fS2",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fnone", 
+	"none",
+	0,
+	"0",
+	"none");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fHamming_x5f0_x5f54", 
+	"Hamming 0.54",
+	0,
+	"1",
+	"Hamming 0.54");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fHanning_x5f0_x5f50", 
+	"Hanning 0.50",
+	0,
+	"2",
+	"Hanning 0.50");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fGaussian_x5f0_x5f75", 
+	"Gaussian 0.75",
+	0,
+	"3",
+	"Gaussian 0.75");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fKaiser_x5f7_x5f865", 
+	"Kaiser 7.865",
+	0,
+	"4",
+	"Kaiser 7.865");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_f_x5f8510_x5f6_x5f0", 
+	"_8510 6.0",
+	0,
+	"5",
+	"8510 6.0");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fBlackman", 
+	"Blackman",
+	0,
+	"6",
+	"Blackman");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fBlackman_x5fHarris", 
+	"Blackman-Harris",
+	0,
+	"7",
+	"Blackman-Harris");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fSpecMeasWindowSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fnone",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fHamming_x5f0_x5f54",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fHanning_x5f0_x5f50",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fGaussian_x5f0_x5f75",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fKaiser_x5f7_x5f865",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_f_x5f8510_x5f6_x5f0",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fBlackman",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fBlackman_x5fHarris",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fOff", 
+	"Off",
+	0,
+	"0",
+	"Off");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fRMS_x5f_x5fVideo_x5f", 
+	"RMS (Video)",
+	0,
+	"1",
+	"RMS (Video)");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fEVM_x5fAverageTypeSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fOff",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fRMS_x5f_x5fVideo_x5f",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fEnableESGSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fInternal", 
+	"Internal",
+	0,
+	"0",
+	"Internal");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fExternal", 
+	"External",
+	0,
+	"1",
+	"External");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fClkRefSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fInternal",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fExternal",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fthrough", 
+	"through",
+	0,
+	"0",
+	"through");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_ffilter_x5f2100kHz", 
+	"filter_2100kHz",
+	0,
+	"1",
+	"filter_2100kHz");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_ffilter_x5f40MHz", 
+	"filter_40MHz",
+	0,
+	"2",
+	"filter_40MHz");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fIQFilterSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fthrough",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_ffilter_x5f2100kHz",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_ffilter_x5f40MHz",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fAutoScalingSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fArbOnSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNO", 
+	"NO",
+	0,
+	"0",
+	"NO");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fYES", 
+	"YES",
+	0,
+	"1",
+	"YES");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fRFPowOnSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNO",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fYES",
+	"StdForm");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fNeither", 
+	"Neither",
+	0,
+	"0",
+	"Neither");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fEvent1", 
+	"Event1",
+	0,
+	"1",
+	"Event1");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fEvent2", 
+	"Event2",
+	0,
+	"2",
+	"Event2");
+
+
+create_constant_form ("_nTDSCDMA_x5fDnLnk_x5fTX_fBoth", 
+	"Both",
+	0,
+	"3",
+	"Both");
+
+
+create_form_set("_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fEventMarkerTypeSet",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fNeither",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fEvent1",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fEvent2",
+	"_nTDSCDMA_x5fDnLnk_x5fTX_fBoth",
+	"StdForm");
+
+
+create_item ("TDSCDMA_DnLnk_TX","TD-SCDMA downlink TX test",
+	"TDSCDMA_DnLnk_TX",
+	ITEM_NOT_ALL_PARM | ITEM_DESIGN_INST | ITEM_UNIQUE,
+	-1,
+	"BMP_TDSCDMA_DnLnk_TX",
+	"Component Parameters",
+	NULL,
+	ARFWTBNetlistFmt,
+	"TDSCDMA_DnLnk_TX",
+	SPDesignAnnotFmt,
+	"SYM_DSN_TDSCDMA_DnLnk_TX",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("RequiredParameters","Required Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("CE_TimeStep","Circuit envelope simulation time step",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","1/1.28 MHz/8")),
+	create_parm ("WTB_TimeStep","Set CE_TimeStep <= 1/1.28e6/SamplesPerChip. <br> SamplesPerChip is in Signal Parameters tab.",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("FSource","Source carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("SourcePower","Source power",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		POWER_UNIT,
+		prm("StdForm","dbmtow(-20.0)")),
+	create_parm ("FMeasurement","Measurement carrier frequency",
+		PARM_REAL | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","1900 MHz")),
+	create_parm ("MeasurementInfo","Available Measurements <br> Each measurement has parameters on its tab/category below.",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("RF_EnvelopeMeasurement","Enable RF envelope measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fRF_x5fEnvelopeMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fYES","YES")),
+	create_parm ("Constellation","Enable constellation measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fConstellationSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("PowerMeasurement","Enable power measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fPowerMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("SpectrumMeasurement","Enable spectrum measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fSpectrumMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("EVM_Measurement","Enable EVM measurement?",
+		PARM_INT,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fEVM_x5fMeasurementSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("BasicParameters","Basic Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("SourceR","Source resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("SourceTemp","Source resistor temperature",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","-273.15")),
+	create_parm ("EnableSourceNoise","Enable source thermal noise?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fEnableSourceNoiseSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("MeasR","Measurement resistance",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50 Ohm")),
+	create_parm ("MirrorSourceSpectrum","Mirror source spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fMirrorSourceSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("MirrorMeasSpectrum","Mirror meas spectrum about carrier?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fMirrorMeasSpectrumSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("RF_MirrorFreq","Mirror source frequency for spectrum/envelope measurement?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fRF_x5fMirrorFreqSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("MeasMirrorFreq","Mirror meas frequency for spectrum/envelope measurement?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fMeasMirrorFreqSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("TestBenchSeed","Random number generator seed",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1234567")),
+	create_parm ("SignalParameters","Signal Parameters",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("GainImbalance","Gain imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		DB_GAIN_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("PhaseImbalance","Phase imbalance, Q vs I",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("I_OriginOffset","I origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("Q_OriginOffset","Q origin offset (percent)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("IQ_Rotation","IQ rotation",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		ANGLE_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("SamplesPerChip","Samples per chip",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("RRC_FilterLength","RRC filter length (chips)",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","8")),
+	create_parm ("MidambleAllocScheme","Midamble allocation scheme",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fMidambleAllocSchemeSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fCommon","Common")),
+	create_parm ("BasicMidambleID","Basic midamble index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("MidambleID1","1st DPCH midamble index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("MidambleID2","2nd DPCH midamble index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("MaxMidambleShift","Max midamble shift",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","16")),
+	create_parm ("ActiveTimeslot","Active Timeslot",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fActiveTimeslotSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fTS2","TS2")),
+	create_parm ("SpreadCode1","1st DPCH spread code index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("SpreadCode2","2nd DPCH spread code index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","2")),
+	create_parm ("DownlinkPilotCode","Downlink pilot code index",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0")),
+	create_parm ("ModPhase","Modulation phase quadruples",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fModPhaseSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fS1","S1")),
+	create_parm ("DwPCH_Gain","DwPCH gain",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("RF_EnvelopeMeasurementParameters","RF Envelope Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("RF_EnvelopeDisplayPages","RF envelope measurement display pages: <br> TDSCDMA_DnLnk_TX Envelope Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("RF_EnvelopeStart","RF envelope measurement start",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("RF_EnvelopeStop","RF envelope measurement stop",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","5.0 msec")),
+	create_parm ("RF_EnvelopeSubframes","RF envelope measurement subframes",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1")),
+	create_parm ("ConstellationParameters","Constellation",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("ConstellationDisplayPages","Constellation measurement display pages: <br> TDSCDMA_UpLnk_TX Constellation Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("ConstellationSubframes","Constellation measurement subframes",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("PowerMeasurementParameters","Power Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("PowerDisplayPages","Power measurement display pages: <br> TDSCDMA_UpLnk_TX Power Tables <br> TDSCDMA_UpLnk_TX Power RF Figures <br> TDSCDMA_UpLnk_TX Power  RF Equations <br> TDSCDMA_UpLnk_TX Power Meas Figures <br> TDSCDMA_UpLnk_TX Power Meas Equations",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("PowerSubframeMeasured","Subframes measured",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("SpectrumMeasurementParameters","Spectrum Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("SpecMeasDisplayPages","Spectrum measurement display pages: <br> TDSCDMA_UpLnk_TX Spectrum Figures",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("SpecMeasStart","Spectrum measurement start",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("SpecMeasStop","Spectrum measurement stop",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","5.0 msec")),
+	create_parm ("SpecMeasSubframes","Spectrum measurement subframes",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("SpecMeasResBW","Spectrum resolution bandwidth",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","0")),
+	create_parm ("SpecMeasWindow","Window type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fSpecMeasWindowSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fnone","none")),
+	create_parm ("EVM_MeasurementParameters","EVM Measurement",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("EVM_DisplayPages","EVM measurement display pages: <br> TDSCDMA_UpLnk_TX EVM RF Tables <br> TDSCDMA_UpLnk_TX EVM Meas Tables",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("EVM_StartTime","EVM measurement start",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("EVM_AverageType","Average type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fEVM_x5fAverageTypeSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fRMS_x5f_x5fVideo_x5f","RMS__Video_")),
+	create_parm ("EVM_SubframesToAverage","Subframes used for RMS averaging",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("EVM_ActiveSlotThreshold","Active slot threshold (dBc)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-30.0")),
+	create_parm ("SignalToESG_Parameters","Signal to ESG",
+		PARM_STRING | PARM_NO_DISPLAY | PARM_NOT_EDITED | PARM_NOT_NETLISTED,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"Category\"")),
+	create_parm ("EnableESG","Enable signal to ESG?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fEnableESGSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fNO","NO")),
+	create_parm ("ESG_Instrument","ESG instrument address",
+		PARM_STRING | PARM_NO_DISPLAY,
+		"InstrumentFormSet",
+		UNITLESS_UNIT,
+		prm("InstrumentForm","\"[GPIB0::19::INSTR][localhost][4790]\"")),
+	create_parm ("ESG_Start","Signal start",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0.0")),
+	create_parm ("ESG_Stop","Signal stop",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","5.0 msec")),
+	create_parm ("ESG_Subframes","Subframes to ESG",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","3")),
+	create_parm ("ESG_Power","ESG RF ouput power (dBm)",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","-20")),
+	create_parm ("ESG_ClkRef","Waveform clock reference",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fClkRefSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fInternal","Internal")),
+	create_parm ("ESG_ExtClkRefFreq","External clock reference freq",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","10 MHz")),
+	create_parm ("ESG_IQFilter","IQ filter",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fIQFilterSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fthrough","through")),
+	create_parm ("ESG_SampleClkRate","Sequencer sample clock rate",
+		PARM_REAL | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		FREQUENCY_UNIT,
+		prm("StdForm","10.24 MHz")),
+	create_parm ("ESG_Filename","ESG waveform storage filename",
+		PARM_STRING | PARM_NO_DISPLAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"TDSCDMA_DL\"")),
+	create_parm ("ESG_AutoScaling","Activate auto scaling?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fAutoScalingSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fYES","YES")),
+	create_parm ("ESG_ArbOn","Select waveform and turn ArbOn after download?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fArbOnSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fYES","YES")),
+	create_parm ("ESG_RFPowOn","Turn RF ON after download?",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fRFPowOnSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fYES","YES")),
+	create_parm ("ESG_EventMarkerType","Event marker type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nTDSCDMA_x5fDnLnk_x5fTX_fESG_x5fEventMarkerTypeSet",
+		UNITLESS_UNIT,
+		prm("_nTDSCDMA_x5fDnLnk_x5fTX_fEvent1","Event1")),
+	create_parm ("ESG_MarkerLength","ESG marker length",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","10")));

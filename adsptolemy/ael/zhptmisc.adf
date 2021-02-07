@@ -1,0 +1,1495 @@
+create_text_form( "_nEnvOutSelector_fOutSelectorBandpass",
+                  "Bandpass",
+                  "SingleTextLine",
+                  0,
+                  "%v",
+                  "%v" );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form( "_nEnvOutSelector_fOutSelectorAll",
+                      "Allpass",
+                      0,
+                      "-1",
+                      "All" );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form( "_nEnvOutSelector_fOutSelectorLowpass",
+                      "Lowpass",
+                      0,
+                      "0",
+                      "Lowpass" );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_form_set( "_nEnvOutSelector_fOutFreqSet",
+                 "_nEnvOutSelector_fOutSelectorBandpass",
+                 "_nEnvOutSelector_fOutSelectorLowpass",
+                 "_nEnvOutSelector_fOutSelectorAll" );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_item ("EnvOutSelector",                  
+             "Selects from Ckt Envelope Output, open ckt model ",           
+             "O",                  
+             0,                    
+             -1,                   
+             "BMP_EnvOutSelector",       
+             standard_dialog,     
+             "*",                 
+             SPComponentNetlistFmt, 
+             "OutSelector",                  
+             SPComponentAnnotFmt,   
+             "SYM_EnvOutSelector",               
+             no_artwork,          
+             NULL,                
+             create_parm( "OutFreq",
+                          "Output Frequency",
+                          PARM_REAL,
+                          "_nEnvOutSelector_fOutFreqSet",
+                          FREQUENCY_UNIT,
+                          prm("_nEnvOutSelector_fOutSelectorBandpass","1000000.0" )));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_text_form( "_nEnvOutShort_fOutSelectorBandpass",
+                  "Bandpass",
+                  "SingleTextLine",
+                  0,
+                  "%v",
+                  "%v" );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form( "_nEnvOutShort_fOutSelectorAll",
+                      "Allpass",
+                      0,
+                      "-1",
+                      "All" );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form( "_nEnvOutShort_fOutSelectorLowpass",
+                      "Lowpass",
+                      0,
+                      "0",
+                      "Lowpass" );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_form_set( "_nEnvOutShort_fOutFreqSet",
+                 "_nEnvOutShort_fOutSelectorBandpass",
+                 "_nEnvOutShort_fOutSelectorLowpass",
+                 "_nEnvOutShort_fOutSelectorAll" );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_item ("EnvOutShort",                  
+             "Selects from Ckt Envelope Output, short ckt model ",           
+             "O",                  
+             0,                    
+             -1,                   
+             "BMP_EnvOutShort",       
+             standard_dialog,     
+             "*",                 
+             CKTComponentForSPUseFmt, 
+             "EnvOutShort",                
+             SPComponentAnnotFmt,   
+             "SYM_EnvOutShort",               
+             no_artwork,          
+             NULL,                
+             create_parm( "OutFreq",
+                          "Output Frequency",
+                          PARM_REAL,
+                          "_nEnvOutShort_fOutFreqSet",
+                          FREQUENCY_UNIT,
+                          prm("_nEnvOutShort_fOutSelectorBandpass","1000000.0" )));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_item ("RES",                  
+             "Resistor",           
+             "R",                  
+             ITEM_NOT_ALL_PARM,    
+             -1,                   
+             "BMP_RES",                
+             standard_dialog,     
+             NULL,                 
+             SPComponentNetlistFmt, 
+             "R",                  
+             SPComponentAnnotFmt,   
+             "SYM_RES",               
+             no_artwork,          
+             NULL,                
+             ITEM_PRIMITIVE_EX,
+             create_parm( "R",
+                          "resistance value cannot be used with ParamSweep or SweepPlan",
+                          PARM_REAL,
+                          "GeminiForms1",
+                          RESISTANCE_UNIT,
+                          prm("StdForm","50") ),
+             create_parm( "Temp",
+                          "temperature of resistor in degrees Celsius value cannot be used with ParamSweep or SweepPlan",
+                          PARM_REAL | PARM_NO_DISPLAY,
+                          "GeminiForms1",
+                          TEMPERATURE_UNIT,
+                          prm("StdForm","DefaultRTemp") ));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("_nDF_fReportDeadlock", "Report deadlock", 0, "0", "ReportDeadlock");
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+create_constant_form("_nDF_fIdentifyDeadlock", "Identify deadlocked loops", 0, "1", "IdentifyDeadlock");
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+create_constant_form("_nDF_fResolveDeadlock", "Resolve deadlock by inserting tokens", 0, "2", "ResolveDeadlock");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_form_set("_nDF_fsp_x5fenum_x5fdeadlock_x5flist_x5fform", "_nDF_fReportDeadlock", "_nDF_fIdentifyDeadlock", "_nDF_fResolveDeadlock");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("_nDF_fNoChange", "No change", 0, "0", "NoChange");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("_nDF_fInitZero", "Initialize with zero volts", 0, "1", "InitZero");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("_nDF_fInsertDelay", "Insert one time step delay", 0, "2", "InsertDelay");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_form_set("_nDF_fsp_x5fenum_x5fcktcosiminputs_x5flist_x5fform", "_nDF_fNoChange", "_nDF_fInitZero", "_nDF_fInsertDelay");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+defun setDataFlowNetlistFmt() {
+
+    decl outputplanSelector = DeOutputPlan_Selector_Equations_Basic;
+
+
+
+
+
+
+
+
+
+
+
+
+
+    decl il,i,f;
+
+
+
+
+
+
+
+
+
+
+
+
+
+    decl ixOutputPlan = 14;
+
+
+
+
+
+
+
+
+
+
+
+
+
+    decl ixSavedEquationName = 17;
+
+
+
+
+
+
+
+
+
+
+
+
+
+    f = "";
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    for (il=list(0, 1, 2, 3, 4, 8, 9, 10, 11);
+
+
+
+
+
+
+
+
+
+
+
+
+ il;
+
+
+
+
+
+
+
+
+
+
+
+
+ il=cdr(il)) {
+	i = car(il);
+
+
+
+
+
+
+
+
+
+
+
+
+
+	f = strcat(f, sprintf("%%%dF%%29?%%:%%%dk=%%%dp\n%%",i,i,i));
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+
+    f = strcat(f, "__DefaultPartition=1\n");
+
+
+
+
+
+
+
+
+
+
+
+
+
+    f = strcat(f, "__SimulationID=0\n");
+
+
+
+
+
+
+
+
+
+
+
+
+
+    f = strcat(f, "%d:%t DefaultTimeUnit=3 DefaultSeed=if (DefaultSeed==0) then 0 else (DefaultSeed+__SimulationID) endif DefaultPartition=__DefaultPartition ");
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+    
+    for (il=list(5, 12, 13);
+
+
+
+
+
+
+
+
+
+
+
+
+ il;
+
+
+
+
+
+
+
+
+
+
+
+
+ il=cdr(il)) {
+      i = car(il);
+
+
+
+
+
+
+
+
+
+
+
+
+
+      f = strcat(f, sprintf("%%%dF%%29?%%:%%%dk=%%%dp %%",i,i,i));
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+
+    
+    for (il=list(6, 7);
+
+
+
+
+
+
+
+
+
+
+
+
+ il;
+
+
+
+
+
+
+
+
+
+
+
+
+ il=cdr(il)) {
+	i = car(il);
+
+
+
+
+
+
+
+
+
+
+
+
+
+	f = strcat(f, sprintf("%%%dk=%%%dp ",i,i,i));
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+
+    f = strcat(f, deoutputplan_netlist_ref(), netlist_newline(),
+	deoutputplan_netlist_block(list( list( ixOutputPlan, ixSavedEquationName ) ) ),
+	netlist_newline());
+
+
+
+
+
+
+
+
+
+
+
+
+
+    return(f);
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+decl DataFlowNetlistFmt = setDataFlowNetlistFmt();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_item ("DF","Data Flow controller to run mixed numeric and timed signal processing systems",
+	"DF",
+	ITEM_UNIQUE,
+	-1,
+	"BMP_DF",
+	dataflow_dialog,
+	NULL,
+	DataFlowNetlistFmt,
+	"_vKeysightEEsof_dTSDF_nDF_ltsdf",
+	SPComponentAnnotFmt,
+	"SYM_CONTROL",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX | ITEM_ANALYSIS_EX,
+	DFParm_DefaultNumericStart,
+	DFParm_DefaultNumericStop,
+	DFParm_DefaultTimeStart,
+	DFParm_DefaultTimeStop,
+	DFParm_DefaultSeed,
+	create_parm ("OutVar","List of Vars to be made available to DDS",
+		PARM_STRING | PARM_NO_DISPLAY,
+		"StringAndReferenceFormSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference", "\"\"")),
+	create_parm ("DeadlockManager","Deadlock manager type",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nDF_fsp_x5fenum_x5fdeadlock_x5flist_x5fform",
+		UNITLESS_UNIT,
+		prm("_nDF_fReportDeadlock", "Report deadlock")),
+	create_parm ("CktCosimInputs","Initialize Circuit Cosim Inputs",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nDF_fsp_x5fenum_x5fcktcosiminputs_x5flist_x5fform",
+		UNITLESS_UNIT,
+		prm("_nDF_fNoChange", "No change")),
+	DFParm_DefaultRIn,
+	DFParm_DefaultROut,
+	DFParm_DefaultRLoad,
+	DFParm_DefaultRTemp,
+	create_parm ("ProfileTimes","Profile Times Log Filename",
+		PARM_STRING | PARM_NO_DISPLAY,
+		"StringAndReferenceFormSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference", "\"\"")),
+	create_parm ("logFile","Schedule Log Filename",
+		PARM_STRING | PARM_NO_DISPLAY,
+		"StringAndReferenceFormSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference", "\"\"")),
+	deoutputplan_create_parm ( "OutputPlan" ),
+	deoutputplan_create_parm ("UseSavedEquationNestLevel" ),
+	deoutputplan_create_parm ( "SavedEquationNestLevel"),
+	deoutputplan_create_parm( "SavedEquationName" ));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_item ( "OutputOption", "Output Option for Dataset Templates",
+              "OutputOption",
+              ITEM_NOT_ALL_PARM,
+              -1,
+              "BMP_OutputOption",
+              standard_dialog,
+              NULL,
+              SPComponentNetlistFmt,
+              "OutputOption",
+              SPComponentAnnotFmt,
+              "SYM_OutputOption",
+              no_artwork,
+              NULL,
+              ITEM_PRIMITIVE_EX|ITEM_ANALYSIS_EX,
+	          create_parm("DatasetTemplate", "Dataset Template name (repeatable)",
+	              PARM_REPEATED | PARM_STRING,
+	              "StringAndReferenceSet",
+	              UNITLESS_UNIT,
+	              list(prm("StringAndReference",""))));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_item ("MeasEqn",                             
+             "simulation measurement equation",     
+             "Meas",                                
+             ITEM_NOT_ALL_PARM,                     
+             -1,                                    
+             "measeqn",                             
+             standard_dialog,                       
+             "*",                                   
+             MeasGroupNetlistFmtx,                  
+             "VAR",                                 
+             ComponentAnnotFmt,                     
+             "MEAS_Generic",                        
+             no_artwork,                            
+             NULL,                                  
+             ITEM_INITIAL_ORIENTATION_UP_EX | ITEM_MEASUREMENT_EX|ITEM_NO_SPL_CHAR_EX,
+             create_parm ("Meas", "simulation measurement",
+                          PARM_RIGHT_HAND_ONLY|PARM_REPEATED,
+                          "SingleTextLineFormSet", UNITLESS_UNIT,
+                          list(prm("SingleTextLine","Meas=1")),
+			  list(dm_create_cb(PARM_DEFAULT_VALUE_CB, "default_measurement_id_cb", "1", TRUE)) )
+    );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+decl IndepVar = "Independent Variable Name or Cardinality (1: outermost)";
+
+
+
+
+
+
+
+
+
+
+
+
+
+decl IndepVal = "Independent Variable Value or Index (0: first/starting index)";
+
+
+
+
+
+
+
+
+
+
+
+
+
+decl StdFmSet = "StdFileFormSet";
+
+
+
+
+
+
+
+
+
+
+
+
+
+decl defVal = prm("StdForm", "");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T1", "Discrete", 0, "\"dscr\"", "Discrete");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T2", "model MDIF", 0, "\"model\"", "MDIFmodel");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T3", "S2PMDIF", 0, "\"s2pmdif\"", "S2PMDIF");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T4", "Dataset", 0, "\"dataset\"", "Dataset");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T5", "Touchstone", 0, "\"touchstone\"", "Touchstone");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T6", "CITIfile", 0, "\"citi\"", "CITIfile");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T7", "P2D MDIF", 0, "\"p2d\"", "Power-dependent S-pars");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T8", "S2D MDIF", 0, "\"s2d\"", "S-pars & Gain Compression");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T9", "IMT MDIF", 0, "\"imt\"", "Mixer Intermodulation Table");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T10", "GCOMP MDIF", 0, "\"gcomp\"", "Gain Compression");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T11", "FIR MDIF", 0, "\"fir\"", "FIR Filter Coefficients");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T12", "SPW", 0, "\"spw\"", "SPW Real/Complex vs Time");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T13", "TIM MDIF", 0, "\"tim\"", "Time-domain Waveform");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T14", "SPE MDIF", 0, "\"spe\"", "Complex Spectrum");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T15", "SDF", 0, "\"sdf\"",
+  "HP Instrument Standard Data Format");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T16", "Generic MDIF", 0, "\"gmdif\"",
+  "Generalized Multi-dimensional Data");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T17", "COD MDIF", 0, "\"cod\"",
+  "Convolutional Coder Generator Polynomial");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("T18", "LAS MDIF", 0, "\"las\"", "Laser Diode Model Data");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_form_set("TDACForm",
+  "T1", "T2", "T3", "T4", "T5",
+  "T6", "T7", "T8", "T9", "T10",
+  "T11", "T12", "T13", "T14", "T15",
+  "T16", "T17", "T18", "SingleTextLine");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("M2", "Linear or 0", 0, "\"linear\"", "Linear");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("M3", "Cubic Spline or 1", 0,  "\"spline\"", "Cubic Spline");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("M4", "Cubic or 2", 0,  "\"cubic\"", "Cubic");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("M0", "Index Lookup or 3", 0,  "\"index_lookup\"", "Index Lookup");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("M1", "Value Lookup or 4", 0,  "\"value_lookup\"", "Value Lookup");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("M5", "Ceiling Value Lookup or 5", 0,  "\"ceil_value_lookup\"", "Ceiling Value Lookup");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("M6", "Floor Value Lookup or 6", 0,  "\"floor_value_lookup\"", "Floor Value Lookup");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_form_set("DAC_IMForm", "M2", "M3", "M4", "M0", "M1", "M5", "M6", "SingleTextLine");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("Extrap1", "Interpolation Mode", 68,  "\"interpMode\"", "Interpolation Mode");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("Extrap2", "Constant Extrapolation", 68,  "\"constant\"", "Constant Extrapolation");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_form_set("DAC_EMForm", "Extrap1", "Extrap2");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("IDAC1", "Rectangular", 0, "\"ri\"", "Rectangular");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("IDAC2", "Polar", 0,  "\"ma\"", "Polar");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_constant_form("IDAC3", "DB", 0,  "\"db\"", "DB");
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_form_set("DAC_DomForm", "IDAC1", "IDAC2", "IDAC3", "SingleTextLine");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+decl SecFlags = PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+decl SR = "StringAndReference";
+
+
+
+
+
+
+
+
+
+
+
+
+
+decl SRFmSet = "StringAndReferenceFormSet";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create_item(
+  "DataAccessComponent", 	
+  "Data Access Component",	
+  "DAC",			
+  ITEM_NOT_ALL_PARM,		
+  -1,                 		
+  "DAC",             		
+  
+  DataAccessInterp_INDEP_DLG,   
+  "*",               		
+  CKTComponentNetlistFmt,	
+  "DAC",   	          	
+  standard_symbol,  		
+  "SYM_DAC",        		
+  no_artwork,         		
+  NULL,               		
+  ITEM_PRIMITIVE_EX|ITEM_DAC_EX|ITEM_NO_SPL_CHAR_EX,
+  create_parm("File", "File Name", PARM_STRING, "dacfilename", STRING_UNIT, prm("dac", "")),
+  create_parm("Type", "File Type", 0, "TDACForm", UNITLESS_UNIT, prm("T1", "")),
+  create_parm("Block", "Name or number (1 up) of block (table) in file", PARM_STRING|PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("InterpMode", "Interpolation Mode", PARM_STRING, "DAC_IMForm", UNITLESS_UNIT, prm("M0", "")),
+  create_parm("InterpDom", "Interpolation Domain", PARM_STRING, "DAC_DomForm", UNITLESS_UNIT, prm("IDAC1", "\"\"")),
+  create_parm("ExtrapMode", "Extrapolation Mode", PARM_STRING, "DAC_EMForm", UNITLESS_UNIT, prm("Extrap1")),
+  create_parm("iVar1", IndepVar, 0, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal1", IndepVal, PARM_OPTIMIZABLE | PARM_STATISTICAL, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")),
+  create_parm("iVar2", IndepVar, PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal2", IndepVal, SecFlags, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")),
+  create_parm("iVar3", IndepVar, PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal3", IndepVal, SecFlags, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")),
+  create_parm("iVar4", IndepVar, PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal4", IndepVal, SecFlags, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")),
+  create_parm("iVar5", IndepVar, PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal5", IndepVal, SecFlags, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")),
+  create_parm("iVar6", IndepVar, PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal6", IndepVal, SecFlags, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")),
+  create_parm("iVar7", IndepVar, PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal7", IndepVal, SecFlags, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")),
+  create_parm("iVar8", IndepVar, PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal8", IndepVal, SecFlags, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")),
+  create_parm("iVar9", IndepVar, PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal9", IndepVal, SecFlags, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")),
+  create_parm("iVar10", IndepVar, PARM_NO_DISPLAY, SRFmSet, UNITLESS_UNIT, prm(SR, "")),
+  create_parm("iVal10", IndepVal, SecFlags, StdFmSet, UNITLESS_UNIT, prm("StdForm", "")));

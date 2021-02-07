@@ -1,0 +1,58 @@
+// Copyright 2006 - 2014 Keysight Technologies, Inc  
+// -*- c++ -*-
+// migrate msrvsimstars components
+
+defun migrate_CM_SStudioFileRead( design, instance ) {
+
+  decl r = FALSE;
+  
+  // Map the Periodic parameter to RepeatData
+  decl periodic = pt_get_instance_parm( instance, "Periodic" );
+
+  if( periodic ) {
+	  if( !strcmp( periodic, "_nCM_x5fSStudioFileRead_fYES" ) ) {
+		  pt_add_instance_parm( instance, "RepeatData", "_nCM_x5fSStudioFileRead_fRepeat" );
+	  }
+	  else if( !strcmp( periodic, "_nCM_x5fSStudioFileRead_fNO" ) ) {
+		  pt_add_instance_parm( instance, "RepeatData", "_nCM_x5fSStudioFileRead_fSingle_x5fpass" );
+	  }
+	  else {
+		  pt_add_instance_parm( instance, "RepeatData", periodic );
+	  }
+  }
+
+  // Map the period parameter to SegmentLength
+  decl segmentLength = pt_get_instance_parm( instance, "Period" );
+
+  if( segmentLength ) {
+	  pt_add_instance_parm( instance, "SegmentLength", segmentLength );
+  }
+
+  // Map TStep=0, 0.0, 0<space>, or 0.0<space> to TStep=-1
+  decl oldTStep = pt_get_instance_parm( instance, "TStep" );
+
+  if( oldTStep ) {
+	  if( ( ! strcmp( oldTStep, "0"   ) ) || ( index( oldTStep, "0 "   ) == 0 ) || 
+		  ( ! strcmp( oldTStep, "0.0" ) ) || ( index( oldTStep, "0.0 " ) == 0 ) ) {
+		  pt_set_instance_parm( instance, "TStep", "-1" );
+	  }
+	  else {
+		  pt_set_instance_parm( instance, "TStep", oldTStep );
+	  }
+  }
+
+//  db_regenerate_instance_annotation( instance );
+//
+//  Based on discussions I have had with Peter Niday, if parameters are added, 
+//  removed, or reordered PDE will regenerate the instance annotation itself 
+//  and so db_regenerate_instance_annotation should not be called here. In 
+//  fact, if it is called it will mess up the parameter values.
+
+  r = TRUE;
+  return(r);
+}
+
+
+migrate_add_set( &PtolemyMigrateList,
+		 list( "pt_msrvsimstars", 1,
+		      "CM_SStudioFileRead", migrate_CM_SStudioFileRead ) );

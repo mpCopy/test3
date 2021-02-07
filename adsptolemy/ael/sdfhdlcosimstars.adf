@@ -1,0 +1,162 @@
+set_design_type( sigproc_net );
+
+create_text_form ("_nHdlCosim_ftxt_x5ffile", 
+	"File with txt extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "txt"), prefix_path_to_data_file);
+
+create_form_set ( "_nHdlCosim_fHdlSrcFile_x5fFileSet",
+	"_nHdlCosim_ftxt_x5ffile");
+
+create_text_form ("_nHdlCosim_ftxt_x5ffile", 
+	"File with txt extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "txt"), prefix_path_to_data_file);
+
+create_form_set ( "_nHdlCosim_fHdlLibrary_x5fFileSet",
+	"_nHdlCosim_ftxt_x5ffile");
+
+create_constant_form ("_nHdlCosim_fOff", 
+	"Off",
+	0,
+	"0",
+	"Off");
+
+create_constant_form ("_nHdlCosim_fOn", 
+	"On",
+	0,
+	"1",
+	"On");
+
+create_form_set("_nHdlCosim_fHdlSimulatorGUISet",
+	"_nHdlCosim_fOff",
+	"_nHdlCosim_fOn",
+	"StdForm");
+
+create_text_form ("_nHdlCosim_ftxt_x5ffile", 
+	"File with txt extension",
+	"ReadFileForm", 0, "%v", "%v", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "txt"), prefix_path_to_data_file);
+
+create_form_set ( "_nHdlCosim_fCmdArgs_x5fFileSet",
+	"_nHdlCosim_ftxt_x5ffile");
+
+create_constant_form ("_nHdlCosim_ffs", 
+	"fs",
+	0,
+	"0",
+	"fs");
+
+create_constant_form ("_nHdlCosim_fps", 
+	"ps",
+	0,
+	"1",
+	"ps");
+
+create_constant_form ("_nHdlCosim_fns", 
+	"ns",
+	0,
+	"2",
+	"ns");
+
+create_constant_form ("_nHdlCosim_fus", 
+	"us",
+	0,
+	"3",
+	"us");
+
+create_constant_form ("_nHdlCosim_fms", 
+	"ms",
+	0,
+	"4",
+	"ms");
+
+create_constant_form ("_nHdlCosim_fsec", 
+	"sec",
+	0,
+	"5",
+	"sec");
+
+create_form_set("_nHdlCosim_fTimeUnitSet",
+	"_nHdlCosim_ffs",
+	"_nHdlCosim_fps",
+	"_nHdlCosim_fns",
+	"_nHdlCosim_fus",
+	"_nHdlCosim_fms",
+	"_nHdlCosim_fsec",
+	"StdForm");
+
+create_item ("HdlCosim","General HDLCOSIM star to cosimulate with any VHDL/Verilog entity using ModelTech EE simulator",
+	"H",
+	ITEM_NOT_ALL_PARM,
+	-1,
+	"BMP_HdlCosim",
+	standard_dialog,
+	NULL,
+	SPComponentNetlistFmt,
+	"_vKeysightEEsof_dSDF_nHdlCosim_lsdfhdlcosimstars",
+	SPComponentAnnotFmt,
+	"SYM_HdlCosim",
+	no_artwork,
+	NULL,
+	ITEM_PRIMITIVE_EX,
+	create_parm ("HdlSrcFile","HDL Source file followed by the dependency files (space separated) to be built, or ADS project compile_verilog or compil...(Press Help for more info)",
+		PARM_STRING,
+		"_nHdlCosim_fHdlSrcFile_x5fFileSet",
+		UNITLESS_UNIT,
+		prm("_nHdlCosim_ftxt_x5ffile","\"\"")),
+	create_parm ("Inputs","Names of the input HDL ports to communicate with",
+		PARM_STRINGARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("InputPhases","Delay to be used for updating inputs within each IterationTime step",
+		PARM_INTARRAY | PARM_NO_DISPLAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("InputPrecisions","Precision of the inputs in the sequence they appear in the HDL definition",
+		PARM_STRINGARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("Outputs","Names of the output HDL ports to communicate with",
+		PARM_STRINGARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("OutputPrecisions","Precision of the outputs in the sequence they appear in the HDL definition",
+		PARM_STRINGARRAY,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("HdlModelName","VHDL entity[.architecture|+configuration] or Verilog module name to cosimulate with",
+		PARM_STRING,
+		"StringAndReferenceSet",
+		UNITLESS_UNIT,
+		prm("StringAndReference","\"\"")),
+	create_parm ("HdlLibrary","HDL libraries (space separated) that user model depends on (to map them explicitly use name=path syntax), if set to none...(Press Help for more info)",
+		PARM_STRING,
+		"_nHdlCosim_fHdlLibrary_x5fFileSet",
+		UNITLESS_UNIT,
+		prm("_nHdlCosim_ftxt_x5ffile","\"\"")),
+	create_parm ("HdlSimulatorGUI","HDL simulator Graphical User Interface Mode",
+		PARM_INT,
+		"_nHdlCosim_fHdlSimulatorGUISet",
+		UNITLESS_UNIT,
+		prm("_nHdlCosim_fOff","Off")),
+	create_parm ("CmdArgs","HDL Simulator command invocation arguments, if any",
+		PARM_STRING | PARM_NO_DISPLAY,
+		"_nHdlCosim_fCmdArgs_x5fFileSet",
+		UNITLESS_UNIT,
+		prm("_nHdlCosim_ftxt_x5ffile","\"\"")),
+	create_parm ("IterationTime","Time to run the HDL block before collecting the outputs",
+		PARM_INT | PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","100")),
+	create_parm ("TimeUnit","Time resolution limit to be passed to HDL simulator",
+		PARM_INT | PARM_NO_DISPLAY,
+		"_nHdlCosim_fTimeUnitSet",
+		UNITLESS_UNIT,
+		prm("_nHdlCosim_fns","ns")));

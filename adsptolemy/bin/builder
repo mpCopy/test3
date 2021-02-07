@@ -1,0 +1,658 @@
+#!/hped/builds/bin/perl
+###############################################################################
+#
+# File:         builder
+# RCS:          $Header: /cvs/wlv/src/cedamk/bin/builder,v 1.32 2008/07/25 20:11:09 darrylo Exp $
+# Description:  Script to help developers get started.
+#		NOT FOR DISTRIBUTION TO CUSTOMERS!
+# Author:       Darryl Okahata
+# Created:      Mon Aug  6 14:25:43 2001
+# Modified:     Fri Jul 25 13:06:40 2008 (Darryl Okahata) darrylo@soco.keysight.com
+# Language:     CPerl
+# Package:      N/A
+# Status:       Experimental (Do Not Distribute)
+#
+# (C) Copyright 2001, Keysight Technologies, all rights reserved.
+#
+###############################################################################
+#
+# We must first check for potentially problematic environment variables,
+# before setting configuration variable defaults.
+#
+
+@warn_vars = ( "REV", "REVISION", "VER", "VERSION",
+	       "CEDA_DRIVE", "BUILD_PREFIX", "ARCH" );
+
+# Warn about certain environment variables, which could be OK, but
+# might not be:
+
+$warning_output = '';
+foreach $name (@warn_vars) {
+    if ($ENV{$name}) {
+	if (!$warning_output) {
+	    print STDERR "***** WARNING: the following environment variable(s) exist:\n\n";
+	    $warning_output = 1;
+	}
+	print STDERR "\t$name\n";
+    }
+}
+if ($warning_output) {
+    print STDERR <<EOF;
+
+This might be OK, but it might not be.  If any exist, it\'s assumed that
+you know what you are doing.
+
+EOF
+}
+
+###############################################################################
+#
+# Start of configuration defaults:
+#
+
+$default_prod = "de";
+$default_ver = "33X";
+$default_rev = "stable";
+
+if ($^O =~ /Win32/) {
+  $CEDA_DRIVE = $ENV{'CEDA_DRIVE'} || "S:";
+  $PATH_SEP = ';';
+} else {
+  $CEDA_DRIVE = '';
+  $PATH_SEP = ':';
+}
+
+$build_prefix = $ENV{'BUILD_PREFIX'} || "/hped/builds";
+
+$build_bin = "$CEDA_DRIVE$build_prefix/bin";
+
+#
+# End of configuration defaults:
+#
+###############################################################################
+
+# Make sure bad variables are unset:
+purge_var("SITE");
+purge_var("HPED_SITE");
+purge_var("MNS_COMPILE_FLAGS");
+
+###############################################################################
+
+use Cwd 'chdir';
+use Getopt::Std;
+
+$ENV{'PATH'} = "$build_bin$PATH_SEP" . $ENV{'PATH'};
+
+$HPEESOF_DIR_NAME = 'HPEESOF_DIR';
+
+$init = '';
+$warnings = '';
+
+usage() if (!getopts('bpIMOR:V:P:X'));
+$do_build = 1 if ($opt_b);
+$print_vars = 1 if ($opt_p);
+$init = 1 if ($opt_I);
+if ($opt_M) {
+    $ceda_mk_dir = $opt_M;
+} else {
+    if ($ENV{'ceda_mk_dir'}) {
+	$ceda_mk_dir = $ENV{'ceda_mk_dir'};
+    }
+}
+$prod = $opt_P if ($opt_P);
+$ver = $opt_V if ($opt_V);
+$rev = $opt_R if ($opt_R);
+$ver = $ENV{'VERSION'} if ($ENV{'VERSION'});
+$rev = $ENV{'REVISION'} if ($ENV{'REVISION'});
+
+$which = 'opt' if ($opt_O);
+$build_var = $opt_V || $opt_R || $opt_O;
+$dangerously_risky = 1 if ($opt_X);
+
+@checkout_projects = @ARGV;
+
+$pwd = $ENV{'PWD'};
+
+###############################################################################
+
+chomp($arch = `sh -c hped-arch`);	# "sh -c" required for win32
+die if $?;
+
+$prod = $default_prod if (!$prod);
+$ver = $default_ver if (!$ver);
+$rev = $default_rev if (!$rev);
+$which = 'debug' if (!$which);
+chomp($this_site = `sh -c hped-site`);	# "sh -c" required for win32
+die if $?;
+
+$top_dir = "$CEDA_DRIVE$build_prefix/$this_site/${prod}v$ver/r$rev/$which";
+
+if (!$ENV{$HPEESOF_DIR_NAME} || $build_var) {
+    $hpeesof_dir = $ENV{$HPEESOF_DIR_NAME} = "$top_dir/prod";
+} else {
+    $hpeesof_dir = $ENV{$HPEESOF_DIR_NAME};
+}
+
+if ($arch =~ /^win/) {
+    if ($ENV{$HPEESOF_DIR_NAME} =~ /\\/) {
+	print STDERR <<EOF;
+
+***** WARNING: \$HPEESOF_DIR contains a path with backslashes!:
+
+          $ENV{$HPEESOF_DIR_NAME}
+
+      Under Win32, the path should contain forward slashes only!  This
+      script will correct this problem (but only for this script), but
+      not all tools correct this for you; you will eventually run into
+      problems if you continue to use backslashes.
+
+      Correcting (temporarily) and continuing ...
+EOF
+	$ENV{$HPEESOF_DIR_NAME} =~ s|\\|/|g;
+	$hpeesof_dir = $ENV{$HPEESOF_DIR_NAME};
+	print STDERR "      ... now using \"$ENV{$HPEESOF_DIR_NAME}\" ...\n\n";
+    }
+}
+
+$ceda_cedamk_dir = "$top_dir/cedamk";
+if (!$ceda_mk_dir) {
+    $ceda_mk_dir = "$ceda_cedamk_dir";
+}
+
+$ENV{'ceda_mk_dir'} = $ceda_mk_dir;
+
+$extra_path = "$build_bin$PATH_SEP$ceda_cedamk_dir/bin$PATH_SEP$ceda_cedamk_dir/bin.$arch$PATH_SEP$hpeesof_dir/bin";
+
+undef $arch_var;
+
+set_arch_vars: {
+    $local_arch_value = "$pwd/build/lib.$arch";
+    if ($init || -d "$pwd/build/lib.$arch") {
+        $arch_var_value = "$local_arch_value$PATH_SEP";
+    }
+    $arch_var_value = "$arch_var_value$ENV{$HPEESOF_DIR_NAME}/lib/$arch$PATH_SEP$ENV{$HPEESOF_DIR_NAME}/hptolemy/lib.$arch";
+    if ($arch =~ /^hpux/) {
+	$arch_var = 'SHLIB_PATH';
+	last set_arch_vars;
+    }
+    if ($arch =~ /^linux/) {
+	$arch_var = 'LD_LIBRARY_PATH';
+	last set_arch_vars;
+    }
+    if ($arch =~ /^aix/) {
+	last set_arch_vars;
+    }
+    if ($arch =~ /^sun/) {
+	$arch_var = 'LD_LIBRARY_PATH';
+	last set_arch_vars;
+    }
+    if ($arch =~ /^win/) {
+	$arch_var = 'PATH';
+	$arch_var_value = "/bin$PATH_SEP/usr/bin$PATH_SEP$extra_path$PATH_SEP$arch_var_value";
+	last set_arch_vars;
+    }
+}
+
+if ($arch_var) {
+    if ($ENV{$arch_var}) {
+	$ENV{$arch_var} = $arch_var_value . $PATH_SEP . $ENV{$arch_var};
+    } else {
+	$ENV{$arch_var} = $arch_var_value;
+    }
+}
+if ($arch !~ /^win/) {
+    $ENV{'PATH'} = "$extra_path$PATH_SEP$ENV{'PATH'}";
+}
+
+if ($print_vars) {
+    print "export $HPEESOF_DIR_NAME=$ENV{$HPEESOF_DIR_NAME}\n";
+    print "export ceda_mk_dir=$ENV{'ceda_mk_dir'}\n";
+    if ($arch_var) {
+	print "export $arch_var=$ENV{$arch_var}\n";
+    }
+    if ($arch !~ /^win/) {
+	print "PATH=$ENV{'PATH'}\n"
+    }
+    print "# In other words, add the following to the beginning of \$PATH:\n";
+    print "# ", convert_win32_path($extra_path), "\n";
+    exit 0;
+}
+
+undef $ENV{'MNS_COMPILE_FLAGS'};	# Gemini kludge
+
+if ($arch =~ /^win/) {
+  $login = $ENV{'USER'} || $ENV{'USERNAME'};
+  die "Unable to determine login name!" if (!$login);
+} else {
+  chomp($login = `whoami`);
+  die if $?;
+}
+
+$CVSROOT_SR=":pserver:$login\@cvs.soco.keysight.com:/cvs/sr/src";
+$CVSROOT_WLV=":pserver:$login\@cvs.wlv.keysight.com:/cvs/wlv/src";
+$CVSROOT_GENT=":pserver:$login\@cvs.belgium.keysight.com:/cvs/gent/src";
+
+if ($init) {
+    if (-d "build") {
+	print STDERR <<EOF;
+
+Sorry, a build tree already exists here.  If you really want to create a
+new build tree, you\'ll have to either rename or delete the existing
+\"build\" directory.
+EOF
+	exit 1;
+    }
+    print "\n***** Creating and initializing new build tree! *****\n\n";
+    if ($arch !~ /^win/) {
+        $status = xsystem("cedamksetup");
+    } else {
+        $status = xsystem("sh -c cedamksetup");
+    }
+    die "cedamksetup failed!\n" if ($status != 0);
+}
+
+@all_projects = ();
+while (<DATA>) {
+    chomp;
+    next if (/^\s*$/ || /^\s*\#/);
+    ($project, $site, $name) = split;
+    $projects{$project} = $site;
+    $location{$project} = $name;
+    push @all_projects, $project;
+#    print "$site:$project\n";
+}
+
+@unknown = ();
+foreach $proj (@checkout_projects) {
+    if (!$projects{$proj}) {
+	if ($dangerously_risky && ($proj =~ /^(.+):(.+)$/)) {
+	    $proj = $1;
+	    $site = $2;
+	    $projects{$proj} = $site;
+	    $location{$proj} = $proj;
+	} else {
+	    push @unknown, $proj;
+	}
+    }
+}
+
+if ($#unknown >= 0) {
+    print "Sorry, but the following project(s) are unknown:\n";
+    foreach $proj (@unknown) {
+	print "\t$proj\n";
+    }
+    print <<EOF;
+
+If you feel that this is an error, this script probably does not know about
+the project(s).  In this case, you have these choices:
+
+1. You can get someone to fix this script.  It\'s pretty trivial to do, and
+   any of the build maintainers can do it.
+
+2. You can use the \"-X\" flag to bypass the checking, but only if you
+   understand the risks (see the manual).  If you use -X, you must specify
+   the projects in the form:
+
+	project:site
+
+   Here, replace \"project\" with the CVS name/alias of the project that you
+   want to check out, and replace \"site\" with the site at which the project
+   is based (site must be all in lowercase).
+
+3. You\'ll have to manually check out the projects and hand-edit make-defs.
+EOF
+    exit 1;
+}
+
+if (! -d "build/projects") {
+    if (!$init) {
+	print STDERR "\n***** Sorry, this script must be run from the directory that contains the\n";
+	print STDERR "top-level \"build\" directory.  Alternatively, you may want to create\n";
+	print STDERR "a new build directory tree, using \"$0 -I\".\n";
+	exit 1;
+    }
+    die "Huh?  Where's \"build/projects\"???\n";
+}
+
+chdir 'build/projects' || die;
+
+foreach $proj (@checkout_projects) {
+    if ($projects{$proj} eq 'sr') {
+	$CVSROOT = $CVSROOT_SR;
+    } elsif ($projects{$proj} eq 'wlv') {
+	$CVSROOT = $CVSROOT_WLV;
+    } elsif ($projects{$proj} eq 'gent') {
+	$CVSROOT = $CVSROOT_GENT;
+    } else {
+	print "\n***** Sorry, site \"$projects{$proj}\" is not supported!
+      Project \"$proj\" will be skipped!\n";
+	next;
+    }
+    $cmd = "cvs -d $CVSROOT co $location{$proj}";
+    $status = xsystem($cmd);
+    if ($status != 0) {
+	print STDERR <<EOF;
+
+***** CVS command failed (status $status)! *****
+
+command: \"$cmd\"
+
+The usual reason for this is that a \"cvs login\" has not properly been done.
+Please do the following, if you haven\'t already done so:
+
+	cvs -d $CVSROOT login
+
+Enter your password at the prompt.
+EOF
+	exit 1;
+    }
+}
+
+if ($#checkout_projects < 0) {
+    print "No projects to check out.\n";
+}
+
+@project_dirs = ();
+@risky_projects = ();
+foreach $proj (<*>) {
+    next if (!-d $proj);
+    if ($projects{$proj}) {
+	$project_dirs{$proj} = 1;
+    } else {
+	if ($dangerously_risky) {
+	    push @risky_projects, $proj;
+	} else {
+	    print STDERR "\n***** Warning: directory \"$proj\" is UNKNOWN.
+      It will not be added to make-defs!\n";
+	    $warnings = 1;
+	}
+    }
+}
+
+@dirs = ();
+foreach $proj (@all_projects) {
+    if ($project_dirs{$proj}) {
+	push @dirs, $proj;
+    }
+}
+
+print "\nUpdating build/projects/make-defs ...\n";
+unlink "make-defs";
+open(OUT, ">make-defs") || die "make-defs: $!";
+
+print OUT <<EOF;
+#
+# This file was automatically generated by $0.
+# You are allowed to edit this file, as long as $0 is not
+# run again.  If you ever again run $0 to checkout new projects,
+# or to do anything else, this file will be overwritten, and any
+# changes made here will be lost.  Note that you can still check out
+# projects manually.
+#
+DIRS =
+EOF
+foreach $proj (@dirs, @risky_projects) {
+    ($proj, $site) = parse_risky_project($proj);
+    print OUT "DIRS += $proj\n";
+}
+
+close(OUT) || die "make-defs: $!";
+
+if (!$do_build) {
+    print <<EOF;
+Done.
+
+Now you must insure that all of the proper environment variables are set.
+To see what they should be, run:
+
+	$0 -p
+
+Ksh/bash shell users can simply do \"$0 -p >> ~/.profile\" to
+make the environment variables permanent.  Note that this must be done
+ONLY from the current directory, however, as this very important
+directory:
+
+        $local_arch_value
+
+is added ONLY when $0 is run from the current directory.
+
+Once the environment variables have all been properly set, you can build
+everything by doing:
+
+	cd build
+EOF
+    if ($arch =~ /^win/) {
+	print <<EOF;
+	make debug=1
+
+IMPORTANT NOTE: Do not use \"gmake\"; you must use \"make\", as the
+currently-installed version of \"gmake\" will not work properly.  This
+restriction applies to Win32 builds only; it does not apply to Unix
+builds.
+EOF
+    } else {
+	print <<EOF;
+	gmake debug=1
+EOF
+    }
+}
+print;
+
+if ($do_build) {
+    # We're currently in build/projects.  Go one level up.
+    chdir("..");
+    if ($arch =~ /^win/) {
+	$cmd = "make debug=1";
+    } else {
+	$cmd = "gmake debug=1";
+    }
+    $status = xsystem($cmd);
+    if ($status != 0) {
+	print STDERR "\n***** BUILD FAILED *****\n";
+    }
+}
+
+if ($warnings) {
+    print STDERR "\n***** Warnings were output! -- see above!\n";
+}
+
+if ($dangerously_risky) {
+    print STDERR <<EOF;
+
+***** WARNING: the \"-X\" option was used.  Using this option is EXTREMELY
+RISKY, unless you are very careful.  It\'s very easy to accidentally
+check out files that can be modified, but cannot be checked in (or, if they
+are checked in, for all of the changes to be thrown away).
+EOF
+}
+
+exit 0;
+
+###############################################################################
+
+sub xsystem
+{
+    my($command) = @_;
+    my($signal, $status);
+
+    $status = system($command);
+    if ($status & 0xFF) {
+        if ($signal = $status & 0x7F) {
+	    printf STDERR "$command: Signal %d", $signal;
+        } else {
+	    print STDERR $command;
+        }
+        if ($status & 0x80) {
+	    print STDERR " -- core dumped";
+        }
+        print STDERR "\n";
+        exit(128 + $signal);
+    }
+    $status = $status / 256;	
+    return ($status);
+}
+
+
+###############################################################################
+
+sub parse_risky_project
+{
+    my ($proj_spec) = @_;
+    my ($proj, $proj_site);
+
+    $proj = $proj_spec;
+    $proj_site = $this_site;
+    if ($proj =~ /^(.+):(.+)$/) {
+	$proj = $1;
+	$proj_site = $2;
+    }
+    return ($proj, $proj_site);
+}
+
+
+###############################################################################
+
+sub convert_win32_path
+{
+    my($path) = @_;
+    my($newpath, $tmp_path, $item);
+
+    if ($arch =~ /^win/) {
+	foreach $item (split(/[:;]/, $path)) {
+ 	    chomp($tmp_path = `cygpath -w $item`);
+ 	    if ($newpath) {
+ 		$newpath = "$newpath;$tmp_path";
+ 	    } else {
+ 		$newpath = $tmp_path;
+ 	    }
+	}
+    } else {
+	$newpath = $path;
+    }
+    return ($path);
+}
+
+
+###############################################################################
+
+sub purge_var
+{
+    my ($var) = @_;
+
+    if ($ENV{$var}) {
+	undef $ENV{$var};
+	print STDERR <<EOF;
+***** WARNING: the environment variable, \"$var\", is set.
+      This variable should not be set, and so this script is
+      temporarily unsetting it.  Having it set can cause mysterious
+      problems.  You should edit your .profile or .cshrc to get rid of
+      it.
+
+EOF
+    }
+}
+
+
+###############################################################################
+
+sub usage
+{
+    print STDERR 
+	"usage: $0: [-bIOpX] [-M ceda_mk_dir] [-V version] [-R revision] \\
+                [-P proddesig] [ <project> ... ]\n";
+    print STDERR
+	"Use \"$0 -I <project> [<project> ...]\" to create a new build\
+directory with the specified projects.\n";
+    exit 1;
+}
+
+
+###############################################################################
+__DATA__
+#
+# IMPORTANT: THE FOLLOWING MUST BE LISTED IN THE ORDER IN WHICH THE PROJECTS
+# MUST BE BUILT!
+#
+# This section consists of:
+#
+# <project name>	<site>	<actual CVS name>
+bldsupaddons            wlv     buildmech/bootstrap/bldsupaddons
+stl                     wlv     stl
+freetype                wlv     freetype
+gsl                     wlv     gsl
+flexlm                  wlv     flexlm
+gemx                    wlv     gemx
+gxvt                    wlv     gxvt
+gcls                    wlv     gcls
+gxvtxptr                wlv     gxvt/source
+clapack                 sr      clapack
+genserver               sr      genserver
+gendata                 sr      gendata
+datasetint              sr      datasetint
+lib_netlist             sr      gemini/lib_netlist
+dio                     wlv     dio
+optpak                  wlv     optpak
+genfun                  sr      genfun
+ael                     wlv     ael
+veelib                  sr      instserver/source
+buslib                  sr      buslib
+linker                  wlv     linker
+lapi                    wlv     lapi
+parser                  sr      gemini/source/parser
+libgen                  wlv     libgen
+mtools                  sr      mtools
+dataset                 sr      dataset
+eedaemon                wlv     eedaemon
+emshell                 wlv     emshell
+smg_ui                  wlv     smg_ui
+aelshell                wlv     ael
+linecalcui              wlv     linecalcui
+browser                 wlv     browser
+simexec                 sr      simexec
+llc                     wlv     llc
+instserver              sr      instserver
+ic2citi                 sr      instserver/ic2citi
+dftool                  wlv     dftool
+guidedsetup             wlv     guidedsetup
+spicedeck               wlv     spicedeck
+esynui                  wlv     esynui
+esyn                    wlv     esyn
+notebook                sr      notebook
+geminiui                sr      geminiui
+gemini                  sr      gemini-src
+gemini-src              sr      gemini-src
+pde                     wlv     pde
+pde-src                 wlv     pde-src
+eedit                   wlv     eedit
+momsim                  gent    momsim
+momopt                  gent    momopt
+physsim                 gent    physsim
+deinvoke                wlv     deinvoke
+dscommon                wlv     dscommon
+eehelp                  wlv     eehelp
+complib_release         wlv     complib_release
+cadence                 wlv     cadence
+devlibMe                wlv     complib/Migration/devlibMe
+dds                     sr      dds
+QAtestdrivers           sr      QAtestdrivers
+gemxtst                 wlv     gemxtst
+spdiff                  sr      spdiff
+iccap                   sr      iccap
+expdocinst              wlv     lprod/source
+hptolemy                wlv     hptolemy
+sp-modelbuilder         wlv     sp-modelbuilder
+hptolemy-kernel         wlv     hptolemy-kernel
+hpeesofsim              wlv     hpeesofsim
+libTrans                wlv     libTrans
+spctrn                  wlv     spctrn
+iff                     wlv     iff
+migration               wlv     migration
+rfsynth                 wlv     rfsynth
+dspsynth                wlv     dspsynth
+dspfilter               wlv     dspfilter
+idf                     sr      idf
+ip_protect              sr      ip_protect
+hptolemyfull            wlv     hptolemyfull
+foundryKits             sr      foundryKits
+cds_integration         sr      cds_integration
+cdslibs         	wlv     cdslibs

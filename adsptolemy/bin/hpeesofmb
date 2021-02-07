@@ -1,0 +1,74 @@
+#!/bin/ksh
+# Set up ADS Ptolemy modelbuilder
+
+set -e
+prog=$0
+
+usage () {
+    echo "Usage: $prog [-clean] [work directory]"
+}
+
+while [ -n "$1" ] ; do
+    case "$1" in
+	-clean) mbclean=1 ;;
+	-check) echo "Sorry, -check not implemented yet" ; exit 1 ;;
+	-h*) usage ; exit 0 ;;
+	-*) echo "$prog: unknown option: $1" ; usage ; exit 1 ;;
+	*) break ;;
+    esac
+    shift
+done
+
+if [ `uname | cut -d"_" -f 1` = "CYGWIN" ]
+ then
+  echo "Setting HPEESOF_DIR to cygwin path"
+  NEW_HPEESOF_DIR=`cygpath -u "$(cygpath -m -s "$HPEESOF_DIR")"`
+  HPEESOF_DIR=$NEW_HPEESOF_DIR
+fi 
+
+if [ ! -f "$HPEESOF_DIR/adsptolemy/bin/cedamksetup" ] ; then
+    echo "Error: Can't find \$HPEESOF_DIR/adsptolemy/bin/cedamksetup
+Is HPEESOF_DIR set corectly?" 1>&2
+    exit 1
+fi
+
+work=${1:-adsptolemy}
+
+case `sh $HPEESOF_DIR/bin/hpeesofarch` in
+  win32|win32_64)
+    mbv=mbsetvars.bat ; mbv64=mbsetvars64.bat ; make=make ; sh=bash
+
+    MODELDIR=`cygpath -w $PWD | sed -e 's/\\\\/\\\\\\\\/g'`\\\\$work ;; # :-b
+  *)
+    mbv=mbsetvars ; mbv64=mbsetvars64;  make=hpeesofmake ; sh=ksh ; MODELDIR="$PWD/$work" ;;
+esac
+
+if [ ! -e "$work/src/make-defs" ] ; then
+  mkdir -p $work/src
+  cp $HPEESOF_DIR/adsptolemy/lib/sample-make-defs $work/src/make-defs
+  chmod +w $work/src/make-defs
+fi
+
+export ceda_mk_dir=${ceda_mk_dir:-$HPEESOF_DIR/adsptolemy}
+$sh $HPEESOF_DIR/adsptolemy/bin/cedamksetup -m '$$(HPEESOF_DIR)/adsptolemy' \
+  -p adsptolemy -b $work -s src
+
+echo DIRS=src > $work/make-defs
+
+mkdir -p $work/bin
+sed -e "s,MODELDIR,$MODELDIR,g" $HPEESOF_DIR/adsptolemy/lib/$mbv > $work/bin/$mbv
+sed -e "s,MODELDIR,$MODELDIR,g" $HPEESOF_DIR/adsptolemy/lib/$mbv64 > $work/bin/$mbv64
+chmod +x $work/bin/$mbv
+chmod +x $work/bin/$mbv64
+
+if [ ! -d "$work/symbols/ptmb_wrk/ptmb_lib" ] ; then
+  mkdir -p $work/symbols
+  cp -r $HPEESOF_DIR/adsptolemy/bin/ptmb_wrk $work/symbols
+fi
+
+if [ -n "$mbclean" ] ; then
+    echo Cleaning
+    rm -f $work/mk/*
+    find $work/src -name makefile | xargs rm -f
+    $make -C $work realclean
+fi
