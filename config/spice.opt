@@ -1,0 +1,37 @@
+ @(#) $Source: /cvs/wlv/src/pde/misc/spice.opt,v $ $Revision: 150.3 $ $Date: 2000/07/26 00:41:22 $  
+# SCCS @(#) /wlv/src/acad700/misc spice.opt 700.1 date: 03/27/95
+# SCCS @(#) /wlv/src/acad600/misc spice.opt 600.5 date: 03/23/95 
+# SCCS @(#) acad500/misc spice.opt 500.3 date: 8/3/93
+! The following options are for reading and writing SPICE and PSpice files
+
+! spice file import options
+SpiceDialect = 3                      ! 1 = SPICE2G, 2 = SPICE3, 3 = PSPICE
+                                      ! 4 = HSPICE, 5 = HPSPICE
+
+IgnoreFirstLine = true                ! true = first line is treated as a 
+                                      !        comment
+
+SuppressNameMapping = false           ! don't convert all to lower case
+
+ConnectionMethod = 2                  ! 1 = use Named Connections 
+                                      ! 2 = use Netlist
+				      ! NOTE: on very large networks,
+ 				      !       option 2 is recommended
+
+ComponentName = 
+
+NumberOfPins = 0
+
+DirectoryToStoreNetList = 
+ 
+! spice file export options
+! There are no export options supported at this time
+
+ElementReplacementTable              ! don't edit this line 
+
+! all lines after this must be in the following form
+!eesofElement  userElement
+!+ eesofParam  userParam  eesofParam  userParam
+!+ eesofParam  userParam
+! NOTE: maximum line length = 80
+

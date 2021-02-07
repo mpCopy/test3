@@ -1,0 +1,126 @@
+
+BOOT_COMMENT_START
+
+/******************************************************************************/
+
+// SETTING 1: RANGE RESET
+// In case of a numeric parameter, during the validation of the range,
+// user can set the below options to customize the behavior and set
+// the parameter range to one of the following
+//      The current value entered by the user - CtVal
+//      The minimum value for the parameter   - minVal
+//      The maximum value for the parameter   - maxVal
+//      The default value for the parameter   - defVal
+//      Teh stepsize value for the parameter  - stpVal
+// OPTION 0: Donot modify the ctVal entered by used
+//           if the ctVal is within minVal to maxVal
+// OPTION 1: Reset the parameter to minVal and maxVal
+//           if the ctVal is within minVal to maxVal
+// OPTION 2: Reset the parameter to defVal
+//           if the ctVal is within minVal to maxVal
+// Setting the range default option 
+
+decl glbRangeOption = 1;
+
+
+// SETTING 2: RANGE WARNING WINDOW DISPLAY
+// The following option variable controls the display of warning
+// when the parameter is set out of range
+// OPTION 0: Donot display the warning window when out of range
+//           Note that the setting of value without warning window
+//           will also be according to the "glbRangeOption" setting
+// OPTION 1: Display the warning window and do the action
+//           according to the "glbRangeOption" setting
+// Setting the default warning option 
+
+decl glbWarningDisp = 1;
+
+
+// SETTING 3: STEPSIZE ROUNDOFF
+// If a step size is given for a parameter and user entered ctVal is 
+// not in steps, one of the following would be set.
+// OPTION 0: Leave the user entered value undisturbed
+// OPTION 1: Round off to the nearest value conforming to stepsize
+// Setting the default step roud off option
+
+decl glbStepValRndoff = 1;
+
+/******************************************************************************/
+
+BOOT_COMMENT_END
+
+GLOBAL_RANGE_FUNCTION_START
+
+(
+  parmName,
+  curVal,
+  minVal,
+  maxVal,
+  defVal,
+  stepVal,
+  unitString
+)
+{
+
+  decl scale;
+  decl newVal=curVal;
+  if ((is_string(unitString) && strlen(unitString)) > 0)
+     scale = evaluate(sprintf("1 %s", unitString));
+  else
+  {
+    scale = 1;
+    unitString = "";
+  }
+  if((stepVal!=0.0) && ((glbRangeOption == 1)&&(glbStepValRndoff == 1)))
+  {
+    if((minVal/stepVal)!=(floor(minVal/stepVal)))   minVal=(floor(minVal/stepVal)*stepVal)+stepVal;
+    if((maxVal/stepVal)!=(floor(maxVal/stepVal)))   maxVal=(floor(maxVal/stepVal)*stepVal);
+  }
+  if ((maxVal != NULL) && (maxVal > 0.0) && ( ( (curVal-maxVal)/maxVal ) > 1e-6))
+  {
+    if (glbWarningDisp == 1)
+        warning("aelcmd", 16, "", fmt_tokens(list("The maximum for", parmName,
+                                              "is", maxVal/scale, unitString, ".")));
+    if (glbRangeOption == 0) newVal = curVal;
+    if (glbRangeOption == 1) newVal = maxVal;
+    if (glbRangeOption == 2) newVal = defVal;
+	return newVal;
+  }
+  if ((minVal != NULL) && (minVal > 0.0) && (((minVal-curVal)/minVal) > 1e-6))
+  {
+    if (glbWarningDisp == 1)
+       warning("aelcmd", 16, "", fmt_tokens(list("The minimum for", parmName,
+                                              "is", minVal/scale, unitString, ".")));
+    if (glbRangeOption == 0) newVal = curVal;
+    if (glbRangeOption == 1) newVal = minVal;
+    if (glbRangeOption == 2) newVal = defVal;
+    return newVal;
+  }
+    
+  if ( (stepVal != NULL) && stepVal != 0.0 )
+  {
+   if ( ( ( round(curVal*1000000/scale) % round(stepVal*1000000/scale) ) != 0) || (curVal==0))
+   {
+     
+     if (glbWarningDisp == 1)
+        warning("aelcmd", 16, "", fmt_tokens(list("The step size of", parmName,
+                                              "is", stepVal/scale, unitString, "."))); 
+     	decl rndVal = (floor(curVal/stepVal)*stepVal);
+     	if ((rndVal<minVal) && (glbRangeOption == 1))   rndVal=minVal;
+     	if ((rndVal<minVal) && (glbRangeOption == 0))   rndVal= (rndVal+stepVal);
+     	if((rndVal<minVal)&& (glbRangeOption == 2)) rndVal=defVal;
+     	if((rndVal>maxVal)&& (glbRangeOption == 2)) rndVal=defVal;
+        if (glbStepValRndoff == 1) newVal = rndVal;
+        if (curVal > maxVal)   rndVal=maxVal;
+        if (curVal < minVal)   rndVal=minVal;
+        if ((glbStepValRndoff == 1)&&(glbRangeOption == 1)) newVal = rndVal;
+   }
+	
+	return newVal;
+  }
+  
+  return newVal;
+}
+
+
+GLOBAL_RANGE_FUNCTION_END

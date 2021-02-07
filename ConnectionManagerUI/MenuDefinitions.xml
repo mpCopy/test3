@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+
+<!--
+Copyright (c) 2002 Keysight Technologies.  All rights reserved.
+-->
+
+<MenuDefinitions>
+  <Menu Name="&amp;File">
+    <MenuEntry Name="file_open"/>
+    <MenuEntry Name="file_save"/>
+    <MenuEntry Name="file_saveas"/>
+    <MenuEntry Name="file_exit"/>
+  </Menu>
+  <Menu Name="&amp;Server">
+      <MenuEntry Name="server_set_host"/>
+  </Menu>
+  <Menu Name="&amp;Instruments">
+    <MenuEntry Name="inst_disp_finder"/>
+    <MenuEntry Name="inst_interactive_io"/>
+  </Menu>
+  <Menu Name="&amp;Measurements">
+        <SubMenu Name="&amp;Behavioral Modeling">
+            <MenuEntry Name="msmt_sparm_8753_pswept"/>
+            <MenuEntry Name="msmt_sparm_pna_pswept"/>
+        </SubMenu>
+        <SubMenu Name="&amp;S-Parameters">
+            <MenuEntry Name="msmt_sparm_8753_pnp"/>
+            <MenuEntry Name="msmt_sparm_871x_pnp"/>
+            <MenuEntry Name="msmt_sparm_ena"/>
+            <MenuEntry Name="msmt_sparm_8510"/>
+        </SubMenu>
+        <SubMenu Name="Sp&amp;ectrum">
+            <MenuEntry Name="msmt_spectrum_856xx"/>
+            <MenuEntry Name="msmt_spectrum_859xx"/>
+            <MenuEntry Name="msmt_spectrum_E444xA"/>
+        </SubMenu>
+        <SubMenu Name="&amp;Voltage Waveform">
+            <MenuEntry Name="msmt_waveform_861xx_548xx_546xx"/>
+            <MenuEntry Name="msmt_waveform_5462x"/>
+            <MenuEntry Name="msmt_waveform_scope"/>
+        </SubMenu>
+  </Menu>
+  <MenuSeparator/>
+  <Menu Name="&amp;CommandExpertMode">
+      <MenuEntry Name="toggle_use_of_command_expert" />
+      <MenuEntry Name="msmt_sparm_pna_cm" />
+      <MenuEntry Name="msmt_sparm_ena_cm" />
+  </Menu>
+
+</MenuDefinitions>
+
+<!--
+$Log: MenuDefinitions.xml,v $
+Revision 1.2  2009/01/07 00:29:22  ikoyfman
+Added minimize buttons to dialog windows and removed Window menu
+
+Revision 1.1  2008/10/22 16:15:45  ikoyfman
+Qt4 version for Linux
+
+Revision 1.37  2005/01/19 22:42:18  doomer
+beginning to incorporate dc bias additions to behavioral
+modeling
+Modified Files:
+  MenuDefinitions.xml SparmMeas_2Port_PSwept.ui
+  SparmMeas_PSwept_Impl.cpp SparmMeas_PSwept_Impl.h
+
+Revision 1.36  2005/01/13 23:53:27  doomer
+adding a Help->SupportedInstruments... menu selection
+
+Revision 1.35  2004/11/22 17:47:36  doomer
+removing 5483x menu entry.  It is covered by the 5485x panel.
+
+Revision 1.34  2004/11/22 17:23:36  doomer
+Removing changes made to implement dc bias extension to pwer-swept
+s-parameter measurement.  There isn't enoug time in the 2005A release
+to do developthis feature in addition to everything else we have to do.
+
+Modified Files:
+  MenuDefinitions.xml SparmMeas_2Port_PSwept.ui
+  SparmMeas_PSwept_Impl.cpp
+
+Revision 1.31  2004/03/26 23:29:09  doomer
+added window management menu entries
+Modified Files:
+  MenuDefinitions.xml MsmtSrvrUI.cpp
+
+Revision 1.30  2004/02/10 21:13:01  doomer
+adding new scope measurement to support 54855 and UWB in Ptolemy
+Modified Files:
+  CMDataTypes.h MenuDefinitions.xml MsmtSrvrUI.cpp MsmtSrvrUI.h
+  MsmtUIUtilities.cpp ScopeSetupDlg.ui make-defs
+Added Files:
+  ScopeSetupDlgImpl.cpp ScopeSetupDlgImpl.h ScopeSetupUI.cpp
+
+Revision 1.29  2004/01/05 20:30:48  doomer
+adding server diagnostic client panel.  Usability improvements
+to the host name entry dialog
+Modified Files:
+  CM_Icon.bmp HostNameEntryDlg.cpp HostNameEntryDlg.h
+  MenuDefinitions.xml MsmtSrvrUI.cpp MsmtUIUtilities.cpp
+  MsmtUIUtilities.h make-defs
+Added Files:
+  CMServerDiagnostics.ui CMServerDiagnosticsImpl.cpp
+  CMServerDiagnosticsImpl.h
+
+Revision 1.28  2003/08/01 19:44:17  doomer
+adding support for 5483x oscilloscopes
+
+CMDataTypes.h MenuDefinitions.xml MsmtSrvrUI.cpp MsmtSrvrUI.h
+VoltMeas_861XX_548XX_546XX_Impl.cpp
+
+Revision 1.27  2003/07/25 18:55:26  doomer
+had to take the cvs log minus signs out again.
+
+Revision 1.26  2003/07/25 18:47:15  doomer
+adding support for 4-port s-parameter measurements.
+Modified Files:
+  CMDataTypes.h MenuDefinitions.xml MsmtSrvrUI.cpp MsmtSrvrUI.h
+  PNPSparmUI.h SparmMeas_3Port.ui SparmMeas_3Port_Impl.cpp
+  SparmMeas_3Port_Impl.h
+
+Revision 1.25  2003/07/16 00:39:41  doomer
+changes for the help menu on RFDE
+Modified Files:
+  MenuDefinitions.xml MsmtSrvrUI.cpp RfdeHelpAbout.ui
+  RfdeHelpAboutImpl.cpp RfdeHelpAboutImpl.h
+
+Revision 1.24  2003/07/15 20:44:42  doomer
+changes for hiding help menu contents from rfde
+
+Revision 1.23  2003/07/15 18:03:46  doomer
+removed minus signs from cvs ci log
+
+Revision 1.22  2003/07/15 00:41:32  doomer
+adding support for gemx commands set_rfde_context, prompt_for_save
+exit_immediately for use in rfde.
+
+Revision 1.21  2003/05/02 03:04:33  surenram
+Renamed p-swept measurements as 2-port p-swept
+
+Revision 1.20  2003/05/01 22:02:07  doomer
+changed spelling of S Parameters.
+
+Revision 1.19  2003/04/18 19:40:23  doomer
+removed the Advanced menu.
+
+Revision 1.18  2003/03/25 23:01:52  doomer
+modifications to improve usability.  rearranged the cm ui menu.
+improved the readability of error dialogs.
+
+Modified Files:
+  ImportDotNetLib.cpp ImportDriver.cpp ImportVeeLib.cpp
+  InstExplorer.cpp InteractiveIO.cpp MenuDefinitions.xml
+  MsmtSrvrUI.cpp MsmtUIUtilities.cpp MsmtUIUtilities.h
+  SparmMeas_PSwept_Impl.cpp SpecMeas_Base_Impl.cpp
+  VoltMeas_861XX_548XX_546XX_Impl.cpp
+
+Revision 1.17  2003/02/15 00:42:51  doomer
+added a panel to talk to 5462x and 5464x oscilloscopes
+
+Modified Files:
+  CMDataTypes.h MenuDefinitions.xml MsmtSrvrUI.cpp MsmtSrvrUI.h
+  VoltMeas_861XX_548XX_546XX_Impl.cpp
+  VoltMeas_861XX_548XX_546XX_Impl.h
+
+Revision 1.16  2003/02/06 00:33:33  surenram
+Added new UI for 3-port Sparameters and derived PNPSparmUI class from this
+instead of the 2-port measurement UI
+
+Revision 1.15  2003/02/05 04:35:10  surenram
+Checked in UI for Power Swept s-parameter measurement
+
+Revision 1.14  2003/01/31 23:25:03  doomer
+added a library browser dialog
+
+Revision 1.13  2003/01/30 08:01:25  kkladopo
+CVS formatting of check in comments yields invalid entries in an xml comment
+
+Revision 1.12  2003/01/30 06:54:46  kkladopo
+added entries for 856xx and E444xA
+
+Revision 1.11  2003/01/30 00:58:20  doomer
+added a panel for 871x network analyzers
+
+Modified Files:
+  MenuDefinitions.xml MsmtSrvrUI.cpp MsmtSrvrUI.h PNPSparm.h
+  SparmClient.cpp SparmClient.h
+
+
+Revision 1.10  2003/01/25 02:15:59  surenram
+Removed Extensible Sparameters from the Measurements menu list
+
+Revision 1.9  2003/01/22 22:18:04  doomer
+removed entry which was used to launch vee io manager dialog.  moved that
+capability to schematic window
+
+Revision 1.8  2003/01/17 23:46:26  doomer
+removed driver download entry from the instrument menu.
+
+Revision 1.7  2003/01/15 22:33:15  doomer
+Added 8510 s parameter panel.
+Help for server components shows up on client machine now.
+
+Modified Files:
+  MsmtSrvrUI.cpp MsmtSrvrUI.h ImportDotNetLib.cpp
+  ImportDriver.cpp ImportVeeLib.cpp MenuDefinitions.xml
+  PNPSparm.h SparmClient.cpp SparmClient.h make-defs
+
+Revision 1.6  2003/01/15 06:44:38  kkladopo
+updated menu definitions with new Spectrum and Voltage measurements
+
+Revision 1.5  2003/01/06 17:58:11  doomer
+CVS formatting of check in comments yields invalid entries in an
+xml comment.
+
+Revision 1.4  2002/12/19 20:43:18  doomer
+Added a simplified s-parameter measurement that talks to network anakyzers
+in the Ag8753 plug & play driver.  I have not yet imlemented export to
+a data file or serialization.
+Modified Files:
+  CMDataTypes.h MenuDefinitions.xml MsmtSrvrUI.cpp MsmtSrvrUI.h
+  MsmtUIUtilities.cpp MsmtUIUtilities.h SparmClient.cpp
+  SparmClient.h make-defs
+Added Files:
+  PNPSparm.h PNPSparm.ui
+
+Revision 1.11  2002-12-16 10:55:06-08  doomer
+Got the s-parameter measurement for dummies UI wired into the
+rest of the measurement server UI.
+
+Revision 1.10  2002-11-21 13:52:30-08  doomer
+Synchronizing sources with work pc.
+
+Revision 1.3  2002/11/06 03:46:09  surenram
+1. Fixed typos in Menudefinitions.xml
+2. Renamed SimUI as CmgrCompUI
+
+Revision 1.2  2002/11/05 01:59:47  doomer
+there is only one s parameter measurement now.
+
+Revision 1.1  2002/09/20 23:51:20  doomer
+The ui menu definition file
+
+Revision 1.1  2002-09-05 14:45:34-07  doomer
+Simplified the menus.
+
+Revision 1.0  2002-09-05 14:39:06-07  doomer
+Initial revision
+
+Revision 1.7  2002-08-20 17:12:02-07  doomer
+Added an interactive IO dialog.
+
+Revision 1.6  2002-08-15 11:29:49-07  doomer
+Added a menu selection to download drivers.
+
+Revision 1.5  2002-08-13 18:26:51-07  doomer
+Started wiring the instrument finder dialog into the main window.  Like
+everything else Qt, there is no documentation on how to use modeless
+dialogs.
+
+Revision 1.4  2002-08-06 17:30:51-07  doomer
+Added more menu defintions.
+
+-->

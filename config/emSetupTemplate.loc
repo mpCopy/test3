@@ -1,0 +1,32 @@
+; This file is found in the first of the following locations that has an emSetupTemplate.loc file:
+;    .                                   Current working directory                  
+;    @ADS_WORKSPACE                      The current workspace
+;    $ADS_EMSETUPTEMPLATELOC_FILEPATH    Environment variable with the full PATH to emSetupTemplate.loc
+;    $HOME/hpeesof
+;    $ADS_CUSTOM_DIR                     if $ADS_CUSTOM_DIR not set use $HPEESOF_DIR/custom instead
+;    $HPEESOF_DIR/config                 Will always contain a emSetupTemplate.loc file which can be used for customization
+;
+; It defines the EM Setup Template search locations (path to directory or path to file)
+; EM Setup Templates are files with the suffix .emSetupT
+; *All* EM Setup Templates found in these locations will be offered to choose from when creating a new emSetup
+;
+; Format: one entry per line, everything after blank or tab is comment (quote entries if containing blanks)
+; ; or '#' or '//' at the start of a line is a comment.
+; $envvar, ${envvar} are expanded as needed.
+;
+; If an environment variable is not defined, then that entry is ignored.
+; No errors are generated.
+;
+.                        search the current working directory for templates
+@LIBRARY                 search all the design libraries for templates
+;@LIBRARY_myLibrary      search the myLibrary design libraries for templates
+;@ADS_WORKSPACE	         search current user workspace for templates (in most cases the current working directory)
+$ADS_EMSETUPT_SEARCHDIR  search the directory defined by the environment variable that may be set during startup for templates
+@EMSETUPT_USER 	         search for user templates stored in $HOME/hpeesof/em/setupTemplates	
+@EMSETUPT_SITE	         search for site templates stored in $ADS_CUSTOM_DIR/em/setupTemplates 
+;                           if ADS_CUSTOM_DIR is not set search in $HPEESOF_DIR/custom/em/setupTemplates
+@EMSETUPT_SUPPLIED       search for shipped templates stored in $HPEESOF_DIR/em/setupTemplates
+;$ANY_ENV_VARIABLE       search the directory defined by the environment variable that may be set during startup for templates
+;/a/fixed/path/to/a/directory              search directory for templates
+;"/a/fixed/path/to/a/template.emsetupT"    add this template to the list if found.
+

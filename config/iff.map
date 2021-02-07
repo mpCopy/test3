@@ -1,0 +1,34 @@
+! @(#) $Source: /cvs/wlv/src/iff/misc/iff.map,v $ $Revision: 1.3 $ $Date: 2009/07/29 23:21:51 $  
+!----------------------------------------------------------------------------
+!
+! Layer Mapping File for IFF Layout Imports
+!
+! This file defines the mapping between IFF Layers and ADS/SeriesIV
+! layers.  The first column is the IFF Layer Name. The second column is
+! the ADS/SeriesIV layer name. The last column is a comment column and
+! is optional. Each column is separated by one of the following comment
+! characters ("!",";" or "*").  In addition to the normal layer names
+! the ADS/SeriesIV layer column can include the layer names "default"
+! and "none". The "default" layer assigns that layers data to the
+! ADS/SeriesIV default layer. And the "none" layer ignores the data on
+! that layer during the import.
+!
+! This file can be located in the following directories. Each file is
+! read with the last entry taking precedence over previous entries.
+!
+!	[$HPEESOF,$EESOF]/config/iff.map  (System Level)  (1st)
+!	$HOME/hpeesof/config/iff.map      (User Level)    (2nd)
+!	<Project>/iff.map                 (Project Level) (last)
+!
+!----------------------------------------------------------------------------
+!   IFF Layer   !  ADS/SeriesIV Layer   ! Comments
+!----------------------------------------------------------------------------
+FMetal		!	cond		! This is a comment....
+FResist		!	resi
+FDieDef		! 	diel
+CapGap		!	capgap	        ! This is another comment...
+Assembly	!	packages
+Pin		!	ports
+New Layer Name  !       default         ! Assign this layer to default
+Junk            !       none            ! Ignore all data on Junk layer
+
