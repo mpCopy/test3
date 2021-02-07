@@ -1,0 +1,35 @@
+--- qtbase/mkspecs/win32-msvc2013/qmake.conf.orig	2015-04-24 08:41:06.179739300 -0700
++++ qtbase/mkspecs/win32-msvc2013/qmake.conf	2015-04-24 08:42:31.196240100 -0700
+@@ -22,10 +22,10 @@
+ QMAKE_LEXFLAGS          =
+ QMAKE_YACC              = byacc
+ QMAKE_YACCFLAGS         = -d
+-QMAKE_CFLAGS            = -nologo -Zm200 -Zc:wchar_t -FS
++QMAKE_CFLAGS            = -nologo -Zm200 -Zc:wchar_t -FS -Zi
+ QMAKE_CFLAGS_WARN_ON    = -W3
+ QMAKE_CFLAGS_WARN_OFF   = -W0
+-QMAKE_CFLAGS_RELEASE    = -O2 -MD -Zc:strictStrings
++QMAKE_CFLAGS_RELEASE    = -O2 -MD -Zc:strictStrings -Zi
+ QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO += -O2 -MD -Zi -Zc:strictStrings
+ QMAKE_CFLAGS_DEBUG      = -Zi -MDd
+ QMAKE_CFLAGS_YACC       =
+@@ -67,7 +67,7 @@
+ 
+ QMAKE_LINK              = link
+ QMAKE_LFLAGS            = /NOLOGO /DYNAMICBASE /NXCOMPAT
+-QMAKE_LFLAGS_RELEASE    = /INCREMENTAL:NO
++QMAKE_LFLAGS_RELEASE    = /INCREMENTAL:NO  /DEBUG /OPT:REF
+ QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO = /DEBUG /OPT:REF /INCREMENTAL:NO
+ QMAKE_LFLAGS_DEBUG      = /DEBUG
+ QMAKE_LFLAGS_CONSOLE    = /SUBSYSTEM:CONSOLE@QMAKE_SUBSYSTEM_SUFFIX@
+--- qtwebkit/Source/WebCore/platform/text/TextEncodingRegistry.cpp.roig	2015-04-21 19:50:28.864289700 -0700
++++ qtwebkit/Source/WebCore/platform/text/TextEncodingRegistry.cpp	2015-04-22 16:24:09.904855700 -0700
+@@ -298,7 +298,7 @@
+     TextCodecMac::registerCodecs(addToTextCodecMap);
+ #endif
+ 
+-#if OS(WINDOWS) && USE(WCHAR_UNICODE)
++#if OS(WINCE)  && USE(WCHAR_UNICODE)
+     TextCodecWin::registerExtendedEncodingNames(addToTextEncodingNameMap);
+     TextCodecWin::registerExtendedCodecs(addToTextCodecMap);
+ #endif

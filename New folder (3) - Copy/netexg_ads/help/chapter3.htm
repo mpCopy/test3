@@ -1,0 +1,85 @@
+<html>
+<head>
+<title>PCB Importer User Manual Chapter 3 Importing Files</title>
+<style>
+body {background-color:#FFFFFF;
+      text-decoration:none;
+      font-family:Verdana,Arial,Helvetica,sans-serif;
+      font-size:100%;
+      margin-left:50px;
+     }
+
+h1,h2,h3,h4 {color:#C00000;}
+
+pre {font-family :Courier New, Courier, Monospaced;}
+
+p   {line-height:1.5;}
+</style>
+</head>
+
+<body>
+<table width=825>
+<td width=825>
+<h1>Importing Files</h1>
+<p>The first step in importing PCB manufacturing data is to open the file (or the directory hierarchy). This is done from the File pull down available in the main dialog box:</p>
+
+<h2>ODB++</h2>
+<p>To import an ODB++ file use the File | Import ODB++ menu item.</p>
+
+<img src="./file_open_import_odb_pull_down.gif" width=673 height=259 hspace=73 vspace=10 alt="importing an ODB++ file"><br>
+
+<p>The import dialog will open. You must choose between opening a file (in .tgz format) or a directory hierarchy by pressing the correct radio buttom selector.</p>
+
+
+<img src="./odb_import_dialog_empty.gif" width=554 height=286 hspace=83 vspace=10 alt="importing an ODB++ file"><br>
+
+<p>In the screen shot above we have selected Directory so we use the Open button and browse to the directory that is the "top" of the ODB++ hierarchy.
+</p>
+
+<img src="./browse_odb_directory_dialog.gif" width=325 height=332 hspace=250 vspace=10 alt="browse odb top level directory"><br>
+
+<p>Once the directory is selected and the user hits OK, the program will do the following:</p>
+
+<ul>
+<p>a) make a copy of the ODB++ hierarchy in a temporary location.</p>
+
+<p>b) scan the ODB data and populate the list of STEPs and Layers</p>
+</ul>
+
+<img src="./odb_step_and_layer_list.gif" width=680 height=331 hspace=72 vspace=10 alt="steps and layers"><br>
+
+<h3>Selecting The Step and Layers</h3>
+
+<p>Most PCB Design software will only create a single STEP. (In principle, the ODB++ file could have multiple circuits - each represented by a STEP along with an array; again, another STEP - but this is only seen when preparing a circuit for panelization.)</p>
+
+<p>The only layer <u>types</u> that the user should import are:</p>
+
+<p>component</p>
+<p>signal</p>
+<p>power gnd</p>
+<p>drill</p>
+
+<p>These are selected by holding the Ctrl key down and clicking on each layer to import.</p>
+
+<p>If you select layers of type other than the supported types no harm is done. However if you fail to select a layer of the required type important sections of the layout data will not be transfered to ADS.</p>
+
+
+<img src="./odb_selected_layers.gif" width=680 height=331 hspace=72 vspace=20 alt="selected layers for import"><br>
+
+<p>Note that there may be components on both top and bottom of the board and one should select both top and bottom components. There are often multiple drill layers to account for buried and blind vias so select all layers of type drill.</p>
+
+<p>When you are satisfied that you have selected the proper layers click on the Import button.</p>
+
+<br>
+
+<h3>Previewing Data</h3>
+<p>If you wish to preview one or more layers before doing your import, highlight the layer or layer(s) by clicking on it and then click on Preview. This will launch the GBRVU program and show you the data in a new window.</p>
+
+
+<img src="./plane1_preview.gif" width=595 height=680 hspace=115 vspace=10 alt="plane1 preview"><br>
+
+
+</td>
+</table>
+</body>
+</html>

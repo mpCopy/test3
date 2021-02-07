@@ -1,0 +1,5219 @@
+diff -Naur qwt-6.1/source/src/qwt_abstract_scale_draw.cpp qwt_6.1.0.original/src/qwt_abstract_scale_draw.cpp
+--- qwt-6.1/source/src/qwt_abstract_scale_draw.cpp	2014-08-28 16:58:46.383665691 -0700
++++ qwt_6.1.0.original/src/qwt_abstract_scale_draw.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -369,6 +369,9 @@
+ */
+ QwtText QwtAbstractScaleDraw::label( double value ) const
+ {
++    if ( qFuzzyCompare( value + 1.0, 1.0 ) )
++        value = 0.0; 
++
+     return QLocale().toString( value );
+ }
+ 
+diff -Naur qwt-6.1/source/src/qwt_abstract_slider.cpp qwt_6.1.0.original/src/qwt_abstract_slider.cpp
+--- qwt-6.1/source/src/qwt_abstract_slider.cpp	2014-08-28 16:58:46.394665849 -0700
++++ qwt_6.1.0.original/src/qwt_abstract_slider.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -749,11 +749,11 @@
+     if ( d_data->totalSteps == 0 )
+         return value;
+ 
+-    double stepSize;
+-
+     if ( scaleMap().transformation() == NULL )
+     {
+-        stepSize = ( maximum() - minimum() ) / d_data->totalSteps;
++        const double stepSize = 
++            ( maximum() - minimum() ) / d_data->totalSteps;
++
+         if ( stepSize > 0.0 )
+         {
+             value = lowerBound() + 
+@@ -762,7 +762,8 @@
+     }
+     else
+     {
+-        stepSize = ( scaleMap().p2() - scaleMap().p1() ) / d_data->totalSteps;
++        const double stepSize = 
++            ( scaleMap().p2() - scaleMap().p1() ) / d_data->totalSteps;
+ 
+         if ( stepSize > 0.0 )
+         {
+@@ -775,21 +776,18 @@
+         }
+     }
+ 
+-    if ( qAbs( stepSize ) > 1e-12 )
++    // correct rounding error if value = 0
++    if ( qFuzzyCompare( value + 1.0, 1.0 ) )
+     {
+-        if ( qFuzzyCompare( value + 1.0, 1.0 ) )
+-        {
+-            // correct rounding error if value = 0
+-            value = 0.0;
+-        }
+-        else
+-        {
+-            // correct rounding error at the border
+-            if ( qFuzzyCompare( value, upperBound() ) )
+-                value = upperBound();
+-            else if ( qFuzzyCompare( value, lowerBound() ) )
+-                value = lowerBound();
+-        }
++        value = 0.0;
++    }
++    else
++    {
++        // correct rounding error at the border
++        if ( qFuzzyCompare( value, upperBound() ) )
++            value = upperBound();
++        else if ( qFuzzyCompare( value, lowerBound() ) )
++            value = lowerBound();
+     }
+ 
+     return value;
+diff -Naur qwt-6.1/source/src/qwt_compass_rose.cpp qwt_6.1.0.original/src/qwt_compass_rose.cpp
+--- qwt-6.1/source/src/qwt_compass_rose.cpp	2014-08-28 16:58:46.492667246 -0700
++++ qwt_6.1.0.original/src/qwt_compass_rose.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -75,7 +75,6 @@
+   Set the Factor how to shrink the thorns with each level
+   The default value is 0.9.
+ 
+-  \param factor Shrink factor
+   \sa shrinkFactor()
+ */
+ void QwtSimpleCompassRose::setShrinkFactor( double factor )
+@@ -212,10 +211,7 @@
+         d_data->width = 0.4;
+ }
+ 
+-/*! 
+-  \return Width of the rose
+-  \sa setWidth()
+- */
++//! \sa setWidth()
+ double QwtSimpleCompassRose::width() const
+ {
+     return d_data->width;
+diff -Naur qwt-6.1/source/src/qwt_counter.cpp qwt_6.1.0.original/src/qwt_counter.cpp
+--- qwt-6.1/source/src/qwt_counter.cpp	2014-08-28 16:58:46.520667644 -0700
++++ qwt_6.1.0.original/src/qwt_counter.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -661,20 +661,11 @@
+     }
+ 
+     value = min + qRound( ( value - min ) / stepSize ) * stepSize;
++    if ( qFuzzyCompare( value, max ) )
++        value = max;
+ 
+-    if ( stepSize > 1e-12 )
+-    {
+-        if ( qFuzzyCompare( value + 1.0, 1.0 ) )
+-        {
+-            // correct rounding error if value = 0
+-            value = 0.0;
+-        }
+-        else if ( qFuzzyCompare( value, max ) )
+-        {
+-            // correct rounding error at the border
+-            value = max;
+-        }
+-    }
++    if ( qFuzzyCompare( value + 1.0, 1.0 ) )
++        value = 0.0;
+ 
+     if ( value != d_data->value )
+     {
+diff -Naur qwt-6.1/source/src/qwt_date_scale_engine.cpp qwt_6.1.0.original/src/qwt_date_scale_engine.cpp
+--- qwt-6.1/source/src/qwt_date_scale_engine.cpp	2014-08-28 16:58:46.585668572 -0700
++++ qwt_6.1.0.original/src/qwt_date_scale_engine.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -18,7 +18,7 @@
+         365.0 * 24.0 * 3600.0 * 1000.0,
+     };
+ 
+-    if ( type < 0 || type >= static_cast<int>( sizeof( msecs ) / sizeof( msecs[0] ) ) )
++    if ( type < 0 || type >= sizeof( msecs ) / sizeof( msecs[0] ) )
+         return 1.0;
+ 
+     return msecs[ type ];
+@@ -903,7 +903,7 @@
+   The algorithm aligns and divides the interval into steps. 
+ 
+   Datetime interval divisions are usually not equidistant and the
+-  calculated stepSize can only be used as an approximation
++  calculated stepSize is can only be used as an approximation
+   for the steps calculated by divideScale(). 
+ 
+   \param maxNumSteps Max. number of steps
+@@ -944,19 +944,19 @@
+         const QwtDate::IntervalType intvType = 
+             intervalType( from, to, maxNumSteps );
+ 
+-        const double width = qwtIntervalWidth( from, to, intvType );
++        double width = qwtIntervalWidth( from, to, intvType );
++        width = QwtScaleArithmetic::divideInterval( width, maxNumSteps, 10 );
+ 
+-        const double stepWidth = qwtDivideScale( width, maxNumSteps, intvType );
+-        if ( stepWidth != 0.0 && !testAttribute( QwtScaleEngine::Floating ) )
++        if ( width != 0.0 && !testAttribute( QwtScaleEngine::Floating ) )
+         {
+-            const QDateTime d1 = alignDate( from, stepWidth, intvType, false );
+-            const QDateTime d2 = alignDate( to, stepWidth, intvType, true );
++            const QDateTime d1 = alignDate( from, width, intvType, false );
++            const QDateTime d2 = alignDate( to, width, intvType, true );
+ 
+             interval.setMinValue( QwtDate::toDouble( d1 ) );
+             interval.setMaxValue( QwtDate::toDouble( d2 ) );
+         }
+ 
+-        stepSize = stepWidth * qwtMsecsForType( intvType );
++        stepSize = width * qwtMsecsForType( intvType );
+     }
+ 
+     x1 = interval.minValue();
+@@ -1123,14 +1123,8 @@
+         }
+         case QwtDate::Second:
+         {
+-            int second = dt.time().second();
+-            if ( up )
+-            {
+-                if ( dt.time().msec() > 0 )
+-                    second++;
+-            }
+-
+-            const int s = qwtAlignValue( second, stepSize, up );
++            const int s = qwtAlignValue( 
++                dt.time().second(), stepSize, up );
+ 
+             dt = QwtDate::floor( dt, QwtDate::Minute );
+             dt = dt.addSecs( s );
+@@ -1139,14 +1133,8 @@
+         }
+         case QwtDate::Minute:
+         {
+-            int minute = dt.time().minute();
+-            if ( up )
+-            {
+-                if ( dt.time().msec() > 0 || dt.time().second() > 0 )
+-                    minute++;
+-            }
+-
+-            const int m = qwtAlignValue( minute, stepSize, up );
++            const int m = qwtAlignValue( 
++                dt.time().minute(), stepSize, up );
+ 
+             dt = QwtDate::floor( dt, QwtDate::Hour );
+             dt = dt.addSecs( m * 60 );
+@@ -1155,16 +1143,8 @@
+         }
+         case QwtDate::Hour:
+         {
+-            int hour = dt.time().hour();
+-            if ( up )
+-            {
+-                if ( dt.time().msec() > 0 || dt.time().second() > 0
+-                    || dt.time().minute() > 0 )
+-                {
+-                    hour++;
+-                }
+-            }
+-            const int h = qwtAlignValue( hour, stepSize, up );
++            const int h = qwtAlignValue( 
++                dt.time().hour(), stepSize, up );
+ 
+             dt = QwtDate::floor( dt, QwtDate::Day );
+             dt = dt.addSecs( h * 3600 );
+@@ -1177,14 +1157,8 @@
+             // Aligning them to the beginning of the year avoids at least
+             // jumping major ticks when panning
+ 
+-            int day = dt.date().dayOfYear();
+-            if ( up )
+-            {
+-                if ( dt.time() > QTime( 0, 0 ) )
+-                    day++;
+-            }
+-
+-            const int d = qwtAlignValue( day, stepSize, up );
++            const int d = qwtAlignValue(
++                dt.date().dayOfYear(), stepSize, up );
+ 
+             dt = QwtDate::floor( dt, QwtDate::Year );
+             dt = dt.addDays( d - 1 );
+@@ -1196,16 +1170,7 @@
+             const QDate date = QwtDate::dateOfWeek0(
+                 dt.date().year(), d_data->week0Type );
+ 
+-            int numWeeks = date.daysTo( dt.date() ) / 7;
+-            if ( up )
+-            {
+-                if ( dt.time() > QTime( 0, 0 ) ||
+-                    date.daysTo( dt.date() ) % 7 )
+-                {
+-                    numWeeks++;
+-                }
+-            }
+-
++            const int numWeeks = date.daysTo( dt.date() ) / 7;
+             const int d = qwtAlignValue( numWeeks, stepSize, up ) * 7;
+ 
+             dt = QwtDate::floor( dt, QwtDate::Day );
+@@ -1216,17 +1181,8 @@
+         }
+         case QwtDate::Month:
+         {
+-            int month = dt.date().month();
+-            if ( up )
+-            {
+-                if ( dt.date().day() > 1 ||
+-                    dt.time() > QTime( 0, 0 ) )
+-                {
+-                    month++;
+-                }
+-            }
+-
+-            const int m = qwtAlignValue( month - 1, stepSize, up );
++            const int m = qwtAlignValue( 
++                dt.date().month() - 1, stepSize, up );
+ 
+             dt = QwtDate::floor( dt, QwtDate::Year );
+             dt = dt.addMonths( m );
+@@ -1235,17 +1191,8 @@
+         }
+         case QwtDate::Year:
+         {
+-            int year = dateTime.date().year();
+-            if ( up )
+-            {
+-                if ( dateTime.date().dayOfYear() > 1 ||
+-                    dt.time() > QTime( 0, 0 ) )
+-                {
+-                    year++;
+-                }
+-            }
+-
+-            const int y = qwtAlignValue( year, stepSize, up );
++            const int y = qwtAlignValue(
++                dateTime.date().year(), stepSize, up );
+ 
+             dt = QwtDate::floor( dt, QwtDate::Day );
+             if ( y == 0 )
+diff -Naur qwt-6.1/source/src/qwt_global.h qwt_6.1.0.original/src/qwt_global.h
+--- qwt-6.1/source/src/qwt_global.h	2014-08-28 16:58:46.654669556 -0700
++++ qwt_6.1.0.original/src/qwt_global.h	2013-03-01 14:52:46.000000000 -0800
+@@ -6,15 +6,16 @@
+  * This library is free software; you can redistribute it and/or
+  * modify it under the terms of the Qwt License, Version 1.0
+  *****************************************************************************/
+-#pragma once
+ 
++#ifndef QWT_GLOBAL_H
++#define QWT_GLOBAL_H
+ 
+ #include <qglobal.h>
+ 
+ // QWT_VERSION is (major << 16) + (minor << 8) + patch.
+ 
+-#define QWT_VERSION       0x060101
+-#define QWT_VERSION_STR   "6.1.1"
++#define QWT_VERSION       0x060100
++#define QWT_VERSION_STR   "6.1.0"
+ 
+ #if defined(_MSC_VER) /* MSVC Compiler */
+ /* template-class specialization 'identifier' is already instantiated */
+@@ -24,35 +25,18 @@
+ #pragma warning(disable: 4250)
+ #endif // _MSC_VER
+ 
++#ifdef QWT_DLL
+ 
+-#pragma once
+-
+-#if defined(_WIN32) // static is not supported; need to ensure runtime registration into singleton containers
+-    #if defined(QWT_MAKEDLL)
+-            #define QWT_EXPORT __declspec(dllexport)
+-    #else
+-            #define QWT_EXPORT __declspec(dllimport)
+-    #endif
+-    #define QWT_LOCAL  // to decrease chance of someone adding export
+-    #define QWT_MODULE // for the occasional case where you must export only on linux
+-#else
+-    #if __GNUC__ >= 4
+-      #define QWT_EXPORT  __attribute__ ((visibility ("default")))
+-      #define QWT_MODULE  __attribute__ ((visibility ("default")))
+-      #define QWT_LOCAL   __attribute__ ((visibility ("hidden")))
+-    #else
+-      #define  QWT_EXPORT
+-      #define  QWT_LOCAL
+-      #define  QWT_MODULE
+-    #endif
++#if defined(QWT_MAKEDLL)     // create a Qwt DLL library 
++#define QWT_EXPORT Q_DECL_EXPORT
++#else                        // use a Qwt DLL library
++#define QWT_EXPORT Q_DECL_IMPORT 
+ #endif
+ 
+-// enable compilation toggle for yes/no exporting internal objects for tests.
+-// set it to on for production build.
+-#if !defined(QWT_HIDE_GTEST_EXPORTS)
+-    #define  QWT_GTEST  QWT_EXPORT
+-#else
+-    #define  GRAPHS_GTEST  QWT_LOCAL
++#endif // QWT_DLL
++
++#ifndef QWT_EXPORT
++#define QWT_EXPORT
+ #endif
+ 
++#endif 
+diff -Naur qwt-6.1/source/src/qwt_graphic.h qwt_6.1.0.original/src/qwt_graphic.h
+--- qwt-6.1/source/src/qwt_graphic.h	2014-08-28 16:58:46.655669570 -0700
++++ qwt_6.1.0.original/src/qwt_graphic.h	2013-03-01 14:52:47.000000000 -0800
+@@ -23,7 +23,7 @@
+ 
+     QwtGraphic is the representation of a graphic that is tailored for
+     scalability. Like QPicture it will be initialized by QPainter
+-    operations and can be replayed later to any target paint device.
++    operations and replayed later to any target paint device.
+ 
+     While the usual image representations QImage and QPixmap are not
+     scalable Qt offers two paint devices, that might be candidates
+@@ -36,16 +36,18 @@
+ 
+     - QSvgRenderer/QSvgGenerator\n
+       Unfortunately QSvgRenderer hides to much information about
+-      its nodes in internal APIs, that are necessary for proper 
++      its nodes in internal APIs, that are necessary proper 
+       layout calculations. Also it is derived from QObject and 
+       can't be copied like QImage/QPixmap.
++      Also QSvgRenderer/QSvgGenerator are no complete SVG implementations
++      with a questionable future in Qt 5.
+ 
+     QwtGraphic maps all scalable drawing primitives to a QPainterPath
+     and stores them together with the painter state changes 
+     ( pen, brush, transformation ... ) in a list of QwtPaintCommands. 
+     For being a complete QPaintDevice it also stores pixmaps or images, 
+     what is somehow against the idea of the class, because these objects 
+-    can't be scaled without a loss in quality.
++    can be scaled without a loss in quality.
+ 
+     The main issue about scaling a QwtGraphic object are the pens used for
+     drawing the outlines of the painter paths. While non cosmetic pens 
+diff -Naur qwt-6.1/source/src/qwt_knob.cpp qwt_6.1.0.original/src/qwt_knob.cpp
+--- qwt-6.1/source/src/qwt_knob.cpp	2014-08-28 16:58:46.705670284 -0700
++++ qwt_6.1.0.original/src/qwt_knob.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -521,24 +521,6 @@
+ 
+             break;
+         }
+-        case QwtKnob::Styled:
+-        {
+-            QRadialGradient gradient(knobRect.center().x() - knobRect.width() / 3,
+-                knobRect.center().y() - knobRect.height() / 2,
+-                knobRect.width() * 1.3,
+-                knobRect.center().x(),
+-                knobRect.center().y() - knobRect.height() / 2);
+-
+-            const QColor c = palette().color( QPalette::Button );
+-            gradient.setColorAt(0, c.lighter(110));
+-            gradient.setColorAt(qreal(0.5), c);
+-            gradient.setColorAt(qreal(0.501), c.darker(102));
+-            gradient.setColorAt(1, c.darker(115));
+-
+-            brush = QBrush( gradient );
+-
+-            break;
+-        }
+         case QwtKnob::Sunken:
+         {
+             QLinearGradient gradient( 
+@@ -587,17 +569,13 @@
+     if ( radius < 1.0 )
+         radius = 1.0;
+ 
+-    int markerSize = d_data->markerSize;
+-    if ( markerSize <= 0 )
+-        markerSize = qRound( 0.4 * radius );
+-
+     switch ( d_data->markerStyle )
+     {
+         case Notch:
+         case Nub:
+         {
+             const double dotWidth = 
+-                qMin( double( markerSize ), radius);
++                qMin( double( d_data->markerSize ), radius);
+ 
+             const double dotCenterDist = radius - 0.5 * dotWidth;
+             if ( dotCenterDist > 0.0 )
+@@ -629,7 +607,7 @@
+         case Dot:
+         {
+             const double dotWidth = 
+-                qMin( double( markerSize ), radius);
++                qMin( double( d_data->markerSize ), radius);
+ 
+             const double dotCenterDist = radius - 0.5 * dotWidth;
+             if ( dotCenterDist > 0.0 )
+@@ -649,7 +627,7 @@
+         }
+         case Tick:
+         {
+-            const double rb = qMax( radius - markerSize, 1.0 );
++            const double rb = qMax( radius - d_data->markerSize, 1.0 );
+             const double re = radius;
+ 
+             const QLineF line( xm - sinA * rb, ym - cosA * rb,
+@@ -664,7 +642,7 @@
+         }
+         case Triangle:
+         {
+-            const double rb = qMax( radius - markerSize, 1.0 );
++            const double rb = qMax( radius - d_data->markerSize, 1.0 );
+             const double re = radius;
+ 
+             painter->translate( rect.center() );
+@@ -802,10 +780,6 @@
+ 
+ /*!
+   \brief Set the size of the marker
+-
+-  When setting a size <= 0 the marker will
+-  automatically scaled to 40% of the radius of the knob.
+-
+   \sa markerSize(), markerStyle()
+ */
+ void QwtKnob::setMarkerSize( int size )
+diff -Naur qwt-6.1/source/src/qwt_knob.h qwt_6.1.0.original/src/qwt_knob.h
+--- qwt-6.1/source/src/qwt_knob.h	2014-08-28 16:58:46.712670382 -0700
++++ qwt_6.1.0.original/src/qwt_knob.h	2013-03-01 14:52:47.000000000 -0800
+@@ -75,13 +75,7 @@
+           Build a gradient from QPalette::Midlight, QPalette::Button
+           and QPalette::Midlight
+          */
+-        Sunken,
+-
+-        /*! 
+-          Build a radial gradient from QPalette::Button
+-          like it is used for QDial in various Qt styles.
+-         */
+-        Styled
++        Sunken
+     };
+ 
+     /*!
+diff -Naur qwt-6.1/source/src/qwt_legend.cpp qwt_6.1.0.original/src/qwt_legend.cpp
+--- qwt-6.1/source/src/qwt_legend.cpp	2014-08-28 16:58:46.732670668 -0700
++++ qwt_6.1.0.original/src/qwt_legend.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -20,7 +20,7 @@
+ #include <qstyle.h>
+ #include <qstyleoption.h>
+ 
+-class QWT_GTEST QwtLegendMap
++class QwtLegendMap
+ {
+ public:
+     inline bool isEmpty() const { return d_entries.isEmpty(); }
+diff -Naur qwt-6.1/source/src/qwt_legend_label.cpp qwt_6.1.0.original/src/qwt_legend_label.cpp
+--- qwt-6.1/source/src/qwt_legend_label.cpp	2014-08-28 16:58:46.739670768 -0700
++++ qwt_6.1.0.original/src/qwt_legend_label.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -74,8 +74,7 @@
+     if ( legendData.hasRole( QwtLegendData::ModeRole ) )
+         setItemMode( legendData.mode() );
+ 
+-    // TODO: Long (this is interfering with gui state flags)
+-    //if ( doUpdate )
++    if ( doUpdate )
+     {
+         setUpdatesEnabled( true );
+         update();
+diff -Naur qwt-6.1/source/src/qwt_magnifier.cpp qwt_6.1.0.original/src/qwt_magnifier.cpp
+--- qwt-6.1/source/src/qwt_magnifier.cpp	2014-08-28 16:58:46.767671168 -0700
++++ qwt_6.1.0.original/src/qwt_magnifier.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -12,7 +12,7 @@
+ #include <qevent.h>
+ #include <qwidget.h>
+ 
+-class QWT_GTEST QwtMagnifier::PrivateData
++class QwtMagnifier::PrivateData
+ {
+ public:
+     PrivateData():
+diff -Naur qwt-6.1/source/src/qwt_math.h qwt_6.1.0.original/src/qwt_math.h
+--- qwt-6.1/source/src/qwt_math.h	2014-08-28 16:58:46.776671297 -0700
++++ qwt_6.1.0.original/src/qwt_math.h	2013-03-01 14:52:47.000000000 -0800
+@@ -26,12 +26,6 @@
+ #include <qmath.h>
+ #include "qwt_global.h"
+ 
+-#ifndef M_PI_2
+-// For Qt <= 4.8.4 M_PI_2 is not known by MinGW-w64 
+-// when compiling with -std=c++11
+-#define M_PI_2 (1.57079632679489661923)
+-#endif
+-
+ #ifndef LOG_MIN
+ //! Minimum value for logarithmic scales
+ #define LOG_MIN 1.0e-100
+diff -Naur qwt-6.1/source/src/qwt_null_paintdevice.cpp qwt_6.1.0.original/src/qwt_null_paintdevice.cpp
+--- qwt-6.1/source/src/qwt_null_paintdevice.cpp	2014-08-28 16:58:46.816671866 -0700
++++ qwt_6.1.0.original/src/qwt_null_paintdevice.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -404,10 +404,6 @@
+ 
+ /*! 
+     See QPaintDevice::metric()
+-
+-    \param deviceMetric Type of metric
+-    \return Metric information for the given paint device metric.
+-
+     \sa sizeMetrics()
+ */
+ int QwtNullPaintDevice::metric( PaintDeviceMetric deviceMetric ) const
+diff -Naur qwt-6.1/source/src/qwt_painter.cpp qwt_6.1.0.original/src/qwt_painter.cpp
+--- qwt-6.1/source/src/qwt_painter.cpp	2014-08-28 16:58:46.815671852 -0700
++++ qwt_6.1.0.original/src/qwt_painter.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -32,18 +32,16 @@
+ #include <qwindow.h>
+ #endif
+ 
+-#if QT_VERSION < 0x050000
+-
++#if 0
+ #ifdef Q_WS_X11
+ #include <qx11info_x11.h>
+ #endif
+-
+ #endif
+ 
+ bool QwtPainter::d_polylineSplitting = true;
+ bool QwtPainter::d_roundingAlignment = true;
+ 
+-static inline bool qwtIsClippingNeeded(
++static inline bool qwtIsClippingNeeded( 
+     const QPainter *painter, QRectF &clipRect )
+ {
+     bool doClipping = false;
+@@ -84,7 +82,7 @@
+ 
+     if ( doSplit )
+     {
+-        const int splitSize = 20; // TODO: process events!
++        const int splitSize = 20;
+         for ( int i = 0; i < pointCount; i += splitSize )
+         {
+             const int n = qMin( splitSize + 1, pointCount - i );
+@@ -185,10 +183,10 @@
+   Enable whether coordinates should be rounded, before they are painted
+   to a paint engine that floors to integer values. For other paint engines
+   this ( PDF, SVG ), this flag has no effect.
+-  QwtPainter stores this flag only, the rounding itself is done in
++  QwtPainter stores this flag only, the rounding itself is done in 
+   the painting code ( f.e the plot items ).
+ 
+-  The default setting is true.
++  The default setting is true. 
+ 
+   \sa roundingAlignment(), isAligning()
+ */
+@@ -538,7 +536,7 @@
+         const int minY = qCeil( clipRect.top() );
+         const int maxY = qFloor( clipRect.bottom() );
+ 
+-        if ( pos.x() < minX || pos.x() > maxX
++        if ( pos.x() < minX || pos.x() > maxX 
+             || pos.y() < minY || pos.y() > maxY )
+         {
+             return;
+@@ -549,7 +547,7 @@
+ }
+ 
+ //! Wrapper for QPainter::drawPoints()
+-void QwtPainter::drawPoints( QPainter *painter,
++void QwtPainter::drawPoints( QPainter *painter, 
+     const QPoint *points, int pointCount )
+ {
+     QRectF clipRect;
+@@ -582,7 +580,7 @@
+ }
+ 
+ //! Wrapper for QPainter::drawPoints()
+-void QwtPainter::drawPoints( QPainter *painter,
++void QwtPainter::drawPoints( QPainter *painter, 
+     const QPointF *points, int pointCount )
+ {
+     QRectF clipRect;
+@@ -669,7 +667,7 @@
+ }
+ 
+ /*!
+-  Draw a round frame
++  Draw a round frame 
+ 
+   \param painter Painter
+   \param rect Frame rectangle
+@@ -680,7 +678,7 @@
+   \param frameStyle bitwise OR´ed value of QFrame::Shape and QFrame::Shadow
+ */
+ void QwtPainter::drawRoundFrame( QPainter *painter,
+-    const QRectF &rect, const QPalette &palette,
++    const QRectF &rect, const QPalette &palette, 
+     int lineWidth, int frameStyle )
+ {
+     enum Style
+@@ -759,7 +757,7 @@
+     if ( shadow == QFrame::Plain )
+     {
+         const QRectF outerRect = rect.adjusted( 0.0, 0.0, -1.0, -1.0 );
+-        const QRectF innerRect = outerRect.adjusted(
++        const QRectF innerRect = outerRect.adjusted( 
+             frameWidth, frameWidth, -frameWidth, -frameWidth );
+ 
+         QPainterPath path;
+@@ -778,12 +776,12 @@
+         if ( shape == QFrame::Box )
+         {
+             const QRectF outerRect = rect.adjusted( 0.0, 0.0, -1.0, -1.0 );
+-            const QRectF midRect1 = outerRect.adjusted(
++            const QRectF midRect1 = outerRect.adjusted( 
+                 frameWidth, frameWidth, -frameWidth, -frameWidth );
+-            const QRectF midRect2 = midRect1.adjusted(
++            const QRectF midRect2 = midRect1.adjusted( 
+                 midLineWidth, midLineWidth, -midLineWidth, -midLineWidth );
+ 
+-            const QRectF innerRect = midRect2.adjusted(
++            const QRectF innerRect = midRect2.adjusted( 
+                 frameWidth, frameWidth, -frameWidth, -frameWidth );
+ 
+             QPainterPath path1;
+@@ -859,8 +857,8 @@
+         else
+         {
+             const QRectF outerRect = rect.adjusted( 0.0, 0.0, -1.0, -1.0 );
+-            const QRectF innerRect = outerRect.adjusted(
+-                frameWidth - 1.0, frameWidth - 1.0,
++            const QRectF innerRect = outerRect.adjusted( 
++                frameWidth - 1.0, frameWidth - 1.0, 
+                 -( frameWidth - 1.0 ), -( frameWidth - 1.0 ) );
+ 
+             QPainterPath path1;
+@@ -914,8 +912,8 @@
+   \param frameStyle bitwise OR´ed value of QFrame::Shape and QFrame::Shadow
+ */
+ 
+-void QwtPainter::drawRoundedFrame( QPainter *painter,
+-    const QRectF &rect, double xRadius, double yRadius,
++void QwtPainter::drawRoundedFrame( QPainter *painter, 
++    const QRectF &rect, double xRadius, double yRadius, 
+     const QPalette &palette, int lineWidth, int frameStyle )
+ {
+     painter->save();
+@@ -945,27 +943,27 @@
+     {
+         // move + 4 * ( cubicTo + lineTo )
+         QPainterPath pathList[8];
+-
++        
+         for ( int i = 0; i < 4; i++ )
+         {
+             const int j = i * 4 + 1;
+-
++            
+             pathList[ 2 * i ].moveTo(
+                 path.elementAt(j - 1).x, path.elementAt( j - 1 ).y
+-            );
+-
++            );  
++            
+             pathList[ 2 * i ].cubicTo(
+                 path.elementAt(j + 0).x, path.elementAt(j + 0).y,
+                 path.elementAt(j + 1).x, path.elementAt(j + 1).y,
+                 path.elementAt(j + 2).x, path.elementAt(j + 2).y );
+-
++                
+             pathList[ 2 * i + 1 ].moveTo(
+                 path.elementAt(j + 2).x, path.elementAt(j + 2).y
+-            );
++            );  
+             pathList[ 2 * i + 1 ].lineTo(
+                 path.elementAt(j + 3).x, path.elementAt(j + 3).y
+-            );
+-        }
++            );  
++        }   
+ 
+         QColor c1( palette.color( QPalette::Dark ) );
+         QColor c2( palette.color( QPalette::Light ) );
+@@ -1086,7 +1084,7 @@
+             const double value = sMap.invTransform( x );
+ 
+             if ( colorMap.format() == QwtColorMap::RGB )
+-                c.setRgba( colorMap.rgb( interval, value ) );
++                c.setRgb( colorMap.rgb( interval, value ) );
+             else
+                 c = colorTable[colorMap.colorIndex( interval, value )];
+ 
+@@ -1117,10 +1115,10 @@
+     drawPixmap( painter, rect, pixmap );
+ }
+ 
+-static inline void qwtFillRect( const QWidget *widget, QPainter *painter,
++static inline void qwtFillRect( const QWidget *widget, QPainter *painter, 
+     const QRect &rect, const QBrush &brush)
+ {
+-    if ( brush.style() == Qt::TexturePattern )
++    if ( brush.style() == Qt::TexturePattern ) 
+     {
+         painter->save();
+ 
+@@ -1128,18 +1126,18 @@
+         painter->drawTiledPixmap(rect, brush.texture(), rect.topLeft());
+ 
+         painter->restore();
+-    }
++    } 
+     else if ( brush.gradient() )
+     {
+         painter->save();
+ 
+         painter->setClipRect( rect );
+-        painter->fillRect(0, 0, widget->width(),
++        painter->fillRect(0, 0, widget->width(), 
+             widget->height(), brush);
+ 
+         painter->restore();
+-    }
+-    else
++    } 
++    else 
+     {
+         painter->fillRect(rect, brush);
+     }
+@@ -1149,16 +1147,16 @@
+   Fill a pixmap with the content of a widget
+ 
+   In Qt >= 5.0 QPixmap::fill() is a nop, in Qt 4.x it is buggy
+-  for backgrounds with gradients. Thus fillPixmap() offers
++  for backgrounds with gradients. Thus fillPixmap() offers 
+   an alternative implementation.
+ 
+   \param widget Widget
+   \param pixmap Pixmap to be filled
+-  \param offset Offset
++  \param offset Offset 
+ 
+   \sa QPixmap::fill()
+  */
+-void QwtPainter::fillPixmap( const QWidget *widget,
++void QwtPainter::fillPixmap( const QWidget *widget, 
+     QPixmap &pixmap, const QPoint &offset )
+ {
+     const QRect rect( offset, pixmap.size() );
+@@ -1166,10 +1164,10 @@
+     QPainter painter( &pixmap );
+     painter.translate( -offset );
+ 
+-    const QBrush autoFillBrush =
++    const QBrush autoFillBrush = 
+         widget->palette().brush( widget->backgroundRole() );
+ 
+-    if ( !( widget->autoFillBackground() && autoFillBrush.isOpaque() ) )
++    if ( !( widget->autoFillBackground() && autoFillBrush.isOpaque() ) ) 
+     {
+         const QBrush bg = widget->palette().brush( QPalette::Window );
+         qwtFillRect( widget, &painter, rect, bg);
+@@ -1178,13 +1176,13 @@
+     if ( widget->autoFillBackground() )
+         qwtFillRect( widget, &painter, rect, autoFillBrush);
+ 
+-    if ( widget->testAttribute(Qt::WA_StyledBackground) )
++    if ( widget->testAttribute(Qt::WA_StyledBackground) ) 
+     {
+         painter.setClipRegion( rect );
+ 
+         QStyleOption opt;
+         opt.initFrom( widget );
+-        widget->style()->drawPrimitive( QStyle::PE_Widget,
++        widget->style()->drawPrimitive( QStyle::PE_Widget, 
+             &opt, &painter, widget );
+     }
+ }
+@@ -1251,13 +1249,10 @@
+     pm = QPixmap( size );
+ #endif
+ 
+-#if QT_VERSION < 0x050000
++#if 0
+ #ifdef Q_WS_X11
+-    if ( widget && isX11GraphicsSystem() )
+-    {
+-        if ( pm.x11Info().screen() != widget->x11Info().screen() )
+-            pm.x11SetScreen( widget->x11Info().screen() );
+-    }
++    if ( pm.x11Info().screen() != x11Info().screen() )
++         pm.x11SetScreen( x11Info().screen() );
+ #endif
+ #endif
+ 
+diff -Naur qwt-6.1/source/src/qwt_painter.h qwt_6.1.0.original/src/qwt_painter.h
+--- qwt-6.1/source/src/qwt_painter.h	2014-08-28 16:58:46.834672124 -0700
++++ qwt_6.1.0.original/src/qwt_painter.h	2013-03-01 14:52:47.000000000 -0800
+@@ -165,11 +165,10 @@
+ }
+ 
+ /*!
+-  Check whether coordinates should be rounded, before they are painted
+-  to a paint engine that rounds to integer values. For other paint engines
+-  ( PDF, SVG ), this flag has no effect.
++  Returns whether coordinates should be rounded, before they are painted
++  to a paint engine that floors to integer values.  For other paint engines
++  this ( PDF, SVG ), this flag has no effect.
+ 
+-  \return True, when rounding is enabled
+   \sa setRoundingAlignment(), isAligning()
+ */
+ inline bool QwtPainter::roundingAlignment()
+diff -Naur qwt-6.1/source/src/qwt_panner.cpp qwt_6.1.0.original/src/qwt_panner.cpp
+--- qwt-6.1/source/src/qwt_panner.cpp	2014-08-28 16:58:46.849672337 -0700
++++ qwt_6.1.0.original/src/qwt_panner.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -31,7 +31,7 @@
+     return pickers;
+ }
+ 
+-class QWT_GTEST QwtPanner::PrivateData
++class QwtPanner::PrivateData
+ {
+ public:
+     PrivateData():
+@@ -224,7 +224,7 @@
+ }
+ 
+ /*!
+-   \return True if an orientation is enabled
++   Return true if a orientation is enabled
+    \sa orientations(), setOrientations()
+ */
+ bool QwtPanner::isOrientationEnabled( Qt::Orientation o ) const
+@@ -299,7 +299,6 @@
+ 
+ /*!
+   Grab the widget into a pixmap.
+-  \return Grabbed pixmap
+ */
+ QPixmap QwtPanner::grab() const
+ {
+@@ -319,9 +318,6 @@
+   \param object Object to be filtered
+   \param event Event
+ 
+-  \return Always false, beside for paint events for the
+-          parent widget.
+-
+   \sa widgetMousePressEvent(), widgetMouseReleaseEvent(),
+       widgetMouseMoveEvent()
+ */
+diff -Naur qwt-6.1/source/src/qwt_picker.cpp qwt_6.1.0.original/src/qwt_picker.cpp
+--- qwt-6.1/source/src/qwt_picker.cpp	2014-08-28 16:58:46.858672466 -0700
++++ qwt_6.1.0.original/src/qwt_picker.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -52,20 +52,83 @@
+ 
+     if ( l.x1() == l.x2() )
+     {
+-        region += QRect( l.x1() - pw2, l.y1(),
++        region += QRect( l.x1() - pw2, l.y1(), 
+             pw, l.y2() ).normalized();
+     }
+     else if ( l.y1() == l.y2() )
+     {
+-        region += QRect( l.x1(), l.y1() - pw2,
++        region += QRect( l.x1(), l.y1() - pw2, 
+             l.x2(), pw ).normalized();
+     }
+ 
+     return region;
+ }
+ 
++class QwtPickerRubberband: public QwtWidgetOverlay
++{
++public:
++    QwtPickerRubberband( QwtPicker *, QWidget * );
++
++protected:
++    virtual void drawOverlay( QPainter * ) const;
++    virtual QRegion maskHint() const;
++
++    QwtPicker *d_picker;
++};
++
++class QwtPickerTracker: public QwtWidgetOverlay
++{                                  
++public:
++    QwtPickerTracker( QwtPicker *, QWidget * );
++    
++protected:
++    virtual void drawOverlay( QPainter * ) const;
++    virtual QRegion maskHint() const;
++    
++    QwtPicker *d_picker;
++};  
++
++
++class QwtPicker::PrivateData
++{
++public:
++    PrivateData():
++        enabled( false ),
++        stateMachine( NULL ),
++        resizeMode( QwtPicker::Stretch ),
++        rubberBand( QwtPicker::NoRubberBand ),
++        trackerMode( QwtPicker::AlwaysOff ),
++        isActive( false ),
++        trackerPosition( -1, -1 ),
++        mouseTracking( false ),
++        openGL( false )
++    {
++    }
++        
++    bool enabled;
+ 
++    QwtPickerMachine *stateMachine;
+ 
++    QwtPicker::ResizeMode resizeMode;
++
++    QwtPicker::RubberBand rubberBand;
++    QPen rubberBandPen;
++
++    QwtPicker::DisplayMode trackerMode;
++    QPen trackerPen;
++    QFont trackerFont;
++
++    QPolygon pickedPoints;
++    bool isActive;
++    QPoint trackerPosition;
++
++    bool mouseTracking; // used to save previous value
++
++    QPointer< QwtPickerRubberband > rubberBandOverlay;
++    QPointer< QwtPickerTracker> trackerOverlay;
++
++    bool openGL;
++};
+ 
+ QwtPickerRubberband::QwtPickerRubberband(
+         QwtPicker *picker, QWidget *parent ):
+@@ -494,21 +557,21 @@
+             {
+                 case VLineRubberBand:
+                 {
+-                    mask += qwtMaskRegion( QLine( pos.x(), pRect.top(),
++                    mask += qwtMaskRegion( QLine( pos.x(), pRect.top(), 
+                         pos.x(), pRect.bottom() ), pw );
+                     break;
+                 }
+                 case HLineRubberBand:
+                 {
+-                    mask += qwtMaskRegion( QLine( pRect.left(), pos.y(),
++                    mask += qwtMaskRegion( QLine( pRect.left(), pos.y(), 
+                         pRect.right(), pos.y() ), pw );
+                     break;
+                 }
+                 case CrossRubberBand:
+                 {
+-                    mask += qwtMaskRegion( QLine( pos.x(), pRect.top(),
++                    mask += qwtMaskRegion( QLine( pos.x(), pRect.top(), 
+                         pos.x(), pRect.bottom() ), pw );
+-                    mask += qwtMaskRegion( QLine( pRect.left(), pos.y(),
++                    mask += qwtMaskRegion( QLine( pRect.left(), pos.y(), 
+                         pRect.right(), pos.y() ), pw );
+                     break;
+                 }
+@@ -711,9 +774,6 @@
+     }
+     return adjusted;
+ }\endverbatim\n
+-
+-  \param points Selected points
+-  \return Selected points unmodified
+ */
+ QPolygon QwtPicker::adjustedPoints( const QPolygon &points ) const
+ {
+@@ -817,8 +877,6 @@
+   \param object Object to be filtered
+   \param event Event
+ 
+-  \return Always false.
+-
+   \sa widgetEnterEvent(), widgetLeaveEvent(),
+       widgetMousePressEvent(), widgetMouseReleaseEvent(),
+       widgetMouseDoubleClickEvent(), widgetMouseMoveEvent(),
+@@ -1105,7 +1163,7 @@
+         case QEvent::MouseButtonRelease:
+         case QEvent::MouseMove:
+         {
+-            const QMouseEvent *me =
++            const QMouseEvent *me = 
+                 static_cast< const QMouseEvent * >( event );
+             pos = me->pos();
+             break;
+@@ -1394,7 +1452,7 @@
+ /*!
+   Find the area of the observed widget, where selection might happen.
+ 
+-  \return parentWidget()->contentsRect()
++  \return parentWidget()->contentsRect() 
+ */
+ QPainterPath QwtPicker::pickArea() const
+ {
+@@ -1426,7 +1484,7 @@
+         if ( trackerMode() == AlwaysOn ||
+             ( trackerMode() == ActiveOnly && isActive() ) )
+         {
+-            if ( trackerPen() != Qt::NoPen
++            if ( trackerPen() != Qt::NoPen 
+                 && !trackerRect( QFont() ).isEmpty() )
+             {
+                 showTracker = true;
+diff -Naur qwt-6.1/source/src/qwt_picker.h qwt_6.1.0.original/src/qwt_picker.h
+--- qwt-6.1/source/src/qwt_picker.h	2014-08-28 16:58:46.883672821 -0700
++++ qwt_6.1.0.original/src/qwt_picker.h	2013-03-01 14:52:47.000000000 -0800
+@@ -13,23 +13,18 @@
+ #include "qwt_global.h"
+ #include "qwt_text.h"
+ #include "qwt_event_pattern.h"
+-#include "qwt_math.h"
+-#include "qwt_widget_overlay.h"
+-#include "qwt_picker_machine.h"
+ #include <qobject.h>
+ #include <qpen.h>
+ #include <qfont.h>
+ #include <qrect.h>
+ #include <qpainterpath.h>
+-#include <qpointer.h>
+ 
+ class QWidget;
+ class QMouseEvent;
+ class QWheelEvent;
+ class QKeyEvent;
+-
+-
+-
++class QwtPickerMachine;
++class QwtWidgetOverlay;
+ 
+ /*!
+   \brief QwtPicker provides selections on a widget
+@@ -275,7 +270,6 @@
+       A signal emitted whenever the last appended point of the
+       selection has been removed.
+ 
+-      \param pos Position of the point, that has been removed
+       \sa remove(), appended()
+     */
+     void removed( const QPoint &pos );
+@@ -331,71 +325,4 @@
+     PrivateData *d_data;
+ };
+ 
+-
+-class QWT_EXPORT QwtPickerRubberband: public QwtWidgetOverlay
+-{
+-public:
+-    QwtPickerRubberband( QwtPicker *, QWidget * );
+-
+-protected:
+-    virtual void drawOverlay( QPainter * ) const;
+-    virtual QRegion maskHint() const;
+-
+-    QwtPicker *d_picker;
+-};
+-
+-class QWT_EXPORT  QwtPickerTracker: public QwtWidgetOverlay
+-{
+-public:
+-    QwtPickerTracker( QwtPicker *, QWidget * );
+-
+-protected:
+-    virtual void drawOverlay( QPainter * ) const;
+-    virtual QRegion maskHint() const;
+-
+-    QwtPicker *d_picker;
+-};
+-
+-
+-class  QWT_EXPORT  QwtPicker::PrivateData
+-{
+-public:
+-    PrivateData():
+-        enabled( false ),
+-        stateMachine( NULL ),
+-        resizeMode( QwtPicker::Stretch ),
+-        rubberBand( QwtPicker::NoRubberBand ),
+-        trackerMode( QwtPicker::AlwaysOff ),
+-        isActive( false ),
+-        trackerPosition( -1, -1 ),
+-        mouseTracking( false ),
+-        openGL( false )
+-    {
+-    }
+-
+-    bool enabled;
+-
+-    QwtPickerMachine *stateMachine;
+-
+-    QwtPicker::ResizeMode resizeMode;
+-
+-    QwtPicker::RubberBand rubberBand;
+-    QPen rubberBandPen;
+-
+-    QwtPicker::DisplayMode trackerMode;
+-    QPen trackerPen;
+-    QFont trackerFont;
+-
+-    QPolygon pickedPoints;
+-    bool isActive;
+-    QPoint trackerPosition;
+-
+-    bool mouseTracking; // used to save previous value
+-
+-    QPointer< QwtPickerRubberband > rubberBandOverlay;
+-    QPointer< QwtPickerTracker> trackerOverlay;
+-
+-    bool openGL;
+-};
+-
+ #endif
+diff -Naur qwt-6.1/source/src/qwt_picker_machine.cpp qwt_6.1.0.original/src/qwt_picker_machine.cpp
+--- qwt-6.1/source/src/qwt_picker_machine.cpp	2014-08-28 16:58:46.885672851 -0700
++++ qwt_6.1.0.original/src/qwt_picker_machine.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -452,75 +452,3 @@
+ 
+     return cmdList;
+ }
+-
+-//! Constructor
+-QwtPickerDragLineMachine::QwtPickerDragLineMachine():
+-    QwtPickerMachine( PolygonSelection )
+-{
+-}
+-
+-//! Transition
+-QList<QwtPickerMachine::Command> QwtPickerDragLineMachine::transition(
+-    const QwtEventPattern &eventPattern, const QEvent *event )
+-{
+-    QList<QwtPickerMachine::Command> cmdList;
+-
+-    switch( event->type() )
+-    {
+-        case QEvent::MouseButtonPress:
+-        {
+-            if ( eventPattern.mouseMatch( QwtEventPattern::MouseSelect1,
+-                static_cast<const QMouseEvent *>( event ) ) )
+-            {
+-                if ( state() == 0 )
+-                {
+-                    cmdList += Begin;
+-                    cmdList += Append;
+-                    cmdList += Append;
+-                    setState( 1 );
+-                }
+-            }
+-            break;
+-        }
+-        case QEvent::KeyPress:
+-        {
+-            if ( eventPattern.keyMatch( QwtEventPattern::KeySelect1,
+-                static_cast<const QKeyEvent *> ( event ) ) )
+-            {
+-                if ( state() == 0 )
+-                {
+-                    cmdList += Begin;
+-                    cmdList += Append;
+-                    cmdList += Append;
+-                    setState( 1 );
+-                }
+-                else
+-                {
+-                    cmdList += End;
+-                    setState( 0 );
+-                }
+-            }
+-            break;
+-        }
+-        case QEvent::MouseMove:
+-        case QEvent::Wheel:
+-        {
+-            if ( state() != 0 )
+-                cmdList += Move;
+-
+-            break;
+-        }
+-        case QEvent::MouseButtonRelease:
+-        {
+-            if ( state() != 0 )
+-            {
+-                cmdList += End;
+-                setState( 0 );
+-            }
+-        }
+-        default:
+-            break;
+-    }
+-
+-    return cmdList;
+-}
+diff -Naur qwt-6.1/source/src/qwt_picker_machine.h qwt_6.1.0.original/src/qwt_picker_machine.h
+--- qwt-6.1/source/src/qwt_picker_machine.h	2014-08-28 16:58:46.890672923 -0700
++++ qwt_6.1.0.original/src/qwt_picker_machine.h	2013-03-01 14:52:47.000000000 -0800
+@@ -168,30 +168,6 @@
+ };
+ 
+ /*!
+-  \brief A state machine for line selections
+-    
+-  Pressing QwtEventPattern::MouseSelect1 selects
+-  the first point, releasing it the second point.
+-  Pressing QwtEventPattern::KeySelect1 also selects the
+-  first point, a second press selects the second point and terminates
+-  the selection.
+-
+-  A common use case of QwtPickerDragLineMachine are pickers for
+-  distance measurements.
+-  
+-  \sa QwtEventPattern::MousePatternCode, QwtEventPattern::KeyPatternCode
+-*/              
+-                    
+-class QWT_EXPORT QwtPickerDragLineMachine: public QwtPickerMachine
+-{
+-public:
+-    QwtPickerDragLineMachine();
+-
+-    virtual QList<Command> transition(
+-        const QwtEventPattern &, const QEvent * );
+-};
+-
+-/*!
+   \brief A state machine for polygon selections
+ 
+   Pressing QwtEventPattern::MouseSelect1 or QwtEventPattern::KeySelect1
+diff -Naur qwt-6.1/source/src/qwt_plot_abstract_barchart.cpp qwt_6.1.0.original/src/qwt_plot_abstract_barchart.cpp
+--- qwt-6.1/source/src/qwt_plot_abstract_barchart.cpp	2014-08-28 16:58:46.917673308 -0700
++++ qwt_6.1.0.original/src/qwt_plot_abstract_barchart.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -212,12 +212,6 @@
+ /*!
+    Calculate the width for a sample in paint device coordinates
+ 
+-   \param map Scale map for the corresponding scale
+-   \param canvasSize Size of the canvas in paint device coordinates
+-   \param boundingSize Bounding size of the chart in plot coordinates
+-                       ( used in AutoAdjustSamples mode )
+-   \param value Value of the sample
+-
+    \return Sample width
+    \sa layoutPolicy(), layoutHint()
+ */
+diff -Naur qwt-6.1/source/src/qwt_plot_axis.cpp qwt_6.1.0.original/src/qwt_plot_axis.cpp
+--- qwt-6.1/source/src/qwt_plot_axis.cpp	2014-08-28 16:58:46.934673550 -0700
++++ qwt_6.1.0.original/src/qwt_plot_axis.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -13,6 +13,25 @@
+ #include "qwt_scale_div.h"
+ #include "qwt_scale_engine.h"
+ 
++class QwtPlot::AxisData
++{
++public:
++    bool isEnabled;
++    bool doAutoScale;
++
++    double minValue;
++    double maxValue;
++    double stepSize;
++
++    int maxMajor;
++    int maxMinor;
++
++    bool isValid;
++
++    QwtScaleDiv scaleDiv;
++    QwtScaleEngine *scaleEngine;
++    QwtScaleWidget *scaleWidget;
++};
+ 
+ //! Initialize axes
+ void QwtPlot::initAxesData()
+@@ -48,7 +67,7 @@
+ 
+         d.scaleEngine = new QwtLinearScaleEngine;
+ 
+-        d.scaleWidget->setTransformation(
++        d.scaleWidget->setTransformation( 
+             d.scaleEngine->transformation() );
+ 
+         d.scaleWidget->setFont( fscl );
+@@ -88,8 +107,8 @@
+ }
+ 
+ /*!
+-  \return Scale widget of the specified axis, or NULL if axisId is invalid.
+-  \param axisId Axis index
++  \return specified axis, or NULL if axisId is invalid.
++  \param axisId axis index
+ */
+ const QwtScaleWidget *QwtPlot::axisWidget( int axisId ) const
+ {
+@@ -100,8 +119,8 @@
+ }
+ 
+ /*!
+-  \return Scale widget of the specified axis, or NULL if axisId is invalid.
+-  \param axisId Axis index
++  \return specified axis, or NULL if axisId is invalid.
++  \param axisId axis index
+ */
+ QwtScaleWidget *QwtPlot::axisWidget( int axisId )
+ {
+@@ -112,9 +131,9 @@
+ }
+ 
+ /*!
+-  Change the scale engine for an axis
++   Change the scale engine for an axis
+ 
+-  \param axisId Axis index
++  \param axisId axis index
+   \param scaleEngine Scale engine
+ 
+   \sa axisScaleEngine()
+@@ -128,7 +147,7 @@
+         delete d.scaleEngine;
+         d.scaleEngine = scaleEngine;
+ 
+-        d_axisData[axisId]->scaleWidget->setTransformation(
++        d_axisData[axisId]->scaleWidget->setTransformation( 
+             scaleEngine->transformation() );
+ 
+         d.isValid = false;
+@@ -138,7 +157,7 @@
+ }
+ 
+ /*!
+-  \param axisId Axis index
++  \param axisId axis index
+   \return Scale engine for a specific axis
+ */
+ QwtScaleEngine *QwtPlot::axisScaleEngine( int axisId )
+@@ -150,7 +169,7 @@
+ }
+ 
+ /*!
+-  \param axisId Axis index
++  \param axisId axis index
+   \return Scale engine for a specific axis
+ */
+ const QwtScaleEngine *QwtPlot::axisScaleEngine( int axisId ) const
+@@ -161,8 +180,8 @@
+         return NULL;
+ }
+ /*!
+-  \return \c True, if autoscaling is enabled
+-  \param axisId Axis index
++  \return \c true if autoscaling is enabled
++  \param axisId axis index
+ */
+ bool QwtPlot::axisAutoScale( int axisId ) const
+ {
+@@ -174,8 +193,8 @@
+ }
+ 
+ /*!
+-  \return \c True, if a specified axis is enabled
+-  \param axisId Axis index
++  \return \c true if a specified axis is enabled
++  \param axisId axis index
+ */
+ bool QwtPlot::axisEnabled( int axisId ) const
+ {
+@@ -186,8 +205,8 @@
+ }
+ 
+ /*!
+-  \return The font of the scale labels for a specified axis
+-  \param axisId Axis index
++  \return the font of the scale labels for a specified axis
++  \param axisId axis index
+ */
+ QFont QwtPlot::axisFont( int axisId ) const
+ {
+@@ -199,9 +218,9 @@
+ }
+ 
+ /*!
+-  \return The maximum number of major ticks for a specified axis
+-  \param axisId Axis index
+-  \sa setAxisMaxMajor(), QwtScaleEngine::divideScale()
++  \return the maximum number of major ticks for a specified axis
++  \param axisId axis index
++  \sa setAxisMaxMajor()
+ */
+ int QwtPlot::axisMaxMajor( int axisId ) const
+ {
+@@ -213,8 +232,8 @@
+ 
+ /*!
+   \return the maximum number of minor ticks for a specified axis
+-  \param axisId Axis index
+-  \sa setAxisMaxMinor(), QwtScaleEngine::divideScale()
++  \param axisId axis index
++  \sa setAxisMaxMinor()
+ */
+ int QwtPlot::axisMaxMinor( int axisId ) const
+ {
+@@ -230,10 +249,10 @@
+   axisScaleDiv(axisId).lowerBound(), axisScaleDiv(axisId).upperBound()
+   are the current limits of the axis scale.
+ 
+-  \param axisId Axis index
++  \param axisId axis index
+   \return Scale division
+ 
+-  \sa QwtScaleDiv, setAxisScaleDiv(), QwtScaleEngine::divideScale()
++  \sa QwtScaleDiv, setAxisScaleDiv()
+ */
+ const QwtScaleDiv &QwtPlot::axisScaleDiv( int axisId ) const
+ {
+@@ -241,10 +260,10 @@
+ }
+ 
+ /*!
+-  \brief Return the scale draw of a specified axis
+-
+-  \param axisId Axis index
+-  \return Specified scaleDraw for axis, or NULL if axis is invalid.
++  \returns the scale draw of a specified axis
++  \param axisId axis index
++  \return specified scaleDraw for axis, or NULL if axis is invalid.
++  \sa QwtScaleDraw
+ */
+ const QwtScaleDraw *QwtPlot::axisScaleDraw( int axisId ) const
+ {
+@@ -255,10 +274,10 @@
+ }
+ 
+ /*!
+-  \brief Return the scale draw of a specified axis
+-
+-  \param axisId Axis index
+-  \return Specified scaleDraw for axis, or NULL if axis is invalid.
++  \returns the scale draw of a specified axis
++  \param axisId axis index
++  \return specified scaleDraw for axis, or NULL if axis is invalid.
++  \sa QwtScaleDraw
+ */
+ QwtScaleDraw *QwtPlot::axisScaleDraw( int axisId )
+ {
+@@ -269,14 +288,14 @@
+ }
+ 
+ /*!
+-  \brief Return the step size parameter that has been set in setAxisScale.
+-
+-  This doesn't need to be the step size of the current scale.
++   Return the step size parameter, that has been set
++   in setAxisScale. This doesn't need to be the step size
++   of the current scale.
+ 
+-  \param axisId Axis index
++  \param axisId axis index
+   \return step size parameter value
+ 
+-   \sa setAxisScale(), QwtScaleEngine::divideScale()
++   \sa setAxisScale()
+ */
+ double QwtPlot::axisStepSize( int axisId ) const
+ {
+@@ -290,8 +309,8 @@
+   \brief Return the current interval of the specified axis
+ 
+   This is only a convenience function for axisScaleDiv( axisId )->interval();
+-
+-  \param axisId Axis index
++  
++  \param axisId axis index
+   \return Scale interval
+ 
+   \sa QwtScaleDiv, axisScaleDiv()
+@@ -305,8 +324,8 @@
+ }
+ 
+ /*!
+-  \return Title of a specified axis
+-  \param axisId Axis index
++  \return the title of a specified axis
++  \param axisId axis index
+ */
+ QwtText QwtPlot::axisTitle( int axisId ) const
+ {
+@@ -325,8 +344,7 @@
+   into values works as normal.
+ 
+   Only xBottom and yLeft are enabled by default.
+-
+-  \param axisId Axis index
++  \param axisId axis index
+   \param tf \c true (enabled) or \c false (disabled)
+ */
+ void QwtPlot::enableAxis( int axisId, bool tf )
+@@ -341,12 +359,8 @@
+ /*!
+   Transform the x or y coordinate of a position in the
+   drawing region into a value.
+-
+-  \param axisId Axis index
++  \param axisId axis index
+   \param pos position
+-
+-  \return Position as axis coordinate
+-
+   \warning The position can be an x or a y coordinate,
+            depending on the specified axis.
+ */
+@@ -361,10 +375,9 @@
+ 
+ /*!
+   \brief Transform a value into a coordinate in the plotting region
+-
+-  \param axisId Axis index
++  \param axisId axis index
+   \param value value
+-  \return X or Y coordinate in the plotting region corresponding
++  \return X or y coordinate in the plotting region corresponding
+           to the value.
+ */
+ double QwtPlot::transform( int axisId, double value ) const
+@@ -377,16 +390,15 @@
+ 
+ /*!
+   \brief Change the font of an axis
+-
+-  \param axisId Axis index
+-  \param font Font
++  \param axisId axis index
++  \param f font
+   \warning This function changes the font of the tick labels,
+            not of the axis title.
+ */
+-void QwtPlot::setAxisFont( int axisId, const QFont &font )
++void QwtPlot::setAxisFont( int axisId, const QFont &f )
+ {
+     if ( axisValid( axisId ) )
+-        axisWidget( axisId )->setFont( font );
++        axisWidget( axisId )->setFont( f );
+ }
+ 
+ /*!
+@@ -395,7 +407,7 @@
+   This member function is used to switch back to autoscaling mode
+   after a fixed scale has been set. Autoscaling is enabled by default.
+ 
+-  \param axisId Axis index
++  \param axisId axis index
+   \param on On/Off
+   \sa setAxisScale(), setAxisScaleDiv(), updateAxes()
+ 
+@@ -413,18 +425,12 @@
+ 
+ /*!
+   \brief Disable autoscaling and specify a fixed scale for a selected axis.
+-
+-  In updateAxes() the scale engine calculates a scale division from the
+-  specified parameters, that will be assigned to the scale widget. So
+-  updates of the scale widget usually happen delayed with the next replot.
+-
+-  \param axisId Axis index
+-  \param min Minimum of the scale
+-  \param max Maximum of the scale
++  \param axisId axis index
++  \param min
++  \param max minimum and maximum of the scale
+   \param stepSize Major step size. If <code>step == 0</code>, the step size is
+-                  calculated automatically using the maxMajor setting.
+-
+-  \sa setAxisMaxMajor(), setAxisAutoScale(), axisStepSize(), QwtScaleEngine::divideScale()
++            calculated automatically using the maxMajor setting.
++  \sa setAxisMaxMajor(), setAxisAutoScale(), axisStepSize()
+ */
+ void QwtPlot::setAxisScale( int axisId, double min, double max, double stepSize )
+ {
+@@ -445,14 +451,8 @@
+ 
+ /*!
+   \brief Disable autoscaling and specify a fixed scale for a selected axis.
+-
+-  The scale division will be stored locally only until the next call
+-  of updateAxes(). So updates of the scale widget usually happen delayed with
+-  the next replot.
+-
+-  \param axisId Axis index
++  \param axisId axis index
+   \param scaleDiv Scale division
+-
+   \sa setAxisScale(), setAxisAutoScale()
+ */
+ void QwtPlot::setAxisScaleDiv( int axisId, const QwtScaleDiv &scaleDiv )
+@@ -471,9 +471,8 @@
+ 
+ /*!
+   \brief Set a scale draw
+-
+-  \param axisId Axis index
+-  \param scaleDraw Object responsible for drawing scales.
++  \param axisId axis index
++  \param scaleDraw object responsible for drawing scales.
+ 
+   By passing scaleDraw it is possible to extend QwtScaleDraw
+   functionality and let it take place in QwtPlot. Please note
+@@ -496,10 +495,8 @@
+ 
+ /*!
+   Change the alignment of the tick labels
+-
+-  \param axisId Axis index
++  \param axisId axis index
+   \param alignment Or'd Qt::AlignmentFlags see <qnamespace.h>
+-
+   \sa QwtScaleDraw::setLabelAlignment()
+ */
+ void QwtPlot::setAxisLabelAlignment( int axisId, Qt::Alignment alignment )
+@@ -510,11 +507,9 @@
+ 
+ /*!
+   Rotate all tick labels
+-
+-  \param axisId Axis index
++  \param axisId axis index
+   \param rotation Angle in degrees. When changing the label rotation,
+                   the label alignment might be adjusted too.
+-
+   \sa QwtScaleDraw::setLabelRotation(), setAxisLabelAlignment()
+ */
+ void QwtPlot::setAxisLabelRotation( int axisId, double rotation )
+@@ -526,9 +521,8 @@
+ /*!
+   Set the maximum number of minor scale intervals for a specified axis
+ 
+-  \param axisId Axis index
+-  \param maxMinor Maximum number of minor steps
+-
++  \param axisId axis index
++  \param maxMinor maximum number of minor steps
+   \sa axisMaxMinor()
+ */
+ void QwtPlot::setAxisMaxMinor( int axisId, int maxMinor )
+@@ -550,9 +544,8 @@
+ /*!
+   Set the maximum number of major scale intervals for a specified axis
+ 
+-  \param axisId Axis index
+-  \param maxMajor Maximum number of major steps
+-
++  \param axisId axis index
++  \param maxMajor maximum number of major steps
+   \sa axisMaxMajor()
+ */
+ void QwtPlot::setAxisMaxMajor( int axisId, int maxMajor )
+@@ -573,8 +566,7 @@
+ 
+ /*!
+   \brief Change the title of a specified axis
+-
+-  \param axisId Axis index
++  \param axisId axis index
+   \param title axis title
+ */
+ void QwtPlot::setAxisTitle( int axisId, const QString &title )
+@@ -585,9 +577,8 @@
+ 
+ /*!
+   \brief Change the title of a specified axis
+-
+-  \param axisId Axis index
+-  \param title Axis title
++  \param axisId axis index
++  \param title axis title
+ */
+ void QwtPlot::setAxisTitle( int axisId, const QwtText &title )
+ {
+@@ -595,30 +586,7 @@
+         axisWidget( axisId )->setTitle( title );
+ }
+ 
+-/*!
+-  \brief Rebuild the axes scales
+-
+-  In case of autoscaling the boundaries of a scale are calculated
+-  from the bounding rectangles of all plot items, having the
+-  QwtPlotItem::AutoScale flag enabled ( QwtScaleEngine::autoScale() ).
+-  Then a scale division is calculated ( QwtScaleEngine::didvideScale() )
+-  and assigned to scale widget.
+-
+-  When the scale boundaries have been assigned with setAxisScale() a
+-  scale division is calculated ( QwtScaleEngine::didvideScale() )
+-  for this interval and assigned to the scale widget.
+-
+-  When the scale has been set explicitly by setAxisScaleDiv() the
+-  locally stored scale division gets assigned to the scale widget.
+-
+-  The scale widget indicates modifications by emitting a
+-  QwtScaleWidget::scaleDivChanged() signal.
+-
+-  updateAxes() is usually called by replot().
+-
+-  \sa setAxisAutoScale(), setAxisScale(), setAxisScaleDiv(), replot()
+-      QwtPlotItem::boundingRect()
+- */
++//! Rebuild the scales
+ void QwtPlot::updateAxes()
+ {
+     // Find bounding interval of the item data
+diff -Naur qwt-6.1/source/src/qwt_plot_barchart.cpp qwt_6.1.0.original/src/qwt_plot_barchart.cpp
+--- qwt-6.1/source/src/qwt_plot_barchart.cpp	2014-08-28 16:58:46.928673463 -0700
++++ qwt_6.1.0.original/src/qwt_plot_barchart.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -379,7 +379,6 @@
+    otherwise the chart is represented like any other plot item
+    from its title() and the legendIcon().
+ 
+-   \return Information, that is needed to represent the item on the legend
+    \sa title(), setLegendMode(), barTitle(), QwtLegend, QwtPlotLegendItem
+  */
+ QList<QwtLegendData> QwtPlotBarChart::legendData() const
+diff -Naur qwt-6.1/source/src/qwt_plot_canvas.cpp qwt_6.1.0.original/src/qwt_plot_canvas.cpp
+--- qwt-6.1/source/src/qwt_plot_canvas.cpp	2014-08-28 16:58:46.947673735 -0700
++++ qwt_6.1.0.original/src/qwt_plot_canvas.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -18,7 +18,7 @@
+ #include <qpaintengine.h>
+ #include <qevent.h>
+ 
+-class QWT_GTEST QwtStyleSheetRecorder: public QwtNullPaintDevice
++class QwtStyleSheetRecorder: public QwtNullPaintDevice
+ {
+ public:
+     QwtStyleSheetRecorder( const QSize &size ):
+@@ -72,7 +72,7 @@
+ 
+         for ( int i = 0; i < path.elementCount(); i++ )
+         {
+-            QPainterPath::Element el = path.elementAt(i);
++            QPainterPath::Element el = path.elementAt(i); 
+             switch( el.type )
+             {
+                 case QPainterPath::MoveToElement:
+@@ -97,7 +97,7 @@
+                     if ( clipRects.size() > 0 )
+                     {
+                         QRectF r = clipRects.last();
+-                        r.setCoords(
++                        r.setCoords( 
+                             qMin( r.left(), el.x ),
+                             qMin( r.top(), el.y ),
+                             qMax( r.right(), el.x ),
+@@ -169,7 +169,7 @@
+     if ( !borderClip.isEmpty() )
+         painter->setClipPath( borderClip, Qt::IntersectClip );
+ 
+-    const QBrush &brush =
++    const QBrush &brush = 
+         canvas->palette().brush( canvas->backgroundRole() );
+ 
+     if ( brush.style() == Qt::TexturePattern )
+@@ -185,8 +185,8 @@
+         if ( brush.gradient()->coordinateMode() == QGradient::ObjectBoundingMode )
+         {
+             rects += canvas->rect();
+-        }
+-        else
++        } 
++        else 
+         {
+             rects = painter->clipRegion().rects();
+         }
+@@ -196,7 +196,7 @@
+ 
+         if ( painter->paintEngine()->type() == QPaintEngine::X11 )
+         {
+-            // Qt 4.7.1: gradients on X11 are broken ( subrects +
++            // Qt 4.7.1: gradients on X11 are broken ( subrects + 
+             // QGradient::StretchToDeviceMode ) and horrible slow.
+             // As workaround we have to use the raster paintengine.
+             // Even if the QImage -> QPixmap translation is slow
+@@ -222,7 +222,7 @@
+                     break;
+                 }
+             }
+-
++            
+             QImage image( canvas->size(), format );
+ 
+             QPainter p( &image );
+@@ -267,7 +267,7 @@
+     }
+ }
+ 
+-static QPainterPath qwtCombinePathList( const QRectF &rect,
++static QPainterPath qwtCombinePathList( const QRectF &rect, 
+     const QList<QPainterPath> &pathList )
+ {
+     if ( pathList.isEmpty() )
+@@ -285,7 +285,7 @@
+         {
+             if ( br.center().y() < rect.center().y() )
+             {
+-                if ( qAbs( br.top() - rect.top() ) <
++                if ( qAbs( br.top() - rect.top() ) < 
+                     qAbs( br.left() - rect.left() ) )
+                 {
+                     index = 1;
+@@ -297,7 +297,7 @@
+             }
+             else
+             {
+-                if ( qAbs( br.bottom() - rect.bottom() ) <
++                if ( qAbs( br.bottom() - rect.bottom() ) < 
+                     qAbs( br.left() - rect.left() ) )
+                 {
+                     index = 6;
+@@ -315,7 +315,7 @@
+         {
+             if ( br.center().y() < rect.center().y() )
+             {
+-                if ( qAbs( br.top() - rect.top() ) <
++                if ( qAbs( br.top() - rect.top() ) < 
+                     qAbs( br.right() - rect.right() ) )
+                 {
+                     index = 2;
+@@ -327,7 +327,7 @@
+             }
+             else
+             {
+-                if ( qAbs( br.bottom() - rect.bottom() ) <
++                if ( qAbs( br.bottom() - rect.bottom() ) < 
+                     qAbs( br.right() - rect.right() ) )
+                 {
+                     index = 5;
+@@ -339,7 +339,7 @@
+             }
+             if ( subPath.currentPosition().y() < br.center().y() )
+                 qwtRevertPath( subPath );
+-        }
++        }   
+         ordered[index] = subPath;
+     }
+ 
+@@ -380,7 +380,7 @@
+ #endif
+ }
+ 
+-static inline void qwtDrawStyledBackground(
++static inline void qwtDrawStyledBackground( 
+     QWidget *w, QPainter *painter )
+ {
+     QStyleOption opt;
+@@ -417,7 +417,7 @@
+     return qwtBackgroundWidget( w->parentWidget() );
+ }
+ 
+-static void qwtFillBackground( QPainter *painter,
++static void qwtFillBackground( QPainter *painter, 
+     QWidget *widget, const QVector<QRectF> &fillRects )
+ {
+     if ( fillRects.isEmpty() )
+@@ -520,7 +520,7 @@
+ 
+ };
+ 
+-/*!
++/*! 
+   \brief Constructor
+ 
+   \param plot Parent plot widget
+@@ -594,7 +594,7 @@
+ #if QT_VERSION >= 0x050000
+                     *d_data->backingStore = grab( rect() );
+ #else
+-                    *d_data->backingStore =
++                    *d_data->backingStore = 
+                         QPixmap::grabWidget( this, rect() );
+ #endif
+                 }
+@@ -688,25 +688,23 @@
+ 
+ /*!
+   Qt event handler for QEvent::PolishRequest and QEvent::StyleChange
+-
+   \param event Qt Event
+-  \return See QFrame::event()
+ */
+ bool QwtPlotCanvas::event( QEvent *event )
+ {
+-    if ( event->type() == QEvent::PolishRequest )
++    if ( event->type() == QEvent::PolishRequest ) 
+     {
+         if ( testPaintAttribute( QwtPlotCanvas::Opaque ) )
+         {
+-            // Setting a style sheet changes the
++            // Setting a style sheet changes the 
+             // Qt::WA_OpaquePaintEvent attribute, but we insist
+             // on painting the background.
+-
++            
+             setAttribute( Qt::WA_OpaquePaintEvent, true );
+         }
+     }
+ 
+-    if ( event->type() == QEvent::PolishRequest ||
++    if ( event->type() == QEvent::PolishRequest || 
+         event->type() == QEvent::StyleChange )
+     {
+         updateStyleSheetInfo();
+@@ -805,7 +803,7 @@
+ 
+             drawCanvas( &painter, false );
+ 
+-            if ( frameWidth() > 0 )
++            if ( frameWidth() > 0 ) 
+                 drawBorder( &painter );
+         }
+     }
+@@ -814,15 +812,15 @@
+         drawFocusIndicator( &painter );
+ }
+ 
+-void QwtPlotCanvas::drawCanvas( QPainter *painter, bool withBackground )
++void QwtPlotCanvas::drawCanvas( QPainter *painter, bool withBackground ) 
+ {
+     bool hackStyledBackground = false;
+ 
+-    if ( withBackground && testAttribute( Qt::WA_StyledBackground )
++    if ( withBackground && testAttribute( Qt::WA_StyledBackground ) 
+         && testPaintAttribute( HackStyledBackground ) )
+     {
+         // Antialiasing rounded borders is done by
+-        // inserting pixels with colors between the
++        // inserting pixels with colors between the 
+         // border color and the color on the canvas,
+         // When the border is painted before the plot items
+         // these colors are interpolated for the canvas
+@@ -852,7 +850,7 @@
+                 // paint background without border
+ 
+                 painter->setPen( Qt::NoPen );
+-                painter->setBrush( d_data->styleSheet.background.brush );
++                painter->setBrush( d_data->styleSheet.background.brush ); 
+                 painter->setBrushOrigin( d_data->styleSheet.background.origin );
+                 painter->setClipPath( d_data->styleSheet.borderPath );
+                 painter->drawRect( contentsRect() );
+@@ -893,7 +891,7 @@
+ 
+     if ( !d_data->styleSheet.borderPath.isEmpty() )
+     {
+-        painter->setClipPath(
++        painter->setClipPath( 
+             d_data->styleSheet.borderPath, Qt::IntersectClip );
+     }
+     else
+@@ -929,7 +927,7 @@
+     {
+         if ( frameWidth() > 0 )
+         {
+-            QwtPainter::drawRoundedFrame( painter, QRectF( frameRect() ),
++            QwtPainter::drawRoundedFrame( painter, QRectF( frameRect() ), 
+                 d_data->borderRadius, d_data->borderRadius,
+                 palette(), frameWidth(), frameStyle() );
+         }
+@@ -948,7 +946,7 @@
+         opt.rect = frameRect();
+ #endif
+ 
+-        switch (frameShape)
++        switch (frameShape) 
+         {
+             case QFrame::Box:
+             case QFrame::HLine:
+@@ -958,15 +956,15 @@
+             {
+                 opt.lineWidth = lineWidth();
+                 opt.midLineWidth = midLineWidth();
+-                break;
++                break; 
+             }
+-            default:
++            default: 
+             {
+                 opt.lineWidth = frameWidth();
+                 break;
+             }
+         }
+-
++    
+         if ( frameShadow == Sunken )
+             opt.state |= QStyle::State_Sunken;
+         else if ( frameShadow == Raised )
+@@ -1025,13 +1023,13 @@
+         return;
+ 
+     QwtStyleSheetRecorder recorder( size() );
+-
++    
+     QPainter painter( &recorder );
+-
++    
+     QStyleOption opt;
+     opt.initFrom(this);
+     style()->drawPrimitive( QStyle::PE_Widget, &opt, &painter, this);
+-
++    
+     painter.end();
+ 
+     d_data->styleSheet.hasBorder = !recorder.border.rectList.isEmpty();
+@@ -1041,7 +1039,7 @@
+     {
+         if ( !recorder.border.rectList.isEmpty() )
+         {
+-            d_data->styleSheet.borderPath =
++            d_data->styleSheet.borderPath = 
+                 qwtCombinePathList( rect(), recorder.border.pathList );
+         }
+     }
+@@ -1092,6 +1090,6 @@
+         path.addRoundedRect( r, d_data->borderRadius, d_data->borderRadius );
+         return path;
+     }
+-
++    
+     return QPainterPath();
+ }
+diff -Naur qwt-6.1/source/src/qwt_plot.cpp qwt_6.1.0.original/src/qwt_plot.cpp
+--- qwt-6.1/source/src/qwt_plot.cpp	2014-08-28 16:58:46.896673007 -0700
++++ qwt_6.1.0.original/src/qwt_plot.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -27,23 +27,23 @@
+ {
+     if ( on )
+     {
+-        QObject::connect(
++        QObject::connect( 
+             plot, SIGNAL( legendDataChanged(
+                 const QVariant &, const QList<QwtLegendData> & ) ),
+-            plot, SLOT( updateLegendItems(
++            plot, SLOT( updateLegendItems( 
+                 const QVariant &, const QList<QwtLegendData> & ) ) );
+     }
+     else
+     {
+-        QObject::disconnect(
++        QObject::disconnect( 
+             plot, SIGNAL( legendDataChanged(
+                 const QVariant &, const QList<QwtLegendData> & ) ),
+-            plot, SLOT( updateLegendItems(
++            plot, SLOT( updateLegendItems( 
+                 const QVariant &, const QList<QwtLegendData> & ) ) );
+     }
+ }
+ 
+-static void qwtSetTabOrder(
++static void qwtSetTabOrder( 
+     QWidget *first, QWidget *second, bool withChildren )
+ {
+     QList<QWidget *> tabChain;
+@@ -91,7 +91,7 @@
+     }
+ }
+ 
+-class QWT_EXPORT  QwtPlot::PrivateData
++class QwtPlot::PrivateData
+ {
+ public:
+     QPointer<QwtTextLabel> titleLabel;
+@@ -194,7 +194,7 @@
+ 
+   QwtPlot invokes methods of the canvas as meta methods ( see QMetaObject ).
+   In opposite to using conventional C++ techniques like virtual methods
+-  they allow to use canvas implementations that are derived from
++  they allow to use canvas implementations that are derived from 
+   QWidget or QGLWidget.
+ 
+   The following meta methods could be implemented:
+@@ -208,7 +208,7 @@
+     When the canvas doesn't have any special border ( f.e rounded corners )
+     it is o.k. not to implement this method.
+ 
+-  The default canvas is a QwtPlotCanvas
++  The default canvas is a QwtPlotCanvas 
+ 
+   \param canvas Canvas Widget
+   \sa canvas()
+@@ -234,8 +234,6 @@
+ /*!
+   \brief Adds handling of layout requests
+   \param event Event
+-
+-  \return See QFrame::event()
+ */
+ bool QwtPlot::event( QEvent *event )
+ {
+@@ -267,8 +265,6 @@
+   \param object Object to be filtered
+   \param event Event
+ 
+-  \return See QFrame::eventFilter()
+-
+   \sa updateCanvasMargins(), updateLayout()
+ */
+ bool QwtPlot::eventFilter( QObject *object, QEvent *event )
+@@ -315,7 +311,7 @@
+     d_data->autoReplot = tf;
+ }
+ 
+-/*!
++/*! 
+   \return true if the autoReplot option is set.
+   \sa setAutoReplot()
+ */
+@@ -369,7 +365,7 @@
+ }
+ 
+ /*!
+-  Change the text the footer
++  Change the text the footer 
+   \param text New text of the footer
+ */
+ void QwtPlot::setFooter( const QString &text )
+@@ -382,7 +378,7 @@
+ }
+ 
+ /*!
+-  Change the text the footer
++  Change the text the footer 
+   \param text New text of the footer
+ */
+ void QwtPlot::setFooter( const QwtText &text )
+@@ -477,9 +473,10 @@
+ }
+ 
+ /*!
+-  \return Size hint for the plot widget
++  Return sizeHint
+   \sa minimumSizeHint()
+ */
++
+ QSize QwtPlot::sizeHint() const
+ {
+     int dw = 0;
+@@ -540,7 +537,8 @@
+   or if any curves are attached to raw data, the plot has to
+   be refreshed explicitly in order to make changes visible.
+ 
+-  \sa updateAxes(), setAutoReplot()
++  \sa setAutoReplot()
++  \warning Calls canvas()->repaint, take care of infinite recursions
+ */
+ void QwtPlot::replot()
+ {
+@@ -558,7 +556,7 @@
+ 
+     if ( d_data->canvas )
+     {
+-        const bool ok = QMetaObject::invokeMethod(
++        const bool ok = QMetaObject::invokeMethod( 
+             d_data->canvas, "replot", Qt::DirectConnection );
+         if ( !ok )
+         {
+@@ -654,13 +652,6 @@
+ /*!
+   \brief Calculate the canvas margins
+ 
+-  \param maps QwtPlot::axisCnt maps, mapping between plot and paint device coordinates
+-  \param canvasRect Bounding rectangle where to paint
+-  \param left Return parameter for the left margin
+-  \param top Return parameter for the top margin
+-  \param right Return parameter for the right margin
+-  \param bottom Return parameter for the bottom margin
+-
+   Plot items might indicate, that they need some extra space
+   at the borders of the canvas by the QwtPlotItem::Margins flag.
+ 
+@@ -709,7 +700,7 @@
+     double margins[axisCnt];
+     getCanvasMarginsHint( maps, canvas()->contentsRect(),
+         margins[yLeft], margins[xTop], margins[yRight], margins[xBottom] );
+-
++    
+     bool doUpdate = false;
+     for ( int axisId = 0; axisId < axisCnt; axisId++ )
+     {
+@@ -745,19 +736,18 @@
+ 
+ /*!
+   Redraw the canvas items.
+-
+   \param painter Painter used for drawing
+   \param canvasRect Bounding rectangle where to paint
+-  \param maps QwtPlot::axisCnt maps, mapping between plot and paint device coordinates
++  \param map QwtPlot::axisCnt maps, mapping between plot and paint device coordinates
+ 
+   \note Usually canvasRect is contentsRect() of the plot canvas.
+-        Due to a bug in Qt this rectangle might be wrong for certain
+-        frame styles ( f.e QFrame::Box ) and it might be necessary to
++        Due to a bug in Qt this rectangle might be wrong for certain 
++        frame styles ( f.e QFrame::Box ) and it might be necessary to 
+         fix the margins manually using QWidget::setContentsMargins()
+ */
+ 
+ void QwtPlot::drawItems( QPainter *painter, const QRectF &canvasRect,
+-        const QwtScaleMap maps[axisCnt] ) const
++        const QwtScaleMap map[axisCnt] ) const
+ {
+     const QwtPlotItemList& itmList = itemList();
+     for ( QwtPlotItemIterator it = itmList.begin();
+@@ -774,7 +764,7 @@
+                 item->testRenderHint( QwtPlotItem::RenderAntialiased ) );
+ 
+             item->draw( painter,
+-                maps[item->xAxis()], maps[item->yAxis()],
++                map[item->xAxis()], map[item->yAxis()],
+                 canvasRect );
+ 
+             painter->restore();
+@@ -886,7 +876,7 @@
+   with a best fit number of columns from left to right.
+ 
+   insertLegend() will set the plot widget as parent for the legend.
+-  The legend will be deleted in the destructor of the plot or when
++  The legend will be deleted in the destructor of the plot or when 
+   another legend is inserted.
+ 
+   Legends, that are not inserted into the layout of the plot widget
+@@ -924,12 +914,12 @@
+ 
+         if ( d_data->legend )
+         {
+-            connect( this,
+-                SIGNAL( legendDataChanged(
++            connect( this, 
++                SIGNAL( legendDataChanged( 
+                     const QVariant &, const QList<QwtLegendData> & ) ),
+-                d_data->legend,
+-                SLOT( updateLegend(
+-                    const QVariant &, const QList<QwtLegendData> & ) )
++                d_data->legend, 
++                SLOT( updateLegend( 
++                    const QVariant &, const QList<QwtLegendData> & ) ) 
+             );
+ 
+             if ( d_data->legend->parent() != this )
+@@ -1060,7 +1050,7 @@
+ }
+ 
+ /*!
+-  \brief Attach/Detach a plot item
++  \brief Attach/Detach a plot item 
+ 
+   \param plotItem Plot item
+   \param on When true attach the item, otherwise detach it
+@@ -1088,7 +1078,7 @@
+ 
+     if ( on )
+         insertItem( plotItem );
+-    else
++    else 
+         removeItem( plotItem );
+ 
+     Q_EMIT itemAttached( plotItem, on );
+@@ -1126,7 +1116,6 @@
+ \endcode
+ 
+   \param plotItem Plot item
+-  \return Plot item embedded in a QVariant
+   \sa infoToItem()
+  */
+ QVariant QwtPlot::itemToInfo( QwtPlotItem *plotItem ) const
+@@ -1141,7 +1130,7 @@
+   \brief Identify the plot item according to an item info object,
+          that has bee generated from itemToInfo().
+ 
+-  The default implementation simply tries to unwrap a QwtPlotItem
++  The default implementation simply tries to unwrap a QwtPlotItem 
+   pointer:
+ 
+ \code
+diff -Naur qwt-6.1/source/src/qwt_plot_curve.cpp qwt_6.1.0.original/src/qwt_plot_curve.cpp
+--- qwt-6.1/source/src/qwt_plot_curve.cpp	2014-08-28 16:58:46.967674020 -0700
++++ qwt_6.1.0.original/src/qwt_plot_curve.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -21,11 +21,10 @@
+ #include <qpixmap.h>
+ #include <qalgorithms.h>
+ #include <qmath.h>
+-#include <QtGui/QApplication>
+ 
+ static void qwtUpdateLegendIconSize( QwtPlotCurve *curve )
+ {
+-    if ( curve->symbol() &&
++    if ( curve->symbol() && 
+         curve->testLegendAttribute( QwtPlotCurve::LegendShowSymbol ) )
+     {
+         QSize sz = curve->symbol()->boundingRect().size();
+@@ -60,7 +59,7 @@
+     return ( i2 - i1 + 1 );
+ }
+ 
+-class QWT_GTEST QwtPlotCurve::PrivateData
++class QwtPlotCurve::PrivateData
+ {
+ public:
+     PrivateData():
+@@ -68,7 +67,7 @@
+         baseline( 0.0 ),
+         symbol( NULL ),
+         attributes( 0 ),
+-        paintAttributes(
++        paintAttributes( 
+             QwtPlotCurve::ClipPolygons | QwtPlotCurve::FilterPoints ),
+         legendAttributes( 0 )
+     {
+@@ -157,7 +156,7 @@
+ }
+ 
+ /*!
+-    \return True, when attribute is enabled
++    \brief Return the current paint attributes
+     \sa setPaintAttribute()
+ */
+ bool QwtPlotCurve::testPaintAttribute( PaintAttribute attribute ) const
+@@ -187,8 +186,8 @@
+ }
+ 
+ /*!
+-  \return True, when attribute is enabled
+-  \sa setLegendAttribute()
++    \brief Return the current paint attributes
++    \sa setLegendAttribute()
+ */
+ bool QwtPlotCurve::testLegendAttribute( LegendAttribute attribute ) const
+ {
+@@ -213,8 +212,8 @@
+ }
+ 
+ /*!
+-  \return Style of the curve
+-  \sa setStyle()
++    Return the current style
++    \sa setStyle()
+ */
+ QwtPlotCurve::CurveStyle QwtPlotCurve::style() const
+ {
+@@ -225,7 +224,7 @@
+   \brief Assign a symbol
+ 
+   The curve will take the ownership of the symbol, hence the previously
+-  set symbol will be delete by setting a new one. If \p symbol is
++  set symbol will be delete by setting a new one. If \p symbol is 
+   \c NULL no symbol will be drawn.
+ 
+   \param symbol Symbol
+@@ -475,7 +474,7 @@
+         // then drawing the polyline itself
+ 
+         if ( !doFit && !doFill )
+-            doIntegers = true;
++            doIntegers = true; 
+     }
+ #endif
+ 
+@@ -488,12 +487,12 @@
+ 
+     if ( doIntegers )
+     {
+-        const QPolygon polyline = mapper.toPolygon(
++        const QPolygon polyline = mapper.toPolygon( 
+             xMap, yMap, data(), from, to );
+ 
+         if ( d_data->paintAttributes & ClipPolygons )
+         {
+-            const QPolygon clipped = QwtClipper::clipPolygon(
++            const QPolygon clipped = QwtClipper::clipPolygon( 
+                 clipRect.toAlignedRect(), polyline, false );
+ 
+             QwtPainter::drawPolyline( painter, clipped );
+@@ -513,7 +512,7 @@
+ 
+         if ( d_data->paintAttributes & ClipPolygons )
+         {
+-            const QPolygonF clipped = QwtClipper::clipPolygonF(
++            const QPolygonF clipped = QwtClipper::clipPolygonF( 
+                 clipRect, polyline, false );
+ 
+             QwtPainter::drawPolyline( painter, clipped );
+@@ -627,7 +626,7 @@
+     {
+         mapper.setFlag( QwtPointMapper::WeedOutPoints, false );
+ 
+-        QPolygonF points = mapper.toPointsF(
++        QPolygonF points = mapper.toPointsF( 
+             xMap, yMap, data(), from, to );
+ 
+         QwtPainter::drawPoints( painter, points );
+@@ -636,7 +635,7 @@
+     else if ( d_data->paintAttributes & ImageBuffer )
+     {
+         const QImage image = mapper.toImage( xMap, yMap,
+-            data(), from, to, d_data->pen,
++            data(), from, to, d_data->pen, 
+             painter->testRenderHint( QPainter::Antialiasing ),
+             renderThreadCount() );
+ 
+@@ -667,13 +666,13 @@
+         if ( doAlign )
+         {
+             const QPolygon points = mapper.toPoints(
+-                xMap, yMap, data(), from, to );
++                xMap, yMap, data(), from, to ); 
+ 
+             QwtPainter::drawPoints( painter, points );
+         }
+         else
+         {
+-            const QPolygonF points = mapper.toPointsF(
++            const QPolygonF points = mapper.toPointsF( 
+                 xMap, yMap, data(), from, to );
+ 
+             QwtPainter::drawPoints( painter, points );
+@@ -746,7 +745,7 @@
+ 
+     if ( d_data->paintAttributes & ClipPolygons )
+     {
+-        const QPolygonF clipped = QwtClipper::clipPolygonF(
++        const QPolygonF clipped = QwtClipper::clipPolygonF( 
+             canvasRect, polygon, false );
+ 
+         QwtPainter::drawPolyline( painter, clipped );
+@@ -868,7 +867,7 @@
+ }
+ 
+ /*!
+-  \brief Complete a polygon to be a closed polygon including the
++  \brief Complete a polygon to be a closed polygon including the 
+          area between the original polygon and the baseline.
+ 
+   \param painter Painter
+@@ -886,7 +885,7 @@
+     const bool doAlign = QwtPainter::roundingAlignment( painter );
+ 
+     double baseline = d_data->baseline;
+-
++    
+     if ( orientation() == Qt::Vertical )
+     {
+         if ( yMap.transformation() )
+@@ -931,9 +930,9 @@
+     const QRectF &canvasRect, int from, int to ) const
+ {
+     QwtPointMapper mapper;
+-    mapper.setFlag( QwtPointMapper::RoundPoints,
++    mapper.setFlag( QwtPointMapper::RoundPoints, 
+         QwtPainter::roundingAlignment( painter ) );
+-    mapper.setFlag( QwtPointMapper::WeedOutPoints,
++    mapper.setFlag( QwtPointMapper::WeedOutPoints, 
+         testPaintAttribute( QwtPlotCurve::FilterPoints ) );
+     mapper.setBoundingRect( canvasRect );
+ 
+@@ -1034,13 +1033,13 @@
+ /*!
+    \return Icon representing the curve on the legend
+ 
+-   \param index Index of the legend entry
++   \param index Index of the legend entry 
+                 ( ignored as there is only one )
+    \param size Icon size
+ 
+    \sa QwtPlotItem::setLegendIconSize(), QwtPlotItem::legendData()
+  */
+-QwtGraphic QwtPlotCurve::legendIcon( int index,
++QwtGraphic QwtPlotCurve::legendIcon( int index, 
+     const QSizeF &size ) const
+ {
+     Q_UNUSED( index );
+@@ -1053,12 +1052,8 @@
+     graphic.setRenderHint( QwtGraphic::RenderPensUnscaled, true );
+ 
+     QPainter painter( &graphic );
+-
+-    bool AA_is_on = testRenderHint(QwtPlotItem::RenderAntialiased);
+-    painter.setRenderHint( QPainter::Antialiasing,AA_is_on);
+-    //bad, fuzzy painter.setRenderHint( QPainter::TextAntialiasing,AA_is_on);
+-    //painter.setRenderHint( QPainter::HighQualityAntialiasing,AA_is_on);
+-    //painter.setRenderHint( QPainter::SmoothPixmapTransform,AA_is_on);
++    painter.setRenderHint( QPainter::Antialiasing,
++        testRenderHint( QwtPlotItem::RenderAntialiased ) );
+ 
+     if ( d_data->legendAttributes == 0 ||
+         d_data->legendAttributes & QwtPlotCurve::LegendShowBrush )
+@@ -1142,10 +1137,10 @@
+ #ifndef QWT_NO_COMPAT
+ 
+ /*!
+-  \brief Initialize the data by pointing to memory blocks which
++  \brief Initialize the data by pointing to memory blocks which 
+          are not managed by QwtPlotCurve.
+ 
+-  setRawSamples is provided for efficiency.
++  setRawSamples is provided for efficiency. 
+   It is important to keep the pointers
+   during the lifetime of the underlying QwtCPointerData class.
+ 
+@@ -1155,7 +1150,7 @@
+ 
+   \sa QwtCPointerData
+ */
+-void QwtPlotCurve::setRawSamples(
++void QwtPlotCurve::setRawSamples( 
+     const double *xData, const double *yData, int size )
+ {
+     setData( new QwtCPointerData( xData, yData, size ) );
+@@ -1172,7 +1167,7 @@
+ 
+   \sa QwtPointArrayData
+ */
+-void QwtPlotCurve::setSamples(
++void QwtPlotCurve::setSamples( 
+     const double *xData, const double *yData, int size )
+ {
+     setData( new QwtPointArrayData( xData, yData, size ) );
+diff -Naur qwt-6.1/source/src/qwt_plot_curve.h qwt_6.1.0.original/src/qwt_plot_curve.h
+--- qwt-6.1/source/src/qwt_plot_curve.h	2014-08-28 16:58:46.966674005 -0700
++++ qwt_6.1.0.original/src/qwt_plot_curve.h	2013-03-01 14:52:46.000000000 -0800
+@@ -33,7 +33,7 @@
+   \par Usage
+   <dl><dt>a) Assign curve properties</dt>
+   <dd>When a curve is created, it is configured to draw black solid lines
+-  with in QwtPlotCurve::Lines style and no symbols.
++  with in QwtPlotCurve::Lines style and no symbols. 
+   You can change this by calling
+   setPen(), setStyle() and setSymbol().</dd>
+   <dt>b) Connect/Assign data.</dt>
+@@ -52,7 +52,7 @@
+ 
+   \sa QwtPointSeriesData, QwtSymbol, QwtScaleMap
+ */
+-class QWT_EXPORT QwtPlotCurve:
++class QWT_EXPORT QwtPlotCurve: 
+     public QwtPlotSeriesItem, public QwtSeriesStore<QPointF>
+ {
+ public:
+@@ -75,7 +75,7 @@
+         Lines,
+ 
+         /*!
+-           Draw vertical or horizontal sticks ( depending on the
++           Draw vertical or horizontal sticks ( depending on the 
+            orientation() ) from a baseline which is defined by setBaseline().
+         */
+         Sticks,
+@@ -90,7 +90,7 @@
+         /*!
+            Draw dots at the locations of the data points. Note:
+            This is different from a dotted line (see setPen()), and faster
+-           as a curve in QwtPlotCurve::NoStyle style and a symbol
++           as a curve in QwtPlotCurve::NoStyle style and a symbol 
+            painting a point.
+         */
+         Dots,
+@@ -110,7 +110,7 @@
+     enum CurveAttribute
+     {
+         /*!
+-           For QwtPlotCurve::Steps only.
++           For QwtPlotCurve::Steps only. 
+            Draws a step function from the right to the left.
+          */
+         Inverted = 0x01,
+@@ -141,13 +141,13 @@
+     enum LegendAttribute
+     {
+         /*!
+-          QwtPlotCurve tries to find a color representing the curve
++          QwtPlotCurve tries to find a color representing the curve 
+           and paints a rectangle with it.
+          */
+         LegendNoAttribute = 0x00,
+ 
+         /*!
+-          If the style() is not QwtPlotCurve::NoCurve a line
++          If the style() is not QwtPlotCurve::NoCurve a line 
+           is painted with the curve pen().
+          */
+         LegendShowLine = 0x01,
+@@ -191,16 +191,16 @@
+         FilterPoints = 0x02,
+ 
+         /*!
+-          Minimize memory usage that is temporarily needed for the
++          Minimize memory usage that is temporarily needed for the 
+           translated points, before they get painted.
+-          This might slow down the performance of painting
++          This might slow down the performance of painting 
+          */
+         MinimizeMemory = 0x04,
+ 
+         /*!
+           Render the points to a temporary image and paint the image.
+           This is a very special optimization for Dots style, when
+-          having a huge amount of points.
++          having a huge amount of points. 
+           With a reasonable number of points QPainter::drawPoints()
+           will be faster.
+          */
+@@ -270,7 +270,6 @@
+ 
+     void init();
+ 
+-public:
+     virtual void drawCurve( QPainter *p, int style,
+         const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+         const QRectF &canvasRect, int from, int to ) const;
+@@ -296,13 +295,13 @@
+         const QRectF &canvasRect, int from, int to ) const;
+ 
+     virtual void fillCurve( QPainter *,
+-        const QwtScaleMap &, const QwtScaleMap &,
++        const QwtScaleMap &, const QwtScaleMap &, 
+         const QRectF &canvasRect, QPolygonF & ) const;
+ 
+     void closePolyline( QPainter *,
+         const QwtScaleMap &, const QwtScaleMap &, QPolygonF & ) const;
+ 
+-protected:
++private:
+     class PrivateData;
+     PrivateData *d_data;
+ };
+diff -Naur qwt-6.1/source/src/qwt_plot_dict.cpp qwt_6.1.0.original/src/qwt_plot_dict.cpp
+--- qwt-6.1/source/src/qwt_plot_dict.cpp	2014-08-28 16:58:46.965673990 -0700
++++ qwt_6.1.0.original/src/qwt_plot_dict.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -169,7 +169,6 @@
+ 
+ /*!
+   \return List of all attached plot items of a specific type.
+-  \param rtti See QwtPlotItem::RttiValues
+   \sa QwtPlotItem::rtti()
+ */
+ QwtPlotItemList QwtPlotDict::itemList( int rtti ) const
+diff -Naur qwt-6.1/source/src/qwt_plot_directpainter.cpp qwt_6.1.0.original/src/qwt_plot_directpainter.cpp
+--- qwt-6.1/source/src/qwt_plot_directpainter.cpp	2014-08-28 16:58:47.014674691 -0700
++++ qwt_6.1.0.original/src/qwt_plot_directpainter.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -97,7 +97,8 @@
+ }
+ 
+ /*!
+-  \return True, when attribute is enabled
++  Check if a attribute is set.
++
+   \param attribute Attribute to be tested
+   \sa Attribute, setAttribute()
+ */
+diff -Naur qwt-6.1/source/src/qwt_plot_glcanvas.cpp qwt_6.1.0.original/src/qwt_plot_glcanvas.cpp
+--- qwt-6.1/source/src/qwt_plot_glcanvas.cpp	2014-08-28 16:58:46.989674333 -0700
++++ qwt_6.1.0.original/src/qwt_plot_glcanvas.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -234,7 +234,6 @@
+ /*!
+   Qt event handler for QEvent::PolishRequest and QEvent::StyleChange
+   \param event Qt Event
+-  \return See QGLWidget::event()
+ */
+ bool QwtPlotGLCanvas::event( QEvent *event )
+ {
+diff -Naur qwt-6.1/source/src/qwt_plot_grid.cpp qwt_6.1.0.original/src/qwt_plot_grid.cpp
+--- qwt-6.1/source/src/qwt_plot_grid.cpp	2014-08-28 16:58:47.018674749 -0700
++++ qwt_6.1.0.original/src/qwt_plot_grid.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -16,7 +16,7 @@
+ #include <qpainter.h>
+ #include <qpen.h>
+ 
+-class QWT_GTEST QwtPlotGrid::PrivateData
++class QwtPlotGrid::PrivateData
+ {
+ public:
+     PrivateData():
+diff -Naur qwt-6.1/source/src/qwt_plot.h qwt_6.1.0.original/src/qwt_plot.h
+--- qwt-6.1/source/src/qwt_plot.h	2014-08-28 16:58:46.917673308 -0700
++++ qwt_6.1.0.original/src/qwt_plot.h	2013-03-01 14:52:46.000000000 -0800
+@@ -21,16 +21,12 @@
+ 
+ class QwtPlotLayout;
+ class QwtAbstractLegend;
++class QwtScaleWidget;
++class QwtScaleEngine;
++class QwtScaleDiv;
+ class QwtScaleDraw;
+ class QwtTextLabel;
+ 
+-#include "qwt_plot.h"
+-#include "qwt_math.h"
+-#include "qwt_scale_widget.h"
+-#include "qwt_scale_div.h"
+-#include "qwt_scale_engine.h"
+-
+-
+ /*!
+   \brief A 2-D plotting widget
+ 
+@@ -44,7 +40,7 @@
+   are calculated from the plot items, using algorithms (QwtScaleEngine) which
+   can be configured separately for each axis.
+ 
+-  The simpleplot example is a good starting point to see how to set up a
++  The simpleplot example is a good starting point to see how to set up a 
+   plot widget.
+ 
+   \image html plot.png
+@@ -79,7 +75,7 @@
+ {
+     Q_OBJECT
+ 
+-    Q_PROPERTY( QBrush canvasBackground
++    Q_PROPERTY( QBrush canvasBackground 
+         READ canvasBackground WRITE setCanvasBackground )
+     Q_PROPERTY( bool autoReplot READ autoReplot WRITE setAutoReplot )
+ 
+@@ -125,7 +121,7 @@
+         //! The legend will be right from the QwtPlot::yRight axis.
+         RightLegend,
+ 
+-        //! The legend will be below the footer
++        //! The legend will be below the footer 
+         BottomLegend,
+ 
+         //! The legend will be above the title
+@@ -228,7 +224,7 @@
+ 
+     // Legend
+ 
+-    void insertLegend( QwtAbstractLegend *,
++    void insertLegend( QwtAbstractLegend *, 
+         LegendPosition = QwtPlot::RightLegend, double ratio = -1.0 );
+ 
+     QwtAbstractLegend *legend();
+@@ -248,7 +244,7 @@
+     void updateAxes();
+     void updateCanvasMargins();
+ 
+-    virtual void getCanvasMarginsHint(
++    virtual void getCanvasMarginsHint( 
+         const QwtScaleMap maps[], const QRectF &canvasRect,
+         double &left, double &top, double &right, double &bottom) const;
+ 
+@@ -271,7 +267,7 @@
+     void itemAttached( QwtPlotItem *plotItem, bool on );
+ 
+     /*!
+-      A signal with the attributes how to update
++      A signal with the attributes how to update 
+       the legend entries for a plot item.
+ 
+       \param itemInfo Info about a plot item, build from itemToInfo()
+@@ -280,14 +276,13 @@
+ 
+       \sa itemToInfo(), infoToItem(), QwtAbstractLegend::updateLegend()
+      */
+-    void legendDataChanged( const QVariant &itemInfo,
++    void legendDataChanged( const QVariant &itemInfo, 
+         const QList<QwtLegendData> &data );
+ 
+ public Q_SLOTS:
+     virtual void replot();
+     void autoRefresh();
+ 
+-
+ protected:
+     static bool axisValid( int axisId );
+ 
+@@ -297,21 +292,6 @@
+     void updateLegendItems( const QVariant &itemInfo,
+         const QList<QwtLegendData> &data );
+ 
+-public:
+-    struct AxisData {
+-            bool isEnabled;
+-            bool doAutoScale;
+-            double minValue;
+-            double maxValue;
+-            double stepSize;
+-            int maxMajor;
+-            int maxMinor;
+-            bool isValid;
+-            QwtScaleDiv scaleDiv;
+-            QwtScaleEngine *scaleEngine;
+-            QwtScaleWidget *scaleWidget;
+-        };
+-
+ private:
+     friend class QwtPlotItem;
+     void attachItem( QwtPlotItem *, bool );
+@@ -322,17 +302,11 @@
+ 
+     void initPlot( const QwtText &title );
+ 
++    class AxisData;
+     AxisData *d_axisData[axisCnt];
+ 
+     class PrivateData;
+     PrivateData *d_data;
+-
+-public:
+-    AxisData     axisData(int key) const { return *d_axisData[key]; }
+-    AxisData*   axisDataPtr(int key) { return d_axisData[key]; }
+ };
+ 
+-
+-
+-
+ #endif
+diff -Naur qwt-6.1/source/src/qwt_plot_histogram.cpp qwt_6.1.0.original/src/qwt_plot_histogram.cpp
+--- qwt-6.1/source/src/qwt_plot_histogram.cpp	2014-08-28 16:58:47.005674563 -0700
++++ qwt_6.1.0.original/src/qwt_plot_histogram.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -112,7 +112,7 @@
+ }
+ 
+ /*!
+-    \return Style of the histogram
++    Return the current style
+     \sa HistogramStyle, setStyle()
+ */
+ QwtPlotHistogram::HistogramStyle QwtPlotHistogram::style() const
+@@ -572,11 +572,8 @@
+             polygon += QPointF( baseLine, polygon.last().y() );
+             polygon += QPointF( baseLine, polygon.first().y() );
+         }
+-
+         QwtPainter::drawPolygon( painter, polygon );
+-
+-        polygon.pop_back();
+-        polygon.pop_back();
++        polygon.resize( polygon.size() - 2 );
+     }
+     if ( d_data->pen.style() != Qt::NoPen )
+     {
+@@ -673,14 +670,13 @@
+ }
+ 
+ /*!
+-  A plain rectangle without pen using the brush()
++   A plain rectangle without pen using the brush()
+ 
+-  \param index Index of the legend entry 
++   \param index Index of the legend entry 
+                 ( ignored as there is only one )
+-  \param size Icon size
+-  \return A graphic displaying the icon
++   \param size Icon size
+     
+-  \sa QwtPlotItem::setLegendIconSize(), QwtPlotItem::legendData()
++   \sa QwtPlotItem::setLegendIconSize(), QwtPlotItem::legendData()
+ */
+ QwtGraphic QwtPlotHistogram::legendIcon( int index,
+     const QSizeF &size ) const
+diff -Naur qwt-6.1/source/src/qwt_plot_intervalcurve.cpp qwt_6.1.0.original/src/qwt_plot_intervalcurve.cpp
+--- qwt-6.1/source/src/qwt_plot_intervalcurve.cpp	2014-08-28 16:58:47.028674890 -0700
++++ qwt_6.1.0.original/src/qwt_plot_intervalcurve.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -132,7 +132,7 @@
+ }
+ 
+ /*!
+-    \return True, when attribute is enabled
++    \brief Return the current paint attributes
+     \sa PaintAttribute, setPaintAttribute()
+ */
+ bool QwtPlotIntervalCurve::testPaintAttribute(
+@@ -185,7 +185,7 @@
+ }
+ 
+ /*!
+-    \return Style of the curve
++    \brief Return the current style
+     \sa setStyle()
+ */
+ QwtPlotIntervalCurve::CurveStyle QwtPlotIntervalCurve::style() const
+@@ -255,7 +255,7 @@
+ }
+ 
+ /*!
+-    \return Pen used to draw the lines
++    \brief Return the pen used to draw the lines
+     \sa setPen(), brush()
+ */
+ const QPen& QwtPlotIntervalCurve::pen() const
+diff -Naur qwt-6.1/source/src/qwt_plot_item.cpp qwt_6.1.0.original/src/qwt_plot_item.cpp
+--- qwt-6.1/source/src/qwt_plot_item.cpp	2014-08-28 16:58:47.044675118 -0700
++++ qwt_6.1.0.original/src/qwt_plot_item.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -15,7 +15,7 @@
+ #include "qwt_graphic.h"
+ #include <qpainter.h>
+ 
+-class QWT_GTEST QwtPlotItem::PrivateData
++class QwtPlotItem::PrivateData
+ {
+ public:
+     PrivateData():
+@@ -589,7 +589,6 @@
+    The default implementation returns one entry with 
+    the title() of the item and the legendIcon().
+ 
+-   \return Data, that is needed to represent the item on the legend
+    \sa title(), legendIcon(), QwtLegend, QwtPlotLegendItem
+  */
+ QList<QwtLegendData> QwtPlotItem::legendData() const
+diff -Naur qwt-6.1/source/src/qwt_plot_layout.cpp qwt_6.1.0.original/src/qwt_plot_layout.cpp
+--- qwt-6.1/source/src/qwt_plot_layout.cpp	2014-08-28 16:58:47.072675518 -0700
++++ qwt_6.1.0.original/src/qwt_plot_layout.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -464,8 +464,6 @@
+   This method is intended to be used from derived layouts
+   overloading activate()
+ 
+-  \param rect Rectangle for the legend
+-
+   \sa legendRect(), activate()
+  */
+ void QwtPlotLayout::setLegendRect( const QRectF &rect )
+@@ -488,15 +486,13 @@
+   This method is intended to be used from derived layouts
+   overloading activate()
+ 
+-  \param axis Axis index
+-  \param rect Rectangle for the scale
+-
+   \sa scaleRect(), activate()
+  */
+ void QwtPlotLayout::setScaleRect( int axis, const QRectF &rect )
+ {
+     if ( axis >= 0 && axis < QwtPlot::axisCnt )
+         d_data->scaleRect[axis] = rect;
++
+ }
+ 
+ /*!
+@@ -550,9 +546,7 @@
+ }
+ 
+ /*!
+-  \return Minimum size hint
+-  \param plot Plot widget
+-
++  \brief Return a minimum size hint
+   \sa QwtPlot::minimumSizeHint()
+ */
+ 
+@@ -999,10 +993,6 @@
+   Align the ticks of the axis to the canvas borders using
+   the empty corners.
+ 
+-  \param options Layout options
+-  \param canvasRect Geometry of the canvas ( IN/OUT )
+-  \param scaleRect Geometries of the scales ( IN/OUT )
+-
+   \sa Options
+ */
+ 
+diff -Naur qwt-6.1/source/src/qwt_plot_marker.cpp qwt_6.1.0.original/src/qwt_plot_marker.cpp
+--- qwt-6.1/source/src/qwt_plot_marker.cpp	2014-08-28 16:58:47.106676004 -0700
++++ qwt_6.1.0.original/src/qwt_plot_marker.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -132,9 +132,9 @@
+ */
+ void QwtPlotMarker::draw( QPainter *painter,
+     const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+-    const QRectF &canvasRect, bool bDrawLabel ) const
++    const QRectF &canvasRect ) const
+ {
+-    const QPointF pos( xMap.transform( d_data->xValue ),
++    const QPointF pos( xMap.transform( d_data->xValue ), 
+         yMap.transform( d_data->yValue ) );
+ 
+     // draw lines
+@@ -147,14 +147,14 @@
+     {
+         const QSizeF sz = d_data->symbol->size();
+ 
+-        const QRectF clipRect = canvasRect.adjusted(
++        const QRectF clipRect = canvasRect.adjusted( 
+             -sz.width(), -sz.height(), sz.width(), sz.height() );
+ 
+         if ( clipRect.contains( pos ) )
+             d_data->symbol->drawSymbol( painter, pos );
+     }
+-    if(bDrawLabel)
+-        drawLabel( painter, canvasRect, pos );
++
++    drawLabel( painter, canvasRect, pos );
+ }
+ 
+ /*!
+@@ -337,7 +337,7 @@
+ 
+ /*!
+   \brief Set the line style
+-  \param style Line style.
++  \param style Line style. 
+   \sa lineStyle()
+ */
+ void QwtPlotMarker::setLineStyle( LineStyle style )
+@@ -423,7 +423,7 @@
+ 
+   In all other styles the alignment is relative to the marker's position.
+ 
+-  \param align Alignment.
++  \param align Alignment. 
+   \sa labelAlignment(), labelOrientation()
+ */
+ void QwtPlotMarker::setLabelAlignment( Qt::Alignment align )
+@@ -502,21 +502,21 @@
+     return d_data->spacing;
+ }
+ 
+-/*!
++/*! 
+   Build and assign a line pen
+-
++    
+   In Qt5 the default pen width is 1.0 ( 0.0 in Qt4 ) what makes it
+   non cosmetic ( see QPen::isCosmetic() ). This method has been introduced
+   to hide this incompatibility.
+-
++    
+   \param color Pen color
+   \param width Pen width
+   \param style Pen style
+-
++    
+   \sa pen(), brush()
+- */
++ */ 
+ void QwtPlotMarker::setLinePen( const QColor &color, qreal width, Qt::PenStyle style )
+-{
++{   
+     setLinePen( QPen( color, width, style ) );
+ }
+ 
+@@ -554,7 +554,7 @@
+ /*!
+    \return Icon representing the marker on the legend
+ 
+-   \param index Index of the legend entry
++   \param index Index of the legend entry 
+                 ( usually there is only one )
+    \param size Icon size
+ 
+@@ -585,7 +585,7 @@
+         {
+             const double y = 0.5 * size.height();
+ 
+-            QwtPainter::drawLine( &painter,
++            QwtPainter::drawLine( &painter, 
+                 0.0, y, size.width(), y );
+         }
+ 
+@@ -594,7 +594,7 @@
+         {
+             const double x = 0.5 * size.width();
+ 
+-            QwtPainter::drawLine( &painter,
++            QwtPainter::drawLine( &painter, 
+                 x, 0.0, x, size.height() );
+         }
+     }
+diff -Naur qwt-6.1/source/src/qwt_plot_marker.h qwt_6.1.0.original/src/qwt_plot_marker.h
+--- qwt-6.1/source/src/qwt_plot_marker.h	2014-08-28 16:58:47.114676116 -0700
++++ qwt_6.1.0.original/src/qwt_plot_marker.h	2013-03-01 14:52:46.000000000 -0800
+@@ -37,11 +37,11 @@
+   are valid. The interpretation of the alignment depends on the marker's
+   line style. The alignment refers to the center point of
+   the marker, which means, for example, that the label would be printed
+-  left above the center point if the alignment was set to
++  left above the center point if the alignment was set to 
+   Qt::AlignLeft | Qt::AlignTop.
+ 
+   \note QwtPlotTextLabel is intended to align a text label
+-        according to the geometry of canvas
++        according to the geometry of canvas 
+         ( unrelated to plot coordinates )
+ */
+ 
+@@ -108,17 +108,17 @@
+ 
+     virtual void draw( QPainter *p,
+         const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+-        const QRectF &, bool bDrawLabel=true) const;
++        const QRectF & ) const;
+ 
+     virtual QRectF boundingRect() const;
+ 
+     virtual QwtGraphic legendIcon( int index, const QSizeF & ) const;
+ 
+ protected:
+-    virtual void drawLines( QPainter *,
++    virtual void drawLines( QPainter *, 
+         const QRectF &, const QPointF & ) const;
+ 
+-    virtual void drawLabel( QPainter *,
++    virtual void drawLabel( QPainter *, 
+         const QRectF &, const QPointF & ) const;
+ 
+ private:
+diff -Naur qwt-6.1/source/src/qwt_plot_multi_barchart.h qwt_6.1.0.original/src/qwt_plot_multi_barchart.h
+--- qwt-6.1/source/src/qwt_plot_multi_barchart.h	2014-08-28 16:58:47.122676231 -0700
++++ qwt_6.1.0.original/src/qwt_plot_multi_barchart.h	2013-03-01 14:52:47.000000000 -0800
+@@ -7,8 +7,8 @@
+  * modify it under the terms of the Qwt License, Version 1.0
+  *****************************************************************************/
+ 
+-#ifndef QWT_PLOT_MULTI_BAR_CHART_H
+-#define QWT_PLOT_MULTI_BAR_CHART_H
++#ifndef QWT_PLOT_BAR_CHART_H
++#define QWT_PLOT_BAR_CHART_H
+ 
+ #include "qwt_global.h"
+ #include "qwt_plot_abstract_barchart.h"
+diff -Naur qwt-6.1/source/src/qwt_plot_panner.cpp qwt_6.1.0.original/src/qwt_plot_panner.cpp
+--- qwt-6.1/source/src/qwt_plot_panner.cpp	2014-08-28 16:58:47.131676361 -0700
++++ qwt_6.1.0.original/src/qwt_plot_panner.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -238,10 +238,8 @@
+ }
+ 
+ /*!
+-   Calculate a mask from the border path of the canvas
+-
+-   \return Mask as bitmap
+-   \sa QwtPlotCanvas::borderPath()
++    Calculate a mask from the border path of the canvas
++    \sa QwtPlotCanvas::borderPath()
+ */
+ QBitmap QwtPlotPanner::contentsMask() const
+ {
+@@ -251,9 +249,6 @@
+     return QwtPanner::contentsMask();
+ }
+ 
+-/*!
+-   \return Pixmap with the content of the canvas
+- */
+ QPixmap QwtPlotPanner::grab() const
+ {   
+     const QWidget *cv = canvas();
+diff -Naur qwt-6.1/source/src/qwt_plot_picker.cpp qwt_6.1.0.original/src/qwt_plot_picker.cpp
+--- qwt-6.1/source/src/qwt_plot_picker.cpp	2014-08-28 16:58:47.121676217 -0700
++++ qwt_6.1.0.original/src/qwt_plot_picker.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -133,7 +133,8 @@
+ }
+ 
+ /*!
+-  \return Normalized bounding rectangle of the axes
++  Return normalized bounding rectangle of the axes
++
+   \sa QwtPlot::autoReplot(), QwtPlot::replot().
+ */
+ QRectF QwtPlotPicker::scaleRect() const
+@@ -260,7 +261,7 @@
+ 
+   \param ok If true, complete the selection and emit selected signals
+             otherwise discard the selection.
+-  \return True if the selection has been accepted, false otherwise
++  \return true if the selection is accepted, false otherwise
+ */
+ 
+ bool QwtPlotPicker::end( bool ok )
+diff -Naur qwt-6.1/source/src/qwt_plot_rasteritem.cpp qwt_6.1.0.original/src/qwt_plot_rasteritem.cpp
+--- qwt-6.1/source/src/qwt_plot_rasteritem.cpp	2014-08-28 16:58:47.193677244 -0700
++++ qwt_6.1.0.original/src/qwt_plot_rasteritem.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -472,7 +472,7 @@
+ }
+ 
+ /*!
+-    \return True, when attribute is enabled
++    \brief Return the current paint attributes
+     \sa PaintAttribute, setPaintAttribute()
+ */
+ bool QwtPlotRasterItem::testPaintAttribute( PaintAttribute attribute ) const
+@@ -896,8 +896,6 @@
+    \param area Area to be painted on the image
+    \param imageSize Image size
+    \param pixelSize Width/Height of a data pixel
+-
+-   \return Calculated scale map
+ */
+ QwtScaleMap QwtPlotRasterItem::imageMap(
+     Qt::Orientation orientation,
+diff -Naur qwt-6.1/source/src/qwt_plot_rasteritem.h qwt_6.1.0.original/src/qwt_plot_rasteritem.h
+--- qwt-6.1/source/src/qwt_plot_rasteritem.h	2014-08-28 16:58:47.163676816 -0700
++++ qwt_6.1.0.original/src/qwt_plot_rasteritem.h	2013-03-01 14:52:46.000000000 -0800
+@@ -121,8 +121,6 @@
+       \param yMap Y-Scale Map
+       \param area Requested area for the image in scale coordinates
+       \param imageSize Requested size of the image
+-   
+-      \return Rendered image
+      */
+     virtual QImage renderImage( const QwtScaleMap &xMap,
+         const QwtScaleMap &yMap, const QRectF &area,
+diff -Naur qwt-6.1/source/src/qwt_plot_renderer.cpp qwt_6.1.0.original/src/qwt_plot_renderer.cpp
+--- qwt-6.1/source/src/qwt_plot_renderer.cpp	2014-08-28 16:58:47.158676744 -0700
++++ qwt_6.1.0.original/src/qwt_plot_renderer.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -103,7 +103,8 @@
+ }
+ 
+ /*!
+-  \return True, if flag is enabled.
++  Check if a flag is set.
++
+   \param flag Flag to be tested
+   \sa DiscardFlag, setDiscardFlag(), setDiscardFlags(), discardFlags()
+ */
+@@ -149,7 +150,8 @@
+ }
+ 
+ /*!
+-  \return True, if flag is enabled.
++  Check if a flag is set.
++
+   \param flag Flag to be tested
+   \sa LayoutFlag, setLayoutFlag(), setLayoutFlags(), layoutFlags()
+ */
+@@ -242,12 +244,12 @@
+     {
+ #ifndef QT_NO_PRINTER
+         QPrinter printer;
+-        printer.setOutputFormat( QPrinter::PdfFormat );
+         printer.setColorMode( QPrinter::Color );
+         printer.setFullPage( true );
+         printer.setPaperSize( sizeMM, QPrinter::Millimeter );
+         printer.setDocName( title );
+         printer.setOutputFileName( fileName );
++        printer.setOutputFormat( QPrinter::PdfFormat );
+         printer.setResolution( resolution );
+ 
+         QPainter painter( &printer );
+@@ -259,12 +261,12 @@
+ #if QT_VERSION < 0x050000
+ #ifndef QT_NO_PRINTER
+         QPrinter printer;
+-        printer.setOutputFormat( QPrinter::PostScriptFormat );
+         printer.setColorMode( QPrinter::Color );
+         printer.setFullPage( true );
+         printer.setPaperSize( sizeMM, QPrinter::Millimeter );
+         printer.setDocName( title );
+         printer.setOutputFileName( fileName );
++        printer.setOutputFormat( QPrinter::PostScriptFormat );
+         printer.setResolution( resolution );
+ 
+         QPainter painter( &printer );
+@@ -957,7 +959,6 @@
+    \param sizeMM Size for the document in millimeters.
+    \param resolution Resolution in dots per Inch (dpi)
+ 
+-   \return True, when exporting was successful
+    \sa renderDocument()
+ */
+ bool QwtPlotRenderer::exportTo( QwtPlot *plot, const QString &documentName,
+diff -Naur qwt-6.1/source/src/qwt_plot_rescaler.cpp qwt_6.1.0.original/src/qwt_plot_rescaler.cpp
+--- qwt-6.1/source/src/qwt_plot_rescaler.cpp	2014-08-28 16:58:47.161676788 -0700
++++ qwt_6.1.0.original/src/qwt_plot_rescaler.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -178,7 +178,7 @@
+ }
+ 
+ /*!
+-  \return Direction in which an axis should be expanded
++  Return direction in which an axis should be expanded
+ 
+   \param axis Axis index ( see QwtPlot::AxisId )
+   \sa setExpandingDirection()
+@@ -223,7 +223,7 @@
+ }
+ 
+ /*!
+-  \return Aspect ratio between an axis and the reference axis.
++  Return aspect ratio between an axis and the reference axis.
+ 
+   \param axis Axis index ( see QwtPlot::AxisId )
+   \sa setAspectRatio()
+@@ -440,13 +440,11 @@
+ }
+ 
+ /*!
+-  Synchronize an axis scale according to the scale of the reference axis
++   Synchronize an axis scale according to the scale of the reference axis
+ 
+   \param axis Axis index ( see QwtPlot::AxisId )
+   \param reference Interval of the reference axis
+   \param size Size of the canvas
+-
+-  \return New interval for axis
+ */
+ QwtInterval QwtPlotRescaler::syncScale( int axis,
+     const QwtInterval& reference, const QSize &size ) const
+@@ -476,7 +474,7 @@
+ }
+ 
+ /*!
+-  \return Orientation of an axis
++  Return orientation of an axis
+   \param axis Axis index ( see QwtPlot::AxisId )
+ */
+ Qt::Orientation QwtPlotRescaler::orientation( int axis ) const
+diff -Naur qwt-6.1/source/src/qwt_plot_shapeitem.cpp qwt_6.1.0.original/src/qwt_plot_shapeitem.cpp
+--- qwt-6.1/source/src/qwt_plot_shapeitem.cpp	2014-08-28 16:58:47.212677515 -0700
++++ qwt_6.1.0.original/src/qwt_plot_shapeitem.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -163,7 +163,7 @@
+ }
+ 
+ /*!
+-  \return True, when attribute is enabled
++  \brief Return if a paint attributes is enabled
+   \sa setPaintAttribute()
+ */
+ bool QwtPlotShapeItem::testPaintAttribute( PaintAttribute attribute ) const
+diff -Naur qwt-6.1/source/src/qwt_plot_spectrocurve.cpp qwt_6.1.0.original/src/qwt_plot_spectrocurve.cpp
+--- qwt-6.1/source/src/qwt_plot_spectrocurve.cpp	2014-08-28 16:58:47.230677770 -0700
++++ qwt_6.1.0.original/src/qwt_plot_spectrocurve.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -98,7 +98,7 @@
+ }
+ 
+ /*!
+-    \return True, when attribute is enabled
++    \brief Return the current paint attributes
+     \sa PaintAttribute, setPaintAttribute()
+ */
+ bool QwtPlotSpectroCurve::testPaintAttribute( PaintAttribute attribute ) const
+@@ -303,14 +303,14 @@
+             const QRgb rgb = d_data->colorMap->rgb(
+                 d_data->colorRange, sample.z() );
+ 
+-            painter->setPen( QPen( QColor::fromRgba( rgb ), d_data->penWidth ) );
++            painter->setPen( QPen( QColor( rgb ), d_data->penWidth ) );
+         }
+         else
+         {
+             const unsigned char index = d_data->colorMap->colorIndex(
+                 d_data->colorRange, sample.z() );
+ 
+-            painter->setPen( QPen( QColor::fromRgba( d_data->colorTable[index] ), 
++            painter->setPen( QPen( QColor( d_data->colorTable[index] ), 
+                 d_data->penWidth ) );
+         }
+ 
+diff -Naur qwt-6.1/source/src/qwt_plot_spectrogram.cpp qwt_6.1.0.original/src/qwt_plot_spectrogram.cpp
+--- qwt-6.1/source/src/qwt_plot_spectrogram.cpp	2014-08-28 16:58:47.233677815 -0700
++++ qwt_6.1.0.original/src/qwt_plot_spectrogram.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -287,7 +287,7 @@
+ }
+ 
+ /*!
+-   \return Levels of the contour lines.
++   \brief Return the levels of the contour lines.
+ 
+    The levels are sorted in increasing order.
+ 
+@@ -551,7 +551,6 @@
+ 
+    \param rect Rectangle, where to calculate the contour lines
+    \param raster Raster, used by the CONREC algorithm
+-   \return Calculated contour lines
+ 
+    \sa contourLevels(), setConrecFlag(),
+        QwtRasterData::contourLines()
+diff -Naur qwt-6.1/source/src/qwt_plot_textlabel.cpp qwt_6.1.0.original/src/qwt_plot_textlabel.cpp
+--- qwt-6.1/source/src/qwt_plot_textlabel.cpp	2014-08-28 16:58:47.261678213 -0700
++++ qwt_6.1.0.original/src/qwt_plot_textlabel.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -183,23 +183,8 @@
+     const QRectF rect = textRect( canvasRect.adjusted( m, m, -m, -m ),
+         d_data->text.textSize( painter->font() ) );
+ 
+-    bool doCache = QwtPainter::roundingAlignment( painter );
+-    if ( doCache )
+-    {
+-        switch( painter->paintEngine()->type() )
+-        {
+-            case QPaintEngine::Picture:
+-            case QPaintEngine::User: // usually QwtGraphic
+-            {
+-                // don't use a cache for record/replay devices
+-                doCache = false;
+-                break;
+-            }
+-            default:;
+-        }
+-    }
+-
+-    if ( doCache )
++    const bool doAlign = QwtPainter::roundingAlignment( painter );
++    if ( doAlign )
+     {
+         // when the paint device is aligning it is not one
+         // where scalability matters ( PDF, SVG ).
+diff -Naur qwt-6.1/source/src/qwt_plot_tradingcurve.cpp qwt_6.1.0.original/src/qwt_plot_tradingcurve.cpp
+--- qwt-6.1/source/src/qwt_plot_tradingcurve.cpp	2014-08-28 16:58:47.280678485 -0700
++++ qwt_6.1.0.original/src/qwt_plot_tradingcurve.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -111,7 +111,7 @@
+ }
+ 
+ /*!
+-    \return True, when attribute is enabled
++    \brief Return the current paint attributes
+     \sa PaintAttribute, setPaintAttribute()
+ */
+ bool QwtPlotTradingCurve::testPaintAttribute(
+diff -Naur qwt-6.1/source/src/qwt_plot_xml.cpp qwt_6.1.0.original/src/qwt_plot_xml.cpp
+--- qwt-6.1/source/src/qwt_plot_xml.cpp	2014-08-28 16:58:47.287678585 -0700
++++ qwt_6.1.0.original/src/qwt_plot_xml.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -28,7 +28,6 @@
+   This method is intended for manipulating the plot widget
+   from a specific editor in the Qwt designer plugin.
+ 
+-  \return QString::null
+   \warning The plot editor has never been implemented.
+ */
+ QString QwtPlot::grabProperties() const
+diff -Naur qwt-6.1/source/src/qwt_plot_zoomer.cpp qwt_6.1.0.original/src/qwt_plot_zoomer.cpp
+--- qwt-6.1/source/src/qwt_plot_zoomer.cpp	2014-08-28 16:58:47.311678927 -0700
++++ qwt_6.1.0.original/src/qwt_plot_zoomer.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -13,7 +13,7 @@
+ #include "qwt_picker_machine.h"
+ #include <qalgorithms.h>
+ 
+-class QWT_EXPORT QwtPlotZoomer::PrivateData
++class QwtPlotZoomer::PrivateData
+ {
+ public:
+     uint zoomRectIndex;
+@@ -139,8 +139,8 @@
+ }
+ 
+ /*!
+-  \return The zoom stack. zoomStack()[0] is the zoom base,
+-          zoomStack()[1] the first zoomed rectangle.
++  Return the zoom stack. zoomStack()[0] is the zoom base,
++  zoomStack()[1] the first zoomed rectangle.
+ 
+   \sa setZoomStack(), zoomRectIndex()
+ */
+@@ -216,7 +216,8 @@
+ }
+ 
+ /*!
+-  \return Rectangle at the current position on the zoom stack.
++  Rectangle at the current position on the zoom stack.
++
+   \sa zoomRectIndex(), scaleRect().
+ */
+ QRectF QwtPlotZoomer::zoomRect() const
+@@ -565,11 +566,7 @@
+   Expand the selected rectangle to minZoomSize() and zoom in
+   if accepted.
+ 
+-  \param ok If true, complete the selection and emit selected signals
+-            otherwise discard the selection.
+-
+   \sa accept(), minZoomSize()
+-  \return True if the selection has been accepted, false otherwise
+ */
+ bool QwtPlotZoomer::end( bool ok )
+ {
+diff -Naur qwt-6.1/source/src/qwt_point_3d.h qwt_6.1.0.original/src/qwt_point_3d.h
+--- qwt-6.1/source/src/qwt_point_3d.h	2014-08-28 16:58:47.311678927 -0700
++++ qwt_6.1.0.original/src/qwt_point_3d.h	2013-03-01 14:52:46.000000000 -0800
+@@ -102,7 +102,7 @@
+ }
+ 
+ /*!
+-    \return True if the point is null; otherwise returns false.
++    Returns true if the point is null; otherwise returns false.
+ 
+     A point is considered to be null if x, y and z-coordinates
+     are equal to zero.
+@@ -112,37 +112,37 @@
+     return d_x == 0.0 && d_y == 0.0 && d_z == 0.0;
+ }
+ 
+-//! \return The x-coordinate of the point.
++//! Returns the x-coordinate of the point.
+ inline double QwtPoint3D::x() const
+ {
+     return d_x;
+ }
+ 
+-//! \return The y-coordinate of the point.
++//! Returns the y-coordinate of the point.
+ inline double QwtPoint3D::y() const
+ {
+     return d_y;
+ }
+ 
+-//! \return The z-coordinate of the point.
++//! Returns the z-coordinate of the point.
+ inline double QwtPoint3D::z() const
+ {
+     return d_z;
+ }
+ 
+-//! \return A reference to the x-coordinate of the point.
++//! Returns a reference to the x-coordinate of the point.
+ inline double &QwtPoint3D::rx()
+ {
+     return d_x;
+ }
+ 
+-//! \return A reference to the y-coordinate of the point.
++//! Returns a reference to the y-coordinate of the point.
+ inline double &QwtPoint3D::ry()
+ {
+     return d_y;
+ }
+ 
+-//! \return A reference to the z-coordinate of the point.
++//! Returns a reference to the z-coordinate of the point.
+ inline double &QwtPoint3D::rz()
+ {
+     return d_z;
+@@ -167,20 +167,20 @@
+ }
+ 
+ /*!
+-   \return 2D point, where the z coordinate is dropped.
++   Rounds 2D point, where the z coordinate is dropped.
+ */
+ inline QPointF QwtPoint3D::toPoint() const
+ {
+     return QPointF( d_x, d_y );
+ }
+ 
+-//! \return True, if this point and other are equal; otherwise returns false.
++//! Returns true if this point and other are equal; otherwise returns false.
+ inline bool QwtPoint3D::operator==( const QwtPoint3D &other ) const
+ {
+     return ( d_x == other.d_x ) && ( d_y == other.d_y ) && ( d_z == other.d_z );
+ }
+ 
+-//! \return True if this rect and other are different; otherwise returns false.
++//! Returns true if this rect and other are different; otherwise returns false.
+ inline bool QwtPoint3D::operator!=( const QwtPoint3D &other ) const
+ {
+     return !operator==( other );
+diff -Naur qwt-6.1/source/src/qwt_point_data.cpp qwt_6.1.0.original/src/qwt_point_data.cpp
+--- qwt-6.1/source/src/qwt_point_data.cpp	2014-08-28 16:58:47.329679183 -0700
++++ qwt_6.1.0.original/src/qwt_point_data.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -286,9 +286,6 @@
+    equidistant steps. If !interval().isValid() the
+    interval is calculated from the "rectangle of interest".
+ 
+-   \param index Index of the requested point 
+-   \return Calculated x coordinate
+-
+    \sa interval(), rectOfInterest(), y()
+ */
+ double QwtSyntheticPointData::x( uint index ) const
+diff -Naur qwt-6.1/source/src/qwt_point_data.h qwt_6.1.0.original/src/qwt_point_data.h
+--- qwt-6.1/source/src/qwt_point_data.h	2014-08-28 16:58:47.335679269 -0700
++++ qwt_6.1.0.original/src/qwt_point_data.h	2013-03-01 14:52:47.000000000 -0800
+@@ -71,7 +71,7 @@
+ 
+   The following example shows how to implement a sinus curve.
+ 
+-  \code
++  \verbatim
+ #include <cmath>
+ #include <qwt_series_data.h>
+ #include <qwt_plot_curve.h>
+@@ -82,32 +82,31 @@
+ {
+ public:
+     SinusData():
+-        QwtSyntheticPointData( 100 )
++        QwtSyntheticPointData(100)
+     {
+     }
+-
+-    virtual double y( double x ) const
++    virtual double y(double x) const
+     {
+-        return qSin( x );
++        return qSin(x);
+     }
+ };
+ 
+ int main(int argc, char **argv)
+ {
+-    QApplication a( argc, argv );
++    QApplication a(argc, argv);
+ 
+     QwtPlot plot;
+-    plot.setAxisScale( QwtPlot::xBottom, 0.0, 10.0 );
+-    plot.setAxisScale( QwtPlot::yLeft, -1.0, 1.0 );
++    plot.setAxisScale(QwtPlot::xBottom, 0.0, 10.0);
++    plot.setAxisScale(QwtPlot::yLeft, -1.0, 1.0);
+ 
+-    QwtPlotCurve *curve = new QwtPlotCurve( "y = sin(x)" );
+-    curve->setData( new SinusData() );
+-    curve->attach( &plot );
++    QwtPlotCurve *curve = new QwtPlotCurve("y = sin(x)");
++    curve->setData(SinusData());
++    curve->attach(&plot);
+ 
+     plot.show();
+     return a.exec();
+ }
+-   \endcode
++   \endverbatim
+ */
+ class QWT_EXPORT QwtSyntheticPointData: public QwtSeriesData<QPointF>
+ {
+diff -Naur qwt-6.1/source/src/qwt_point_mapper.cpp qwt_6.1.0.original/src/qwt_point_mapper.cpp
+--- qwt-6.1/source/src/qwt_point_mapper.cpp	2014-08-28 16:58:47.343679382 -0700
++++ qwt_6.1.0.original/src/qwt_point_mapper.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -404,8 +404,6 @@
+   \param series Series of points to be mapped
+   \param from Index of the first point to be painted
+   \param to Index of the last point to be painted
+-
+-  \return Translated polygon
+ */
+ QPolygonF QwtPointMapper::toPolygonF(
+     const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+@@ -454,8 +452,6 @@
+   \param series Series of points to be mapped
+   \param from Index of the first point to be painted
+   \param to Index of the last point to be painted
+-
+-  \return Translated polygon
+ */
+ QPolygon QwtPointMapper::toPolygon(
+     const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+@@ -505,8 +501,6 @@
+   \param series Series of points to be mapped
+   \param from Index of the first point to be painted
+   \param to Index of the last point to be painted
+-
+-  \return Translated polygon
+ */
+ QPolygonF QwtPointMapper::toPointsF(
+     const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+@@ -579,8 +573,6 @@
+   \param series Series of points to be mapped
+   \param from Index of the first point to be painted
+   \param to Index of the last point to be painted
+-
+-  \return Translated polygon
+ */
+ QPolygon QwtPointMapper::toPoints(
+     const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+@@ -630,7 +622,6 @@
+                    If numThreads is set to 0, the system specific
+                    ideal thread count is used.
+ 
+-  \return Image displaying the series
+ */
+ QImage QwtPointMapper::toImage(
+     const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+diff -Naur qwt-6.1/source/src/qwt_point_polar.cpp qwt_6.1.0.original/src/qwt_point_polar.cpp
+--- qwt-6.1/source/src/qwt_point_polar.cpp	2014-08-28 16:58:47.345679412 -0700
++++ qwt_6.1.0.original/src/qwt_point_polar.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -22,7 +22,7 @@
+ QwtPointPolar::QwtPointPolar( const QPointF &p )
+ {
+     d_radius = qSqrt( qwtSqr( p.x() ) + qwtSqr( p.y() ) );
+-    d_azimuth_Radians = qAtan2( p.y(), p.x() );
++    d_azimuth = qAtan2( p.y(), p.x() );
+ }
+ 
+ /*!
+@@ -32,14 +32,12 @@
+ void QwtPointPolar::setPoint( const QPointF &p )
+ {
+     d_radius = qSqrt( qwtSqr( p.x() ) + qwtSqr( p.y() ) );
+-    d_azimuth_Radians = qAtan2( p.y(), p.x() );
++    d_azimuth = qAtan2( p.y(), p.x() );
+ }
+ 
+ /*!
+    Convert and return values in Cartesian coordinates
+ 
+-   \return Converted point in Cartesian coordinates
+-
+    \note Invalid or null points will be returned as QPointF(0.0, 0.0)
+    \sa isValid(), isNull()
+ */
+@@ -48,41 +46,38 @@
+     if ( d_radius <= 0.0 )
+         return QPointF( 0.0, 0.0 );
+ 
+-    const double x = d_radius * qCos( d_azimuth_Radians );
+-    const double y = d_radius * qSin( d_azimuth_Radians );
++    const double x = d_radius * qCos( d_azimuth );
++    const double y = d_radius * qSin( d_azimuth );
+ 
+     return QPointF( x, y );
+ }
+ 
+ /*!
+-    \brief Compare 2 points
++    Returns true if point1 is equal to point2; otherwise returns false.
+ 
+     Two points are equal to each other if radius and
+     azimuth-coordinates are the same. Points are not equal, when
+     the azimuth differs, but other.azimuth() == azimuth() % (2 * PI).
+ 
+-    \return True if the point is equal to other; otherwise return false.
+-
+     \sa normalized()
+ */
+ bool QwtPointPolar::operator==( const QwtPointPolar &other ) const
+ {
+-    return d_radius == other.d_radius && d_azimuth_Radians == other.d_azimuth_Radians;
++    return d_radius == other.d_radius && d_azimuth == other.d_azimuth;
+ }
+ 
+ /*!
+-    Compare 2 points
++    Returns true if point1 is not equal to point2; otherwise returns false.
+ 
+     Two points are equal to each other if radius and
+     azimuth-coordinates are the same. Points are not equal, when
+     the azimuth differs, but other.azimuth() == azimuth() % (2 * PI).
+ 
+-    \return True if the point is not equal to other; otherwise return false.
+     \sa normalized()
+ */
+ bool QwtPointPolar::operator!=( const QwtPointPolar &other ) const
+ {
+-    return d_radius != other.d_radius || d_azimuth_Radians != other.d_azimuth_Radians;
++    return d_radius != other.d_radius || d_azimuth != other.d_azimuth;
+ }
+ 
+ /*!
+@@ -90,16 +85,14 @@
+ 
+    When the radius is < 0.0 it is set to 0.0. The azimuth is
+    a value >= 0.0 and < 2 * M_PI.
+-
+-   \return Normalized point
+ */
+ QwtPointPolar QwtPointPolar::normalized() const
+ {
+     const double radius = qMax( d_radius, 0.0 );
+ 
+-    double azimuth = d_azimuth_Radians;
++    double azimuth = d_azimuth;
+     if ( azimuth < -2.0 * M_PI || azimuth >= 2 * M_PI )
+-        azimuth = ::fmod( d_azimuth_Radians, 2 * M_PI );
++        azimuth = ::fmod( d_azimuth, 2 * M_PI );
+ 
+     if ( azimuth < 0.0 )
+         azimuth += 2 * M_PI;
+diff -Naur qwt-6.1/source/src/qwt_point_polar.h qwt_6.1.0.original/src/qwt_point_polar.h
+--- qwt-6.1/source/src/qwt_point_polar.h	2014-08-28 16:58:47.349679470 -0700
++++ qwt_6.1.0.original/src/qwt_point_polar.h	2013-03-01 14:52:46.000000000 -0800
+@@ -29,7 +29,7 @@
+ {
+ public:
+     QwtPointPolar();
+-    QwtPointPolar( double azimuthRads, double radius );
++    QwtPointPolar( double azimuth, double radius );
+     QwtPointPolar( const QwtPointPolar & );
+     QwtPointPolar( const QPointF & );
+ 
+@@ -45,7 +45,7 @@
+     double &rRadius();
+     double &rAzimuth();
+ 
+-    void setRadius( double Rads);
++    void setRadius( double );
+     void setAzimuth( double );
+ 
+     bool operator==( const QwtPointPolar & ) const;
+@@ -54,7 +54,7 @@
+     QwtPointPolar normalized() const;
+ 
+ private:
+-    double d_azimuth_Radians;
++    double d_azimuth;
+     double d_radius;
+ };
+ 
+@@ -63,7 +63,7 @@
+     \sa QPointF::isNull()
+ */
+ inline QwtPointPolar::QwtPointPolar():
+-    d_azimuth_Radians( 0.0 ),
++    d_azimuth( 0.0 ),
+     d_radius( 0.0 )
+ {
+ }
+@@ -75,7 +75,7 @@
+    \param radius Radius
+ */
+ inline QwtPointPolar::QwtPointPolar( double azimuth, double radius ):
+-    d_azimuth_Radians( azimuth ),
++    d_azimuth( azimuth ),
+     d_radius( radius )
+ {
+ }
+@@ -85,7 +85,7 @@
+     \param other Other point
+ */
+ inline QwtPointPolar::QwtPointPolar( const QwtPointPolar &other ):
+-    d_azimuth_Radians( other.d_azimuth_Radians ),
++    d_azimuth( other.d_azimuth ),
+     d_radius( other.d_radius )
+ {
+ }
+@@ -111,7 +111,7 @@
+ //! Returns the azimuth.
+ inline double QwtPointPolar::azimuth() const
+ {
+-    return d_azimuth_Radians;
++    return d_azimuth;
+ }
+ 
+ //! Returns the radius.
+@@ -123,7 +123,7 @@
+ //! Returns the azimuth.
+ inline double &QwtPointPolar::rAzimuth()
+ {
+-    return d_azimuth_Radians;
++    return d_azimuth;
+ }
+ 
+ //! Sets the radius to radius.
+@@ -135,7 +135,7 @@
+ //! Sets the atimuth to atimuth.
+ inline void QwtPointPolar::setAzimuth( double azimuth )
+ {
+-    d_azimuth_Radians = azimuth;
++    d_azimuth = azimuth;
+ }
+ 
+ #ifndef QT_NO_DEBUG_STREAM
+@@ -188,9 +188,9 @@
+ 
+ inline QPointF qwtFastDegree2Pos( const QPointF &pole,
+     double radius, double angle )
+-{
++{   
+     return qwtFastPolar2Pos( pole, radius, angle / 180.0 * M_PI );
+-}
++} 
+ 
+ inline QwtPointPolar qwtFastPos2Polar( const QPointF &pos )
+ {
+@@ -198,4 +198,4 @@
+         qSqrt( qwtSqr( pos.x() ) + qwtSqr( pos.y() ) ) );
+ }
+ 
+-#endif
++#endif 
+diff -Naur qwt-6.1/source/src/qwt_raster_data.cpp qwt_6.1.0.original/src/qwt_raster_data.cpp
+--- qwt-6.1/source/src/qwt_raster_data.cpp	2014-08-28 16:58:47.361679641 -0700
++++ qwt_6.1.0.original/src/qwt_raster_data.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -9,7 +9,6 @@
+ 
+ #include "qwt_raster_data.h"
+ #include "qwt_point_3d.h"
+-#include <qnumeric.h>
+ 
+ class QwtRasterData::ContourPlane
+ {
+@@ -248,13 +247,6 @@
+ /*!
+    Calculate contour lines
+ 
+-   \param rect Bounding rectangle for the contour lines
+-   \param raster Number of data pixels of the raster data
+-   \param levels List of limits, where to insert contour lines
+-   \param flags Flags to customize the contouring algorithm
+-
+-   \return Calculated contour lines
+-
+    An adaption of CONREC, a simple contouring algorithm.
+    http://local.wasp.uwa.edu.au/~pbourke/papers/conrec/
+ */
+@@ -346,12 +338,6 @@
+                     zMax = z;
+             }
+ 
+-            if ( qIsNaN( zSum ) )
+-            {
+-                // one of the points is NaN
+-                continue;
+-            }
+-
+             if ( ignoreOutOfRange )
+             {
+                 if ( !range.contains( zMin ) || !range.contains( zMax ) )
+diff -Naur qwt-6.1/source/src/qwt_round_scale_draw.cpp qwt_6.1.0.original/src/qwt_round_scale_draw.cpp
+--- qwt-6.1/source/src/qwt_round_scale_draw.cpp	2014-08-28 16:58:47.379679897 -0700
++++ qwt_6.1.0.original/src/qwt_round_scale_draw.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -74,7 +74,6 @@
+ 
+   Radius is the radius of the backbone without ticks and labels.
+ 
+-  \return Radius of the scale
+   \sa setRadius(), extent()
+ */
+ double QwtRoundScaleDraw::radius() const
+@@ -246,7 +245,6 @@
+    for the radius of the bounding circle.
+ 
+    \param font Font used for painting the labels
+-   \return Calculated extent
+ 
+    \sa setMinimumExtent(), minimumExtent()
+    \warning The implemented algorithm is not too smart and
+diff -Naur qwt-6.1/source/src/qwt_scale_div.cpp qwt_6.1.0.original/src/qwt_scale_div.cpp
+--- qwt-6.1/source/src/qwt_scale_div.cpp	2014-08-28 16:58:47.404680253 -0700
++++ qwt_6.1.0.original/src/qwt_scale_div.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -257,8 +257,6 @@
+    \param lowerBound Lower bound
+    \param upperBound Upper bound
+ 
+-   \return Scale division with all ticks inside of the given interval
+-
+    \note lowerBound might be greater than upperBound for inverted scales
+ */
+ QwtScaleDiv QwtScaleDiv::bounded( 
+@@ -305,7 +303,6 @@
+    Return a list of ticks
+ 
+    \param type MinorTick, MediumTick or MajorTick
+-   \return Tick list
+ */
+ QList<double> QwtScaleDiv::ticks( int type ) const
+ {
+diff -Naur qwt-6.1/source/src/qwt_scale_draw.cpp qwt_6.1.0.original/src/qwt_scale_draw.cpp
+--- qwt-6.1/source/src/qwt_scale_draw.cpp	2014-08-28 16:58:47.434680680 -0700
++++ qwt_6.1.0.original/src/qwt_scale_draw.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -63,7 +63,6 @@
+ /*!
+    Return alignment of the scale
+    \sa setAlignment()
+-   \return Alignment of the scale
+ */
+ QwtScaleDraw::Alignment QwtScaleDraw::alignment() const
+ {
+@@ -73,8 +72,6 @@
+ /*!
+    Set the alignment of the scale
+ 
+-   \param align Alignment of the scale
+-
+    The default alignment is QwtScaleDraw::BottomScale
+    \sa alignment()
+ */
+@@ -89,8 +86,6 @@
+   TopScale, BottomScale are horizontal (Qt::Horizontal) scales,
+   LeftScale, RightScale are vertical (Qt::Vertical) scales.
+ 
+-  \return Orientation of the scale
+-
+   \sa alignment()
+ */
+ Qt::Orientation QwtScaleDraw::orientation() const
+@@ -117,8 +112,8 @@
+   \param start Start border distance
+   \param end End border distance
+ */
+-void QwtScaleDraw::getBorderDistHint( 
+-    const QFont &font, int &start, int &end ) const
++void QwtScaleDraw::getBorderDistHint( const QFont &font,
++                                      int &start, int &end ) const
+ {
+     start = 0;
+     end = 0;
+@@ -275,7 +270,6 @@
+    of the labels.
+ 
+    \param font Font used for painting the labels
+-   \return Extent
+ 
+    \sa minLength()
+ */
+@@ -313,7 +307,6 @@
+    Calculate the minimum length that is needed to draw the scale
+ 
+    \param font Font used for painting the labels
+-   \return Minimum length that is needed to draw the scale
+ 
+    \sa extent()
+ */
+@@ -351,7 +344,6 @@
+    in direction of the alignment().
+ 
+    \param value Value
+-   \return Position, where to paint a label
+ */
+ QPointF QwtScaleDraw::labelPosition( double value ) const
+ {
+@@ -608,8 +600,6 @@
+   The length doesn't include the space needed for
+   overlapping labels.
+ 
+-  \param length Length of the backbone
+-
+   \sa move(), minLabelDist()
+ */
+ void QwtScaleDraw::setLength( double length )
+@@ -675,7 +665,6 @@
+   \param font Font used for painting
+   \param value Value
+ 
+-  \return Bounding rectangle
+   \sa labelRect()
+ */
+ QRect QwtScaleDraw::boundingLabelRect( const QFont &font, double value ) const
+@@ -698,7 +687,6 @@
+    \param pos Position where to paint the label
+    \param size Size of the label
+ 
+-   \return Transformation matrix
+    \sa setLabelAlignment(), setLabelRotation()
+ */
+ QTransform QwtScaleDraw::labelTransformation(
+@@ -768,8 +756,6 @@
+ 
+   \param font Font used for painting
+   \param value Value
+-
+-   \return Bounding rectangle that is needed to draw a label
+ */
+ QRectF QwtScaleDraw::labelRect( const QFont &font, double value ) const
+ {
+@@ -793,8 +779,6 @@
+ 
+    \param font Label font
+    \param value Value
+-
+-   \return Size that is needed to draw a label
+ */
+ QSizeF QwtScaleDraw::labelSize( const QFont &font, double value ) const
+ {
+diff -Naur qwt-6.1/source/src/qwt_scale_draw.h qwt_6.1.0.original/src/qwt_scale_draw.h
+--- qwt-6.1/source/src/qwt_scale_draw.h	2014-08-28 16:58:47.433680666 -0700
++++ qwt_6.1.0.original/src/qwt_scale_draw.h	2013-03-01 14:52:47.000000000 -0800
+@@ -106,10 +106,6 @@
+ 
+ /*!
+    Move the position of the scale
+-
+-   \param x X coordinate
+-   \param y Y coordinate
+-
+    \sa move(const QPointF &)
+ */
+ inline void QwtScaleDraw::move( double x, double y )
+diff -Naur qwt-6.1/source/src/qwt_scale_engine.cpp qwt_6.1.0.original/src/qwt_scale_engine.cpp
+--- qwt-6.1/source/src/qwt_scale_engine.cpp	2014-08-28 16:58:47.428680596 -0700
++++ qwt_6.1.0.original/src/qwt_scale_engine.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -105,8 +105,6 @@
+   \param value Value to be ceiled
+   \param intervalSize Interval size
+ 
+-  \return Rounded value
+-
+   \sa floorEps()
+ */
+ double QwtScaleArithmetic::ceilEps( double value,
+@@ -124,7 +122,6 @@
+   \param value Value to be floored
+   \param intervalSize Interval size
+ 
+-  \return Rounded value
+   \sa floorEps()
+ */
+ double QwtScaleArithmetic::floorEps( double value, double intervalSize )
+@@ -158,8 +155,6 @@
+   \param intervalSize Interval size
+   \param numSteps Number of steps
+   \param base Base for the division ( usually 10 )
+-
+-  \return Calculated step size
+  */
+ double QwtScaleArithmetic::divideInterval( 
+     double intervalSize, int numSteps, uint base ) 
+@@ -263,7 +258,6 @@
+    of the engine. When the engine has no special transformation
+    NULL is returned, indicating no transformation.
+ 
+-   \return A clone of the transfomation
+    \sa setTransformation()
+  */
+ QwtTransform *QwtScaleEngine::transformation() const
+@@ -339,8 +333,6 @@
+ 
+   \param interval Interval
+   \param value Value
+-
+-  \return True, when the value is inside the interval
+ */
+ bool QwtScaleEngine::contains(
+     const QwtInterval &interval, double value ) const
+@@ -387,26 +379,23 @@
+ }
+ 
+ /*!
+-  \brief Build an interval around a value
++  \brief Build an interval for a value
+ 
+   In case of v == 0.0 the interval is [-0.5, 0.5],
+   otherwide it is [0.5 * v, 1.5 * v]
+-
+-  \param value Initial value
+-  \return Calculated interval
+ */
+ 
+-QwtInterval QwtScaleEngine::buildInterval( double value ) const
++QwtInterval QwtScaleEngine::buildInterval( double v ) const
+ {
+-    const double delta = ( value == 0.0 ) ? 0.5 : qAbs( 0.5 * value );
++    const double delta = ( v == 0.0 ) ? 0.5 : qAbs( 0.5 * v );
+ 
+-    if ( DBL_MAX - delta < value )
++    if ( DBL_MAX - delta < v )
+         return QwtInterval( DBL_MAX - delta, DBL_MAX );
+ 
+-    if ( -DBL_MAX + delta > value )
++    if ( -DBL_MAX + delta > v )
+         return QwtInterval( -DBL_MAX, -DBL_MAX + delta );
+ 
+-    return QwtInterval( value - delta, value + delta );
++    return QwtInterval( v - delta, v + delta );
+ }
+ 
+ /*!
+@@ -426,7 +415,7 @@
+ }
+ 
+ /*!
+-  \return True, if attribute is enabled.
++  Check if a attribute is set.
+ 
+   \param attribute Attribute to be tested
+   \sa Attribute, setAttribute()
+@@ -448,7 +437,7 @@
+ }
+ 
+ /*!
+-  \return Scale attributes
++  Return the scale attributes
+   \sa Attribute, setAttributes(), testAttribute()
+ */
+ QwtScaleEngine::Attributes QwtScaleEngine::attributes() const
+@@ -487,8 +476,6 @@
+ 
+   The default setting is 10
+ 
+-  \param base Base of the engine
+-
+   \sa base()
+  */
+ void QwtScaleEngine::setBase( uint base )
+diff -Naur qwt-6.1/source/src/qwt_scale_engine.h qwt_6.1.0.original/src/qwt_scale_engine.h
+--- qwt-6.1/source/src/qwt_scale_engine.h	2014-08-28 16:58:47.440680768 -0700
++++ qwt_6.1.0.original/src/qwt_scale_engine.h	2013-03-01 14:52:47.000000000 -0800
+@@ -117,8 +117,6 @@
+       \param maxMinorSteps Maximum number of minor steps
+       \param stepSize Step size. If stepSize == 0.0, the scaleEngine
+                    calculates one.
+-
+-      \return Calculated scale division
+     */
+     virtual QwtScaleDiv divideScale( double x1, double x2,
+         int maxMajorSteps, int maxMinorSteps,
+diff -Naur qwt-6.1/source/src/qwt_scale_map.cpp qwt_6.1.0.original/src/qwt_scale_map.cpp
+--- qwt-6.1/source/src/qwt_scale_map.cpp	2014-08-28 16:58:47.451680922 -0700
++++ qwt_6.1.0.original/src/qwt_scale_map.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -2,7 +2,7 @@
+  * Qwt Widget Library
+  * Copyright (C) 1997   Josef Wilgen
+  * Copyright (C) 2002   Uwe Rathmann
+- * Updates 2013 peter karasev, long vo
++ *
+  * This library is free software; you can redistribute it and/or
+  * modify it under the terms of the Qwt License, Version 1.0
+  *****************************************************************************/
+@@ -12,11 +12,6 @@
+ #include <qrect.h>
+ #include <qdebug.h>
+ 
+-namespace {
+-    inline double identity(const QwtScaleMap& , double arg) {
+-        return arg;
+-    }
+-}
+ /*!
+   \brief Constructor
+ 
+@@ -29,9 +24,8 @@
+     d_p2( 1.0 ),
+     d_cnv( 1.0 ),
+     d_ts1( 0.0 ),
+-    d_transform( NULL ),
+-    m_name("")
+-{   //m_func = identity;
++    d_transform( NULL )
++{
+ }
+ 
+ //! Copy constructor
+@@ -99,7 +93,7 @@
+   \brief Specify the borders of the scale interval
+   \param s1 first border
+   \param s2 second border
+-  \warning scales might be aligned to
++  \warning scales might be aligned to 
+            transformation depending boundaries
+ */
+ void QwtScaleMap::setScaleInterval( double s1, double s2 )
+@@ -192,9 +186,9 @@
+ QPointF QwtScaleMap::invTransform( const QwtScaleMap &xMap,
+     const QwtScaleMap &yMap, const QPointF &pos )
+ {
+-    return QPointF(
+-        xMap.invTransform( pos.x() ),
+-        yMap.invTransform( pos.y() )
++    return QPointF( 
++        xMap.invTransform( pos.x() ), 
++        yMap.invTransform( pos.y() ) 
+     );
+ }
+ 
+@@ -211,8 +205,8 @@
+ QPointF QwtScaleMap::transform( const QwtScaleMap &xMap,
+     const QwtScaleMap &yMap, const QPointF &pos )
+ {
+-    return QPointF(
+-        xMap.transform( pos.x() ),
++    return QPointF( 
++        xMap.transform( pos.x() ), 
+         yMap.transform( pos.y() )
+     );
+ }
+diff -Naur qwt-6.1/source/src/qwt_scale_map.h qwt_6.1.0.original/src/qwt_scale_map.h
+--- qwt-6.1/source/src/qwt_scale_map.h	2014-08-28 16:58:47.452680937 -0700
++++ qwt_6.1.0.original/src/qwt_scale_map.h	2013-03-01 14:52:46.000000000 -0800
+@@ -10,21 +10,21 @@
+ #ifndef QWT_SCALE_MAP_H
+ #define QWT_SCALE_MAP_H
+ 
+-#include <QtCore/QtGlobal>
+-#include <QtCore/QString>
+-#include <QtCore/QRectF>
+-#include <QtCore/QRect>
+-#include <functional>
+-#include <QtCore/QDebug>
+-
++#include "qwt_global.h"
+ #include "qwt_transform.h"
++#include <qrect.h>
++
++#ifndef QT_NO_DEBUG_STREAM
++#include <qdebug.h>
++#endif
+ 
++class QRectF;
+ 
+ /*!
+    \brief A scale map
+ 
+    QwtScaleMap offers transformations from the coordinate system
+-   of a scale into the linear coordinate system of a paint device
++   of a scale into the linear coordinate system of a paint device 
+    and vice versa.
+ */
+ class QWT_EXPORT QwtScaleMap
+@@ -67,15 +67,7 @@
+ 
+     bool isInverting() const;
+ 
+-    QString GetName(){ return m_name; }
+-    void    SetName(QString s){m_name=s;}
+-   // typedef std::function<double  (const QwtScaleMap&,double)> Func;
+-   // const Func&   GetFunc(){ return m_func; }
+-   // void          SetFunc(Func& func){m_func=func;}
+-
+ private:
+-    QString m_name;
+-   // Func  m_func;
+     void updateFactor();
+ 
+     double d_s1, d_s2;     // scale interval boundaries
+@@ -140,16 +132,13 @@
+   related to the interval of the paint device
+ 
+   \param s Value relative to the coordinates of the scale
+-  \return Transformed value
+-
+-  \sa invTransform()
+ */
+ inline double QwtScaleMap::transform( double s ) const
+ {
+     if ( d_transform )
+         s = d_transform->transform( s );
+-    //m_func(*this,s);
+-    return  d_p1 + ( s - d_ts1 ) * d_cnv;
++
++    return d_p1 + ( s - d_ts1 ) * d_cnv;
+ }
+ 
+ /*!
+@@ -157,8 +146,6 @@
+   interval of the scale.
+ 
+   \param p Value relative to the coordinates of the paint device
+-  \return Transformed value
+-
+   \sa transform()
+ */
+ inline double QwtScaleMap::invTransform( double p ) const
+diff -Naur qwt-6.1/source/src/qwt_scale_widget.cpp qwt_6.1.0.original/src/qwt_scale_widget.cpp
+--- qwt-6.1/source/src/qwt_scale_widget.cpp	2014-08-28 16:58:47.446680852 -0700
++++ qwt_6.1.0.original/src/qwt_scale_widget.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -21,7 +21,7 @@
+ #include <qstyle.h>
+ #include <qstyleoption.h>
+ 
+-class QWT_GTEST QwtScaleWidget::PrivateData
++class QwtScaleWidget::PrivateData
+ {
+ public:
+     PrivateData():
+@@ -344,7 +344,7 @@
+ }
+ 
+ /*!
+-    \return scaleDraw of this scale
++    scaleDraw of this scale
+     \sa setScaleDraw(), QwtScaleDraw::setScaleDraw()
+ */
+ const QwtScaleDraw *QwtScaleWidget::scaleDraw() const
+@@ -353,7 +353,7 @@
+ }
+ 
+ /*!
+-    \return scaleDraw of this scale
++    scaleDraw of this scale
+     \sa QwtScaleDraw::setScaleDraw()
+ */
+ QwtScaleDraw *QwtScaleWidget::scaleDraw()
+@@ -767,11 +767,6 @@
+   The maximum of this distance an the minimum border distance
+   is returned.
+ 
+-  \param start Return parameter for the border width at 
+-               the beginning of the scale
+-  \param end Return parameter for the border width at the 
+-             end of the scale
+-
+   \warning
+   <ul> <li>The minimum border distance depends on the font.</ul>
+   \sa setMinBorderDist(), getMinBorderDist(), setBorderDist()
+@@ -807,11 +802,6 @@
+   Get the minimum value for the distances of the scale's endpoints from
+   the widget borders.
+ 
+-  \param start Return parameter for the border width at 
+-               the beginning of the scale
+-  \param end Return parameter for the border width at the 
+-             end of the scale
+-
+   \sa setMinBorderDist(), getBorderDistHint()
+ */
+ void QwtScaleWidget::getMinBorderDist( int &start, int &end ) const
+diff -Naur qwt-6.1/source/src/qwt_series_data.h qwt_6.1.0.original/src/qwt_series_data.h
+--- qwt-6.1/source/src/qwt_series_data.h	2014-08-28 16:58:47.483681381 -0700
++++ qwt_6.1.0.original/src/qwt_series_data.h	2013-03-01 14:52:47.000000000 -0800
+@@ -72,8 +72,6 @@
+        qwtBoundingRect(...) offers slow implementations iterating
+        over the samples. For large sets it is recommended to implement
+        something faster f.e. by caching the bounding rectangle.
+-
+-       \return Bounding rectangle
+      */
+     virtual QRectF boundingRect() const = 0;
+ 
+diff -Naur qwt-6.1/source/src/qwt_series_store.h qwt_6.1.0.original/src/qwt_series_store.h
+--- qwt-6.1/source/src/qwt_series_store.h	2014-08-28 16:58:47.484681396 -0700
++++ qwt_6.1.0.original/src/qwt_series_store.h	2013-03-01 14:52:47.000000000 -0800
+@@ -88,14 +88,15 @@
+     T sample( int index ) const;
+ 
+     /*!
+-      \return Number of samples of the series
++      Return the number of samples of the series
++
+       \sa setData(), QwtSeriesData<T>::size()
+     */
+     virtual size_t dataSize() const;
+ 
+     /*!
+-      \return Bounding rectangle of the series
+-              or an invalid rectangle, when no series is stored
++      Return the bounding rectangle of the series
++      or an invalid rectangle, when no series is stored
+ 
+       \sa QwtSeriesData<T>::boundingRect()
+     */
+diff -Naur qwt-6.1/source/src/qwt_slider.cpp qwt_6.1.0.original/src/qwt_slider.cpp
+--- qwt-6.1/source/src/qwt_slider.cpp	2014-08-28 16:58:47.494681536 -0700
++++ qwt_6.1.0.original/src/qwt_slider.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -746,7 +746,7 @@
+         scaleMargin = qMax( d1, d2 ) - bw;
+     }
+ 
+-    int scaleX=0, scaleY=0, scaleLength=0;
++    int scaleX, scaleY, scaleLength;
+ 
+     if ( d_data->orientation == Qt::Horizontal )
+     {
+diff -Naur qwt-6.1/source/src/qwt_spline.cpp qwt_6.1.0.original/src/qwt_spline.cpp
+--- qwt-6.1/source/src/qwt_spline.cpp	2014-08-28 16:58:47.500681623 -0700
++++ qwt_6.1.0.original/src/qwt_spline.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -78,7 +78,6 @@
+ /*!
+    Assignment operator
+    \param other Spline used for initialization
+-   \return *this
+ */
+ QwtSpline &QwtSpline::operator=( const QwtSpline & other )
+ {
+@@ -153,7 +152,7 @@
+ }
+ 
+ /*!
+-   \return Points, that have been by setPoints()
++   Return points passed by setPoints()
+ */
+ QPolygonF QwtSpline::points() const
+ {
+@@ -197,9 +196,6 @@
+ /*!
+   Calculate the interpolated function value corresponding
+   to a given argument x.
+-
+-  \param x Coordinate
+-  \return Interpolated coordinate
+ */
+ double QwtSpline::value( double x ) const
+ {
+diff -Naur qwt-6.1/source/src/qwt_system_clock.cpp qwt_6.1.0.original/src/qwt_system_clock.cpp
+--- qwt-6.1/source/src/qwt_system_clock.cpp	2014-08-28 16:58:47.520681907 -0700
++++ qwt_6.1.0.original/src/qwt_system_clock.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -356,8 +356,9 @@
+ }
+ 
+ /*!
+-  Set the start time to the current time 
+-  \return Time, that is elapsed since the previous start time.
++  The start time to the current time and
++  return the time, that is elapsed since the
++  previous start time.
+ */
+ double QwtSystemClock::restart()
+ {
+diff -Naur qwt-6.1/source/src/qwt_text.cpp qwt_6.1.0.original/src/qwt_text.cpp
+--- qwt-6.1/source/src/qwt_text.cpp	2014-08-28 16:58:47.534682108 -0700
++++ qwt_6.1.0.original/src/qwt_text.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -133,7 +133,7 @@
+     return e;
+ }
+ 
+-class QWT_EXPORT QwtText::PrivateData
++class QwtText::PrivateData
+ {
+ public:
+     PrivateData():
+@@ -161,7 +161,7 @@
+     const QwtTextEngine *textEngine;
+ };
+ 
+-class QWT_EXPORT QwtText::LayoutCache
++class QwtText::LayoutCache
+ {
+ public:
+     void invalidate()
+@@ -250,7 +250,7 @@
+ }
+ 
+ /*!
+-   \return Text as QString.
++   Return the text.
+    \sa setText()
+ */
+ QString QwtText::text() const
+@@ -306,13 +306,11 @@
+ }
+ 
+ /*!
+-   Return the font of the text, if it has one.
+-   Otherwise return defaultFont.
++  Return the font of the text, if it has one.
++  Otherwise return defaultFont.
+ 
+-   \param defaultFont Default font
+-   \return Font used for drawing the text
+-
+-   \sa setFont(), font(), PaintAttributes
++  \param defaultFont Default font
++  \sa setFont(), font(), PaintAttributes
+ */
+ QFont QwtText::usedFont( const QFont &defaultFont ) const
+ {
+@@ -323,7 +321,7 @@
+ }
+ 
+ /*!
+-   Set the pen color used for drawing the text.
++   Set the pen color used for painting the text.
+ 
+    \param color Color
+    \note Setting the color might have no effect, when
+@@ -346,8 +344,6 @@
+   Otherwise return defaultColor.
+ 
+   \param defaultColor Default color
+-  \return Color used for drawing the text
+-
+   \sa setColor(), color(), PaintAttributes
+ */
+ QColor QwtText::usedColor( const QColor &defaultColor ) const
+@@ -641,8 +637,6 @@
+ 
+    \param text Text, needed in case of AutoText
+    \param format Text format
+-
+-   \return Corresponding text engine
+ */
+ const QwtTextEngine *QwtText::textEngine( const QString &text,
+     QwtText::TextFormat format )
+diff -Naur qwt-6.1/source/src/qwt_text_label.cpp qwt_6.1.0.original/src/qwt_text_label.cpp
+--- qwt-6.1/source/src/qwt_text_label.cpp	2014-08-28 16:58:47.544682251 -0700
++++ qwt_6.1.0.original/src/qwt_text_label.cpp	2013-03-01 14:52:47.000000000 -0800
+@@ -73,8 +73,6 @@
+ 
+ /*!
+    Interface for the designer plugin
+-
+-   \return Text as plain text
+    \sa setPlainText(), text()
+  */
+ QString QwtTextLabel::plainText() const
+diff -Naur qwt-6.1/source/src/qwt_thermo.cpp qwt_6.1.0.original/src/qwt_thermo.cpp
+--- qwt-6.1/source/src/qwt_thermo.cpp	2014-08-28 16:58:47.585682835 -0700
++++ qwt_6.1.0.original/src/qwt_thermo.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -453,7 +453,7 @@
+ }
+ 
+ /*!
+-  \brief Change how the origin is determined.
++  \brief Change how the origin level is determined.
+   \sa originMode(), serOrigin(), origin()
+  */
+ void QwtThermo::setOriginMode( OriginMode m )
+@@ -466,7 +466,7 @@
+ }
+ 
+ /*!
+-  \return Mode, how the origin is determined.
++  \brief Custom origin level.
+   \sa setOriginMode(), serOrigin(), origin()
+  */
+ QwtThermo::OriginMode QwtThermo::originMode() const
+@@ -475,12 +475,12 @@
+ }
+ 
+ /*!
+-  \brief Specifies the custom origin.
++  \brief Specifies the custom origin level.
+ 
+   If originMode is set to OriginCustom this property controls where the
+   liquid starts.
+ 
+-  \param origin New origin level
++  \param o New origin level
+   \sa setOriginMode(), originMode(), origin()
+  */
+ void QwtThermo::setOrigin( double origin )
+@@ -493,8 +493,9 @@
+ }
+ 
+ /*!
+-  \return Origin of the thermo, when OriginCustom is enabled
+-  \sa setOrigin(), setOriginMode(), originMode()
++  \brief Returns the current custom origin level
++
++  \sa serOrigin(), setOriginMode(), originMode()
+  */
+ double QwtThermo::origin() const
+ {
+@@ -519,7 +520,7 @@
+ }
+ 
+ /*!
+-   \return Scale position.
++   Return the scale position.
+    \sa setScalePosition()
+ */
+ QwtThermo::ScalePosition QwtThermo::scalePosition() const
+@@ -563,7 +564,7 @@
+         else
+             qSort( values.begin(), values.end(), qLess<double>() );
+ 
+-        int from=0;
++        int from;
+         if ( !values.isEmpty() )
+         {
+             from = qRound( scaleMap.transform( values[0] ) );
+@@ -660,7 +661,7 @@
+ }
+ 
+ /*!
+-   \return Border width of the thermometer pipe.
++   Return the border width of the thermometer pipe.
+    \sa setBorderWidth()
+ */
+ int QwtThermo::borderWidth() const
+@@ -720,7 +721,7 @@
+ }
+ 
+ /*!
+-  \return Liquid ( QPalette::ButtonText ) brush. 
++  Return the liquid ( QPalette::ButtonText ) brush. 
+   \sa setFillBrush(), QWidget::palette()
+ */
+ QBrush QwtThermo::fillBrush() const
+@@ -747,7 +748,7 @@
+ }
+ 
+ /*!
+-  \return Liquid brush ( QPalette::Highlight ) above the alarm threshold.
++  Return the liquid brush ( QPalette::Highlight ) above the alarm threshold.
+   \sa setAlarmBrush(), QWidget::palette()
+ 
+   \warning The alarm threshold has no effect, when
+@@ -775,7 +776,7 @@
+ }
+ 
+ /*!
+-  \return Alarm threshold.
++  Return the alarm threshold.
+   \sa setAlarmLevel()
+ 
+   \warning The alarm threshold has no effect, when
+@@ -802,7 +803,7 @@
+ }
+ 
+ /*!
+-  \return Width of the pipe.
++  Return the width of the pipe.
+   \sa setPipeWidth()
+ */
+ int QwtThermo::pipeWidth() const
+@@ -844,7 +845,7 @@
+ }
+ 
+ /*!
+-  \return Minimum size hint
++  \brief Return a minimum size hint
+   \warning The return value depends on the font and the scale.
+   \sa sizeHint()
+ */
+@@ -892,38 +893,54 @@
+  */
+ QRect QwtThermo::fillRect( const QRect &pipeRect ) const
+ {
+-    double origin;        
++    const bool inverted = ( upperBound() < lowerBound() );
++
++    const QwtScaleMap scaleMap = scaleDraw()->scaleMap();
++
++    const int tval = qRound( scaleMap.transform( d_data->value ) );
++
++    int torigin;        
+     if ( d_data->originMode == OriginMinimum )
+     {
+-        origin = qMin( lowerBound(), upperBound() );
++        torigin = qRound( scaleMap.transform( 
++            inverted ? upperBound() : lowerBound() ) );
+     }
+     else if ( d_data->originMode == OriginMaximum )
+     {
+-        origin = qMax( lowerBound(), upperBound() );
++        torigin = qRound( scaleMap.transform( 
++            inverted ? lowerBound() : upperBound() ) );
+     }
+     else // OriginCustom
+     {
+-        origin = d_data->origin;
++        torigin = qRound( scaleMap.transform( d_data->origin ) );
+     }
+-
+-    const QwtScaleMap scaleMap = scaleDraw()->scaleMap();
+-
+-    int from = qRound( scaleMap.transform( d_data->value ) );
+-    int to = qRound( scaleMap.transform( origin ) );
+-
+-    if ( to < from )
+-        qSwap( from, to );
+     
+     QRect fillRect = pipeRect;
+     if ( d_data->orientation == Qt::Horizontal )
+     {
+-        fillRect.setLeft( from );
+-        fillRect.setRight( to );
++        if ( inverted )
++        {
++            fillRect.setLeft( tval );
++            fillRect.setRight( torigin );
++        }
++        else
++        {
++            fillRect.setRight( tval );
++            fillRect.setLeft( torigin );
++        }
+     }
+     else // Qt::Vertical
+     {
+-        fillRect.setTop( from );
+-        fillRect.setBottom( to );
++        if ( inverted )
++        {
++            fillRect.setTop( torigin );
++            fillRect.setBottom( tval );
++        }
++        else
++        {
++            fillRect.setBottom( torigin );
++            fillRect.setTop( tval );
++        }
+     }
+ 
+     return fillRect.normalized();
+diff -Naur qwt-6.1/source/src/qwt_thermo.h qwt_6.1.0.original/src/qwt_thermo.h
+--- qwt-6.1/source/src/qwt_thermo.h	2014-08-28 16:58:47.585682835 -0700
++++ qwt_6.1.0.original/src/qwt_thermo.h	2013-03-01 14:52:47.000000000 -0800
+@@ -47,7 +47,7 @@
+ {
+     Q_OBJECT
+ 
+-    Q_ENUMS( ScalePosition )
++    Q_ENUMS( ScalePos )
+     Q_ENUMS( OriginMode )
+ 
+     Q_PROPERTY( Qt::Orientation orientation
+diff -Naur qwt-6.1/source/src/qwt_wheel.cpp qwt_6.1.0.original/src/qwt_wheel.cpp
+--- qwt-6.1/source/src/qwt_wheel.cpp	2014-08-28 16:58:47.583682805 -0700
++++ qwt_6.1.0.original/src/qwt_wheel.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -119,7 +119,6 @@
+ 
+   The wheelMoved() signal is emitted regardless id tracking is enabled or not.
+ 
+-  \param enable On/Off
+   \sa isTracking()
+  */
+ void QwtWheel::setTracking( bool enable )
+@@ -950,7 +949,7 @@
+ }
+ 
+ /*!
+-  \return Minimum size hint
++  \brief Return a minimum size hint
+   \warning The return value is based on the wheel width.
+ */
+ QSize QwtWheel::minimumSizeHint() const
+@@ -992,7 +991,6 @@
+   user input ( mouse, keyboard, wheel ) are aligned to
+   the multiples of the single step.
+ 
+-  \param on On/Off
+   \sa stepAlignment(), setSingleStep()
+  */
+ void QwtWheel::setStepAlignment( bool on )
+@@ -1279,19 +1277,13 @@
+         value = d_data->minimum +
+             qRound( ( value - d_data->minimum ) / stepSize ) * stepSize;
+ 
+-        if ( stepSize > 1e-12 )
+-        {
+-            if ( qFuzzyCompare( value + 1.0, 1.0 ) )
+-            {
+-                // correct rounding error if value = 0
+-                value = 0.0;
+-            }
+-            else if ( qFuzzyCompare( value, d_data->maximum ) )
+-            {
+-                // correct rounding error at the border
+-                value = d_data->maximum;
+-            }
+-        }
++        // correct rounding error at the border
++        if ( qFuzzyCompare( value, d_data->maximum ) )
++            value = d_data->maximum;
++            
++        // correct rounding error if value = 0
++        if ( qFuzzyCompare( value + 1.0, 1.0 ) )
++            value = 0.0;
+     }       
+ 
+     return value;
+diff -Naur qwt-6.1/source/src/qwt_widget_overlay.cpp qwt_6.1.0.original/src/qwt_widget_overlay.cpp
+--- qwt-6.1/source/src/qwt_widget_overlay.cpp	2014-08-28 16:58:47.605683121 -0700
++++ qwt_6.1.0.original/src/qwt_widget_overlay.cpp	2013-03-01 14:52:46.000000000 -0800
+@@ -9,7 +9,6 @@
+ 
+ #include "qwt_widget_overlay.h"
+ #include "qwt_painter.h"
+-#include "qwt_plot_canvas.h"
+ #include <qpainter.h>
+ #include <qpaintengine.h>
+ #include <qimage.h>
+@@ -79,7 +78,7 @@
+     return region;
+ }
+ 
+-class QWT_GTEST QwtWidgetOverlay::PrivateData
++class QwtWidgetOverlay::PrivateData
+ {
+ public:
+     PrivateData():
+@@ -315,12 +314,9 @@
+         // something special for the plot canvas
+         QPainterPath clipPath;
+ 
+-        if (qobject_cast<QwtPlotCanvas*>(widget))
+-        {
+-            ( void )QMetaObject::invokeMethod(
+-                widget, "borderPath", Qt::DirectConnection,
+-                Q_RETURN_ARG( QPainterPath, clipPath ), Q_ARG( QRect, rect() ) );
+-        }
++        ( void )QMetaObject::invokeMethod(
++            widget, "borderPath", Qt::DirectConnection,
++            Q_RETURN_ARG( QPainterPath, clipPath ), Q_ARG( QRect, rect() ) );
+ 
+         if (!clipPath.isEmpty())
+         {
+@@ -346,8 +342,6 @@
+ 
+    The default implementation returns an invalid region
+    indicating no hint.
+-
+-   \return Hint for the mask
+  */
+ QRegion QwtWidgetOverlay::maskHint() const
+ {
+@@ -361,8 +355,6 @@
+ 
+   \param object Object to be filtered
+   \param event Event
+-
+-  \return See QObject::eventFilter()
+ */
+ 
+ bool QwtWidgetOverlay::eventFilter( QObject* object, QEvent* event )
+diff -Naur qwt-6.1/source/src/src.pro qwt_6.1.0.original/src/src.pro
+--- qwt-6.1/source/src/src.pro	1969-12-31 16:00:00.000000000 -0800
++++ qwt_6.1.0.original/src/src.pro	2013-03-01 14:52:46.000000000 -0800
+@@ -0,0 +1,296 @@
++################################################################
++# Qwt Widget Library
++# Copyright (C) 1997   Josef Wilgen
++# Copyright (C) 2002   Uwe Rathmann
++#
++# This library is free software; you can redistribute it and/or
++# modify it under the terms of the Qwt License, Version 1.0
++################################################################
++
++# qmake project file for building the qwt libraries
++
++QWT_ROOT = $${PWD}/..
++include( $${QWT_ROOT}/qwtconfig.pri )
++include( $${QWT_ROOT}/qwtbuild.pri )
++include( $${QWT_ROOT}/qwtfunctions.pri )
++
++TEMPLATE          = lib
++TARGET            = $$qwtLibraryTarget(qwt)
++
++DESTDIR           = $${QWT_ROOT}/lib
++
++contains(QWT_CONFIG, QwtDll) {
++
++    CONFIG += dll
++    win32|symbian: DEFINES += QT_DLL QWT_DLL QWT_MAKEDLL
++}
++else {
++    CONFIG += staticlib
++} 
++
++contains(QWT_CONFIG, QwtFramework) {
++
++    CONFIG += lib_bundle
++}
++
++HEADERS += \
++    qwt.h \
++    qwt_abstract_scale_draw.h \
++    qwt_clipper.h \
++    qwt_color_map.h \
++    qwt_compat.h \
++    qwt_column_symbol.h \
++    qwt_date.h \
++    qwt_date_scale_draw.h \
++    qwt_date_scale_engine.h \
++    qwt_dyngrid_layout.h \
++    qwt_global.h \
++    qwt_graphic.h \
++    qwt_interval.h \
++    qwt_interval_symbol.h \
++    qwt_math.h \
++    qwt_magnifier.h \
++    qwt_null_paintdevice.h \
++    qwt_painter.h \
++    qwt_painter_command.h \
++    qwt_panner.h \
++    qwt_picker.h \
++    qwt_picker_machine.h \
++    qwt_pixel_matrix.h \
++    qwt_point_3d.h \
++    qwt_point_polar.h \
++    qwt_round_scale_draw.h \
++    qwt_scale_div.h \
++    qwt_scale_draw.h \
++    qwt_scale_engine.h \
++    qwt_scale_map.h \
++    qwt_spline.h \
++    qwt_symbol.h \
++    qwt_system_clock.h \
++    qwt_text_engine.h \
++    qwt_text_label.h \
++    qwt_text.h \
++    qwt_transform.h \
++    qwt_widget_overlay.h
++
++SOURCES += \
++    qwt_abstract_scale_draw.cpp \
++    qwt_clipper.cpp \
++    qwt_color_map.cpp \
++    qwt_column_symbol.cpp \
++    qwt_date.cpp \
++    qwt_date_scale_draw.cpp \
++    qwt_date_scale_engine.cpp \
++    qwt_dyngrid_layout.cpp \
++    qwt_event_pattern.cpp \
++    qwt_graphic.cpp \
++    qwt_interval.cpp \
++    qwt_interval_symbol.cpp \
++    qwt_math.cpp \
++    qwt_magnifier.cpp \
++    qwt_null_paintdevice.cpp \
++    qwt_painter.cpp \
++    qwt_painter_command.cpp \
++    qwt_panner.cpp \
++    qwt_picker.cpp \
++    qwt_picker_machine.cpp \
++    qwt_pixel_matrix.cpp \
++    qwt_point_3d.cpp \
++    qwt_point_polar.cpp \
++    qwt_round_scale_draw.cpp \
++    qwt_scale_div.cpp \
++    qwt_scale_draw.cpp \
++    qwt_scale_map.cpp \
++    qwt_spline.cpp \
++    qwt_scale_engine.cpp \
++    qwt_symbol.cpp \
++    qwt_system_clock.cpp \
++    qwt_text_engine.cpp \
++    qwt_text_label.cpp \
++    qwt_text.cpp \
++    qwt_transform.cpp \
++    qwt_widget_overlay.cpp
++
++ 
++contains(QWT_CONFIG, QwtPlot) {
++
++    HEADERS += \
++        qwt_curve_fitter.h \
++        qwt_event_pattern.h \
++        qwt_abstract_legend.h \
++        qwt_legend.h \
++        qwt_legend_data.h \
++        qwt_legend_label.h \
++        qwt_plot.h \
++        qwt_plot_renderer.h \
++        qwt_plot_curve.h \
++        qwt_plot_dict.h \
++        qwt_plot_directpainter.h \
++        qwt_plot_grid.h \
++        qwt_plot_histogram.h \
++        qwt_plot_item.h \
++        qwt_plot_abstract_barchart.h \
++        qwt_plot_barchart.h \
++        qwt_plot_multi_barchart.h \
++        qwt_plot_intervalcurve.h \
++        qwt_plot_tradingcurve.h \
++        qwt_plot_layout.h \
++        qwt_plot_marker.h \
++        qwt_plot_zoneitem.h \
++        qwt_plot_textlabel.h \
++        qwt_plot_rasteritem.h \
++        qwt_plot_spectrogram.h \
++        qwt_plot_spectrocurve.h \
++        qwt_plot_scaleitem.h \
++        qwt_plot_legenditem.h \
++        qwt_plot_seriesitem.h \
++        qwt_plot_shapeitem.h \
++        qwt_plot_canvas.h \
++        qwt_plot_panner.h \
++        qwt_plot_picker.h \
++        qwt_plot_zoomer.h \
++        qwt_plot_magnifier.h \
++        qwt_plot_rescaler.h \
++        qwt_point_mapper.h \
++        qwt_raster_data.h \
++        qwt_matrix_raster_data.h \
++        qwt_sampling_thread.h \
++        qwt_samples.h \
++        qwt_series_data.h \
++        qwt_series_store.h \
++        qwt_point_data.h \
++        qwt_scale_widget.h 
++
++    SOURCES += \
++        qwt_curve_fitter.cpp \
++        qwt_abstract_legend.cpp \
++        qwt_legend.cpp \
++        qwt_legend_data.cpp \
++        qwt_legend_label.cpp \
++        qwt_plot.cpp \
++        qwt_plot_renderer.cpp \
++        qwt_plot_xml.cpp \
++        qwt_plot_axis.cpp \
++        qwt_plot_curve.cpp \
++        qwt_plot_dict.cpp \
++        qwt_plot_directpainter.cpp \
++        qwt_plot_grid.cpp \
++        qwt_plot_histogram.cpp \
++        qwt_plot_item.cpp \
++        qwt_plot_abstract_barchart.cpp \
++        qwt_plot_barchart.cpp \
++        qwt_plot_multi_barchart.cpp \
++        qwt_plot_intervalcurve.cpp \
++        qwt_plot_zoneitem.cpp \
++        qwt_plot_tradingcurve.cpp \
++        qwt_plot_spectrogram.cpp \
++        qwt_plot_spectrocurve.cpp \
++        qwt_plot_scaleitem.cpp \
++        qwt_plot_legenditem.cpp \
++        qwt_plot_seriesitem.cpp \
++        qwt_plot_shapeitem.cpp \
++        qwt_plot_marker.cpp \
++        qwt_plot_textlabel.cpp \
++        qwt_plot_layout.cpp \
++        qwt_plot_canvas.cpp \
++        qwt_plot_panner.cpp \
++        qwt_plot_rasteritem.cpp \
++        qwt_plot_picker.cpp \
++        qwt_plot_zoomer.cpp \
++        qwt_plot_magnifier.cpp \
++        qwt_plot_rescaler.cpp \
++        qwt_point_mapper.cpp \
++        qwt_raster_data.cpp \
++        qwt_matrix_raster_data.cpp \
++        qwt_sampling_thread.cpp \
++        qwt_series_data.cpp \
++        qwt_point_data.cpp \
++        qwt_scale_widget.cpp 
++}
++
++greaterThan(QT_MAJOR_VERSION, 4) {
++
++    QT += printsupport
++    QT += concurrent
++} 
++
++contains(QWT_CONFIG, QwtSvg) {
++
++    QT += svg
++
++    HEADERS += qwt_plot_svgitem.h
++    SOURCES += qwt_plot_svgitem.cpp 
++}
++else {
++
++    DEFINES += QWT_NO_SVG
++}
++
++contains(QWT_CONFIG, QwtOpenGL) {
++
++    QT += opengl
++
++    HEADERS += qwt_plot_glcanvas.h
++    SOURCES += qwt_plot_glcanvas.cpp
++}
++else {
++
++    DEFINES += QWT_NO_OPENGL
++}
++
++contains(QWT_CONFIG, QwtWidgets) {
++
++    HEADERS += \
++        qwt_abstract_slider.h \
++        qwt_abstract_scale.h \
++        qwt_arrow_button.h \
++        qwt_analog_clock.h \
++        qwt_compass.h \
++        qwt_compass_rose.h \
++        qwt_counter.h \
++        qwt_dial.h \
++        qwt_dial_needle.h \
++        qwt_knob.h \
++        qwt_slider.h \
++        qwt_thermo.h \
++        qwt_wheel.h
++    
++    SOURCES += \
++        qwt_abstract_slider.cpp \
++        qwt_abstract_scale.cpp \
++        qwt_arrow_button.cpp \
++        qwt_analog_clock.cpp \
++        qwt_compass.cpp \
++        qwt_compass_rose.cpp \
++        qwt_counter.cpp \
++        qwt_dial.cpp \
++        qwt_dial_needle.cpp \
++        qwt_knob.cpp \
++        qwt_slider.cpp \
++        qwt_thermo.cpp \
++        qwt_wheel.cpp
++}
++
++# Install directives
++
++target.path    = $${QWT_INSTALL_LIBS}
++
++doc.files      = $${QWT_ROOT}/doc/html 
++unix:doc.files += $${QWT_ROOT}/doc/man
++doc.path       = $${QWT_INSTALL_DOCS}
++
++INSTALLS       = target doc
++
++CONFIG(lib_bundle) {
++
++    FRAMEWORK_HEADERS.version = Versions
++    FRAMEWORK_HEADERS.files = $${HEADERS}
++    FRAMEWORK_HEADERS.path = Headers
++    QMAKE_BUNDLE_DATA += FRAMEWORK_HEADERS
++}
++else {
++
++    headers.files  = $${HEADERS}
++    headers.path   = $${QWT_INSTALL_HEADERS}
++    INSTALLS += headers
++}

@@ -1,0 +1,3668 @@
+
+# This file contains the parameter mappings from Spectre to Gemini
+#
+# The format for each entry is as follows:
+#
+# Type | InputName | OutputName | PinMapping | ParamMapping | PerlCallbacks
+#
+# o Type is either "element" or "model"
+# o InputName is the type of Spectre component (resistor etc...)
+# o OutputName is the ADS name for the component. There
+#   are two entries that are comma seperated. The first
+#   entry is the ADS netlist name and the second is the
+#   name it would have on the schematic. This is needed because
+#   you can either translate to IFF (for schematic) or directly
+#   to the ADS netlist format.
+# o PinMapping just maps the pins numbers together.
+# o ParamMapping maps the Spectre parameter to the ADS
+#   parameter for this component. If the default values
+#   are different between Spectre and ADS then the default
+#   value is entered as well (comma delimited).
+# o PerlCallbacks are Perl routines that can be automatically
+#   called for this component so special post processing can
+#   be done if needed.
+
+############# VSOURCE ###################
+element|vsource|V_Source,VtUserDef|1,1;2,2|\
+ dc,Vdc,1;\
+ type,Type,dc;\
+ mag,Mag,0;\
+ phase,Phase,0;\
+ sinephase,SinePhase,0;\
+ ampl,Ampl,;\
+ freq,Freq,;\
+ delay,Delay,;\
+ damp,Damp,;\
+ val0,Val0,;\
+ val1,Val1,;\
+ rise,Rise,;\
+ fall,Fall,;\
+ width,Width,;\
+ period,Period,;\
+ td1,Td1,0;\
+ tau1,Tau1,;\
+  td2,Td2,0;\
+ tau2,Tau2,;\
+ wave,Wave,;\
+ pwlperiod,Pwlperiod,;\
+# tnom,Tnom,27;\
+ tc1,TC1,;\
+ tc2,TC2,;\
+  m,_M,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_vsource.pl,cb_vsource_type;;;|
+
+############# ISOURCE ###################
+element|isource|I_Source,ItUserDef|1,1;2,2|\
+ dc,Idc,1;\
+ type,Type,dc;\
+ mag,Mag,0;\
+ phase,Phase,0;\
+ sinephase,SinePhase,0;\
+ ampl,Ampl,;\
+ freq,Freq,;\
+ delay,Delay,;\
+ damp,Damp,;\
+ val0,Val0,;\
+ val1,Val1,;\
+ rise,Rise,;\
+ fall,Fall,;\
+ width,Width,;\
+ period,Period,;\
+ td1,Td1,0;\
+ tau1,Tau1,;\
+  td2,Td2,0;\
+ tau2,Tau2,;\
+ wave,Wave,;\
+ pwlperiod,Pwlperiod,;\
+ m,_M,;\
+#tnom,Tnom,27;\
+ tc1,TC1,;\
+ tc2,TC2,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_Isource.pl,cb_isource_type;;;|
+
+############# RESISTOR ##################
+# Don't know how to support infinity default value
+# scale, resform parameters not supported.
+#
+element|resistor|R,R|1,1;2,2|\
+ r,R,;\
+ tc1,TC1,;\
+ tc2,TC2,;\
+ tnom,Tnom,27;\
+ isnoisy,Noise,;\
+ l,Length,;\
+ w,Width,;\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;;;;|
+
+
+############# RESISTOR MODEL ##################
+model|resistor|R_Model| |\
+ r,R,;\
+ rsh,Rsh,;\
+ l,Length,;\
+ w,Width,1e-6;\
+ etch,Dw,0;\
+ etchl,Dl,0;\
+ tnom,Tnom,27;\
+ tc1,TC1,;\
+ tc2,TC2,;\
+ scaler,Scale,;\
+ trise,Trise,;\
+ coeffs,Coeffs,;\
+ kf,Kf,;\
+ af,Af,;\
+ wdexp,Wdexp,1;\
+ ldexp,Ldexp,1;\
+ weexp,Weexp,;\
+ leexp,Leexp,;\
+ fexp,Fexp,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;CB_Resistor.pl,cb_resistor;;;|
+
+
+############# CAPACITOR ##################
+# scale parameters not supported
+#
+element|capacitor|C|1,1;2,2|\
+ c,C,;\
+ tc1,TC1,;\
+ tc2,TC2,;\
+ ic,InitCond,;\
+ w,Width,;\
+ l,Length,;\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;;;;|
+
+
+############# CAPACITOR MODEL ##################
+# rforce  parameter not supported
+#
+model|capacitor|C_Model| |\
+ c,C,0;\
+ # cap is alias to c
+ cap,cap,0;\
+ cj,Cj,;\
+ # cox is alias to cj
+ cox,cox,;\
+ cjsw,Cjsw,;\
+ # capsw is alias to cjsw
+ capsw,capsw,;\
+ l,Length,;\
+ w,Width,;\
+ etch,Narrow,;\
+ tnom,Tnom,27;\
+ tc1,TC1,;\
+ tc2,TC2,;\
+ scalec,Scale,;\
+ trise,Trise,;\
+ coeffs,Coeffs,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;CB_Capacitor.pl,cb_capacitor;;;|
+
+
+############# INDUCTOR ##################
+# Tnom, TC1, TC2  parameters not supported
+# Noise parameter not in ADS, only hpeesofsim
+#
+element|inductor|L|1,1;2,2|\
+ l,L,;\
+ r,R,;\
+ ic,InitCond,;\
+ isnoisy,Noise,;\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;;;;|
+
+
+############# INDUCTOR MODEL ##################
+# rforce parameter not supported
+#
+model|inductor|L_Model| |\
+ l,L,;\
+ r,R,;\
+ tnom,Tnom,27;\
+ tc1,TC1,;\
+ tc2,TC2,;\
+ scalei,Scale,;\
+ trise,Trise,;\
+ coeffs,Coeffs,;\
+ kf,Kf,;\
+ af,Af,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;CB_Inductor.pl,cb_inductor_model;;;|
+
+
+############# MUTUAL_INDUCTOR ##################
+#
+# We have a callback to quote the inductor names.
+#
+element|mutual_inductor|Mutual| |\
+ coupling,K,;\
+ k,K,;\
+ mind,M,;\
+ ind1,Inductor1,;\
+ ind2,Inductor2,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_Inductor.pl,cb_inductor;;;|
+
+############# VCVS ##################
+# m parameter not supported
+# Needs a special callback to supply the include statement
+#
+element|vcvs|VCVS|1,3;2,4;3,1;4,2|\
+ gain,G,;\
+ |CB_OutputType.pl,Determine_outputType|
+
+############# VCCS ##################
+# m parameter not supported
+# Needs a special callback to supply the include statement
+#
+element|vccs|VCCS|1,3;2,4;3,1;4,2|\
+ gm,G,;\
+ |CB_OutputType.pl,Determine_outputType|
+
+############# PVCCS ##################
+# gain, m parameters not supported
+# Needs a special callback to change list syntax of coeffs
+# Needs a special callback to supply the include statement
+#
+element|pvccs|NonlinVCCS|1,3;2,4;3,1;4,2|\
+ coeffs,Coeff,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_PVCCS.pl,cb_PVCCS_element;;;|
+
+
+############# PVCVS ##################
+# gain, m parameters not supported
+# Needs a special callback to change list syntax of coeffs
+# Needs a special callback to supply the include statement
+#
+element|pvcvs|NonlinVCVS|1,3;2,4;3,1;4,2|\
+ coeffs,Coeff,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_PVCVS.pl,cb_PVCVS_element;;;|
+
+##################################SDD################################################################
+############# CCCS ##################################################################################
+# 
+# Needs a special callback to supply the include statement
+# Mapping cccs -> SDD_CCCS. cccs will finally be mapped to SDD in CB_CCCS_SDD.pl
+# Mapping  cccs -> SDD directly gives problem because other controlled sources also needs to be mapped to SDD
+#
+element|cccs|SDD_CCCS|1,2;2,1|\
+ gain,I,;\
+ probe,C,;\
+ m,_M,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_CCCS_SDD.pl,cb_CCCS_element;;;|
+ 
+############# CCVS ##################################################################################
+# 
+# Needs a special callback to supply the include statement
+#
+element|ccvs|SDD_CCVS|1,2;2,1|\
+ gain,F,;\
+ probe,C,;\
+ m,_M,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_CCVS_SDD.pl,cb_CCVS_element;;;| 
+
+############# PCCCS ##################################################################################
+# 
+# Needs a special callback to supply the include statement
+#
+element|pcccs|SDD_PCCCS|1,2;2,1|\
+# gain,Gain,;\
+ probe,C,;\
+ coeffs,Coeff,;\
+ m,_M,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_PCCCS_SDD.pl,cb_PCCCS_element;;;|
+
+############# PCCVS ##################################################################################
+# 
+# Needs a special callback to supply the include statement
+#
+element|pccvs|SDD_PCCVS|1,2;2,1|\
+# gain,Gain,;\
+ coeffs,Coeff,;\
+ probe,C,;\
+ m,_M,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_PCCVS_SDD.pl,cb_PCCVS_element;;;|
+
+############# DIODE ##################
+# special callback for region - needs to map parameter values as follows:
+#    off -> off
+#    on  -> on
+#    breakdown  (ignore, don't output the parameter)
+#
+element|diode|Diode|1,1;2,2|\
+ area,Area,;\
+ # It's not documented in the Spectre \
+ # manual - but "pj" has been seen in \
+ # TSMC design kits. \
+ perim,Periph,;\
+ pj,Periph,;\    
+ l,Length,1e-6,;\
+ w,Width,1e-6,;\
+ region,Region,;\
+ m,_M,;\
+ scale,Scale,;\
+ trise,Trise,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;CB_Diode.pl,cb_diode_element;;;|
+
+
+############# DIODE MODEL ##################
+#
+# minr, if, ir, and dskip parameters not supported.
+# ecrf, ecrr, nf, nr, tox parameters not supported.
+#
+# Special callback needed for etch and etchl => Shrink
+#
+# We need to map "fc" to the ADS parameters "Fcsw" AND "Fc".
+# Here we map "fc" to "Fcsw" and we handle the mapping of 
+# "fc" to "Fc" via the CB_Diode.pl callback.
+#
+model|diode|Diode,Diode_Model| |\
+ level,Level,;\
+ is,Is,;\
+ js,Js,;\
+ rs,Rs,;\
+ n,N,;\
+ tt,Tt,;\
+ cjo,Cjo,;\
+ cj,cj,;\
+ cj0,cj0,;\
+ pb,Vj,;\
+ vj,Vj,;\
+ m,M,;\
+ mj,M,;\
+ eg,Eg,1.124481;\
+ imax,Imax,;\
+ jmax,Imax,;\
+ pt,Pt,;\
+ xti,Xti,;\
+ kf,Kf,;\
+ af,Af,;\
+ bv,Bv,;\
+ ibv,Ibv,;\
+ ik,Ikf,;\
+ nz,Nbv,;\
+ tnom,Tnom,27;\
+ trise,Trise,;\
+ isw,Isw,;\
+ jsw,Jsw,;\
+ cjsw,Cjsw,;\
+ mjsw,Msw,;\
+ vjsw,Vjsw,;\
+ rsw,Rsw,;\
+ fc,Fc,;\
+ area,Area,;\
+ perim,Periph,;\
+ tlev,Tlev,;\
+ tlevc,Tlevc,;\
+ gap1,EgAlpha,;\
+ gap2,EgBeta,;\
+ cta,Tcjo,;\
+ ctp,Tcjsw,;\
+ pta,Tvj,;\
+ ptp,Tvjsw,;\
+ trs,Trs,;\
+ trs2,Trs2,;\
+ tgs,Tgs,;\
+ tgs2, Tgs2,;\
+ tbv1,Tbv1,;\
+ tbv2,Tbv2,;\
+ bvj,Bvj,;\
+ ikp,Ikp,;\
+ ns,Ns,;\
+ cd,Cd,;\
+ imelt,Imelt,;\
+ jmelt,Imelt,;\
+ etch,Etch,;\
+ etchl,Etchl,;\
+ gleak,Gleak,;\
+ gleaksw,Gleaksw,;\
+ allow_scaling,AllowScaling,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;CB_Diode.pl,cb_diode_model;;;|
+
+############# BJT ##################
+#
+# special callback for region - needs to map parameter values as follows:
+#    off     -> 0
+#    fwd     -> 1
+#    on      -> 1
+#    rev     -> 2
+#    sat     -> 3
+#    [other] -> (ignore, don't output the parameter)
+#
+# NOTE: Since a model is tied to this we use the Spectre 
+#       model name "bjt" as the input name. This ties 
+#       the two together in post processing.
+#
+#       Also - post processing is needed if we have
+#       IFF output to determine if we are going to
+#       need either of the following ADS symbols:
+#       "BJT_NPN", ""BJT_PNP", "BJT4_NPN", "BJT4_PNP".
+#       The "Last Chance" callback cb_bjt_symbol below
+#       takes care of this.
+#
+element|bjt|bjt| |\
+ area,Area,;\
+ region,Region,;\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;;CB_BJT.pl,cb_bjt_element;CB_BJT.pl,cb_bjt_symbol;|
+
+############# BJT Model ##################
+#
+# bvce, vbefwd, imax1, minr, xcjc2, td, 
+# dskip, and alarm parameters are not 
+# supported
+#
+# special callback for "type" as follows:
+#    type=npn        -> NPN=yes and PNP=no
+#    type=pnp        -> NPN=no  and PNP=yes
+#
+#    The BJT_TYPE parameter below is processed
+#    in the callback to set the ADS NPN and PNP
+#    references.
+#
+# special callback for "struct" as follows:
+#    struct=vertical  ->Lateral=no
+#    struct=lateral   ->Lateral=yes
+#    DEFAULT: vertical IF "type=npn" 
+#    DEFAULT: lateral  IF "type=pnp" 
+#
+#    The STRUCT parameter below is processed
+#    in the callback to set the proper ADS Lateral
+#    value.
+#
+model|bjt|BJT,BJT_Model| |\
+ type,BJT_TYPE,;\
+ struct,STRUCT,;\
+ is,Is,;\
+ bf,Bf,;\
+ nf,Nf,;\
+ vaf,Vaf,;\
+ ikf,Ikf,;\
+ ise,Ise,;\
+ ibe,Ibe,;\
+ ne,Ne,;\
+ br,Br,;\
+ nr,Nr,;\
+ var,Var,;\
+ ikr,Ikr,;\
+ isc,Isc,;\
+ ibc,Ibc,;\
+ nc,Nc,;\
+ rb,Rb,;\
+ irb,Irb,;\
+ rbm,Rbm,;\
+ rbmod,RbModel,;\
+ re,Re,;\
+ rc,Rc,;\
+ imax,Imax,1000;\
+ imelt,Imelt,;\
+ cje,Cje,;\
+ vje,Vje,;\
+ mje,Mje,;\
+ cjc,Cjc,;\
+ vjc,Vjc,;\
+ mjc,Mjc,;\
+ xcjc,Xcjc,;\
+ cjs,Cjs,;\
+ vjs,Vjs,;\
+ mjs,Mjs,;\
+ fc,Fc,;\
+ tf,Tf,;\
+ xtf,Xtf,;\
+ vtf,Vtf,;\
+ itf,Itf,;\
+ ptf,Ptf,;\
+ tr,Tr,;\
+ kf,Kf,;\
+ af,Af,;\
+ kb,Kb,;\
+ bnoisefc,Fb,;\
+ iss,Iss,;\
+ ns,Ns,;\
+ tnom,Tnom,27;\
+ tlev,Tlev,;\
+ tlevc,Tlevc,;\
+ eg,Eg,;\
+ gap1,EgAlpha,;\
+ gap2,EgBeta,;\
+ #region,Region,;\
+ tbf1,Tbf1,;\
+ tbf2,Tbf2,;\
+ tbr1,Tbr1,;\
+ tbr2,Tbr2,;\
+ ctc,Tcbc,;\
+ cte,Tcbe,;\
+ cse,Tccs,;\
+ tikf1,Tikf1,;\
+ tikf2,Tikf2,;\
+ tikr1,Tikr1,;\
+ tikr2,Tikr2,;\
+ tirb1,Tirb1,;\
+ tirb2,Tirb2,;\
+ tis1,Tis1,;\
+ tis2,Tis2,;\
+ tisc1,Tisc1,;\
+ tisc2,Tisc2,;\
+ tise1,Tise1,;\
+ tise2,Tise2,;\
+ tiss1,Tiss1,;\
+ tiss2,Tiss2,;\
+ titf1,Titf1,;\
+ titf2,Titf2,;\
+ tmjc1,Tmjc1,;\
+ tmjc2,Tmjc2,;\
+ tmje1,Tmje1,;\
+ tmje2,Tmje2,;\
+ tmjs1,Tmjs1,;\
+ tmjs2,Tmjs2,;\
+ tnc1,Tnc1,;\
+ tnc2,Tnc2,;\
+ tne1,Tne1,;\
+ tne2,Tne2,;\
+ tnf1,Tnf1,;\
+ tnf2,Tnf2,;\
+ tnr1,Tnr1,;\
+ tnr2,Tnr2,;\
+ tns1,Tns1,;\
+ tns2,Tns2,;\
+ trb1,Trb1,;\
+ trb2,Trb2,;\
+ trc1,Trc1,;\
+ trc2,Trc2,;\
+ tre1,Tre1,;\
+ tre2,Tre2,;\
+ trm1,Trm1,;\
+ trm2,Trm2,;\
+ ttf1,Ttf1,;\
+ ttf2,Ttf2,;\
+ ttr1,Ttr1,;\
+ ttr2,Ttr2,;\
+ tvaf1,Tvaf1,;\
+ tvaf2,Tvaf2,;\
+ tvar1,Tvar1,;\
+ tvar2,Tvar2,;\
+ tvjc,Tvjc,;\
+ tvje,Tvje,;\
+ tvjs,Tvjs,;\
+ xtb,Xtb,;\
+ xti,Xti,;\
+ vsubfwd,wVsubfwd,0.2;\
+ bvsub,wBvwub,;\
+ bvbe,wBvbe,;\
+ bvbc,wBvbc,;\
+ vbcfwd,wVbcfwd,0.2;\
+ trise,Trise,;\
+ rbnoi,Rbnoi,;\
+ ke,Ke,;\
+ kc,Kc,;\
+ dope,Dope,;\
+ cex,Cex,;\
+ cco,Cco,;\
+ tvtf1,Tvtf1,;\
+ tvtf2,Tvtf2,;\
+ txtf1,Txtf1,;\
+ txtf2,Txtf2,;\
+ cbo,Cbo,;\
+ gbo,Gbo,;\
+ vbo,Vbo,;\
+ c2,C2,;\
+ c4,C4,;\
+ nkf,Nk,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;CB_BJT.pl,cb_bjt_model;;;|
+############# STBJT ##################
+#
+# special callback for region - needs to map parameter values as follows:
+#    off   -> 0
+#    fwd   -> 1
+#    rev   -> 2
+#    sat   -> 3
+#    other -> (ignore, don't output the parameter)
+#
+#NOTE: Since a model is tied to this we use the Spectre 
+#       model name "bjt" as the input name. This ties 
+#       the two together in post processing.
+#
+#       Also - post processing is needed if we have
+#       IFF output to determine if we are going to
+#       need either of the following ADS symbols:
+#       "BJT_NPN", ""BJT_PNP", "BJT4_NPN", "BJT4_PNP".
+#       The "Last Chance" callback cb_bjt_symbol below
+#       takes care of this.
+#
+element|bjtst|bjtst| |\
+ area,Area,;\
+ region,Region,;\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_BJT.pl,cb_bjt_element;;CB_BJT.pl,cb_bjt_symbol;|
+
+############# STBJT Model ##################
+#
+# parameters not supported
+#
+# special callback for "type" as follows:
+#    type=npn        -> NPN=yes and PNP=no
+#    type=pnp        -> NPN=no  and PNP=yes
+#
+model|bjtst|STBJT,STBJT_Model| |\
+type,BJT_TYPE,;\
+tmeas,Tmeas,;\
+#tnom,Tnom,27;\
+is,Is,;\
+isn,Isn,;\
+bf,Bf,;\
+nf,Nf,;\
+br,Br,;\
+nr,Nr,;\
+isf,Isf,;\
+nbf,Nbf,;\
+isr,Isr,;\
+nbr,Nbr,;\
+ise,Ise,;\
+ne,Ne,;\
+isc,Isc,;\
+nc,Nc,;\
+vaf,Vaf,;\
+var,Var,;\
+enp,Enp,;\
+rp,Rp,;\
+rw,Rw,;\
+vjj,Vjj,;\
+vrp,Vrp,;\
+bvc,Bvc,;\
+mf,Mf,;\
+fa,Fa,;\
+avc,Avc,;\
+bve,Bve,;\
+mr,Mr,;\
+fb,Fb,;\
+ave,Ave,;\
+rb,Rb,;\
+irb,Irb,;\
+rbm,Rbm,;\
+re,Re,;\
+rc,Rc,;\
+rcs,Rcs,;\
+cje,Cje,;\
+vje,Vje,;\
+mje,Mje,;\
+#Xjbe not in ADS
+#xjbe,Xjbe,;\
+fc,Fc,;\
+cjc,Cjc,;\
+vjc,Vjc,;\
+mjc,Mjc,;\
+xjbc,Xjbc,;\
+cjs,Cjs,;\
+vjs,Vjs,;\
+mjs,Mjs,0;\
+xjbs,Xjbs,;\
+vert,Vert,;\
+subsn,Subsn,;\
+tf,Tf,;\
+xtf,Xtf,;\
+vtf,Vtf,;\
+itf,Itf,;\
+ptf,Ptf,;\
+tfcc,Tfcc,;\
+tr,Tr,;\
+kf,Kf,;\
+af,Af,1;\
+eg,Eg,;\
+xti,Xti,;\
+xtb,Xtb,;\
+trb1,Trb1,;\
+trb2,Trb2,;\
+trbm1,Trbm1,;\
+trbm2,Trbm2,;\
+tre1,Tre1,;\
+tre2,Tre2,;\
+trc1,Trc1,;\
+trc2,Trc2,;\
+trcs1,Trcs1,;\
+trcs2,Trcs2,;\
+ikf,Ikf,;\
+ikr,Ikr,;\
+# gmin,imax and allParams not in spectre model
+#gmin,Gmin,;\
+#imax,IMax,;\
+#allParams,AllParams,;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;CB_BJT.pl,cb_bjt_model;;;|
+
+
+############# JFET ##################
+#
+# special callback for region - needs to map parameter values as follows:
+#    off     -> 0
+#    triode  -> 1
+#    subth   -> 2
+#    sat     -> 3
+#    [other] -> (ignore, don't output the parameter)
+#
+element|jfet|jfet|1,1;2,2;3,3;4,4|\
+ area,Area,;\
+ region,Region,;\
+ m,_M,\
+ |CB_OutputType.pl,Determine_outputType;;;CB_JFET.pl,cb_jfet_element;CB_JFET.pl,cb_jfet_symbol;|
+
+############# JFET Model ##################
+#
+# level, lambda1, rg, rb, minr, tt, mj parameters not supported
+# kfd, afg, vi, tcv, bto, bte, alarm parameters not supported
+# dskip, np, alpha, io, ns, tlev, tlevc, eg parameters not supported
+# gap1, gap2, lto, lte, tc1, tc2  parameters not supported
+# vtop, vtos, vtoe, vtoc, isb, nb, cgbs  parameters not supported
+#
+# special callback for "type" as follows:
+#    type=n        -> NFET=yes and PFET=no
+#    type=p        -> NFET=no  and PFET=yes
+#
+model|jfet|JFET| |\
+ type,JFET_TYPE,;\
+ vto,Vto,;\
+ beta,Beta,;\
+ lambda,Lambda,;\
+ rd,Rd,;\
+ rs,Rs,;\
+ is,Is,;\
+ cgs,Cgs,;\
+ cgd,Cgd,;\
+ pb,Pb,;\
+ fc,Fc,;\
+ tnom,Tnom,27;\
+ kf,Kf,;\
+ af,Af,;\
+ imax,Imax,1.0;\
+ n,N,;\
+ ai,Alpha,;\
+ xti,Xti,;\
+ bvj,wBvgs,;\
+ bjv,wBvgd,;\
+ rs,Rs,;\
+ imelt,Imelt,;\
+ trise,Trise,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;CB_JFET.pl,cb_jfet_model;;;|
+  
+############# BSIM3V3  ##################
+#
+# special callback for region - needs to map parameter values as follows:
+#    off     -> 0
+#    triode  -> 1
+#    on      -> 1
+#    subth   -> 2
+#    sat     -> 3
+#    [other] -> (ignore, don't output the parameter)
+#
+element|bsim3v3|mosfet,MOSFET_NMOS|1,1;2,2;3,3;4,4|\
+ l,Length,;\
+ w,Width,;\
+ ad,Ad,;\
+ as,As,;\
+ ps,Ps,;\
+ pd,Pd,;\
+ nrd,Nrd,;\
+ nrs,Nrs,;\
+ nqsmod,Nqsmod,;\
+ region,Region,;\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;;CB_BinModel.pl,cb_mos_element;CB_BinModel.pl,cb_mos_symbol;|
+
+############# BSIM3V3 model ##################
+#
+# special callback for "type" as follows:
+#    type=n        -> NMOS=yes and PMOS=no
+#    type=p        -> NMOS=no  and PMOS=yes
+#
+#    The MOS_TYPE parameter below is processed
+#    in the callback to set the ADS NMOS and PMOS
+#    references.
+#
+model|bsim3v3|MOSFET,BSIM3_Model| |\
+idsmod,Idsmod,8;\
+type,MOS_TYPE,;\
+version,Version,3.1;\
+acm,Acm,20;\
+jsw,Jsw,;\
+mobmod,Mobmod,;\
+capmod,Capmod,2;\
+noimod,Noimod,;\
+nqsmod,Nqsmod,;\
+paramchk,Paramchk,1;\
+binunit,Binunit,;\
+rsh,Rsh,;\
+n,Nj,;\
+nj,Njtemp,;\
+xti,Xti,;\
+js,Js,;\
+jsw,Jsw,;\
+lint,Lint,;\
+ll,Ll,;\
+lln,Lln,;\
+lw,Lw,;\
+lwn,Lwn,;\
+lwl,Lwl,;\
+wint,Wint,;\
+wl,Wl,;\
+wln,Wln,;\
+ww,Ww,;\
+wwn,Wwn,;\
+wwl,Wwl,;\
+tnom,Tnom,27;\
+tox,Tox,1.50E-08;\
+toxm,Toxm,;\
+cj,Cj,;\
+mj,Mj,;\
+cjsw,Cjsw,;\
+mjsw,Mjsw,;\
+pb,Pb,;\
+pbsw,Pbsw,;\
+cjswg,Cjswg,;\
+cjgate,Cjgate,;\
+mjswg,Mjswg,;\
+pbswg,Pbswg,;\
+xt,Xt,;\
+vbm,Vbm,;\
+vbx,Vbx,;\
+vfbcv,Vfbcv,;\
+vfb,Vfb,;\
+xj,Xj,;\
+dwg,Dwg,;\
+dwb,Dwb,;\
+nch,Nch,;\
+nsub,Nsub,6e16;\
+ngate,Ngate,;\
+gamma1,Gamma1,;\
+gamma2,Gamma2,;\
+alpha0,Alpha0,;\
+alpha1,Alpha1,;\
+beta0,Beta0,;\
+acde,Acde,;\
+moin,Moin,;\
+tpb,Tpb,;\
+tpbsw,Tpbsw,;\
+tpbswg,Tpbswg,;\
+tcj,Tcj,;\
+tcjsw,Tcjsw,;\
+tcjswg,Tcjswg,;\
+llc,Llc,;\
+lwc,Lwc,;\
+lwlc,Lwlc,;\
+wlc,Wlc,;\
+wwc,Wwc,;\
+wwlc,Wwlc,;\
+elm,Elm,;\
+vtho,Vth0,;\
+vth0,Vth0,;\
+k1,K1,;\
+k2,K2,;\
+k3,K3,;\
+k3b,K3b,;\
+w0,W0,;\
+nlx,Nlx,;\
+dvt0,Dvt0,;\
+dvt1,Dvt1,;\
+dvt2,Dvt2,;\
+dvt0w,Dvt0w,;\
+dvt1w,Dvt1w,;\
+dvt2w,Dvt2w,;\
+cgso,Cgso,;\
+cgdo,Cgdo,;\
+cgbo,Cgbo,;\
+xpart,Xpart,;\
+drout,Drout,;\
+dsub,Dsub,;\
+ua,Ua,;\
+ua1,Ua1,;\
+ub,Ub,;\
+ub1,Ub1,;\
+uc,Uc,;\
+uc1,Uc1,;\
+u0,U0,;\
+ute,Ute,;\
+rdsw,Rdsw,;\
+prwg,Prwg,;\
+prwb,Prwb,;\
+wr,Wr,;\
+prt,Prt,;\
+vsat,Vsat,;\
+at,At,;\
+a0,A0,;\
+keta,Keta,;\
+ags,Ags,;\
+a1,A1,;\
+a2,A2,;\
+b0,B0,;\
+b1,B1,;\
+voff,Voff,;\
+voffcv,Voffcv,;\
+noff,Noff,;\
+nfactor,Nfactor,;\
+cdsc,Cdsc,;\
+cdscb,Cdscb,;\
+cdscd,Cdscd,;\
+cit,Cit,;\
+eta0,Eta0,;\
+etab,Etab,;\
+pclm,Pclm,;\
+pdiblc1,Pdiblc1,;\
+pdiblc2,Pdiblc2,;\
+pdiblcb,Pdiblcb,;\
+pscbe1,Pscbe1,;\
+pscbe2,Pscbe2,;\
+pvag,Pvag,;\
+delta,Delta,;\
+kt1,Kt1,;\
+kt1l,Kt1l,;\
+kt2,Kt2,;\
+cgsl,Cgsl,;\
+cgdl,Cgdl,;\
+ckappa,Ckappa,;\
+cf,Cf,;\
+clc,Clc,;\
+cle,Cle,;\
+dlc,Dlc,;\
+dwc,Dwc,;\
+kf,Kf,;\
+af,Af,;\
+ef,Ef,;\
+em,Em,;\
+noia,Noia,;\
+noib,Noib,;\
+noic,Noic,;\
+imax,Imax,1;\
+hdif,Hdif,;\
+ldif,Ldif,;\
+xw,Xw,;\
+xl,Xl,;\
+rdc,Rdc,;\
+rsc,Rsc,;\
+rd,Rd,;\
+rs,Rs,;\
+cbd,Cbd,;\
+cbs,Cbs,;\
+is,Is,;\
+flkmod,Flkmod,;\
+tlev,Tlev,;\
+tlevc,Tlevc,;\
+eg,Eg,1.12452;\
+gap1,Gap1,;\
+gap2,Gap2,;\
+cta,Cta,;\
+ctp,Ctp,;\
+pta,Pta,;\
+ptp,Ptp,;\
+trd,Trd,;\
+trs,Trs,;\
+wmin,Wmin,;\
+wmax,Wmax,;\
+lmin,Lmin,;\
+lmax,Lmax,;\
+bvj,wBvsub,;\
+vbox,wBvg,;\
+trise,Trise,;\
+lxt,Lxt,;\
+lvbm,Lvbm,;\
+lvbx,Lvbx,;\
+lvfbcv,Lvfbcv,;\
+lvfb,Lvfb,;\
+lxj,Lxj,;\
+ldwg,Ldwg,;\
+ldwb,Ldwb,;\
+lnch,Lnch,;\
+lnsub,Lnsub,;\
+lngate,Lngate,;\
+lgamma1,Lgamma1,;\
+lgamma2,Lgamma2,;\
+lalpha0,Lalpha0,;\
+lalpha1,Lalpha1,;\
+lacde,Lacde,;\
+lmoin,Lmoin,;\
+lelm,Lelm,;\
+lbeta0,Lbeta0,;\
+lvth0,Lvth0,;\
+lk1,Lk1,;\
+lk2,Lk2,;\
+lk3,Lk3,;\
+lk3b,Lk3b,;\
+lw0,Lw0,;\
+lnlx,Lnlx,;\
+ldvt0,Ldvt0,;\
+ldvt1,Ldvt1,;\
+ldvt2,Ldvt2,;\
+ldvt0w,Ldvt0w,;\
+ldvt1w,Ldvt1w,;\
+ldvt2w,Ldvt2w,;\
+ldrout,Ldrout,;\
+ldsub,Ldsub,;\
+lua,Lua,;\
+lua1,Lua1,;\
+lub,Lub,;\
+lub1,Lub1,;\
+luc,Luc,;\
+luc1,Luc1,;\
+lu0,Lu0,;\
+lute,Lute,;\
+lrdsw,Lrdsw,;\
+lprwg,Lprwg,;\
+lprwb,Lprwb,;\
+lwr,Lwr,;\
+lprt,Lprt,;\
+lvsat,Lvsat,;\
+lat,Lat,;\
+la0,La0,;\
+lketa,Lketa,;\
+lags,Lags,;\
+la1,La1,;\
+la2,La2,;\
+lb0,Lb0,;\
+lb1,Lb1,;\
+lvoff,Lvoff,;\
+lvoffcv,Lvoffcv,;\
+lnoff,Lnoff,;\
+lnfactor,Lnfactor,;\
+lcdsc,Lcdsc,;\
+lcdscb,Lcdscb,;\
+lcdscd,Lcdscd,;\
+lcit,Lcit,;\
+leta0,Leta0,;\
+letab,Letab,;\
+lpclm,Lpclm,;\
+lpdiblc1,Lpdiblc1,;\
+lpdiblc2,Lpdiblc2,;\
+lpdiblcb,Lpdiblcb,;\
+lpscbe1,Lpscbe1,;\
+lpscbe2,Lpscbe2,;\
+lpvag,Lpvag,;\
+ldelta,Ldelta,;\
+lkt1,Lkt1,;\
+lkt1l,Lkt1l,;\
+lkt2,Lkt2,;\
+lcgsl,Lcgsl,;\
+lcgdl,Lcgdl,;\
+lckappa,Lckappa,;\
+lcf,Lcf,;\
+lclc,Lclc,;\
+lcle,Lcle,;\
+pxt,Pxt,;\
+pvbm,Pvbm,;\
+pvbx,Pvbx,;\
+pvfbcv,Pvfbcv,;\
+pvfb,Pvfb,;\
+pxj,Pxj,;\
+pdwg,Pdwg,;\
+pdwb,Pdwb,;\
+pnch,Pnch,;\
+pnsub,Pnsub,;\
+pngate,Pngate,;\
+pgamma1,Pgamma1,;\
+pgamma2,Pgamma2,;\
+palpha0,Palpha0,;\
+palpha1,Palpha1,;\
+pacde,Pacde,;\
+pmoin,Pmoin,;\
+pelm,Pelm,;\
+pbeta0,Pbeta0,;\
+pvth0,Pvth0,;\
+pk1,Pk1,;\
+pk2,Pk2,;\
+pk3,Pk3,;\
+pk3b,Pk3b,;\
+pw0,Pw0,;\
+pnlx,Pnlx,;\
+pdvt0,Pdvt0,;\
+pdvt1,Pdvt1,;\
+pdvt2,Pdvt2,;\
+pdvt0w,Pdvt0w,;\
+pdvt1w,Pdvt1w,;\
+pdvt2w,Pdvt2w,;\
+pdrout,Pdrout,;\
+pdsub,Pdsub,;\
+pua,Pua,;\
+pua1,Pua1,;\
+pub,Pub,;\
+pub1,Pub1,;\
+puc,Puc,;\
+puc1,Puc1,;\
+pu0,Pu0,;\
+pute,Pute,;\
+prdsw,Prdsw,;\
+pprwg,Pprwg,;\
+pprwb,Pprwb,;\
+pwr,Pwr,;\
+pprt,Pprt,;\
+pvsat,Pvsat,;\
+pat,Pat,;\
+pa0,Pa0,;\
+pketa,Pketa,;\
+pags,Pags,;\
+pa1,Pa1,;\
+pa2,Pa2,;\
+pb0,Pb0,;\
+pb1,Pb1,;\
+pvoff,Pvoff,;\
+pvoffcv,Pvoffcv,;\
+pnoff,Pnoff,;\
+pnfactor,Pnfactor,;\
+pcdsc,Pcdsc,;\
+pcdscb,Pcdscb,;\
+pcdscd,Pcdscd,;\
+pcit,Pcit,;\
+peta0,Peta0,;\
+petab,Petab,;\
+ppclm,Ppclm,;\
+ppdiblc1,Ppdiblc1,;\
+ppdiblc2,Ppdiblc2,;\
+ppdiblcb,Ppdiblcb,;\
+ppscbe1,Ppscbe1,;\
+ppscbe2,Ppscbe2,;\
+ppvag,Ppvag,;\
+pdelta,Pdelta,;\
+pkt1,Pkt1,;\
+pkt1l,Pkt1l,;\
+pkt2,Pkt2,;\
+pcgsl,Pcgsl,;\
+pcgdl,Pcgdl,;\
+pckappa,Pckappa,;\
+pcf,Pcf,;\
+pclc,Pclc,;\
+pcle,Pcle,;\
+wxt,Wxt,;\
+wvbm,Wvbm,;\
+wvbx,Wvbx,;\
+wvfbcv,Wvfbcv,;\
+wvfb,Wvfb,;\
+wxj,Wxj,;\
+wdwg,Wdwg,;\
+wdwb,Wdwb,;\
+wnch,Wnch,;\
+wnsub,Wnsub,;\
+wngate,Wngate,;\
+wgamma1,Wgamma1,;\
+wgamma2,Wgamma2,;\
+walpha0,Walpha0,;\
+walpha1,Walpha1,;\
+wacde,Wacde,;\
+wmoin,Wmoin,;\
+welm,Welm,;\
+wbeta0,Wbeta0,;\
+wvth0,Wvth0,;\
+wk1,Wk1,;\
+wk2,Wk2,;\
+wk3,Wk3,;\
+wk3b,Wk3b,;\
+ww0,Ww0,;\
+wnlx,Wnlx,;\
+wdvt0,Wdvt0,;\
+wdvt1,Wdvt1,;\
+wdvt2,Wdvt2,;\
+wdvt0w,Wdvt0w,;\
+wdvt1w,Wdvt1w,;\
+wdvt2w,Wdvt2w,;\
+wdrout,Wdrout,;\
+wdsub,Wdsub,;\
+wua,Wua,;\
+wua1,Wua1,;\
+wub,Wub,;\
+wub1,Wub1,;\
+wuc,Wuc,;\
+wuc1,Wuc1,;\
+wu0,Wu0,;\
+wute,Wute,;\
+wrdsw,Wrdsw,;\
+wprwg,Wprwg,;\
+wprwb,Wprwb,;\
+wwr,Wwr,;\
+wprt,Wprt,;\
+wvsat,Wvsat,;\
+wat,Wat,;\
+wa0,Wa0,;\
+wketa,Wketa,;\
+wags,Wags,;\
+wa1,Wa1,;\
+wa2,Wa2,;\
+wb0,Wb0,;\
+wb1,Wb1,;\
+wvoff,Wvoff,;\
+wvoffcv,Wvoffcv,;\
+wnoff,Wnoff,;\
+wnfactor,Wnfactor,;\
+wcdsc,Wcdsc,;\
+wcdscb,Wcdscb,;\
+wcdscd,Wcdscd,;\
+wcit,Wcit,;\
+weta0,Weta0,;\
+wetab,Wetab,;\
+wpclm,Wpclm,;\
+wpdiblc1,Wpdiblc1,;\
+wpdiblc2,Wpdiblc2,;\
+wpdiblcb,Wpdiblcb,;\
+wpscbe1,Wpscbe1,;\
+wpscbe2,Wpscbe2,;\
+wpvag,Wpvag,;\
+wdelta,Wdelta,;\
+wkt1,Wkt1,;\
+wkt1l,Wkt1l,;\
+wkt2,Wkt2,;\
+wcgsl,Wcgsl,;\
+wcgdl,Wcgdl,;\
+wckappa,Wckappa,;\
+wcf,Wcf,;\
+wclc,Wclc,;\
+wcle,Wcle,;\
+lgcd,Lgcd,;\
+lgcs,Lgcs,;\
+rdd,Rdd,;\
+rss,Rss,;\
+sc,Sc,1.0e20;\
+l,L,5e-6;\
+w,W,5e-6;\
+ad,Ad,0;\
+as,As,0;\
+pd,Pd,0;\
+ps,Ps,0;\
+nrd,Nrd,0;\
+nrs,Nrs,0;\
+imelt,Imelt,;\
+ijth,Ijth,;\
+wvtho,Wvtho,;\
+kvth0,Kvth0,;\
+wkvth0,Wkvth0,;\
+wlodvth,Wlodvth,;\
+ku0,Ku0,;\
+kvsat,Kvsat,;\
+saref,Sa0,;\
+sbref,Sb0,;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;\
+ CB_BinModel.pl,cb_bsim_params;\
+ CB_BinModel.pl,cb_bin|
+
+############# BSIM4 ##################
+#
+element|bsim4|mosfet,BSIM4_NMOS|1,1;2,2;3,3;4,4|\
+ delvto,Delvto,;\
+ l,Length,;\
+ w,Width,;\
+ sa,Sa,;\
+ sb,Sb,;\
+ sc,Sc,;\
+ sca,Sca,;\   
+ scb,Scb,;\  
+ scc,Scc,;\
+ sd,Sd,;\
+ ad,Ad,;\
+ as,As,;\
+ ps,Ps,;\
+ pd,Pd,;\
+ nrd,Nrd,;\
+ nrs,Nrs,;\
+ xgw,Xgw,;\
+ ngcon,Ngcon,;\
+ #nqsmod,Nqsmod,;\
+ m,_M,;\
+ trnqsmod,Trnqsmod,;\
+ acnqsmod,Acnqsmod,;\
+ trise,Trise,;\
+ rgatemod,Rgatemod,;\
+ rbodymod,Rbodymod,;\
+ geomod,Geomod,;\
+ rgeomod,Rgeomod,;\
+ rbpb,Rbpb,;\
+ rbpd,Rbpd,;\
+ rbps,Rbps,;\
+ rbdb,Rbdb,;\
+ rbsb,Rbsb,;\
+ nf,Nf,;\
+ min,Min,;\
+ |CB_OutputType.pl,Determine_outputType;;;CB_BinModel.pl,cb_mos_element;CB_BinModel.pl,cb_mos_symbol;|
+
+############# BSIM4 model ##################
+#
+# special callback for "type" as follows:
+#    type=n        -> NMOS=yes and PMOS=no
+#    type=p        -> NMOS=no  and PMOS=yes
+#
+#    The MOS_TYPE parameter below is processed
+#    in the callback to set the ADS NMOS and PMOS
+#    references.
+#
+#    NOTE: Spectre u0 has default of 670 cm^2/V*s
+#          ADS     U0 has default of 0.067 m/V*S
+#          Furthermore, for Spectre, if we have
+#          PMOS specified then the u0 default
+#          changes to 250 cm^2/V*s instead.
+#          We need a callback to handle this case.
+#
+#         Spectre uc has default -4.65e-11 m/v^2 
+#         Body-bias dependence of mobility. Default 
+#         is -0.0465 (which is what the ADS default 
+#         is) and unit is 1/V for mobmod=1.
+#
+model|bsim4|BSIM4,BSIM4_Model| |\
+type,MOS_TYPE,;\
+vtho,Vth0,;\
+vth0,Vth0,;\
+vfb,Vfb,;\
+phin,Phin,;\
+k1,K1,;\
+k2,K2,;\
+k3,K3,;\
+k3b,K3b,;\
+w0,W0,;\
+lpe0,Lpe0,;\
+lpeb,Lpeb,;\
+gamma1,Gamma1,;\
+gamma2,Gamma2,;\
+vbx,Vbx,;\
+vbm,Vbm,;\
+dvt0,Dvt0,;\
+dvt1,Dvt1,;\
+dvt2,Dvt2,;\
+dvtp0,Dvtp0,;\
+dvtp1,Dvtp1,;\
+dvt0w,Dvt0w,;\
+dvt1w,Dvt1w,;\
+dvt2w,Dvt2w,;\
+a0,A0,1;\
+b0,B0,;\
+b1,B1,;\
+a1,A1,;\
+a2,A2,;\
+ags,Ags,;\ 
+keta,Keta,;\
+epsrox,Epsrox,;\
+toxe,Toxe,;\
+toxp,Toxp,;\
+dtox,Dtox,;\
+ndep,Ndep,;\
+nsd,Nsd,;\
+nsub,Nsub,;\
+ngate,Ngate,;\
+xj,Xj,;\
+lint,Lint,;\
+wint,Wint,;\
+ll,Ll,;\
+lln,Lln,;\
+lw,Lw,;\
+lwn,Lwn,;\
+lwl,Lwl,;\
+wl,Wl,;\
+wln,Wln,;\
+ww,Ww,;\
+wwn,Wwn,;\
+wwl,Wwl,;\
+dwg,Dwg,;\
+dwb,Dwb,;\
+toxm,Toxm,;\
+xt,Xt,;\
+binunit,Binunit,;\
+rdsmod,Rdsmod,1;\
+rdsw,Rdsw,;\
+rdswmin,Rdswmin,;\
+rdw,Rdw,;\
+rdwmin,Rdwmin,;\
+rsw,Rsw,;\
+rswmin,Rswmin,;\
+prwb,Prwb,;\ 
+prwg,Prwg,;\
+wr,Wr,;\
+mobmod,Mobmod,;\
+# See note above about U0 \
+u0,U0,;\
+vsat,Vsat,;\
+ua,Ua,1.0e-9;\
+ub,Ub,;\
+# See note above about Uc \
+uc,Uc,;\
+eu,Eu,;\
+drout,Drout,;\
+fprout,Fprout,;\
+pclm,Pclm,;\
+pdiblc1,Pdiblc1,;\
+pdiblc2,Pdiblc2,;\
+pdiblcb,Pdiblcb,;\
+pscbe1,Pscbe1,;\
+pscbe2,Pscbe2,;\
+pvag,Pvag,;\
+delta,Delta,;\
+pdits,Pdits,;\
+pditsl,Pditsl,;\
+pditsd,Pditsd,;\
+cdsc,Cdsc,;\
+cdscb,Cdscb,;\ 
+cdscd,Cdscd,;\
+nfactor,Nfactor,;\
+cit,Cit,;\
+voff,Voff,;\
+voffl,Voffl,;\
+minv,Minv,;\
+dsub,Dsub,;\
+eta0,Eta0,;\
+etab,Etab,;\
+alpha0,Alpha0,;\
+alpha1,Alpha1,;\
+beta0,Beta0,;\
+rgatemod,Rgatemod,;\
+rsh,Rsh,;\
+rshg,Rshg,;\
+dmcg,Dmcg,;\
+dmci,Dmci,;\
+dmdg,Dmdg,;\
+dmcgt,Dmcgt,;\
+dwj,Dwj,;\
+xgw,Xgw,;\
+xgl,Xgl,;\
+ngcon,Ngcon,;\
+nf,Nf,;\
+min,Min,;\
+permod,Permod,;\
+geomod,Geomod,;\
+rgeomod,Rgeomod,;\
+xw,Xw,;\
+xl,Xl,;\
+# minr,,0.001;\
+agidl,Agidl,;\
+bgidl,Bgidl,;\
+cgidl,Cgidl,;\
+egidl,Egidl,;\
+igcmod,Igcmod,;\
+igbmod,Igbmod,1;\
+aigbacc,Aigbacc,;\
+bigbacc,Bigbacc,;\
+cigbacc,Cigbacc,;\
+nigbacc,Nigbacc,;\
+aigbinv,Aigbinv,;\
+bigbinv,Bigbinv,;\
+cigbinv,Cigbinv,;\
+eigbinv,Eigbinv,;\
+nigbinv,Nigbinv,;\
+aigc,Aigc,0.054;\
+bigc,Bigc,;\
+cigc,Cigc,;\
+aigsd,Aigsd,;\
+bigsd,Bigsd,;\
+cigsd,Cigsd,;\
+dlcig,Dlcig,;\
+nigc,Nigc,;\
+poxedge,Poxedge,;\
+pigcd,Pigcd,;\
+ntox,Ntox,;\
+toxref,Toxref,;\
+diomod,Diomod,;\
+# js,,1.0e-4;\
+jss,Jss,;\
+jsd,Jsd,;\
+jsws,Jsws,;\
+jswd,Jswd,;\
+jswgs,Jswgs,;\
+jswgd,Jswgd,;\
+# is,,1e-14;\
+# n,,1;\
+njs,Njs,;\
+njd,Njd,;\
+# dskip,,yes;\
+imelt,Imelt,;\
+# jmelt,,`jmax';\
+ijthsrev,Ijthsrev,;\
+ijthdrev,Ijthdrev,;\
+ijthsfwd,Ijthsfwd,;\
+ijthdfwd,Ijthdfwd,;\
+xjbvs,Xjbvs,;\
+xjbvd,Xjbvd,;\
+cgso,Cgso,;\
+cgdo,Cgdo,;\
+cgbo,Cgbo,;\
+# meto,,0;\
+cgsl,Cgsl,;\
+cgdl,Cgdl,;\
+ckappas,Ckappas,;\
+ckappad,Ckappad,;\
+# cj,,5e-4;\
+cjs,Cjs,;\
+cjd,Cjd,;\
+# mj,,1/2;\
+mjs,Mjs,;\
+mjd,Mjd,;\
+# pb,,1;\
+pbs,Pbs,;\
+pbd,Pbd,;\
+# fc,,0.5;\
+# cjsw,,5e-10;\
+cjsws,Cjsws,;\
+cjswd,Cjswd,;\
+# mjsw,,0.33;\
+mjsws,Mjsws,;\
+mjswd,Mjswd,;\
+# pbsw,,1;\
+pbsws,Pbsws,;\
+pbswd,Pbswd,;\
+# cjswg,,cjswg;\
+cjswgs,Cjswgs,;\
+cjswgd,Cjswgd,;\
+# mjswg,,mjsw;\
+mjswgs,Mjswgs,;\
+mjswgd,Mjswgd,;\
+# pbswg,,pbsw;\
+pbswgs,Pbswgs,;\
+pbswgd,Pbswgd,;\
+# fcsw,,0.5;\
+bvs,Bvs,;\
+bvd,Bvd,;\
+capmod,Capmod,;\
+trnqsmod,Trnqsmod,;\
+acnqsmod,Acnqsmod,;\
+dwc,Dwc,;\
+dlc,Dlc,;\
+clc,Clc,;\
+cle,Cle,;\
+cf,Cf,;\
+vfbcv,Vfbcv,;\
+acde,Acde,;\
+moin,Moin,;\
+noff,Noff,;\
+voffcv,Voffcv,;\
+xpart,Xpart,;\
+llc,Llc,;\
+lwc,Lwc,;\
+lwlc,Lwlc,;\
+wlc,Wlc,;\
+wwc,Wwc,;\
+wwlc,Wwlc,;\
+w,W,;\
+l,L,;\
+as,As,;\
+ad,Ad,;\
+ps,Ps,;\
+pd,Pd,;\
+nrd,Nrd,0;\
+nrs,Nrs,0;\
+version,Version,4.2;\
+paramchk,Paramchk,;\
+# fullreinit,,0;\
+tnom,Tnom,27;\
+trise,Trise,0;\
+tlev,Tlev,;\
+tlevc,Tlevc,0;\
+eg,Eg,1.12452;\
+gap1,Gap1,;\
+gap2,Gap2,;\
+kt1,Kt1,;\
+kt1l,Kt1l,;\
+kt2,Kt2,;\
+at,At,;\
+ua1,Ua1,4.31e-9;\
+ub1,Ub1,-7.61e-18;\
+uc1,Uc1,-5.5e-11;\
+prt,Prt,;\
+ute,Ute,;\
+# xti,,3;\
+xtis,Xtis,;\
+xtid,Xtid,;\
+pta,Pta,;\
+tpb,Tpb,;\
+ptp,Ptp,;\
+tpbsw,Tpbsw,;\
+tpbswg,Tpbswg,;\
+cta,Cta,;\
+tcj,Tcj,;\
+ctp,Ctp,;\
+tcjsw,Tcjsw,;\
+tcjswg,Tcjswg,;\
+fnoimod,Fnoimod,;\
+tnoimod,Tnoimod,;\
+kf,Kf,;\
+af,Af,;\
+ef,Ef,;\
+noia,Noia,;\
+noib,Noib,;\
+noic,Noic,;\
+# wnoi,,1e-5;\
+em,Em,4.1e7;\
+# flkmod,,;\
+ntnoi,Ntnoi,;\
+tnoia,Tnoia,;\
+tnoib,Tnoib,;\
+rbodymod,Rbodymod,;\
+xrcrg1,Xrcrg1,;\
+xrcrg2,Xrcrg2,;\
+rbpb,Rbpb,;\
+rbpd,Rbpd,;\
+rbps,Rbps,;\
+rbdb,Rbdb,;\
+rbsb,Rbsb,;\
+gbmin,Gbmin,;\
+wmax,Wmax,;\
+wmin,Wmin,;\
+lmax,Lmax,;\
+lmin,Lmin,;\
+jtss,Jtss,;\
+jtsd,Jtsd,;\    
+jtssws,Jtssws,;\       
+jtsswd,Jtsswd,;\       
+jtsswgs,Jtsswgs,;\       
+jtsswgd,Jtsswgd,;\       
+njts,Njts,;\
+njtssw,Njtssw,;\
+njtsswg,Njtsswg,;\
+xtss,Xtss,;\
+xtsd,Xtsd,;\
+xtssws,Xtssws,;\
+xtsswd,Xtsswd,;\
+xtsswgs,Xtsswgs,;\
+xtsswgd,Xtsswgd,;\
+tnjts,Tnjts,;\
+tnjtssw,Tnjtssw,;\
+tnjtsswg,Tnjtsswg,;\
+vtss,Vtss,;\	
+vtsd,Vtsd,;\	
+vtssws,Vtssws,;\ 
+vtsswd,Vtsswd,;\  
+vtsswgs,Vtsswgs,;\ 
+vtsswgd,Vtsswgd,;\ 
+saref,Saref,;\
+sbref,Sbref,;\
+wlod,Wlod,;\
+ku0,Ku0,;\
+kvsat,Kvsat,;\
+tku0,Tku0,;\
+lku0,Lku0,;\
+wku0,Wku0,;\
+pku0,Pku0,;\
+llodku0,Llodku0,;\
+wlodku0,Wlodku0,;\
+kvth0,Kvth0,;\
+lkvth0,Lkvth0,;\
+wkvth0,Wkvth0,;\
+pkvth0,Pkvth0,;\
+llodvth,Llodvth,;\
+wlodvth,Wlodvth,;\
+stk2,Stk2,;\
+lodk2,Lodk2,;\
+steta0,Steta0,;\
+lodeta0,Lodeta0,;\
+lambda,Lambda,;\
+llambda,Llambda,;\
+wlambda,Wlambda,;\
+plambda,Plambda,;\
+vtl,Vtl,;\
+lvtl,Lvtl,;\
+wvtl,Wvtl,;\
+pvtl,Pvtl,;\
+lc,Lc,;\
+xn,Xn,;\
+lxn,Lxn,;\
+wxn,Wxn,;\
+pxn,Pxn,;\
+tempmod,Tempmod,;\
+rnoia,Rnoia,;\
+rnoib,Rnoib,;\
+# alarm,,none;\
+# imax,,1;\
+# jmax,,1e8;\
+# bvj,,infinity;\
+# vbox,,1e9*toxe;\
+# warn,,on;\
+# Now for the LWP parameters...
+lcdsc,Lcdsc,;\
+lcdsc,Lcdsc,;\
+lcdscb,Lcdscb,;\
+lcdscd,Lcdscd,;\
+lcit,Lcit,;\
+lnfactor,Lnfactor,;\
+lxj,Lxj,;\
+lvsat,Lvsat,;\
+lat,Lat,;\
+la0,La0,;\
+lags,Lags,;\
+la1,La1,;\
+la2,La2,;\
+lketa,Lketa,;\
+lnsub,Lnsub,;\
+lndep,Lndep,;\
+lnsd,Lnsd,;\
+lphin,Lphin,;\
+lngate,Lngate,;\
+lgamma1,Lgamma1,;\
+lgamma2,Lgamma2,;\
+lvbx,Lvbx,;\
+lvbm,Lvbm,;\
+lxt,Lxt,;\
+lk1,Lk1,;\
+lkt1,Lkt1,;\
+lkt1l,Lkt1l,;\
+lkt2,Lkt2,;\
+lk2,Lk2,;\
+lk3,Lk3,;\
+lk3b,Lk3b,;\
+lw0,Lw0,;\
+ldvtp0,Ldvtp0,;\
+ldvtp1,Ldvtp1,;\
+llpe0,Llpe0,;\
+llpeb,Llpeb,;\
+ldvt0,Ldvt0,;\
+ldvt1,Ldvt1,;\
+ldvt2,Ldvt2,;\
+ldvt0w,Ldvt0w,;\
+ldvt1w,Ldvt1w,;\
+ldvt2w,Ldvt2w,;\
+ldrout,Ldrout,;\
+ldsub,Ldsub,;\
+lvth0,Lvth0,;\
+lua,Lua,;\
+lua1,Lua1,;\
+lub,Lub,;\
+lub1,Lub1,;\
+luc,Luc,;\
+luc1,Luc1,;\
+lu0,Lu0,;\
+lute,Lute,;\
+lvoff,Lvoff,;\
+lminv,Lminv,;\
+ldelta,Ldelta,;\
+lrdsw,Lrdsw,;\
+lrsw,Lrsw,;\
+lrdw,Lrdw,;\
+lprwg,Lprwg,;\
+lprwb,Lprwb,;\
+lprt,Lprt,;\
+leta0,Leta0,;\
+letab,Letab,;\
+lpclm,Lpclm,;\
+lpdiblc1,Lpdiblc1,;\
+lpdiblc2,Lpdiblc2,;\
+lpdiblcb,Lpdiblcb,;\
+lfprout,Lfprout,;\
+lpdits,Lpdits,;\
+lpditsd,Lpditsd,;\
+lpscbe1,Lpscbe1,;\
+lpscbe2,Lpscbe2,;\
+lpvag,Lpvag,;\
+lwr,Lwr,;\
+ldwg,Ldwg,;\
+ldwb,Ldwb,;\
+lb0,Lb0,;\
+lb1,Lb1,;\
+lcgsl,Lcgsl,;\
+lcgdl,Lcgdl,;\
+lckappas,Lckappas,;\
+lckappad,Lckappad,;\
+lcf,Lcf,;\
+lclc,Lclc,;\
+lcle,Lcle,;\
+lalpha0,Lalpha0,;\
+lalpha1,Lalpha1,;\
+lbeta0,Lbeta0,;\
+lagidl,Lagidl,;\
+lbgidl,Lbgidl,;\
+lcgidl,Lcgidl,;\
+legidl,Legidl,;\
+laigc,Laigc,;\
+lbigc,Lbigc,;\
+lcigc,Lcigc,;\
+laigsd,Laigsd,;\
+lbigsd,Lbigsd,;\
+lcigsd,Lcigsd,;\
+laigbacc,Laigbacc,;\
+lbigbacc,Lbigbacc,;\
+lcigbacc,Lcigbacc,;\
+laigbinv,Laigbinv,;\
+lbigbinv,Lbigbinv,;\
+lcigbinv,Lcigbinv,;\
+lnigc,Lnigc,;\
+lnigbinv,Lnigbinv,;\
+lnigbacc,Lnigbacc,;\
+lntox,Lntox,;\
+leigbinv,Leigbinv,;\
+lpigcd,Lpigcd,;\
+lpoxedge,Lpoxedge,;\
+lvfbcv,Lvfbcv,;\
+lvfb,Lvfb,;\
+lacde,Lacde,;\
+lmoin,Lmoin,;\
+lnoff,Lnoff,;\
+lvoffcv,Lvoffcv,;\
+lxrcrg1,Lxrcrg1,;\
+lxrcrg2,Lxrcrg2,;\
+leu,Leu,;\
+wcdsc,Wcdsc,;\
+wcdsc,Wcdsc,;\
+wcdscb,Wcdscb,;\
+wcdscd,Wcdscd,;\
+wcit,Wcit,;\
+wnfactor,Wnfactor,;\
+wxj,Wxj,;\
+wvsat,Wvsat,;\
+wat,Wat,;\
+wa0,Wa0,;\
+wags,Wags,;\
+wa1,Wa1,;\
+wa2,Wa2,;\
+wketa,Wketa,;\
+wnsub,Wnsub,;\
+wndep,Wndep,;\
+wnsd,Wnsd,;\
+wphin,Wphin,;\
+wngate,Wngate,;\
+wgamma1,Wgamma1,;\
+wgamma2,Wgamma2,;\
+wvbx,Wvbx,;\
+wvbm,Wvbm,;\
+wxt,Wxt,;\
+wk1,Wk1,;\
+wkt1,Wkt1,;\
+wkt1l,Wkt1l,;\
+wkt2,Wkt2,;\
+wk2,Wk2,;\
+wk3,Wk3,;\
+wk3b,Wk3b,;\
+ww0,Ww0,;\
+wdvtp0,Wdvtp0,;\
+wdvtp1,Wdvtp1,;\
+wlpe0,Wlpe0,;\
+wlpeb,Wlpeb,;\
+wdvt0,Wdvt0,;\
+wdvt1,Wdvt1,;\
+wdvt2,Wdvt2,;\
+wdvt0w,Wdvt0w,;\
+wdvt1w,Wdvt1w,;\
+wdvt2w,Wdvt2w,;\
+wdrout,Wdrout,;\
+wdsub,Wdsub,;\
+wvth0,Wvth0,;\
+wua,Wua,;\
+wua1,Wua1,;\
+wub,Wub,;\
+wub1,Wub1,;\
+wuc,Wuc,;\
+wuc1,Wuc1,;\
+wu0,Wu0,;\
+wute,Wute,;\
+wvoff,Wvoff,;\
+wminv,Wminv,;\
+wdelta,Wdelta,;\
+wrdsw,Wrdsw,;\
+wrsw,Wrsw,;\
+wrdw,Wrdw,;\
+wprwg,Wprwg,;\
+wprwb,Wprwb,;\
+wprt,Wprt,;\
+weta0,Weta0,;\
+wetab,Wetab,;\
+wpclm,Wpclm,;\
+wpdiblc1,Wpdiblc1,;\
+wpdiblc2,Wpdiblc2,;\
+wpdiblcb,Wpdiblcb,;\
+wfprout,Wfprout,;\
+wpdits,Wpdits,;\
+wpditsd,Wpditsd,;\
+wpscbe1,Wpscbe1,;\
+wpscbe2,Wpscbe2,;\
+wpvag,Wpvag,;\
+wwr,Wwr,;\
+wdwg,Wdwg,;\
+wdwb,Wdwb,;\
+wb0,Wb0,;\
+wb1,Wb1,;\
+wcgsl,Wcgsl,;\
+wcgdl,Wcgdl,;\
+wckappas,Wckappas,;\
+wckappad,Wckappad,;\
+wcf,Wcf,;\
+wclc,Wclc,;\
+wcle,Wcle,;\
+walpha0,Walpha0,;\
+walpha1,Walpha1,;\
+wbeta0,Wbeta0,;\
+wagidl,Wagidl,;\
+wbgidl,Wbgidl,;\
+wcgidl,Wcgidl,;\
+wegidl,Wegidl,;\
+waigc,Waigc,;\
+wbigc,Wbigc,;\
+wcigc,Wcigc,;\
+waigsd,Waigsd,;\
+wbigsd,Wbigsd,;\
+wcigsd,Wcigsd,;\
+waigbacc,Waigbacc,;\
+wbigbacc,Wbigbacc,;\
+wcigbacc,Wcigbacc,;\
+waigbinv,Waigbinv,;\
+wbigbinv,Wbigbinv,;\
+wcigbinv,Wcigbinv,;\
+wnigc,Wnigc,;\
+wnigbinv,Wnigbinv,;\
+wnigbacc,Wnigbacc,;\
+wntox,Wntox,;\
+weigbinv,Weigbinv,;\
+wpigcd,Wpigcd,;\
+wpoxedge,Wpoxedge,;\
+wvfbcv,Wvfbcv,;\
+wvfb,Wvfb,;\
+wacde,Wacde,;\
+wmoin,Wmoin,;\
+wnoff,Wnoff,;\
+wvoffcv,Wvoffcv,;\
+wxrcrg1,Wxrcrg1,;\
+wxrcrg2,Wxrcrg2,;\
+weu,Weu,;\
+pcdsc,Pcdsc,;\
+pcdsc,Pcdsc,;\
+pcdscb,Pcdscb,;\
+pcdscd,Pcdscd,;\
+pcit,Pcit,;\
+pnfactor,Pnfactor,;\
+pxj,Pxj,;\
+pvsat,Pvsat,;\
+pat,Pat,;\
+pa0,Pa0,;\
+pags,Pags,;\
+pa1,Pa1,;\
+pa2,Pa2,;\
+pketa,Pketa,;\
+pnsub,Pnsub,;\
+pndep,Pndep,;\
+pnsd,Pnsd,;\
+pphin,Pphin,;\
+pngate,Pngate,;\
+pgamma1,Pgamma1,;\
+pgamma2,Pgamma2,;\
+pvbx,Pvbx,;\
+pvbm,Pvbm,;\
+pxt,Pxt,;\
+pk1,Pk1,;\
+pkt1,Pkt1,;\
+pkt1l,Pkt1l,;\
+pkt2,Pkt2,;\
+pk2,Pk2,;\
+pk3,Pk3,;\
+pk3b,Pk3b,;\
+pw0,Pw0,;\
+pdvtp0,Pdvtp0,;\
+pdvtp1,Pdvtp1,;\
+plpe0,Plpe0,;\
+plpeb,Plpeb,;\
+pdvt0,Pdvt0,;\
+pdvt1,Pdvt1,;\
+pdvt2,Pdvt2,;\
+pdvt0w,Pdvt0w,;\
+pdvt1w,Pdvt1w,;\
+pdvt2w,Pdvt2w,;\
+pdrout,Pdrout,;\
+pdsub,Pdsub,;\
+pvth0,Pvth0,;\
+pua,Pua,;\
+pua1,Pua1,;\
+pub,Pub,;\
+pub1,Pub1,;\
+puc,Puc,;\
+puc1,Puc1,;\
+pu0,Pu0,;\
+pute,Pute,;\
+pvoff,Pvoff,;\
+pminv,Pminv,;\
+pdelta,Pdelta,;\
+prdsw,Prdsw,;\
+prsw,Prsw,;\
+prdw,Prdw,;\
+pprwg,Pprwg,;\
+pprwb,Pprwb,;\
+pprt,Pprt,;\
+peta0,Peta0,;\
+petab,Petab,;\
+ppclm,Ppclm,;\
+ppdiblc1,Ppdiblc1,;\
+ppdiblc2,Ppdiblc2,;\
+ppdiblcb,Ppdiblcb,;\
+pfprout,Pfprout,;\
+ppdits,Ppdits,;\
+ppditsd,Ppditsd,;\
+ppscbe1,Ppscbe1,;\
+ppscbe2,Ppscbe2,;\
+ppvag,Ppvag,;\
+pwr,Pwr,;\
+pdwg,Pdwg,;\
+pdwb,Pdwb,;\
+pb0,Pb0,;\
+pb1,Pb1,;\
+pcgsl,Pcgsl,;\
+pcgdl,Pcgdl,;\
+pckappas,Pckappas,;\
+pckappad,Pckappad,;\
+pcf,Pcf,;\
+pclc,Pclc,;\
+pcle,Pcle,;\
+palpha0,Palpha0,;\
+palpha1,Palpha1,;\
+pbeta0,Pbeta0,;\
+pagidl,Pagidl,;\
+pbgidl,Pbgidl,;\
+pcgidl,Pcgidl,;\
+pegidl,Pegidl,;\
+paigc,Paigc,;\
+pbigc,Pbigc,;\
+pcigc,Pcigc,;\
+paigsd,Paigsd,;\
+pbigsd,Pbigsd,;\
+pcigsd,Pcigsd,;\
+paigbacc,Paigbacc,;\
+pbigbacc,Pbigbacc,;\
+pcigbacc,Pcigbacc,;\
+paigbinv,Paigbinv,;\
+pbigbinv,Pbigbinv,;\
+pcigbinv,Pcigbinv,;\
+pnigc,Pnigc,;\
+pnigbinv,Pnigbinv,;\
+pnigbacc,Pnigbacc,;\
+pntox,Pntox,;\
+peigbinv,Peigbinv,;\
+ppigcd,Ppigcd,;\
+ppoxedge,Ppoxedge,;\
+pvfbcv,Pvfbcv,;\
+pvfb,Pvfb,;\
+pacde,Pacde,;\
+pmoin,Pmoin,;\
+pnoff,Pnoff,;\
+pvoffcv,Pvoffcv,;\
+pxrcrg1,Pxrcrg1,;\
+pxrcrg2,Pxrcrg2,;\
+peu,Peu,;\
+#4.5 parameters
+ud,Ud,;\
+ud1,Ud1,;\
+up,Up,;\
+lp,Lp,;\
+tvoff,Tvoff,;\
+tvfbsdoff,Tvfbsdoff,;\
+ltvoff,Ltvoff,;\
+ltvfbsdoff,Ltvfbsdoff,;\
+wtvoff,Wtvoff,;\
+wtvfbsdoff,Wtvfbsdoff,;\
+ptvoff,Ptvoff,;\
+ptvfbsdoff,Ptvfbsdoff,;\
+rbpb,Rbpb,;\
+rbps,Rbps,;\
+rbpsl,Rbpsl ,;\
+rbpsw,Rbpsw,;\
+rbpsnf,Rbpsnf,;\
+rbpd0,Rbpd0,;\
+rbpdl,Rbpdl,;\
+rbpdw,Rbpdw,;\
+rbpdnf,Rbpdnf,;\
+rbpbx0,Rbpbx0 ,;\
+rbpbxl,Rbpbxl,;\
+rbpbxw,Rbpbxw,;\
+rbpbxnf,Rbpbxnf,;\
+rbpby0,Rbpby0,;\
+rbpbyl,Rbpbyl,;\
+rbpbyw,Rbpbyw,;\
+rbpbynf,Rbpbynf,;\
+rbsbx0,Rbsbx0,;\
+rbsby0,Rbsby0,;\
+rbdbx0,Rbdbx0,;\
+rbdby0,Rbdby0,;\
+rbsdbxl,Rbsdbxl,;\
+rbsdbxw,Rbsdbxw,;\
+rbsdbxnf,Rbsdbxnf,;\
+rbsdbyl,Rbsdbyl,;\
+rbsdbyw,Rbsdbyw,;\
+rbsdbynf,Rbsdbynf,;\
+web,Web,;\
+wec,Wec,;\
+kvth0we,Kvth0we,;\
+k2we,K2we,;\
+ku0we,Ku0we,;\
+scref,Scref,;\
+wpemod,Wpemod,;\
+lkvth0we,Lkvth0we,;\
+lk2we,Lk2we,;\
+lku0we,Lku0we,;\
+wkvth0we,Wkvth0we,;\
+wk2we,Wk2we,;\
+wku0we,Wku0we,;\
+pkvth0we,Pkvth0we,;\
+pk2we,Pk2we,;\
+pku0we,Pku0we,;\
+#Un-documented parameters in spectre
+lud,Lud,;\ 
+lud1,Lud1,;\ 
+lup,Lup,;\ 
+llp,Llp,;\
+wud,Wud,;\ 
+wud1,Wud1,;\
+wup,Wup,;\ 
+wlp,Wlp,;\ 
+pud,Pud,;\ 
+pud1,Pud1,;\ 
+pup,Pup,;\
+plp,Plp;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;\
+ CB_BinModel.pl,cb_bsim_params;\
+ CB_BinModel.pl,cb_bin|
+############# BSIM3SOI ##################
+#
+element|b3soipd|mosfet,BSIM3SOI_NMOS|1,1;2,2;3,3;4,4|\
+ l,Length,;\
+ w,Width,;\
+ ad,Ad,;\
+ as,As,;\
+ ps,Ps,;\
+ pd,Pd,;\
+ nrd,Nrd,;\
+ nrs,Nrs,;\
+ nrb,Nrb,;\
+ m,_M,;\
+ rth0,Rth0,;\
+ cth0,Cth0,;\
+ bjtoff,Bjtoff,;\
+ nbc,Nbc,;\
+ nseg,Nseg,;\
+ pdbcp,Pdbcp,;\
+ psbcp,Psbcp,;\
+ agbcp,Agbcp,;\
+ aebcp,Aebcp,;\
+ vbsusr,Vbsusr,;\
+ #Tnodeout not in ADS
+ #tnodeout,Tnodeout,;\
+ |CB_OutputType.pl,Determine_outputType;;;CB_BinModel.pl,cb_mos_element;CB_BinModel.pl,cb_mos_symbol;|
+
+############# BSIM3SOI model ##################
+#
+# special callback for "type" as follows:
+#    type=n        -> NMOS=yes and PMOS=no
+#    type=p        -> NMOS=no  and PMOS=yes
+#
+#    The MOS_TYPE parameter below is processed
+#    in the callback to set the ADS NMOS and PMOS
+#    references.
+#
+#    NOTE: Spectre u0 has default of 670 cm^2/V*s
+#          ADS     U0 has default of 0.067 m/V*S
+#          Furthermore, for Spectre, if we have
+#          PMOS specified then the u0 default
+#          changes to 250 cm^2/V*s instead.
+#          We need a callback to handle this case.
+#
+#         Spectre uc has default -4.65e-11 m/v^2 
+#         Body-bias dependence of mobility. Default 
+#         is -0.0465 (which is what the ADS default 
+#         is) and unit is 1/V for mobmod=1.
+#
+model|b3soipd|B3SOI,BSIM3SOI_Model| |\
+type,MOS_TYPE,;\
+capmod,Capmod,;\
+mobmod,Mobmod,;\
+noimod,Noimod,;\
+shmod,Shmod,;\
+#ddmod not in spectre
+#ddmod,Ddmod,;\
+igmod,Igmod,;\
+paramchk,Paramchk,;\
+binunit,Binunit,;\
+version,Version,;\
+tox,Tox,;\
+cdsc,Cdsc,;\
+cdscb,Cdscb,;\
+cdscd,Cdscd,;\
+cit,Cit,0;\
+nfactor,Nfactor,1;\
+vsat,Vsat,;\
+at,At,;\
+a0,A0,;\
+ags,Ags,;\
+a1,A1,;\
+a2,A2,;\
+keta,Keta,;\
+nsub,Nsub,;\
+nch,Nch,;\
+ngate,Ngate,;\
+gamma1,Gamma1,;\
+gamma2,Gamma2,;\
+vbx,Vbx,;\
+vbm,Vbm,;\
+xt,Xt,;\
+k1,K1,;\
+kt1,Kt1,;\
+kt1l,Kt1l,;\
+kt2,Kt2,;\
+k2,K2,;\
+k3,K3,;\
+k3b,K3b,;\
+w0,W0,2.5e-6;\
+nlx,Nlx,;\
+dvt0,Dvt0,;\
+dvt1,Dvt1,;\
+dvt2,Dvt2,;\
+dvt0w,Dvt0w,;\
+dvt1w,Dvt1w,;\
+dvt2w,Dvt2w,-0.032;\
+drout,Drout,;\
+dsub,Dsub,;\
+vtho,Vtho,;\
+ua,Ua,1.0e-9;\
+ua1,Ua1,;\
+ub,Ub,;\
+ub1,Ub1,;\
+# See note above about Uc \
+uc,Uc,-0.046;\
+uc1,Uc1,;\
+# See note above about U0 \
+u0,U0,;\
+ute,Ute,;\
+voff,Voff,;\
+tnom,Tnom,27;\
+#trise,Trise,;\
+cgdl,Cgdl,;\
+cgdo,Cgdo,;\
+cgso,Cgso,;\
+xpart,Xpart,;\
+delta,Delta,;\
+rsh,Rsh,;\
+rdsw,Rdsw,;\
+prwg,Prwg,;\
+prwb,Prwb,0;\
+prt,Prt,;\
+eta0,Eta0,;\
+etab,Etab,;\
+pclm,Pclm,;\
+pdiblc1,Pdiblc1,;\
+pdiblc2,Pdiblc2,8.6e-3;\
+pdiblcb,Pdiblcb,;\
+pvag,Pvag,;\
+tbox,Tbox,;\
+tsi,Tsi,;\
+xj,Xj,0.15e-6;\
+rth0,Rth0,;\
+cth0,Cth0,;\
+ngidl,Ngidl,;\
+agidl,Agidl,;\
+bgidl,Bgidl,;\
+ndiode,Ndiode,;\
+xbjt,Xbjt,2;\
+xdif,Xdif,2;\
+xrec,Xrec,20;\
+xtun,Xtun,;\
+pbswg,Pbswg,0.7;\
+mjswg,Mjswg,;\
+cjswg,Cjswg,;\
+lint,Lint,;\
+ll,Ll,;\
+lln,Lln,;\
+lw,Lw,;\
+lwn,Lwn,;\
+lwl,Lwl,;\
+wr,Wr,;\
+wint,Wint,;\
+dwg,Dwg,;\
+dwb,Dwb,;\
+wl,Wl,;\
+wln,Wln,;\
+ww,Ww,;\
+wwn,Wwn,;\
+wwl,Wwl,;\
+b0,B0,;\
+b1,B1,;\
+cgsl,Cgsl,;\
+ckappa,Ckappa,0.6;\
+cf,Cf,;\
+clc,Clc,;\
+cle,Cle,;\
+dwc,Dwc,;\
+dlc,Dlc,;\
+alpha0,Alpha0,;\
+noia,Noia,;\
+noib,Noib,;\
+noic,Noic,;\
+em,Em,4.1e7;\
+ef,Ef,;\
+kf,Kf,;\
+af,Af,;\
+noif,Noif,;\
+k1w1,K1w1,;\
+k1w2,K1w2,;\
+ketas,Ketas,;\
+dwbc,Dwbc;\
+beta0,Beta0,;\
+beta1,Beta1,;\
+beta2,Beta2,;\
+vdsatii0,VdsatiiO,;\
+tii,Tii,;\
+lii,Lii,;\
+sii0,Sii0,;\
+sii1,Sii1,;\
+sii2,Sii2,;\
+siid,Siid,;\
+fbjtii,Fbjtii,;\
+esatii,Esatii,;\
+ntun,Ntun,;\
+nrecf0,Nrecf0,;\
+nrecr0,Nrecr0,;\
+isbjt,Isbjt,;\
+isdif,Isdif,;\
+isrec,Isrec,1e-5;\
+istun,Istun,;\
+ln,Ln,;\
+vrec0,Vrec0,;\
+vtun0,Vtun0,;\
+nbjt,Nbjt,;\
+lbjt0,Lbjt0,;\
+ldif0,Ldif0,;\
+vabjt,Vabjt,;\
+aely,Aely,0;\
+ahli,Ahli,;\
+rbody,Rbody,;\
+rbsh,Rbsh,;\
+cgeo,Cgeo,;\
+tt,Tt,;\
+ndif,Ndif,1;\
+vsdfb,Vsdfb,;\
+vsdth,Vsdth,;\
+csdmin,Csdmin,;\
+asd,Asd,;\
+csdesw,Csdesw,;\
+ntrecf,Ntrecf,;\
+ntrecr,Ntrecr,;\
+dlcb,Dlcb,;\
+fbody,Fbody,;\
+tcjswg,Tcjswg,;\
+tpbswg,Tpbswg,;\
+#acde,Acde,;\
+#moin,Moin,;\
+delvt,Delvt,;\
+kb1,Kb1,;\
+dlbg,Dlbg,;\
+toxqm,Toxqm,;\
+wth0,Wth0,;\
+rhalo,Rhalo,;\
+ntox,Ntox,;\
+toxref,Toxref,;\
+ebg,Ebg,;\
+nevb,Nevb,;\
+alphagb1,Alphabg1,;\
+betagb1,Betagb1,;\
+vgb1,Vgb1,;\
+necb,Necb,;\
+alphagb2,Alphabg2,;\
+betagb2,Betagb2,;\
+vgb2,Vgb2,;\
+voxh,Voxh,;\
+deltavox,Deltavox,;\
+#gmin,Gmin,;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;\
+ CB_BinModel.pl,cb_bsim_params;\
+ CB_BinModel.pl,cb_bin|
+
+
+
+############# VBIC ##################
+#
+# special callback for region - needs to map parameter values as follows:
+#    off     -> 0
+#    fwd     -> 1
+#    rev     -> 2
+#    sat     -> 3
+#    [other] -> (ignore, don't output the parameter)
+#
+# ---> NOTE: Since a model is tied to this we use the Spectre 
+#            model name "vbic" as the input name. This ties 
+#            the two together in post processing.
+#            Also - post processing is needed if we have
+#            IFF output to determine if we are going to
+#            need an ADS "VBIC_NPN" symbol or a "VBIC_PNP" symbol.
+#
+element|vbic|vbic| |\
+ area,Scale,;\
+ m,_M,;\
+ region,Region,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_BJT.pl,cb_bjt_element;;CB_BJT.pl,cb_bjt_symbol;|
+
+############# VBIC Model ##################
+#
+# parameters not supported
+#
+# special callback for "type" as follows:
+#    type=npn        -> NPN=yes and PNP=no
+#    type=pnp        -> NPN=no  and PNP=yes
+#
+model|vbic|VBIC,VBIC_Model| |\
+type,BJT_TYPE,;\
+tnom,Tnom,27;\
+rcx,Rcx,;\
+rci,Rci,;\
+vo,Vo,;\
+gamm,Gamm,;\
+hrcf,Hrcf,;\
+rbx,Rbx,;\
+rbi,Rbi,;\
+re,Re,;\
+rs,Rs,;\
+rbp,Rbp,;\
+is,Is,;\
+nf,Nf,;\
+nr,Nr,;\
+fc,Fc,;\
+cbeo,Cbeo,;\
+cbe0,Cbeo,;\
+cje,Cje,;\
+pe,Pe,;\
+me,Me,;\
+aje,Aje,;\
+cbco,Cbco,;\
+cbc0,Cbco,;\
+cjc,Cjc,;\
+qco,Qco,;\
+cjep,Cjep,;\
+pc,Pc,;\
+mc,Mc,;\
+ajc,Ajc,;\
+cjcp,Cjcp,;\
+ps,Ps,;\
+ms,Ms,;\
+ajs,Ajs,;\
+ibei,Ibei,;\
+wbe,Wbe,;\
+nei,Nei,;\
+iben,Iben,;\
+nen,Nen,;\
+ibci,Ibci,;\
+nci,Nci,;\
+ibcn,Ibcn,;\
+ncn,Ncn,;\
+isp,Isp,;\
+wsp,Wsp,;\
+nfp,Nfp,;\
+ibeip,Ibeip,;\
+ibenp,Ibenp,;\
+ibcip,Ibcip,;\
+ncip,Ncip,;\
+ibcnp,Ibcnp,;\
+avc1,Avc1,;\
+avc2,Avc2,;\
+ncnp,Ncnp,;\
+vef,Vef,0;\
+ver,Ver,0;\
+ikf,Ikf,0;\
+ikr,Ikr,0;\
+ikp,Ikp,0;\
+tf,Tf,;\
+qtf,Qtf,;\
+xtf,Xtf,;\
+vtf,Vtf,;\
+itf,Itf,;\
+tr,Tr,;\
+td,Td,;\
+kfn,Kfn,;\
+afn,Afn,;\
+bfn,Bfn,;\
+xre,Xre,;\
+xrb,Xrb,;\
+xrc,Xrc,;\
+xrs,Xrs,;\
+xvo,Xvo,;\
+ea,Ea,;\
+eaie,Eaie,;\
+eaic,Eaic,;\
+eais,Eais,;\
+eane,Eane,;\
+eanc,Eanc,;\
+eans,Eans,;\
+xis,Xis,;\
+xii,Xii,;\
+xin,Xin,;\
+tnf,Tnf,;\
+tavc,Tavc,;\
+rth,Rth,;\
+cth,Cth,;\
+imax,Imax,;\
+vsubfwd,wVsubfwd,0.2;\
+bvsub,wBvsub,;\
+bvbe,wBvbe,;\
+bvbc,wBvbc,;\
+vbcfwd,wVbcfwd,0.2;\
+imax1,wIcmax,;\
+trise,Trise,;\
+selft,Selft,;\
+dtmax,Dtmax,;\
+imelt,Imelt,;\
+nkf,Nk;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;CB_BJT.pl,cb_bjt_model;;;|
+
+
+############# MEXTRAM 503 ##################
+#
+# special callback for region - needs to map parameter values as follows:
+#    off   -> 0
+#    fwd   -> 1
+#    rev   -> 2
+#    sat   -> 3
+#    other -> (ignore, don't output the parameter)
+#
+# NOTE: Since a model is tied to this we use the Spectre 
+#       model name "bjt503" as the input name. This ties 
+#       the two together in post processing.
+#       Also - post processing is needed if we have
+#       IFF output to determine if we are going to
+#       need either of the following ADS symbols:
+#       "BJT_NPN", ""BJT_PNP", "BJT4_NPN", "BJT4_PNP".
+#       The "Last Chance" callback cb_bjt_symbol below
+#       takes care of this.
+#
+element|bjt503|bjt503| |\
+ area,Scale,;\
+ m,_M,;\
+ region,Region,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_BJT.pl,cb_bjt_element;;CB_BJT.pl,cb_bjt_symbol;|
+
+############# Mextram 503 Model ##################
+#
+# parameters not supported
+#
+# special callback for "type" as follows:
+#    type=npn        -> NPN=yes and PNP=no
+#    type=pnp        -> NPN=no  and PNP=yes
+#
+model|bjt503|MextramBJT,MEXTRAM_Model| |\
+type,BJT_TYPE,;\
+exmod,Exmod,;\
+exphi,Exphi,;\
+exavl,Exavl,;\
+is,Is,;\
+bf,Bf,;\
+xibi,Xibi,;\
+ibf,Ibf,;\
+vlf,Vlf,;\
+ik,Ik,;\
+bri,Bri,;\
+ibr,Ibr,;\
+vlr,Vlr,;\
+xext,Xext,;\
+qbo,Qb0,;\
+eta,Eta,;\
+avl,Avl,;\
+efi,Efi,;\
+ihc,Ihc,;\
+rcc,Rcc,;\
+rcv,Rcv,;\
+scrcv,Scrcv,;\
+sfh,Sfh,;\
+rbc,Rbc,;\
+rbv,Rbv,;\
+re,Re,;\
+taune,Taune,;\
+mtau,Mtau,;\
+cje,Cje,;\
+vde,Vde,;\
+pe,Pe,;\
+xcje,Xcje,;\
+cjc,Cjc,;\
+vdc,Vdc,;\
+pc,Pc,;\
+xp,Xp,;\
+mc,Mc,;\
+xcjc,Xcjc,;\
+tref,Tref,;\
+dta,Dta,;\             
+vge,Vge,;\
+vgb,Vgb,;\
+vgc,Vgc,;\
+vgj,Vgj,;\
+vi,Vi,;\
+na,Na,;\
+er,Er,;\
+ab,Ab,;\
+aepi,Aepi,;\
+aex,Aex,;\
+ac,Ac,;\
+kf,Kf,;\
+kfn,Kfn,;\
+af,Af,;\
+iss,Iss,;\
+iks,Iks,;\
+cjs,Cjs,;\
+vds,Vds,;\
+ps,Ps,;\
+vgs,Vgs,;\
+as,As,;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;CB_BJT.pl,cb_bjt_model;;;|
+
+############# MEXTRAM 504 ##################
+#
+# special callback for region - needs to map parameter values as follows:
+#    off   -> 0
+#    fwd   -> 1
+#    rev   -> 2
+#    sat   -> 3
+#    other -> (ignore, don't output the parameter)
+#
+# NOTE: Since a model is tied to this we use the Spectre 
+#       model name "bjt504" as the input name. This ties 
+#       the two together in post processing.
+#       Also - post processing is needed if we have
+#       IFF output to determine if we are going to
+#       need either of the following ADS symbols:
+#       "M504_BJT_NPN", ""M504_BJT_PNP", "M504_BJT4_NPN", "M504_BJT4_PNP"
+#       "M504_BJT5_NPN", ""M504_BJT5_PNP".
+#	5th pin is the self heating pin and is not supported for bjt504.
+#	self heating is supported in bjt504t in spectre 
+#       The "Last Chance" callback cb_bjt_symbol below
+#       takes care of this.
+#
+element|bjt504|bjt504| |\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_BJT.pl,cb_bjt_element;;CB_BJT.pl,cb_bjt_symbol;|
+
+############# Mextram 504 Model ##################
+#
+# parameters not supported
+#
+# special callback for "type" as follows:
+#    type=npn        -> NPN=yes and PNP=no
+#    type=pnp        -> NPN=no  and PNP=yes
+#
+model|bjt504|MextramBJT504,MEXTRAM_504_Model| |\
+type,BJT_TYPE,;\
+level,Level,;\
+tref,Tref,;\
+dta,Dta,;\             
+exmod,Exmod,;\
+exphi,Exphi,;\
+exavl,Exavl,;\
+is,Is,;\
+ik,Ik,;\
+ver,Ver,;\
+vef,Vef,;\
+bf,Bf,;\
+ibf,Ibf,;\
+mlf,Mlf,;\
+xibi,Xibi,;\
+bri,Bri,;\
+ibr,Ibr,;\
+vlr,Vlr,;\
+xext,Xext,;\
+wavl,Wavl,;\
+vavl,Vavl,;\
+sfh,Sfh,;\
+re,Re,;\
+rbc,Rbc,;\
+rbv,Rbv,;\
+rcc,Rcc,;\
+rcv,Rcv,;\
+scrcv,Scrcv,;\
+ihc,Ihc,;\
+axi,Axi,;\
+cje,Cje,;\
+vde,Vde,;\
+pe,Pe,;\
+xcje,Xcje,;\
+cbeo,Cbeo,;\
+cjc,Cjc,;\
+vdc,Vdc,;\
+pc,Pc,;\
+xp,Xp,;\
+mc,Mc,;\
+xcjc,Xcjc,;\
+cbco,Cbco,;\
+mtau,Mtau,;\
+taue,Taue,;\
+taub,Taub,;\
+tepi,Tepi,;\
+taur,Taur,;\
+deg,Deg,;\
+xrec,Xrec,;\
+aqbo,Aqbo,;\
+ae,Ae,;\
+ab,Ab,;\
+aepi,Aepi,;\
+aex,Aex,;\
+ac,Ac,;\
+dvgbf,dVgbf,;\
+dvgbr,dVgbr,;\
+vgb,Vgb,;\
+vgc,Vgc,;\
+vgj,Vgj,;\
+dvgte,dVgte,;\
+af,Af,;\
+kf,Kf,;\
+kfn,Kfn,;\
+iss,Iss,;\
+iks,Iks,;\
+cjs,Cjs,;\
+vds,Vds,;\
+ps,Ps,;\
+vgs,Vgs,;\
+as,As,;\
+#rth,Rth,;\
+#cth,Cth,;\
+#wvsubfwd,wVsubfwd,;\
+#wbvsub,wBvsub,;\
+#wbvbe,wBvbe,;\
+#wbvbc,wBvbc,;\
+#wvbcfwd,wVbcfwd,;\
+#wlbmax,wlbmax,;\
+#wlcmax,wlcmax,;\
+#wpmax,wPmax,;\
+allParams,AllParams,;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;CB_BJT.pl,cb_bjt_model;;;|
+
+############# HICUM ##################
+#
+#       Since a model is tied to this we use the Spectre 
+#       model name "bht" as the input name. This ties 
+#       the two together in post processing.
+#       Also - post processing is needed if we have
+#       IFF output to determine if we are going to need
+#       to place a "HICUM_NPN" or a "HICUM_PNP".
+#       The "Last Chance" callback cb_bjt_symbol below
+#       takes care of this.
+#
+element|bht|bht| |\
+ area,Scale,;\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;CB_BJT.pl,cb_bjt_element;;CB_BJT.pl,cb_bjt_symbol;|
+
+############# HICUM Model ##################
+#
+# parameters not supported
+#
+# special callback for "type" as follows:
+#    type=npn        -> NPN=yes and PNP=no
+#    type=pnp        -> NPN=no  and PNP=yes
+#
+model|bht|HICUM,HICUM_Model| |\
+type,BJT_TYPE,;\
+latb,Latb,;\
+latl,Latl,;\
+c10,C10,1.0e-28;\
+qp0,Qp0,25.0e-15;\
+ich,Ich,;\
+hjci,Hjci,;\
+hjei,Hjei,;\
+mcf,Mcf,;\
+tsf,Tsf,;\
+hfc,Hfc,;\
+hfe,Hfe,;\
+alit,Alit,;\
+cjei0,Cjei0,;\
+vdei,Vdei,;\
+zei,Zei,;\
+aljei,Aljei,2.4;\
+cjci0,Cjci0,2.0e-15;\
+vdci,Vdci,;\
+zci,Zci,;\
+vptci,Vptci,1.0e+20;\
+t0,T0,8.0e-12;\
+dt0h,Dt0h,2.0e-12;\
+tbvl,Tbvl,4.0e-12;\
+tef0,Tef0,1.0e-12;\
+gtfe,Gtfe,;\
+thcs,Thcs,30.0e-12;\
+alhc,Alhc,0.7;\
+fthc,Fthc,0.6;\
+vces,Vces,;\
+rci0,Rci0,;\
+vlim,Vlim,0.4;\
+vpt,Vpt,;\
+tr,Tr,;\
+alqf,Alqf,;\
+ibeis,Ibeis,0.0;\
+mbei,Mbei,1.002;\
+ireis,Ireis,;\             
+mrei,Mrei,;\
+ibcis,Ibcis,0.0;\
+mbci,Mbci,1.5;\
+favl,Favl,;\
+qavl,Qavl,;\
+rbi0,Rbi0,;\
+fdqr0,Fdqr0,0.2;\
+fgeo,Fgeo,;\
+fqi,Fqi,0.75;\
+fcrbi,Fcrbi,0.2;\
+cjep0,Cjep0,;\
+vdep,Vdep,;\
+zep,Zep,;\
+aljep,Aljep,2.0;\
+ibeps,Ibeps,;\
+mbep,Mbep,1.002;\
+ireps,Ireps,;\
+mrep,Mrep,;\
+cjcx0,Cjcx0,;\
+vdcx,Vdcx,;\
+zcx,Zcx,;\
+vptcx,Vptcx,;\
+ccox,Ccox,;\
+fbc,Fbc,0.7;\
+ibcxs,Ibcxs,;\
+mbcx,Mbcx,1.5;\
+ceox,Ceox,;\
+rbx,Rbx,;\
+re,Re,;\
+rcx,Rcx,;\
+cjs0,Cjs0,;\
+vds,Vds,;\
+zs,Zs,;\
+vpts,Vpts,;\
+rsu,Rsu,;\
+csu,Csu,;\
+iscs,Iscs,;\
+msc,Msc,;\
+itss,Itss,;\
+msf,Msf,;\
+msr,Msr,;\
+ibets,Ibets,;\
+abet,Abet,1.0;\
+kf,Kf,;\
+af,Af,2.0;\
+krbi,Krbi,;\
+vgb,Vgb,1.17;\
+alb,Alb,;\
+alfav,Alfav,;\
+alqav,Alqav,;\
+zetaci,Zetaci,1.6;\
+alvs,Alvs,1.0e-3;\
+alces,Alces,0.4e-3;\
+zetarbi,Zetarbi,1.0;\
+zetarbx,Zetarbx,0.3;\
+zetarcx,Zetarcx,0.3;\
+zetare,Zetare,0.3;\
+alt0,Alt0,;\
+kt0,Kt0,;\
+rth,Rth,;\
+cth,Cth,;\
+trise,Trise,;\
+tnom,Tnom,;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;CB_BJT.pl,cb_bjt_model;;;|
+
+
+############# MOS1 ##################
+# ld, ls, degradation parameters not supported
+#
+# NOTE: There is a special callback for setting the
+#       proper symbol when performing schematic imports.
+#       We search for the associated model and determine
+#       if it's an NMOS or PMOS and set the symbol accordingly.
+#       The "MOSFET_NMOS" entered below is overridden by this
+#       new symbol name.
+#
+# special callback for region - needs to map parameter values as follows:
+#    off -> 0
+#    fwd -> 1
+#    rev -> 2
+#    sat -> 3
+#    breakdown  (ignore, don't output the parameter)
+#
+element|mos1|MOSFET,MOSFET_NMOS|1,1;2,2;3,3;4,4|\
+ l,Length,;\
+ w,Width,;\
+ ad,Ad,;\
+ as,As,;\
+ pd,Pd,;\
+ ps,Ps,;\
+ nrd,Nrd,;\
+ nrs,Nrs,;\
+ region,Region,;\
+ trise,Trise,;\
+ m,_M,;\
+ |CB_OutputType.pl,Determine_outputType;;;CB_BinModel.pl,cb_mos_element;CB_BinModel.pl,cb_mos_symbol;|
+
+
+############# MOS LEVEL 1 model ##################
+#
+# special callback for "type" as follows:
+#    type=n        -> NMOS=yes and PMOS=no
+#    type=p        -> NMOS=no  and PMOS=yes
+#
+#    The MOS_TYPE parameter below is processed
+#    in the callback to set the ADS NMOS and PMOS
+#    references.
+#
+model|mos1|MOSFET,LEVEL1_Model| |\
+ type,MOS_TYPE,;\
+ idsmod,Idsmod,1;\
+ capmod,Capmod,;\
+ vto,Vto,;\
+ kp,Kp,2.0718e-5;\
+ gamma,Gamma,;\
+ phi,Phi,0.7;\
+ lamba,Lambda,;\
+ rd,Rd,;\
+ rs,Rs,;\
+ cbd,Cbd,;\
+ cbs,Cbs,;\
+ is,Is,;\
+ pb,Pb,;\
+ cgso,Cgso,;\
+ cgdo,Cgdo,;\
+ cgbo,Cgbo,;\
+ rsh,Rsh,;\
+ cj,Cj,;\
+ mj,Mj,;\
+ cjsw,Cjsw,;\
+ mjsw,Mjsw,;\
+ js,Js,;\
+ tox,Tox,;\
+ nsub,Nsub,1.13e16;\
+ nss,Nss,;\
+ tpg,Tpg,;\
+ ld,Ld,;\
+ uo,Uo,;\
+ kf,Kf,;\
+ af,Af,;\
+ fc,Fc,;\
+ tnom,Tnom,27;\
+ trise,Trise,;\
+ n,N,;\
+ imax,Imax,;\
+ imelt,Imelt,;\
+ bvj,wBvsub,;\
+ vbox,wBvg,;\
+ ld,Ld,;\
+ vmax,Vmax,1.13e16;\
+ nfs,Nfs,;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;\
+ CB_BinModel.pl,cb_bsim_params;\
+ CB_BinModel.pl,cb_bin|
+
+############# MOS2 ##################
+# ld, ls, degradation parameters not supported
+#
+# NOTE: There is a special callback for setting the
+#       proper symbol when performing schematic imports.
+#       We search for the associated model and determine
+#       if it's an NMOS or PMOS and set the symbol accordingly.
+#       The "MOSFET_NMOS" entered below is overridden by this
+#       new symbol name.
+#
+# special callback for region - needs to map parameter values as follows:
+#    off -> 0
+#    fwd -> 1
+#    rev -> 2
+#    sat -> 3
+#    breakdown  (ignore, don't output the parameter)
+#
+element|mos2|MOSFET,MOSFET_NMOS|1,1;2,2;3,3;4,4|\
+ l,Length,;\
+ w,Width,;\
+ ad,Ad,;\
+ as,As,;\
+ pd,Pd,;\
+ ps,Ps,;\
+ nrd,Nrd,;\
+ nrs,Nrs,;\
+ region,Region,;\
+ trise,Trise,;\
+ m,_M,;\
+ |CB_OutputType.pl,Determine_outputType;;;CB_BinModel.pl,cb_mos_element;CB_BinModel.pl,cb_mos_symbol;|
+
+############# MOS LEVEL 2 model ##################
+#
+# The order of these parameters are the same that
+# you see when you execute "spectre -h mos2". The
+# parameters that aren't supported have been commented
+# out.
+#
+# special callback for "type" as follows:
+#    type=n        -> NMOS=yes and PMOS=no
+#    type=p        -> NMOS=no  and PMOS=yes
+#
+#    The MOS_TYPE parameter below is processed
+#    in the callback to set the ADS NMOS and PMOS
+#    references.
+#
+#    Capmod needs to be handled with a callback.
+#       Spectre values: none, meyer, yang, or bsim (default=bsim)
+#       Gemini  values: 0=no cap 1=meyer_ward 2=smooth 3=qmeyer (default=1)
+#
+#    wBvg needs a callback.
+#       Spectre value: vbox=1e9*tox
+#
+model|mos2|MOSFET,LEVEL2_Model| |\
+ type,MOS_TYPE,;\
+ vto,Vto,;\
+ kp,KP,2.0718e-5;\
+ lambda,Lambda,;\
+ phi,Phi,0.7;\
+ gamma,Gamma,;\
+ uo,Uo,;\
+ vmax,Vmax,1.70141e+38;\
+ ucrit,Ucrit,0;\
+ uexp,Uexp,;\
+ # utra,,0;\
+ neff,Neff,;\
+ delta,Delta,;\
+ # smooth,,yes;\
+ nsub,Nsub,1.13e16;\
+ nss,Nss,;\
+ nfs,Nfs,;\
+ tpg,Tpg,;\
+ tox,Tox,;\
+ ld,Ld,;\
+ # wd,,0;\
+ xw,Xw,;\
+ xl,Xl,;\
+ xj,Xj,;\
+ ai0,Ai0,;\
+ lai0,Lai0,;\
+ wai0,Wai0,;\
+ bi0,Bi0,;\
+ lbi0,Lbi0,;\
+ wbi0,Wbi0,;\
+ cgso,Cgso,;\
+ cgdo,Cgdo,;\
+ cgbo,Cgbo,;\
+ # meto,,0;\
+ capmod,Capmod,;\
+ xpart,Xpart,;\
+ xqc,Xqc,0;\
+ rs,Rs,;\
+ rd,Rd,;\
+ rsh,Rsh,;\
+ # rss,,0;\
+ # rdd,,0;\
+ rsc,Rsc,;\
+ rdc,Rdc,;\
+ # minr,,0.1;\
+ ldif,Ldif,;\
+ hdif,Hdif,;\
+ # lgcs,,0;\
+ # lgcd,,0;\
+ # sc,,infinity;\
+ js,Js,0;\
+ is,Is,;\
+ n,N,;\
+ # dskip,,yes;\
+ imelt,Imelt,;\
+ # jmelt,,;\
+ cbs,Cbs,;\
+ cbd,Cbd,;\
+ cj,Cj,;\
+ mj,Mj,;\
+ pb,Pb,;\
+ fc,Fc,;\
+ cjsw,Cjsw,;\
+ mjsw,Mjsw,;\
+ pbsw,Pbsw,0.8;\
+ # fcsw,,0.5;\
+ # alarm,,none;\
+ imax,Imax,1;\
+ # jmax,,1e8;\
+ # bvj,,infinity;\
+ vbox,wBvg,;\
+ tnom,Tnom,27;\
+ trise,Trise,;\
+ # uto,,0;\
+ ute,Ute,;\
+ tlev,Tlev,;\
+ tlevc,Tlevc,;\
+ eg,Eg,1.12452;\
+ gap1,Gap1,;\
+ gap2,Gap2,;\
+ #f1ex,,0;\
+ # lamex,,0;\
+ trs,Trs,;\
+ trd,Trd,;\
+ xti,Xti,;\
+ # ptc,,0;\
+ # tcv,,0;\
+ pta,Pta,;\
+ ptp,Ptp,;\
+ cta,Cta,;\
+ ctp,Ctp,;\
+ w,Width,3e-6;\
+ l,Length,3e-6;\
+ as,As,;\
+ ad,Ad,;\
+ ps,Ps,;\
+ pd,Pd,;\
+ nrd,Nrd,0;\
+ nrs,Nrs,0;\
+ # ldd,,0;\
+ # lds,,0;\
+ noisemod,Noimod,;\
+ kf,Kf,;\
+ af,Af,;\
+ ef,Ef,;\
+ # wnoi,,1e-5;\
+ wmax,Wmax,;\
+ wmin,Wmin,;\
+ lmax,Lmax,;\
+ lmin,Lmin,;\
+ # degramod,,spectre;\
+ # degradation,,no;\
+ # dvthc,,1;\
+ # dvthe,,1;\
+ # duoc,,1;\
+ # duoe,,1;\
+ # crivth,,0.1;\
+ # criuo,,10%;\
+ # crigm,,10%;\
+ # criids,,10%;\
+ # wnom,,5e-6;\
+ # lnom,,1e-6;\
+ # vbsn,,0;\
+ # vdsni,,0.1;\
+ # vgsni,,5;\
+ # vdsng,,0.1;\
+ # vgsng,,5;\
+ # esat,,1.1e7;\
+ # esatg,,2.5e6;\
+ # vpg,,-0.25;\
+ # vpb,,-0.13;\
+ # subc1,,2.24e-5;\
+ # subc2,,-0.1e-5;\
+ # sube,,6.4;\
+ # strc,,1;\
+ # stre,,1;\
+ # h0,,1;\
+ # hgd,,0;\
+ # m0,,1;\
+ # mgd,,0;\
+ # Ucrit only for ADS MOS 2 \
+ ecrit0,Ucrit,1.1e5\
+ # lecrit0,,0;\
+ # wecrit0,,0;\
+ # ecritg,,0;\
+ # lecritg,,0;\
+ # wecritg,,0;\
+ # ecritb,,0;\
+ # lecritb,,0;\
+ # wecritb,,0;\
+ # lc0,,1;\
+ # llc0,,0;\
+ # wlc0,,0;\
+ # lc1,,1;\
+ # llc1,,0;\
+ # wlc1,,0;\
+ # lc2,,1;\
+ # #llc2,,0;\
+ # wlc2,,0;\
+ # lc3,,1;\
+ # llc3,,0;\
+ # wlc3,,0;\
+ # lc4,,1;\
+ # llc4,,0;\
+ # wlc4,,0;\
+ # lc5,,1;\
+ # llc5,,0;\
+ # wlc5,,0;\
+ # lc6,,1;\
+ # llc6,,0;\
+ # wlc6,,0;\
+ # lc7,,1;\
+ # llc7,,0;\
+ # wlc7,,0;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;\
+ CB_BinModel.pl,cb_bsim_params;\
+ CB_BinModel.pl,cb_bin|
+
+
+############# MOS3 ##################
+# ld, ls, degradation parameters not supported
+#
+# The order of these parameters are the same that
+# you see when you execute "spectre -h mos3". The
+# parameters that aren't supported have been commented
+# out.
+#
+# NOTE: There is a special callback for setting the
+#       proper symbol when performing schematic imports.
+#       We search for the associated model and determine
+#       if it's an NMOS or PMOS and set the symbol accordingly.
+#       The "MOSFET_NMOS" entered below is overridden by this
+#       new symbol name.
+#
+# special callback for region - needs to map parameter values as follows:
+#    off -> 0
+#    fwd -> 1
+#    rev -> 2
+#    sat -> 3
+#    breakdown  (ignore, don't output the parameter)
+#
+element|mos3|MOSFET,MOSFET_NMOS|1,1;2,2;3,3;4,4|\
+ l,Length,;3e-6;\
+ w,Width,3e-6;\
+ ad,Ad,;\
+ as,As,;\
+ pd,Pd,;\
+ ps,Ps,;\
+ nrd,Nrd,;\
+ nrs,Nrs,;\
+ region,Region,;\
+ trise,Trise,;\
+ m,_M,;\
+ |CB_OutputType.pl,Determine_outputType;;;CB_BinModel.pl,cb_mos_element;CB_BinModel.pl,cb_mos_symbol;|
+
+
+############# MOS LEVEL 3 model ##################
+#
+# The order of these parameters are the same that
+# you see when you execute "spectre -h mos3". The
+# parameters that are not supported are ommited.
+#
+# special callback for "type" as follows:
+#    type=n        -> NMOS=yes and PMOS=no
+#    type=p        -> NMOS=no  and PMOS=yes
+#
+#    The MOS_TYPE parameter below is processed
+#    in the callback to set the ADS NMOS and PMOS
+#    references.
+#
+#    Capmod needs to be handled with a callback.
+#       Spectre values: none, meyer, yang, or bsim (default=bsim)
+#       Gemini  values: 0=no cap 1=meyer_ward 2=smooth 3=qmeyer (default=1)
+#
+#    wBvg needs a callback.
+#       Spectre value: vbox=1e9*tox
+#
+model|mos3|MOSFET,LEVEL3_Model| |\
+ type,MOS_TYPE,;\
+ idsmod,Idsmod,3;\
+ vto,Vto,;\
+ kp,Kp,2.0718e-5;\
+ theta,Theta,;\
+ phi,Phi,0.7;\
+ gamma,Gamma,;\
+ uo,Uo,;\
+ vmax,Vmax,1.70141e+38;\
+ eta,Eta,;\
+ kappa,Kappa,;\
+ delta,Delta,;\
+ nsub,Nsub,1.13e16;\
+ nss,Nss,;\
+ nfs,Nfs,;\
+ tpg,Tpg,;\
+ tox,Tox,;\
+ ld,Ld,;\
+ # wd,,0;\
+ xw,Xw,;\
+ xl,Xl,;\
+ xj,Xj,;\
+ ai0,Ai0,;\
+ lai0,Lai0,;\
+ wai0,Wai0,;\
+ bi0,Bi0,;\
+ lbi0,Lbi0,;\
+ wbi0,Wbi0,;\
+ cgso,Cgso,;\
+ cgdo,Cgdo,;\
+ cgbo,Cgbo,;\
+ # meto,,0;\
+ capmod,Capmod,;\
+ xpart,Xpart,;\
+ xqc,Xqc,0;\
+ rs,Rs,;\
+ rd,Rd,;\
+ rsh,Rsh,;\
+ # rss,,0;\
+ # rdd,,0;\
+ rsc,Rsc,;\
+ rdc,Rdc,;\
+ # minr,,0.1;\
+ ldif,Ldif,;\
+ hdif,Hdif,;\
+ # lgcs,,0;\
+ # lgcd,,0;\
+ # sc,,infinity;\
+ js,Js,0;\
+ is,Is,;\
+ n,N,;\
+ # dskip,,yes;\
+ imelt,Imelt,;\
+ # jmelt,,`jmax';\
+ cbs,Cbs,;\
+ cbd,Cbd,;\
+ cj,Cj,;\
+ mj,Mj,;\
+ pb,Pb,;\
+ fc,Fc,;\
+ cjsw,Cjsw,;\
+ mjsw,Mjsw,;\
+ pbsw,Pbsw,0.8;\
+ # fcsw,,0.5;\
+ # alarm,,none;\
+ imax,Imax,1;\
+ # jmax,,1e8;\
+ # bvj,,infinity;\
+ vbox,wBvg,;\
+ tnom,Tnom,27;\
+ trise,Trise,;\
+ # uto,,0;\
+ ute,Ute,;\
+ tlev,Tlev,;\
+ tlevc,Tlevc,;\
+ eg,Eg,1.12452;\
+ gap1,Gap1,;\
+ gap2,Gap2,;\
+ # f1ex,,0;\
+ # lamex,,0;\
+ trs,Trs,;\
+ trd,Trd,;\
+ xti,Xti,;\
+ # ptc,,0;\
+ # tcv,,0;\
+ pta,Pta,;\
+ ptp,Ptp,;\
+ cta,Cta,;\
+ ctp,Ctp,;\
+ w,Width,3e-6;\
+ l,Length,3e-6;\
+ as,As,;\
+ ad,Ad,;\
+ ps,Ps,;\
+ pd,Pd,;\
+ nrd,Nrd,0;\
+ nrs,Nrs,0;\
+ # ldd,,0;\
+ # lds,,0;\
+ noisemod,Noimod,;\
+ kf,Kf,;\
+ af,Af,;\
+ ef,Ef,;\
+ # wnoi,,1e-5;\
+ wmax,Wmax,;\
+ wmin,Wmin,;\
+ lmax,Lmax,;\
+ lmin,Lmin,;\
+ # Degradation parameters: \
+ # degramod,,spectre;\
+ # degradation,,no;\
+ # dvthc,,1;\
+ # dvthe,,1;\
+ # duoc,,1;\
+ # duoe,,1;\
+ # crivth,,0.1;\
+ # criuo,,10%;\
+ # crigm,,10%;\
+ # criids,,10%;\
+ # wnom,5e-6;\
+ # lnom,1e-6;\
+ # vbsn,0;\
+ # vdsni,,0.1;\
+ # vgsni,,5;\
+ # vdsng,,0.1;\
+ # vgsng,,5;\
+ # Spectre stress parameters: \
+ # esat,,1.1e7;\
+ # esatg,,2.5e6;\
+ # vpg,,-0.25;\
+ # vpb,,-0.13;\
+ # subc1,,2.24e-5;\
+ # subc2,,-0.1e-5;\
+ # sube,,6.4;\
+ # strc,,1;\
+ # stre,,1;\
+ # BERT stress parameters: \
+ # h0,,1;\
+ # hgd,,0;\
+ # m0,,1;\
+ # mgd,,0;\
+ # ecrit0,,1.1e5;\
+ # lecrit0,,0;\
+ # wecrit0,,0;\
+ # ecritg,,0;\
+ # lecritg,,0;\
+ # wecritg,,0;\
+ # ecritb,,0;\
+ # lecritb,,0;\
+ # wecritb,,0;\
+ # lc0,,1;\
+ # llc0,,0;\
+ # wlc0,,0;\
+ # lc1,,1;\
+ # llc1,,0;\
+ # wlc1,,0;\
+ # lc2,,1;\
+ # llc2,,0;\
+ # wlc2,,0;\
+ # lc3,,1;\
+ # llc3,,0;\
+ # wlc3,,0;\
+ # lc4,,1;\
+ # llc4,,0;\
+ # wlc4,,0;\
+ # lc5,,1;\
+ # llc5,,0;\
+ # wlc5,,0;\
+ # lc6,,1;\
+ # llc6,,0;\
+ # wlc6,,0;\
+ # lc7,,1;\
+ # llc7,,0;\
+ # wlc7,,0;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;\
+ CB_BinModel.pl,cb_bsim_params;\
+ CB_BinModel.pl,cb_bin|
+
+############# MM9 ##################
+#
+#  region parameter uses callback   
+#    Spectre: off,     triode,   subth,   sat
+#    ADS    : 0        1         2        3    
+#
+element|mos902|MOS9,MM9_NMOS|1,1;2,2;3,3;4,4|\
+ region,Region,;\
+ l,Length,;\
+ w,Width,;\
+ mult,Mult,;\
+ area,Mult,;\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;;CB_BinModel.pl,cb_mos_element;CB_BinModel.pl,cb_mos_symbol;|
+
+############# MM9 Model ##################
+#
+# special callback for "type" as follows:
+#    type=n        -> NMOS=yes and PMOS=no
+#    type=p        -> NMOS=no  and PMOS=yes
+#
+#
+model|mos902|MOS9,MOS_Model9_Process| |\
+type,MOS_TYPE,;\
+ler,Ler,2.50E-06;\
+wer,Wer,2.50E-05;\
+lvar,Lvar,3.00E-07;\
+lap,Lap,1.00E-07;\
+wvar,Wvar,3.00E-06;\
+wot,Wot,1.00E-06;\
+tref,Tr,;\
+tr,Tr,;\
+vtor,Vtor,0.8;\
+stvto,Stvto,0.01;\
+slvto,Slvto,5.00E-07;\
+sl2vto,Sl2vto,;\
+swvto,Swvto,5.00E-06;\
+kor,Kor,0.5;\
+slko,Slko,1.00E-06;\
+swko,Swko,1.00E-05;\
+kr,Kr,0.1;\
+slk,Slk,5.00E-07;\
+swk,Swk,5.00E-06;\
+phibr,Phibr,;\
+vsbxr,Vsbxr,0.9;\
+slvsbx,Slvsbx,5.00E-07;\
+swvsbx,Swvsbx,5.00E-06;\
+betsq,Betsq,1.00E-04;\
+etabet,Etabet,0.5;\
+the1r,The1r,0.05;\
+stthe1r,Stthe1r,3.00E-03;\
+slthe1r,Slthe1r,5.00E-08;\
+stlthe1,Stlthe1,5.00E-09;\
+swthe1,Swthe1,1.00E-06;\
+wdog,Wdog,;\
+fthe1,Fthe1,;\
+the2r,The2r,1.70E-02;\
+stthe2r,Stthe2r,1.00E-04;\
+slthe2r,Slthe2r,5.00E-09;\
+stlthe2,Stlthe2,5.00E-10;\
+swthe2,Swthe2,1.00E-07;\
+the3r,The3r,3.70E-02;\
+stthe3r,Stthe3r,1.00E-04;\
+slthe3r,Slthe3r,5.00E-09;\
+stlthe3,Stlthe3,5.00E-10;\
+swthe3,Swthe3,1.00E-07;\
+gam1r,Gam1r,4.00E-02;\
+slgam1,Slgam1,1.00E-07;\
+swgam1,Swgam1,1.00E-06;\
+etadsr,Etadsr,;\
+alpr,Alpr,4.00E-03;\
+etaalp,Etaalp,0.5;\
+slalp,Slalp,1.40E-04;\
+swalp,Swalp,1.00E-07;\
+vpr,Vpr,0.25;\
+gamoor,Gamoor,1.10E-03;\
+slgamoo,Slgamoo,1.00E-14;\
+etagamr,Etagamr,;\
+mor,Mor,0.3;\
+stmo,Stmo,0.01;\
+slmo,Slmo,1.40E-03;\
+etamr,Etamr,;\
+zet1r,Zet1r,0.7;\
+etazet,Etazet,0.5;\
+slzet1,Slzet1,1.40E-07;\
+vsbtr,Vsbtr,99;\
+slvsbt,Slvsbt,1.00E-05;\
+a1r,A1r,22;\
+sta1,Sta1,0.1;\
+sla1,Sla1,1.00E-05;\
+swa1,Swa1,1.00E-04;\
+a2r,A2r,33;\
+sla2,Sla2,1.00E-05;\
+swa2,Swa2,1.00E-04;\
+a3r,A3r,0.6;\
+sla3,Sla3,1.00E-06;\
+swa3,Swa3,1.00E-05;\
+tox,Tox,2.00E-08;\
+col,Col,5.00E-11;\
+ntr,Ntr,2.10E-20;\
+nfr,Nfr,1.60E-11;\
+#nfar,Nfar,;\
+#nfbr,Nfbr,;\
+#nfcr,Nfcr,;\
+#nfmod,Nfmod,;\
+trise,Trise,;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;\
+CB_BinModel.pl,cb_bsim_params;\
+CB_BinModel.pl,cb_bin|
+
+############# MM9 ##################
+#
+#  region parameter uses callback   
+#    Spectre: off,     triode,   subth,   sat
+#    ADS    : 0        1         2        3    
+#
+element|mos903|MOS9,MM9_NMOS|1,1;2,2;3,3;4,4|\
+ region,Region,;\
+ l,Length,;\
+ w,Width,;\
+ mult,Mult,;\
+ area,Mult,;\
+ m,_M,;\
+ trise,Trise,;\
+ |CB_OutputType.pl,Determine_outputType;;;CB_BinModel.pl,cb_mos_element;CB_BinModel.pl,cb_mos_symbol;|
+
+############# MM9 Model ##################
+#
+# special callback for "type" as follows:
+#    type=n        -> NMOS=yes and PMOS=no
+#    type=p        -> NMOS=no  and PMOS=yes
+#
+#
+model|mos903|MOS9,MOS_Model9_Process| |\
+type,MOS_TYPE,;\
+ler,Ler,2.50E-06;\
+wer,Wer,2.50E-05;\
+lvar,Lvar,3.00E-07;\
+lap,Lap,1.00E-07;\
+wvar,Wvar,3.00E-06;\
+wot,Wot,1.00E-06;\
+tref,Tr,;\
+tr,Tr,;\
+vtor,Vtor,0.8;\
+stvto,Stvto,0.01;\
+slvto,Slvto,5.00E-07;\
+sl2vto,Sl2vto,;\
+swvto,Swvto,5.00E-06;\
+kor,Kor,0.5;\
+slko,Slko,1.00E-06;\
+swko,Swko,1.00E-05;\
+kr,Kr,0.1;\
+slk,Slk,5.00E-07;\
+swk,Swk,5.00E-06;\
+phibr,Phibr,;\
+vsbxr,Vsbxr,0.9;\
+slvsbx,Slvsbx,5.00E-07;\
+swvsbx,Swvsbx,5.00E-06;\
+betsq,Betsq,1.00E-04;\
+etabet,Etabet,0.5;\
+the1r,The1r,0.05;\
+stthe1r,Stthe1r,3.00E-03;\
+slthe1r,Slthe1r,5.00E-08;\
+stlthe1,Stlthe1,5.00E-09;\
+swthe1,Swthe1,1.00E-06;\
+wdog,Wdog,;\
+fthe1,Fthe1,;\
+the2r,The2r,1.70E-02;\
+stthe2r,Stthe2r,1.00E-04;\
+slthe2r,Slthe2r,5.00E-09;\
+stlthe2,Stlthe2,5.00E-10;\
+swthe2,Swthe2,1.00E-07;\
+the3r,The3r,3.70E-02;\
+stthe3r,Stthe3r,1.00E-04;\
+slthe3r,Slthe3r,5.00E-09;\
+stlthe3,Stlthe3,5.00E-10;\
+swthe3,Swthe3,1.00E-07;\
+gam1r,Gam1r,4.00E-02;\
+slgam1,Slgam1,1.00E-07;\
+swgam1,Swgam1,1.00E-06;\
+etadsr,Etadsr,;\
+alpr,Alpr,4.00E-03;\
+etaalp,Etaalp,0.5;\
+slalp,Slalp,1.40E-04;\
+swalp,Swalp,1.00E-07;\
+vpr,Vpr,0.25;\
+gamoor,Gamoor,1.10E-03;\
+slgamoo,Slgamoo,1.00E-14;\
+etagamr,Etagamr,;\
+mor,Mor,0.3;\
+stmo,Stmo,0.01;\
+slmo,Slmo,1.40E-03;\
+etamr,Etamr,;\
+zet1r,Zet1r,0.7;\
+etazet,Etazet,0.5;\
+slzet1,Slzet1,1.40E-07;\
+vsbtr,Vsbtr,99;\
+slvsbt,Slvsbt,1.00E-05;\
+a1r,A1r,22;\
+sta1,Sta1,0.1;\
+sla1,Sla1,1.00E-05;\
+swa1,Swa1,1.00E-04;\
+a2r,A2r,33;\
+sla2,Sla2,1.00E-05;\
+swa2,Swa2,1.00E-04;\
+a3r,A3r,0.6;\
+sla3,Sla3,1.00E-06;\
+swa3,Swa3,1.00E-05;\
+tox,Tox,2.00E-08;\
+col,Col,5.00E-11;\
+ntr,Ntr,2.10E-20;\
+nfr,Nfr,1.60E-11;\
+nfar,Nfar,7.15e+22;\
+nfbr,Nfbr,2.16e+7;\
+nfcr,Nfcr,0.0;\
+nfa,Nfa,;\
+nfb,Nfb,;\
+nfc,Nfc,;\
+nfmod,Nfmod,;\
+trise,Trise,;\
+|CB_ModelOutputType.pl,Determine_modeloutputType;;\
+CB_BinModel.pl,cb_bsim_params;\
+ CB_BinModel.pl,cb_bin|
+ 
+############# analogmodel ##################
+#
+element|analogmodel|analogmodel| |\
+ r,R,;\
+ tc1,TC1,;\
+ tc2,TC2,;\
+ isnoisy,Noise,;\
+ l,Length,;\
+ w,Width,;\
+ m,_M,;\
+ trise,Trise,;\
+ c,C,;\
+ ic,InitCond,;\
+ gain,G,;\
+ gm,G,;\
+ coeffs,Coeff,;\
+ perim,Periph,;\
+ pj,Periph,;\    
+ region,Region,;\
+ scale,Scale,;\
+ area,Area,;\
+ ad,Ad,;\
+ as,As,;\
+ ps,Ps,;\
+ pd,Pd,;\
+ nrd,Nrd,;\
+ nrs,Nrs,;\
+ nqsmod,Nqsmod,;\
+ trnqsmod,Trnqsmod,;\
+ acnqsmod,Acnqsmod,;\
+ trise,Trise,;\
+ rgatemod,Rgatemod,;\
+ rbodymod,Rbodymod,;\
+ geomod,Geomod,;\
+ rgeomod,Rgeomod,;\
+ rbpb,Rbpb,;\
+ rbpd,Rbpd,;\
+ rbps,Rbps,;\
+ rbdb,Rbdb,;\
+ rbsb,Rbsb,;\
+ nf,Nf,;\
+ min,Min,;\
+ mult,Mult,;\
+ |CB_ModelOutputType.pl,Determine_modeloutputType;;;;;|

@@ -1,0 +1,640 @@
+// Copyright Keysight Technologies 2001 - 2017  
+/* This file should contain code for the netlist export options dialog. 
+   Since each tool will have different options available, this file needs 
+   to be created separately for each potential tool.  Below is the 
+   default Dracula options dialog. */
+
+defun draculaConvertToBoolean(value)
+{
+   if(value == "1")
+   {
+      return(TRUE);
+   }
+   else
+   {
+      return(FALSE);
+   }
+}
+
+/* NOTE: This function should be overridden in user defined AEL functions within 
+   netlist_exp/ael/{%CNEX_TOOL}/cnexOptions.ael.  The options will be different for each  
+   tool. */
+
+defun cnexNetlistDialogOptions_cb(buttonH, mainDlgH, winInst)
+{
+   decl dlgH;
+   decl pbOkay, pbCancel;
+
+   /* Dracula option handles and values */
+
+   decl bipolarH, bipolar=FALSE;
+   decl busDelimH, busDelim;
+   decl capaH, capa, capaModelsH, capaModels;
+   decl capareaH, caparea;
+   decl capvalH, capval;
+   decl defaultH, defaultVal;
+   decl defaultWLabel, defaultWH, defaultW;
+   decl defaultLLabel, defaultLH, defaultL;
+   decl defaultQwLabel, defaultQwH, defaultQw;
+   decl defaultQlLabel, defaultQlH, defaultQl;
+   decl defaultRwLabel, defaultRwH, defaultRw;
+   decl defaultRlLabel, defaultRlH, defaultRl;
+   decl diodeH, diode;
+   decl dioareaH, dioarea;
+   decl dioperiH, dioperi;
+   decl equationH, equation;
+   decl equivH, equiv;
+   decl gnonswapH, gnonswap;
+   decl lddH, ldd;
+   decl megaH, mega;
+   decl nosubH, nosub;
+   decl resiH, resi, resiModelsH, resiModels;
+   decl ressizeH, ressize;
+   decl resvalH, resval;
+   decl reverseH, reverse;
+   decl scaleH, scale;
+   decl scaleTypeH, scaleType, scaleItems;
+   decl unspecH, unspec;
+
+   /* Notes: nopin, pin, and pininfo are subcircuit specific, and are not available in 
+      this dialog, which is for setting up global options. edifdelimiter is not specified, 
+      because the netlister is creating CDL format, so it is irrelevant. NONSWAP is the 
+      same as GNONSWAP for global cases, and is not specified. */
+
+   bipolar=draculaConvertToBoolean(getenv("bipolar", "dracula"));
+   busDelim=getenv("busDelim", "dracula");
+   capa=draculaConvertToBoolean(getenv("capa", "dracula"));
+   capaModels=getenv("capaModels", "dracula");
+   if(capaModels == NULL)
+   {
+      capaModels="";
+   }
+   caparea=draculaConvertToBoolean(getenv("caparea", "dracula"));
+   capval=draculaConvertToBoolean(getenv("capval", "dracula"));
+   defaultVal=draculaConvertToBoolean(getenv("defaultVal", "dracula"));
+   defaultW=getenv("defaultW", "dracula");
+   defaultL=getenv("defaultL", "dracula");
+   defaultQw=getenv("defaultQw", "dracula");
+   defaultQl=getenv("defaultQl", "dracula");
+   defaultRw=getenv("defaultRw", "dracula");
+   defaultRl=getenv("defaultRl", "dracula");
+   diode=draculaConvertToBoolean(getenv("diode", "dracula"));
+   dioarea=draculaConvertToBoolean(getenv("dioarea", "dracula"));
+   dioperi=draculaConvertToBoolean(getenv("dioperi", "dracula"));
+   equation=draculaConvertToBoolean(getenv("equation", "dracula"));
+   equiv=getenv("equiv", "dracula");
+   gnonswap=getenv("gnonswap", "dracula");
+   ldd=draculaConvertToBoolean(getenv("ldd", "dracula"));
+   mega=draculaConvertToBoolean(getenv("mega", "dracula"));
+   nosub=draculaConvertToBoolean(getenv("nosub", "dracula"));
+   resi=draculaConvertToBoolean(getenv("resi", "dracula"));
+   resiModels=getenv("resiModels", "dracula");
+   if(resiModels == NULL)
+   {
+      resiModels="";
+   }
+   ressize=draculaConvertToBoolean(getenv("ressize", "dracula"));
+   resval=draculaConvertToBoolean(getenv("resval", "dracula"));
+   reverse=draculaConvertToBoolean(getenv("reverse", "dracula"));
+   scale=draculaConvertToBoolean(getenv("scale", "dracula"));
+   scaleType=getenv("scaleType", "dracula");
+   scaleItems=list("MICRON", "METER");
+   if(!scaleType && !member(scaleType, scaleItems))
+   {
+      scaleType="MICRON";
+   }
+   unspec=draculaConvertToBoolean(getenv("unspec", "dracula"));
+
+   decl dlgH=api_dlg_create_dialog (
+      "CnexDraculaOptions",
+      winInst, 
+      API_RN_CAPTION,         "Dracula Options",  
+      API_RN_ORIENTATION,     API_RV_VERTICAL,
+      API_RN_DEFAULT_OPTIONS, API_RV_TBL_LEFT,
+      API_RN_TBL_OPTIONS,     API_RV_TBL_LK_HEIGHT|API_RV_TBL_SM_HEIGHT,
+      API_RN_RESIZE_MASK,     API_RV_DLG_MIN_WIDTH|API_RV_DLG_MIN_HEIGHT,
+      API_RN_EQUALIZE_ALL,    FALSE,
+      API_RN_MODE_TYPE,       API_RV_MODAL_DIALOG,
+
+      bipolarH=api_dlg_create_item("bipolarH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.BIPOLAR",
+         API_RN_TOGGLE_STATE, bipolar),
+
+      /* Begin bipolar dependent options... */
+
+      api_dlg_create_item ("bipolarTable", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_VERTICAL,
+         API_RN_EQUALIZE_ALL, TRUE,
+         API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+         API_RN_CAPTION, "Bipolar options",
+         api_dlg_create_item ("capaTable", API_TABLE_GROUP,
+            API_RN_ORIENTATION, API_RV_HORIZONTAL,
+            API_RN_EQUALIZE_ALL, FALSE,
+            API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+            capaH=api_dlg_create_item("capaH",
+               API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.CAPA",
+               API_RN_TOGGLE_STATE, capa, API_RN_SENSITIVE_FLAG, bipolar),
+            capaModelsH=api_dlg_create_item("capaModelsH",
+               API_EDIT_TEXT_ITEM, API_RN_CAPTION, "", 
+               API_RN_SENSITIVE_FLAG, bipolar & capa, 
+               API_RN_VALUE, capaModels)
+         ),
+         capareaH=api_dlg_create_item("capareaH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.CAPAREA",
+            API_RN_TOGGLE_STATE, caparea, API_RN_SENSITIVE_FLAG, bipolar),
+         capvalH=api_dlg_create_item("capvalH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.CAPVAL",
+            API_RN_TOGGLE_STATE, capval, API_RN_SENSITIVE_FLAG, bipolar),
+         diodeH=api_dlg_create_item("diodeH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.DIODE",
+            API_RN_TOGGLE_STATE, diode, API_RN_SENSITIVE_FLAG, bipolar),
+         dioareaH=api_dlg_create_item("dioareaH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.DIOAREA",
+            API_RN_TOGGLE_STATE, dioarea, API_RN_SENSITIVE_FLAG, bipolar),
+         dioperiH=api_dlg_create_item("dioperiH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.DIOPERI",
+            API_RN_TOGGLE_STATE, dioperi, API_RN_SENSITIVE_FLAG, bipolar),
+         api_dlg_create_item ("resiTable", API_TABLE_GROUP,
+            API_RN_ORIENTATION, API_RV_HORIZONTAL,
+            API_RN_EQUALIZE_ALL, FALSE,
+            API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+            resiH=api_dlg_create_item("resiH",
+               API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.RESI",
+               API_RN_TOGGLE_STATE, resi, API_RN_SENSITIVE_FLAG, bipolar),
+            resiModelsH=api_dlg_create_item("resiModelsH",
+               API_EDIT_TEXT_ITEM, API_RN_CAPTION, "", 
+               API_RN_SENSITIVE_FLAG, bipolar & resi, 
+               API_RN_VALUE, resiModels)
+         ),
+         ressizeH=api_dlg_create_item("ressizeH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.RESSIZE",
+            API_RN_TOGGLE_STATE, ressize, API_RN_SENSITIVE_FLAG, bipolar),
+         resvalH=api_dlg_create_item("resvalH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.RESVAL",
+            API_RN_TOGGLE_STATE, resval, API_RN_SENSITIVE_FLAG, bipolar),
+      ),
+      // End of bipolar dependent options
+      defaultH=api_dlg_create_item("defaultH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.DEFAULT",
+         API_RN_TOGGLE_STATE, defaultVal),
+
+      api_dlg_create_item ("defaultsTable", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_VERTICAL,
+         API_RN_EQUALIZE_ALL, TRUE,
+         API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+         API_RN_CAPTION, "Default values",
+         api_dlg_create_item ("mosWidthLength", API_TABLE_GROUP,
+            API_RN_ORIENTATION, API_RV_HORIZONTAL,
+            API_RN_EQUALIZE_ALL, FALSE,
+            API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+            API_RN_CAPTION, "MOS Defaults",
+            defaultWLabel=api_dlg_create_item("defaultWLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Width",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultWH=api_dlg_create_item("defaultWH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "",
+               API_RN_VALUE, defaultW, 
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultLLabel=api_dlg_create_item("defaultLLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Length",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultLH=api_dlg_create_item("defaultLH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "", 
+               API_RN_SENSITIVE_FLAG, defaultVal, 
+               API_RN_VALUE, defaultL)
+         ),
+         api_dlg_create_item ("bipolarWidthLength", API_TABLE_GROUP,
+            API_RN_ORIENTATION, API_RV_HORIZONTAL,
+            API_RN_EQUALIZE_ALL, FALSE,
+            API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+            API_RN_CAPTION, "Bipolar Defaults",
+            defaultQwLabel=api_dlg_create_item("defaultQwLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Width",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultQwH=api_dlg_create_item("defaultQwH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "",
+               API_RN_VALUE, defaultQw, 
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultQlLabel=api_dlg_create_item("defaultQlLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Length",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultQlH=api_dlg_create_item("defaultQlH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "", 
+               API_RN_SENSITIVE_FLAG, defaultVal, 
+               API_RN_VALUE, defaultQl)
+         ),
+         api_dlg_create_item ("resWidthLength", API_TABLE_GROUP,
+            API_RN_ORIENTATION, API_RV_HORIZONTAL,
+            API_RN_EQUALIZE_ALL, FALSE,
+            API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+            API_RN_CAPTION, "Resistor Defaults",
+            defaultRwLabel=api_dlg_create_item("defaultRwLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Width",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultRwH=api_dlg_create_item("defaultRwH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "",
+               API_RN_VALUE, defaultW, 
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultRlLabel=api_dlg_create_item("defaultRlLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Length",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultRlH=api_dlg_create_item("defaultRlH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "", 
+               API_RN_SENSITIVE_FLAG, defaultVal, 
+               API_RN_VALUE, defaultRl)
+         )
+      ),
+      // Add in table for default values here...
+      equationH=api_dlg_create_item("equationH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.EQUATION",
+         API_RN_TOGGLE_STATE, equation),
+      // Add in edit box for equivalent nodes here...
+      // Add in edit box for non-swappable MOSFET devices here...
+      lddH=api_dlg_create_item("lddH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.LDD",
+         API_RN_TOGGLE_STATE, ldd),
+      megaH=api_dlg_create_item("megaH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.MEGA",
+         API_RN_TOGGLE_STATE, mega),
+      nosubH=api_dlg_create_item("nosubH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.NOSUB_M",
+         API_RN_TOGGLE_STATE, nosub),
+      reverseH=api_dlg_create_item("reverseH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.REVERSE",
+         API_RN_TOGGLE_STATE, reverse),
+      api_dlg_create_item ("scaleTable", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_HORIZONTAL,
+         API_RN_EQUALIZE_ALL, FALSE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+         scaleH=api_dlg_create_item("scaleH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.SCALE",
+            API_RN_TOGGLE_STATE, scale),
+         scaleTypeH=api_dlg_create_item ("scaleTypeH", 
+            API_DROPDOWNLIST_COMBO_ITEM, API_RN_ITEMS, scaleItems,
+            API_RN_VISIBLE_ITEM_COUNT, 2,
+            API_RN_SELECTED_INDEX, 2-listlen(member(scaleType, scaleItems)))
+      ),
+      unspecH=api_dlg_create_item("unspecH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.UNSPEC",
+         API_RN_TOGGLE_STATE, unspec),
+      api_dlg_create_item ("actTabl", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_HORIZONTAL,
+         API_RN_EQUALIZE_ALL, TRUE,
+         API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_FIX_HEIGHT,
+         pbOkay = api_dlg_create_item ("pbOkay", API_PUSH_BUTTON_ITEM,
+            API_RN_CAPTION, "OK"),
+         pbCancel = api_dlg_create_item ("pbCancel", API_PUSH_BUTTON_ITEM,
+            API_RN_CAPTION, "Cancel")
+      )
+   );
+
+   decl bipolarDependents=list(capaH, capaModelsH, capareaH, capvalH, diodeH, dioareaH, dioperiH, 
+                               resiH, resiModelsH, ressizeH, resvalH);
+
+   api_dlg_add_callback (bipolarH, "cnexOptionBipolarCheck_cb", API_VALUE_CHANGED_CALLBACK, bipolarDependents);
+   api_dlg_add_callback (capaH, "cnexOptionCapaCheck_cb", API_VALUE_CHANGED_CALLBACK, 
+                         list(bipolarH, capaModelsH));
+   api_dlg_add_callback (resiH, "cnexOptionCapaCheck_cb", API_VALUE_CHANGED_CALLBACK, 
+                         list(bipolarH, resiModelsH));
+
+   decl defaultValDependents=list(defaultWLabel, defaultWH, defaultLLabel, defaultLH, 
+                                  defaultQwLabel, defaultQwH, defaultQlLabel, defaultQlH, 
+                                  defaultRwLabel, defaultRwH, defaultRlLabel, defaultRlH);
+   api_dlg_add_callback (defaultH, "cnexOptionDefaultCheck_cb", API_VALUE_CHANGED_CALLBACK, defaultValDependents);
+
+   api_dlg_add_callback (pbOkay, "cnexOptionDialogOkay_cb", API_ACTIVATE_CALLBACK, dlgH);
+   api_dlg_add_callback (pbCancel, "cnexOptionDialogCancel_cb", API_ACTIVATE_CALLBACK, dlgH);
+
+   api_dlg_manage(dlgH);
+
+}
+
+defun cnexOptionDefaultCheck_cb(checkH, cbData, winInst)
+{
+   decl tmpH=cbData;
+   decl defaultVal;
+
+   api_dlg_get_resources(checkH, API_RN_TOGGLE_STATE, &defaultVal);
+
+   while(tmpH)
+   {
+      api_dlg_set_resources(car(tmpH), API_RN_SENSITIVE_FLAG, defaultVal);
+      tmpH=cdr(tmpH);
+   }
+}
+
+defun cnexOptionBipolarCheck_cb(checkH, cbData, winInst)
+{
+   decl tmpH=cbData;
+   decl checkVal, capaVal, resiVal;
+   decl i=0;
+
+   api_dlg_get_resources(checkH, API_RN_TOGGLE_STATE, &checkVal);
+
+   while(tmpH)
+   {
+      if(i == 0)
+      {
+         api_dlg_get_resources(car(tmpH), API_RN_TOGGLE_STATE, &capaVal);
+         api_dlg_set_resources(car(tmpH), API_RN_SENSITIVE_FLAG, checkVal);
+      }
+      else if(i == 1)
+      {
+         api_dlg_set_resources(car(tmpH), API_RN_SENSITIVE_FLAG, checkVal & capaVal);
+      }
+      else if(i == 7)
+      {
+         api_dlg_get_resources(car(tmpH), API_RN_TOGGLE_STATE, &resiVal);
+         api_dlg_set_resources(car(tmpH), API_RN_SENSITIVE_FLAG, checkVal);
+      }
+      else if(i == 8)
+      {
+         api_dlg_set_resources(car(tmpH), API_RN_SENSITIVE_FLAG, checkVal & resiVal);
+      }
+      else
+      {
+         api_dlg_set_resources(car(tmpH), API_RN_SENSITIVE_FLAG, checkVal);
+      }
+      i++;
+      tmpH=cdr(tmpH);
+   }
+}
+
+defun cnexOptionCapaCheck_cb(checkH, cbData, winInst)
+{
+   decl bipolarH=nth(0, cbData);
+   decl capaModelsH=nth(1, cbData);
+   decl bipVal, capaVal;
+
+   api_dlg_get_resources(checkH, API_RN_TOGGLE_STATE, &capaVal);
+   api_dlg_get_resources(bipolarH, API_RN_TOGGLE_STATE, &bipVal);
+
+   api_dlg_set_resources(capaModelsH, API_RN_SENSITIVE_FLAG, bipVal & capaVal);
+
+}
+
+defun cnexOptionResiCheck_cb(checkH, cbData, winInst)
+{
+   decl bipolarH=nth(0, cbData);
+   decl resiModelsH=nth(1, cbData);
+   decl bipVal, resiVal;
+
+   api_dlg_get_resources(checkH, API_RN_TOGGLE_STATE, &resiVal);
+   api_dlg_get_resources(bipolarH, API_RN_TOGGLE_STATE, &bipVal);
+
+   api_dlg_set_resources(resiModelsH, API_RN_SENSITIVE_FLAG, bipVal & resiVal);
+
+}
+
+defun cnexOptionDialogOkay_cb(buttonH, dlgH, winInst)
+{
+   decl bipolarH=api_dlg_find_item(dlgH, "bipolarH");
+   decl capaH=api_dlg_find_item(dlgH, "capaH");
+   decl capaModelsH=api_dlg_find_item(dlgH, "capaModelsH");
+   decl capareaH=api_dlg_find_item(dlgH, "capareaH");
+   decl capvalH=api_dlg_find_item(dlgH, "capvalH");
+   decl defaultH=api_dlg_find_item(dlgH, "defaultH");
+   decl defaultWH=api_dlg_find_item(dlgH, "defaultWH");
+   decl defaultLH=api_dlg_find_item(dlgH, "defaultLH");
+   decl defaultQwH=api_dlg_find_item(dlgH, "defaultQwH");
+   decl defaultQlH=api_dlg_find_item(dlgH, "defaultQlH");
+   decl defaultRwH=api_dlg_find_item(dlgH, "defaultRwH");
+   decl defaultRlH=api_dlg_find_item(dlgH, "defaultRlH");
+   decl diodeH=api_dlg_find_item(dlgH, "diodeH");
+   decl dioareaH=api_dlg_find_item(dlgH, "dioareaH");
+   decl dioperiH=api_dlg_find_item(dlgH, "dioperiH");
+   decl equationH=api_dlg_find_item(dlgH, "equationH");
+   decl equivH=api_dlg_find_item(dlgH, "equivH");
+   decl gnonswapH=api_dlg_find_item(dlgH, "gnonswapH");
+   decl lddH=api_dlg_find_item(dlgH, "lddH");
+   decl megaH=api_dlg_find_item(dlgH, "megaH");
+   decl nosubH=api_dlg_find_item(dlgH, "nosubH");
+   decl resiH=api_dlg_find_item(dlgH, "resiH");
+   decl resiModelsH=api_dlg_find_item(dlgH, "resiModelsH");
+   decl ressizeH=api_dlg_find_item(dlgH, "ressizeH");
+   decl resvalH=api_dlg_find_item(dlgH, "resvalH");
+   decl reverseH=api_dlg_find_item(dlgH, "reverseH");
+   decl scaleH=api_dlg_find_item(dlgH, "scaleH");
+   decl scaleTypeH=api_dlg_find_item(dlgH, "scaleTypeH");
+   decl unspecH=api_dlg_find_item(dlgH, "unspecH");
+
+   cnexWriteDraculaOption(bipolarH, API_RN_TOGGLE_STATE, "bipolar");
+   cnexWriteDraculaOption(capaH, API_RN_TOGGLE_STATE, "capa");
+   cnexWriteDraculaOption(capaModelsH, API_RN_VALUE, "capaModels");
+   cnexWriteDraculaOption(capareaH, API_RN_TOGGLE_STATE, "caparea");
+   cnexWriteDraculaOption(capvalH, API_RN_TOGGLE_STATE, "capval");
+   cnexWriteDraculaOption(defaultH, API_RN_TOGGLE_STATE, "defaultVal");
+   cnexWriteDraculaOption(defaultWH, API_RN_VALUE, "defaultW");
+   cnexWriteDraculaOption(defaultLH, API_RN_VALUE, "defaultL");
+   cnexWriteDraculaOption(defaultQwH, API_RN_VALUE, "defaultQw");
+   cnexWriteDraculaOption(defaultQlH, API_RN_VALUE, "defaultQl");
+   cnexWriteDraculaOption(defaultRwH, API_RN_VALUE, "defaultRw");
+   cnexWriteDraculaOption(defaultRlH, API_RN_VALUE, "defaultRl");
+   cnexWriteDraculaOption(diodeH, API_RN_TOGGLE_STATE, "diode");
+   cnexWriteDraculaOption(dioareaH, API_RN_TOGGLE_STATE, "dioarea");
+   cnexWriteDraculaOption(dioperiH, API_RN_TOGGLE_STATE, "dioperi");
+   cnexWriteDraculaOption(equationH, API_RN_TOGGLE_STATE, "equation");
+   cnexWriteDraculaOption(equivH, API_RN_VALUE, "equiv");
+   cnexWriteDraculaOption(gnonswapH, API_RN_TOGGLE_STATE, "gnonswap");
+   cnexWriteDraculaOption(lddH, API_RN_TOGGLE_STATE, "ldd");
+   cnexWriteDraculaOption(megaH, API_RN_TOGGLE_STATE, "mega");
+   cnexWriteDraculaOption(nosubH, API_RN_TOGGLE_STATE, "nosub");
+   cnexWriteDraculaOption(resiH, API_RN_TOGGLE_STATE, "resi");
+   cnexWriteDraculaOption(resiModelsH, API_RN_VALUE, "resiModels");
+   cnexWriteDraculaOption(ressizeH, API_RN_TOGGLE_STATE, "ressize");
+   cnexWriteDraculaOption(resvalH, API_RN_TOGGLE_STATE, "resval");
+   cnexWriteDraculaOption(reverseH, API_RN_TOGGLE_STATE, "reverse");
+   cnexWriteDraculaOption(scaleH, API_RN_TOGGLE_STATE, "scale");
+   cnexWriteDraculaDropdownOption(scaleTypeH, API_RN_SELECTED_INDEX, "scaleType", list("MICRON","METER"));
+   cnexWriteDraculaOption(unspecH, API_RN_TOGGLE_STATE, "unspec");
+
+   cnexSetupDraculaOptions();
+
+   api_dlg_unmanage(dlgH);
+}
+
+defun cnexWriteDraculaOption(itemH, valType, name)
+{
+   decl itemVal;
+   api_dlg_get_resources(itemH, valType, &itemVal);
+
+   if(itemVal == NULL)
+      itemVal="";
+
+   if(is_string(itemVal))
+      setenv(name, itemVal, "dracula");
+   else
+      setenv(name, identify_value(itemVal), "dracula");
+
+}
+
+defun cnexWriteDraculaDropdownOption(itemH, valType, name, itemList)
+{
+   decl itemVal, itemString;
+   api_dlg_get_resources(itemH, valType, &itemVal);
+   if(itemVal == NULL)
+      itemVal=0;
+   
+   itemString=nth(itemVal, itemList);
+   if(is_string(itemString))
+   {
+      setenv(name, itemString, "dracula");
+   }
+}
+
+defun cnexCreateNetlistOptionList(value)
+{
+   cnexExportOptionList=append(cnexExportOptionList, list(value));
+}
+
+defun cnexSetupDraculaOptions()
+{
+   cnexExportOptionList=NULL;
+
+   decl bipolar=draculaConvertToBoolean(getenv("bipolar", "dracula"));
+
+   if(bipolar)
+   {
+      cnexCreateNetlistOptionList("*.BIPOLAR");
+      decl capa=draculaConvertToBoolean(getenv("capa", "dracula"));
+      if(capa)
+      {
+         decl capaModels=getenv("capaModels", "dracula");
+         if(capaModels == NULL)
+         {
+            capaModels="";
+         }
+         cnexCreateNetlistOptionList(strcat("*.CAPA ", capaModels));
+      }
+      decl caparea=draculaConvertToBoolean(getenv("caparea", "dracula"));
+      if(caparea)
+         cnexCreateNetlistOptionList("*.CAPAREA");
+
+      decl capval=draculaConvertToBoolean(getenv("capval", "dracula"));
+      if(capval)
+         cnexCreateNetlistOptionList("*.CAPVAL");
+
+      decl diode=draculaConvertToBoolean(getenv("diode", "dracula"));
+      if(!diode)
+      {
+         decl dioarea=draculaConvertToBoolean(getenv("dioarea", "dracula"));
+         if(dioarea)
+            cnexCreateNetlistOptionList("*.DIOAREA");
+         decl dioperi=draculaConvertToBoolean(getenv("dioperi", "dracula"));
+         if(dioperi)
+            cnexCreateNetlistOptionList("*.DIOPERI");
+      }
+      else
+      {
+         cnexCreateNetlistOptionList("*.DIODE");
+      }
+
+      decl resi=draculaConvertToBoolean(getenv("resi", "dracula"));
+      if(resi)
+      {
+         decl resiModels=getenv("resiModels", "dracula");
+         if(resiModels == NULL)
+         {
+            resiModels="";
+         }
+         cnexCreateNetlistOptionList(strcat("*.RESI ", resiModels));
+      }
+      decl ressize=draculaConvertToBoolean(getenv("ressize", "dracula"));
+      if(ressize)
+         cnexCreateNetlistOptionList("*.RESSIZE");
+      decl resval=draculaConvertToBoolean(getenv("resval", "dracula"));
+      if(resval)
+         cnexCreateNetlistOptionList("*.RESVAL");
+   }
+
+   decl defaultVal=draculaConvertToBoolean(getenv("defaultVal", "dracula"));
+   decl defaultString="*.DEFAULT";
+
+   if(defaultVal)
+   {
+      decl defaultW=getenv("defaultW", "dracula");
+      if(defaultW)
+         defaultString=strcat(defaultString, " W=", defaultW);
+
+      decl defaultL=getenv("defaultL", "dracula");
+      if(defaultL)
+         defaultString=strcat(defaultString, " L=", defaultL);
+
+      decl defaultQw=getenv("defaultQw", "dracula");
+      if(defaultQw)
+         defaultString=strcat(defaultString, " QW=", defaultQw);
+
+      decl defaultQl=getenv("defaultQl", "dracula");
+      if(defaultQl)
+         defaultString=strcat(defaultString, " QL=", defaultQl);
+
+      decl defaultRw=getenv("defaultRw", "dracula");
+      if(defaultRw)
+         defaultString=strcat(defaultString, " RW=", defaultRw);
+
+      decl defaultRl=getenv("defaultRl", "dracula");
+      if(defaultRl)
+         defaultString=strcat(defaultString, " RL=", defaultRl);
+
+      cnexCreateNetlistOptionList(defaultString);
+   }
+
+   decl equation=draculaConvertToBoolean(getenv("equation", "dracula"));
+   if(equation)
+      cnexCreateNetlistOptionList("*.EQUATION");
+
+   decl equiv=getenv("equiv", "dracula");
+   if(equiv)
+      cnexCreateNetlistOptionList(strcat("*.EQUIV ", equiv));
+   decl gnonswap=getenv("gnonswap", "dracula");
+   if(gnonswap)
+      cnexCreateNetlistOptionList(strcat("*.GNONSWAP ", gnonswap));
+
+   decl ldd=draculaConvertToBoolean(getenv("ldd", "dracula"));
+   if(ldd)
+      cnexCreateNetlistOptionList("*.LDD");
+
+   decl mega=draculaConvertToBoolean(getenv("mega", "dracula"));
+   if(mega)
+      cnexCreateNetlistOptionList("*.MEGA");
+
+   decl nosub=draculaConvertToBoolean(getenv("nosub", "dracula"));
+   if(nosub)
+      cnexCreateNetlistOptionList("*.NOSUB");
+
+   decl reverse=draculaConvertToBoolean(getenv("reverse", "dracula"));
+   if(reverse)
+      cnexCreateNetlistOptionList("*.REVERSE");
+
+   decl scale=draculaConvertToBoolean(getenv("scale", "dracula"));
+   if(scale)
+   {
+      decl scaleType=getenv("scaleType", "dracula");
+      if(scaleType == "METER")
+         cnexCreateNetlistOptionList("*.SCALE METER");      
+      else
+         cnexCreateNetlistOptionList("*.SCALE");
+   }
+   
+   decl unspec=draculaConvertToBoolean(getenv("unspec", "dracula"));
+   if(unspec)
+      cnexCreateNetlistOptionList("*.UNSPEC");
+      
+}
+
+defun cnexOptionDialogCancel_cb(buttonH, dlgH, winInst)
+{
+   api_dlg_unmanage(dlgH);
+}
+
+// Make sure to set up the option list when loading the file.
+cnexSetupDraculaOptions();

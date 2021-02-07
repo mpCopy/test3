@@ -1,0 +1,80 @@
+<html>
+<head>
+<title>PCB Importer User Manual Chapter 9 Labels</title>
+<style>
+body {background-color:#FFFFFF;
+      text-decoration:none;
+      font-family:Verdana,Arial,Helvetica,sans-serif;
+      font-size:100%;
+      margin-left:50px;
+     }
+
+h1,h2,h3,h4 {color:#C00000;}
+
+pre {font-family :Courier New, Courier, Monospaced;}
+
+p   {line-height:1.5;}
+</style>
+</head>
+
+<body>
+<table width=825>
+<td width=825>
+<h1>Labels</h1>
+<p>ODB and IPC-2581 can contain component, net and pin information in addition to the board geometry. This requires the presence of the COMP layers and the EDA/NETLIST containers.</p>
+
+<p><b>Nets</b></p>
+<p>ODB (unlike IPC2581) does not tag each geometry with a net label. Instead it relies on a list of coordinate points (normally associated with the top or bottom of the PCB) and net labels.</p>
+
+<p>The PCB Importer reads this list and uses it along with a connectivity engine to assign each conductor a net.</p>
+
+<img src="./labels_dialog1.gif" width=432 height=436 vspace=15 hspace=195 alt="labels dialog"><br>
+
+<p>The labels dialog provides a view of all the coordinate points associated with nets (when the Nets tab is selected) It shows the label (net name) followed by the stackup position of the conductor associated with that label, followed by the X,Y coordinates.</p>
+
+<p>While there are controls for adding to and modifying the net labels, there is no reason for a user to do this. These controls are in place for data input that lacks net labels and where the user must enter manually his own net assigments.</p>
+
+<br>
+
+<p><b>Nodes</b></p>
+
+<p>Nodes are generated automatically wherever a component pin is located. A Node is essentially a PORT in ADS. The nodes label will consist of a component reference designator, a separation character (typically a dot or dash) and the pin number or name.</p>
+
+<img src="./labels_dialog2.gif" width=432 height=436 vspace=15 hspace=195 alt="labels dialog showing nodes"><br>
+
+
+<p><b>Padstacks</b></p>
+<p>Padstacks are not part of ODB or IPC2581. The PCB Importer actually builds padstacks from component pin information and drill/flash information but because ADS has not concept of a padstack, the padstack info is not used in any way.</p>
+
+<br>
+
+<p><b>Viewing Node and Net Assignments</b></p>
+
+<p>The phyiscal viewer associated with the PCB Importer does <u>not</u> support highlighting or tracing of nets but it is capable of displaying Net, Node and Component information as a text overlay.</p>
+
+<p>To view net/node information first select the type of info you would like to see by checking the appropriate boxes.</p>
+
+<img src="./labels_dialog_view.gif" width=291 height=72 vspace=15 hspace=263 alt="labels dialog showing nodes"><br>
+
+<p>Then click on the View Labels ... button.</p>
+
+<p>The GBRVU program will open and load all the conductor stackup layers. It will also generate either text (or a text marker if the text is too small).
+</p>
+
+<img src="./label_view1.gif" width=539 height=653 vspace=15 hspace=140 alt="net and node view in GBRVU"><br>
+
+<p>It will generally be necessary to zoom in to clearly identify the net or node label. Also, viewing both nodes and nets at the same time may result in a very busy labeling and is not recommended.</p>
+
+<p>Once in the viewer, it is possible to simplify what you are seeing by turning off most of the layers.</p>
+
+<img src="./label_view2.gif" width=539 height=653 vspace=15 hspace=140 alt="net and node view in GBRVU"><br>
+
+<p>In the above snapshot, the user has zoomed in and turned off all layers except for the top layer. The viewer associates the labels on top with the top conductor layer and the labels for the bottom of the board with the bottom conductor layer. If you have both the top and bottom layers on, then it may result in overlapping labels.</p>
+
+<p>Layers can be turned on/off using the File | Layer menu pick.</p>
+
+</td>
+</table>
+
+</body>
+</html>

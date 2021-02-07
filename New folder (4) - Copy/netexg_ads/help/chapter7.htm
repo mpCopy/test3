@@ -1,0 +1,125 @@
+<html>
+<head>
+<title>PCB Importer User Manual Chapter 7 Preferences</title>
+<style>
+body {background-color:#FFFFFF;
+      text-decoration:none;
+      font-family:Verdana,Arial,Helvetica,sans-serif;
+      font-size:100%;
+      margin-left:50px;
+     }
+
+h1,h2,h3,h4 {color:#C00000;}
+
+pre {font-family :Courier New, Courier, Monospaced;}
+
+p   {line-height:1.5;}
+</style>
+</head>
+
+<body>
+<table width=825>
+<td width=825>
+<h1>Preferences</h1>
+<p>Preferences control some of the PCB Importer program behavior. The dialog can be accessed by clicking on Preferences from the menu across the top of the PCB Importer's main dialog.
+</p>
+
+<img src="./preferences_dialog.gif" width=403 height=356 vspace=10 hspace=205 alt="NETEX Preferences"><br>
+
+<p><b>Working Directory</b></p>
+
+<p>determines the directory where the PCB Importer will place its temporary files used during the processing of ODB or IPC2581 data. Note: this directory is generally set by ADS when it starts up the PCB Importer so their should be no need to make modifications.</p>
+
+<p><b>Output Directory</b></p>
+
+<p>determines the directory where the PCB Importer will write the ADFI output file.</p>
+
+<p><b>Max Points</b></p>
+<p>The maximum number of points allowed in a single boundary or polygon. This can occur because all layout data that includes curves is converted into segments. If the PCB Importer produces a polygon with more than the maximum number of allowed vertices it breaks the polygon into two (or more.)</p>
+
+
+<b>Arc Resolution</b>
+<p>When arcs are broken into segments this parameter controls the number of segments based on the angle between vertices.</p>
+<img src="./arcres.gif" width=452 height=310 hspace=180 alt="arc resolution">
+
+<b>Chord Error</b>
+<p>When arcs are broken into segments this parameter controls the number of segments generated based on the allowable error between the path of the arc and the path of the approximation.
+</p>
+
+<img src="./chord_error.gif" width=350 height=267 hspace=237 alt="chord error">
+
+
+<b>Smoothing</b>
+<p>If this value is non-zero (which disables it) the program looks for closely spaced vertices and removes them if they are closer than the specified value.</p>
+
+<img src="./smoothing_parameter.gif" width=481 height=385 vspace=15 hspace=165 alt="chord error">
+
+
+<b>Sliver</b>
+<p>If this value is non-zero, it is used to detect very small "slivers" and delete them. The sliver parameter = [2 x AREA]/PERIMETER. The illustration below shows the sliver value of three small but differently shaped polygons.</p>
+
+<img src="./sliver_parameter.gif" width=571 height=354 vspace=15 hspace=110 alt="chord error"><br>
+
+<p>So if a user set the sliver paramter = 0.05 the square and rectangular slivers would be passed to the output but the triangular one, which is smaller than the sliver parameter would be filtered out.</p>
+
+<br>
+
+<b>Output Units</b>
+<p>The input data can be converted to the desired output units. Input data for ODB++ is in inches or mm. However many ADS designers will work in mils.</p>
+
+
+
+<b>Current Preferences</b>
+<ul>
+<p><b>Save as Defaults</b> - if after modifying your preferences you wish them to be saved so that the next session uses the current values press this button. The preference values are saved in the Windows registry and read back the next time the PCB Importer is started.</p>
+
+<p><b>Reset to Defaults</b> - if you wish to go back to the default preference settings click here.</p>
+
+</ul>
+
+<br>
+
+<p><b>Advanced Preferences</b></p>
+
+<p><b>Gerber Viewer Path</b></p>
+<p>The path and executable name of the GBRVU program. This is used when launching GBRVU from NETEX to either display layers or to select a window.</p>
+
+
+<p><b>Gerber File Extensions</b></p>
+<p>Files with these extensions will be shown in the file browser.</p>
+
+<p><b>3D Viewer Path</b></p>
+<p>not relevant to this product.</p>
+
+<p><b>Progress Display Method</b></p>
+
+<ul>
+<p><b>Use Single Display</b></p>
+<p>All progress information is routed to a single progress display</p>
+
+<p><b>Use Individual Program Files</b></p>
+<p>Each module that reports progress opens its own window.</p>
+
+<p><b>Run Silently</b></p>
+<p>progress display is suppressed.</p>
+</ul>
+
+
+<p><b>Clean up Temporary Files</b></p>
+<p>If checked, temporary files will be deleted when the PCB Importer is closed. If not checked they will not be deleted. Except for debugging purposes one would not want to leave these files on disk.</p>
+
+
+<p><b>View Log after Execution</b></p>
+<p>If checked, a window showing the log file is opened after a conversion is completed.
+</p>
+
+<p><b>Thread Number</b>
+Portions of the OCB Importer code are multi-threaded. This value determines the maximum number of threads that can be launched. Should not exceed the number of CPU  threads the machine can support.
+</p>
+
+
+</td>
+</table>
+
+</body>
+</html>

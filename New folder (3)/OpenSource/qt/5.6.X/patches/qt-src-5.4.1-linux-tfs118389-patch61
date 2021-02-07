@@ -1,0 +1,22 @@
+--- ./qtbase/src/corelib/io/qfilesystemwatcher_inotify.cpp.orig	2016-01-06 16:35:11.000000000 -0800
++++ ./qtbase/src/corelib/io/qfilesystemwatcher_inotify.cpp	2016-01-06 16:35:30.000000000 -0800
+@@ -341,8 +341,11 @@
+ 
+     int buffSize = 0;
+     ioctl(inotifyFd, FIONREAD, (char *) &buffSize);
++    if (buffSize > 0) {
+     QVarLengthArray<char, 4096> buffer(buffSize);
++        do {
+     buffSize = read(inotifyFd, buffer.data(), buffSize);
++        } while (buffSize == -1 && errno == EINTR);
+     char *at = buffer.data();
+     char * const end = at + buffSize;
+ 
+@@ -395,6 +398,7 @@
+         }
+     }
+ }
++}
+ 
+ QString QInotifyFileSystemWatcherEngine::getPathFromID(int id) const
+ {

@@ -1,0 +1,68 @@
+// Copyright Keysight Technologies 2001 - 2017  
+/* This file should contain code for the netlist export options dialog. 
+   Since each tool will have different options available, this file needs 
+   to be created separately for each potential tool.  Below is the 
+   default options dialog. */
+
+defun cnexNetlistDialogOptions_cb(buttonH, mainDlgH, winInst)
+{
+    return cnex_netlist_dialog_options_cb(buttonH, mainDlgH, winInst);
+}
+
+defun cnex_netlist_dialog_options_cb(buttonH, mainDlgH, winInst)
+{
+   decl dlgH;
+
+   /* NOTE: This function should be overridden in user defined AEL functions within 
+      netlist_exp/ael/{%CNEX_TOOL}/cnexOptions.ael.  The options will be different for each  
+      tool. */
+
+   decl pbClose;
+   decl tool=cnex_get_tool();
+   decl dlgName=strcat("ADS Front End ", tool, "Options");
+   decl dlgCaption=strcat(tool, " Options");
+   decl infoString=strcat("There are no options available for the tool ", tool); 
+    
+   decl dlgH=api_dlg_create_dialog (
+      dlgName,
+      winInst, 
+      API_RN_CAPTION,         dlgCaption,  
+      API_RN_ORIENTATION,     API_RV_VERTICAL,
+      API_RN_DEFAULT_OPTIONS, API_RV_TBL_LEFT,
+      API_RN_TBL_OPTIONS,     API_RV_TBL_LK_HEIGHT|API_RV_TBL_SM_HEIGHT,
+      API_RN_RESIZE_MASK,     API_RV_DLG_MIN_WIDTH|API_RV_DLG_MIN_HEIGHT,
+      API_RN_MODE_TYPE,       API_RV_MODAL_DIALOG,
+      api_dlg_create_item("spaceLabel1", API_LABEL_ITEM, API_RN_CAPTION, ""),
+      api_dlg_create_item ("actTabl", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_HORIZONTAL,
+         API_RN_EQUALIZE_ALL, FALSE,
+         API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_FIX_HEIGHT,
+         api_dlg_create_item("infoIcon", API_LABEL_ITEM,
+            API_RN_USE_BITMAP, TRUE,
+            API_RN_UP_BUTTON_BITMAP, "API_ERROR_BMP"),        
+         api_dlg_create_item("infoLabel", API_LABEL_ITEM,
+            API_RN_CAPTION, infoString)        
+      ),
+      api_dlg_create_item("spaceLabel2", API_LABEL_ITEM, API_RN_CAPTION, ""),
+      api_dlg_create_item ("actTabl", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_HORIZONTAL,
+         API_RN_EQUALIZE_ALL, TRUE,
+         API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_FIX_HEIGHT,
+         pbClose = api_dlg_create_item ("pbCancel", API_PUSH_BUTTON_ITEM,
+            API_RN_CAPTION, "Close")
+      )
+   );
+
+   api_dlg_add_callback (pbClose, "cnexNetlistDialogOptionsClose_cb", API_ACTIVATE_CALLBACK, dlgH);
+
+   api_dlg_manage(dlgH);
+}
+
+defun cnexNetlistDialogOptionsClose_cb(buttonH, dlgH, winInst)
+{
+   api_dlg_unmanage(dlgH);
+}
+
+cnexExportOptionList=NULL;

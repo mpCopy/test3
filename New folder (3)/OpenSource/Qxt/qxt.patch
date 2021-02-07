@@ -1,0 +1,809 @@
+diff -Naur orig/qxtglobal.h qxt/qxtglobal.h
+--- orig/qxtglobal.h	2015-04-23 14:04:37.077218300 -0700
++++ qxt/qxtglobal.h	2015-04-23 13:58:34.147079400 -0700
+@@ -1,47 +1,56 @@
+ /****************************************************************************
+- **
+- ** Copyright (C) Qxt Foundation. Some rights reserved.
+- **
+- ** This file is part of the QxtCore module of the Qxt library.
+- **
+- ** This library is free software; you can redistribute it and/or modify it
+- ** under the terms of the Common Public License, version 1.0, as published
+- ** by IBM, and/or under the terms of the GNU Lesser General Public License,
+- ** version 2.1, as published by the Free Software Foundation.
+- **
+- ** This file is provided "AS IS", without WARRANTIES OR CONDITIONS OF ANY
+- ** KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY
+- ** WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR
+- ** FITNESS FOR A PARTICULAR PURPOSE.
+- **
+- ** You should have received a copy of the CPL and the LGPL along with this
+- ** file. See the LICENSE file and the cpl1.0.txt/lgpl-2.1.txt files
+- ** included with the source distribution for more information.
+- ** If you did not receive a copy of the licenses, contact the Qxt Foundation.
+- **
+- ** <http://libqxt.org>  <foundation@libqxt.org>
+- **
+- ****************************************************************************/
++** Copyright (c) 2006 - 2011, the LibQxt project.
++** See the Qxt AUTHORS file for a list of authors and copyright holders.
++** All rights reserved.
++**
++** Redistribution and use in source and binary forms, with or without
++** modification, are permitted provided that the following conditions are met:
++**     * Redistributions of source code must retain the above copyright
++**       notice, this list of conditions and the following disclaimer.
++**     * Redistributions in binary form must reproduce the above copyright
++**       notice, this list of conditions and the following disclaimer in the
++**       documentation and/or other materials provided with the distribution.
++**     * Neither the name of the LibQxt project nor the
++**       names of its contributors may be used to endorse or promote products
++**       derived from this software without specific prior written permission.
++**
++** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++** ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++** WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++** DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
++** DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++** (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++** LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++** ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++**
++** <http://libqxt.org>  <foundation@libqxt.org>
++*****************************************************************************/
+ 
+ #ifndef QXTGLOBAL_H
+ #define QXTGLOBAL_H
+-
++#include "Graphs/define/export.h"
+ #include <QtGlobal>
+ 
+-#define QXT_VERSION 0x000602
+-#define QXT_VERSION_STR "0.6.2"
++#define QXT_VERSION 0x000700
++#define QXT_VERSION_STR "0.7.0"
+ 
+ //--------------------------global macros------------------------------
+ 
+ #ifndef QXT_NO_MACROS
+ 
++#ifndef _countof
++#define _countof(x) (sizeof(x)/sizeof(*x))
++#endif
++
+ #endif // QXT_NO_MACROS
+ 
+ //--------------------------export macros------------------------------
+ 
+ #define QXT_DLLEXPORT DO_NOT_USE_THIS_ANYMORE
+ 
+-#if !defined(QXT_STATIC)
++#if !defined(QXT_STATIC) && !defined(QXT_DOXYGEN_RUN)
+ #    if defined(BUILD_QXT_CORE)
+ #        define QXT_CORE_EXPORT Q_DECL_EXPORT
+ #    else
+@@ -51,7 +60,7 @@
+ #    define QXT_CORE_EXPORT
+ #endif // BUILD_QXT_CORE
+  
+-#if !defined(QXT_STATIC)
++#if !defined(QXT_STATIC) && !defined(QXT_DOXYGEN_RUN)
+ #    if defined(BUILD_QXT_GUI)
+ #        define QXT_GUI_EXPORT Q_DECL_EXPORT
+ #    else
+@@ -61,7 +70,7 @@
+ #    define QXT_GUI_EXPORT
+ #endif // BUILD_QXT_GUI
+  
+-#if !defined(QXT_STATIC)
++#if !defined(QXT_STATIC) && !defined(QXT_DOXYGEN_RUN)
+ #    if defined(BUILD_QXT_NETWORK)
+ #        define QXT_NETWORK_EXPORT Q_DECL_EXPORT
+ #    else
+@@ -71,7 +80,7 @@
+ #    define QXT_NETWORK_EXPORT
+ #endif // BUILD_QXT_NETWORK
+  
+-#if !defined(QXT_STATIC)
++#if !defined(QXT_STATIC) && !defined(QXT_DOXYGEN_RUN)
+ #    if defined(BUILD_QXT_SQL)
+ #        define QXT_SQL_EXPORT Q_DECL_EXPORT
+ #    else
+@@ -81,7 +90,7 @@
+ #    define QXT_SQL_EXPORT
+ #endif // BUILD_QXT_SQL
+  
+-#if !defined(QXT_STATIC)
++#if !defined(QXT_STATIC) && !defined(QXT_DOXYGEN_RUN)
+ #    if defined(BUILD_QXT_WEB)
+ #        define QXT_WEB_EXPORT Q_DECL_EXPORT
+ #    else
+@@ -91,7 +100,7 @@
+ #    define QXT_WEB_EXPORT
+ #endif // BUILD_QXT_WEB
+  
+-#if !defined(QXT_STATIC)
++#if !defined(QXT_STATIC) && !defined(QXT_DOXYGEN_RUN)
+ #    if defined(BUILD_QXT_BERKELEY)
+ #        define QXT_BERKELEY_EXPORT Q_DECL_EXPORT
+ #    else
+@@ -101,7 +110,7 @@
+ #    define QXT_BERKELEY_EXPORT
+ #endif // BUILD_QXT_BERKELEY
+ 
+-#if !defined(QXT_STATIC)
++#if !defined(QXT_STATIC) && !defined(QXT_DOXYGEN_RUN)
+ #    if defined(BUILD_QXT_ZEROCONF)
+ #        define QXT_ZEROCONF_EXPORT Q_DECL_EXPORT
+ #    else
+@@ -111,7 +120,7 @@
+ #    define QXT_ZEROCONF_EXPORT
+ #endif // QXT_ZEROCONF_EXPORT
+ 
+-#if defined BUILD_QXT_CORE || defined BUILD_QXT_GUI || defined  BUILD_QXT_SQL || defined BUILD_QXT_NETWORK || defined BUILD_QXT_WEB || defined BUILD_QXT_BERKELEY || defined BUILD_QXT_ZEROCONF
++#if defined(BUILD_QXT_CORE) || defined(BUILD_QXT_GUI) || defined(BUILD_QXT_SQL) || defined(BUILD_QXT_NETWORK) || defined(BUILD_QXT_WEB) || defined(BUILD_QXT_BERKELEY) || defined(BUILD_QXT_ZEROCONF)
+ #   define BUILD_QXT
+ #endif
+ 
+@@ -167,6 +176,14 @@
+     {
+         return *qxt_p_ptr;
+     }
++    inline PUB* qxt_ptr()
++    {
++        return qxt_p_ptr;
++    }
++    inline const PUB* qxt_ptr() const
++    {
++        return qxt_p_ptr;
++    }
+ 
+ private:
+     PUB* qxt_p_ptr;
+@@ -198,10 +215,18 @@
+     {
+         return *static_cast<PVT*>(pvt);
+     }
++    inline PVT * operator->()
++    {
++	return static_cast<PVT*>(pvt);
++    }
++    inline const PVT * operator->() const
++    {
++	return static_cast<PVT*>(pvt);
++    }
+ private:
+     QxtPrivateInterface(const QxtPrivateInterface&) { }
+     QxtPrivateInterface& operator=(const QxtPrivateInterface&) { }
+     QxtPrivate<PUB>* pvt;
+ };
+ 
+-#endif // QXT_GLOBAL
++#endif // QXT_GLOBAL
+\ No newline at end of file
+diff -Naur orig/qxtnamespace.h qxt/qxtnamespace.h
+--- orig/qxtnamespace.h	2015-04-23 14:06:58.532768900 -0700
++++ qxt/qxtnamespace.h	2015-04-23 13:58:34.147079400 -0700
+@@ -1,37 +1,42 @@
+ /****************************************************************************
+- **
+- ** Copyright (C) Qxt Foundation. Some rights reserved.
+- **
+- ** This file is part of the QxtCore module of the Qxt library.
+- **
+- ** This library is free software; you can redistribute it and/or modify it
+- ** under the terms of the Common Public License, version 1.0, as published
+- ** by IBM, and/or under the terms of the GNU Lesser General Public License,
+- ** version 2.1, as published by the Free Software Foundation.
+- **
+- ** This file is provided "AS IS", without WARRANTIES OR CONDITIONS OF ANY
+- ** KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY
+- ** WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR
+- ** FITNESS FOR A PARTICULAR PURPOSE.
+- **
+- ** You should have received a copy of the CPL and the LGPL along with this
+- ** file. See the LICENSE file and the cpl1.0.txt/lgpl-2.1.txt files
+- ** included with the source distribution for more information.
+- ** If you did not receive a copy of the licenses, contact the Qxt Foundation.
+- **
+- ** <http://libqxt.org>  <foundation@libqxt.org>
+- **
+- ****************************************************************************/
++** Copyright (c) 2006 - 2011, the LibQxt project.
++** See the Qxt AUTHORS file for a list of authors and copyright holders.
++** All rights reserved.
++**
++** Redistribution and use in source and binary forms, with or without
++** modification, are permitted provided that the following conditions are met:
++**     * Redistributions of source code must retain the above copyright
++**       notice, this list of conditions and the following disclaimer.
++**     * Redistributions in binary form must reproduce the above copyright
++**       notice, this list of conditions and the following disclaimer in the
++**       documentation and/or other materials provided with the distribution.
++**     * Neither the name of the LibQxt project nor the
++**       names of its contributors may be used to endorse or promote products
++**       derived from this software without specific prior written permission.
++**
++** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++** ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++** WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++** DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
++** DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++** (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++** LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++** ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++**
++** <http://libqxt.org>  <foundation@libqxt.org>
++*****************************************************************************/
+ 
+ #ifndef QXTNAMESPACE_H
+ #define QXTNAMESPACE_H
++#include "Graphs/define/export.h"
++#include "qxtglobal.h"
+ 
+-#include <qxtglobal.h>
+-
+-#if (defined BUILD_QXT | defined Q_MOC_RUN) && !defined(QXT_DOXYGEN_RUN)
++#if 1 //(defined BUILD_QXT | defined Q_MOC_RUN) && !defined(QXT_DOXYGEN_RUN)
+ #include <QObject>
+ 
+-class QXT_CORE_EXPORT Qxt  : public QObject
++class GRAPHSWIDGETS_EXPORT Qxt  : public QObject
+ {
+     Q_OBJECT
+     Q_ENUMS(Rotation)
+@@ -103,4 +108,4 @@
+     };
+ };
+ 
+-#endif // QXTNAMESPACE_H
++#endif // QXTNAMESPACE_H
+\ No newline at end of file
+diff -Naur orig/qxtspanslider.cpp qxt/qxtspanslider.cpp
+--- orig/qxtspanslider.cpp	2015-04-23 14:07:36.734305000 -0700
++++ qxt/qxtspanslider.cpp	2015-04-23 13:58:34.150079700 -0700
+@@ -1,28 +1,34 @@
+-/****************************************************************************
+- **
+- ** Copyright (C) Qxt Foundation. Some rights reserved.
+- **
+- ** This file is part of the QxtGui module of the Qxt library.
+- **
+- ** This library is free software; you can redistribute it and/or modify it
+- ** under the terms of the Common Public License, version 1.0, as published
+- ** by IBM, and/or under the terms of the GNU Lesser General Public License,
+- ** version 2.1, as published by the Free Software Foundation.
+- **
+- ** This file is provided "AS IS", without WARRANTIES OR CONDITIONS OF ANY
+- ** KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY
+- ** WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR
+- ** FITNESS FOR A PARTICULAR PURPOSE.
+- **
+- ** You should have received a copy of the CPL and the LGPL along with this
+- ** file. See the LICENSE file and the cpl1.0.txt/lgpl-2.1.txt files
+- ** included with the source distribution for more information.
+- ** If you did not receive a copy of the licenses, contact the Qxt Foundation.
+- **
+- ** <http://libqxt.org>  <foundation@libqxt.org>
+- **
+- ****************************************************************************/
+ #include "qxtspanslider.h"
++/****************************************************************************
++** Copyright (c) 2006 - 2011, the LibQxt project.
++** See the Qxt AUTHORS file for a list of authors and copyright holders.
++** All rights reserved.
++**
++** Redistribution and use in source and binary forms, with or without
++** modification, are permitted provided that the following conditions are met:
++**     * Redistributions of source code must retain the above copyright
++**       notice, this list of conditions and the following disclaimer.
++**     * Redistributions in binary form must reproduce the above copyright
++**       notice, this list of conditions and the following disclaimer in the
++**       documentation and/or other materials provided with the distribution.
++**     * Neither the name of the LibQxt project nor the
++**       names of its contributors may be used to endorse or promote products
++**       derived from this software without specific prior written permission.
++**
++** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++** ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++** WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++** DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
++** DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++** (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++** LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++** ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++**
++** <http://libqxt.org>  <foundation@libqxt.org>
++*****************************************************************************/
++
+ #include "qxtspanslider_p.h"
+ #include <QKeyEvent>
+ #include <QMouseEvent>
+@@ -37,8 +43,8 @@
+         upperPos(0),
+         offset(0),
+         position(0),
+-        lastPressed(NoHandle),
+-        mainControl(LowerHandle),
++        lastPressed(QxtSpanSlider::NoHandle),
++        mainControl(QxtSpanSlider::LowerHandle),
+         lowerPressed(QStyle::SC_None),
+         upperPressed(QStyle::SC_None),
+         movement(QxtSpanSlider::FreeMovement),
+@@ -47,30 +53,12 @@
+ {
+ }
+ 
+-// TODO: get rid of this in Qt 4.3
+-void QxtSpanSliderPrivate::initStyleOption(QStyleOptionSlider* option, SpanHandle handle) const
++void QxtSpanSliderPrivate::initStyleOption(QStyleOptionSlider* option, QxtSpanSlider::SpanHandle handle) const
+ {
+-    if (!option)
+-        return;
+-
+-    const QSlider* p = &qxt_p();
+-    option->initFrom(p);
+-    option->subControls = QStyle::SC_None;
+-    option->activeSubControls = QStyle::SC_None;
+-    option->orientation = p->orientation();
+-    option->maximum = p->maximum();
+-    option->minimum = p->minimum();
+-    option->tickPosition = p->tickPosition();
+-    option->tickInterval = p->tickInterval();
+-    option->upsideDown = (p->orientation() == Qt::Horizontal) ?
+-                         (p->invertedAppearance() != (option->direction == Qt::RightToLeft)) : (!p->invertedAppearance());
+-    option->direction = Qt::LeftToRight; // we use the upsideDown option instead
+-    option->sliderPosition = (handle == LowerHandle ? lowerPos : upperPos);
+-    option->sliderValue = (handle == LowerHandle ? lower : upper);
+-    option->singleStep = p->singleStep();
+-    option->pageStep = p->pageStep();
+-    if (p->orientation() == Qt::Horizontal)
+-        option->state |= QStyle::State_Horizontal;
++    const QxtSpanSlider* p = &qxt_p();
++    p->initStyleOption(option);
++    option->sliderPosition = (handle == QxtSpanSlider::LowerHandle ? lowerPos : upperPos);
++    option->sliderValue = (handle == QxtSpanSlider::LowerHandle ? lower : upper);
+ }
+ 
+ int QxtSpanSliderPrivate::pixelPosToRangeValue(int pos) const
+@@ -100,11 +88,11 @@
+                                            sliderMax - sliderMin, opt.upsideDown);
+ }
+ 
+-void QxtSpanSliderPrivate::handleMousePress(const QPoint& pos, QStyle::SubControl& control, int value, SpanHandle handle)
++void QxtSpanSliderPrivate::handleMousePress(const QPoint& pos, QStyle::SubControl& control, int value, QxtSpanSlider::SpanHandle handle)
+ {
+     QStyleOptionSlider opt;
+     initStyleOption(&opt, handle);
+-    QSlider* p = &qxt_p();
++    QxtSpanSlider* p = &qxt_p();
+     const QStyle::SubControl oldControl = control;
+     control = p->style()->hitTestComplexControl(QStyle::CC_Slider, &opt, pos, p);
+     const QRect sr = p->style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderHandle, p);
+@@ -114,6 +102,7 @@
+         offset = pick(pos - sr.topLeft());
+         lastPressed = handle;
+         p->setSliderDown(true);
++        emit p->sliderPressed(handle);
+     }
+     if (control != oldControl)
+         p->update(sr);
+@@ -157,12 +146,12 @@
+     painter->drawRect(rect.intersected(groove));
+ }
+ 
+-void QxtSpanSliderPrivate::drawHandle(QStylePainter* painter, SpanHandle handle) const
++void QxtSpanSliderPrivate::drawHandle(QStylePainter* painter, QxtSpanSlider::SpanHandle handle) const
+ {
+     QStyleOptionSlider opt;
+     initStyleOption(&opt, handle);
+     opt.subControls = QStyle::SC_SliderHandle;
+-    QStyle::SubControl pressed = (handle == LowerHandle ? lowerPressed : upperPressed);
++    QStyle::SubControl pressed = (handle == QxtSpanSlider::LowerHandle ? lowerPressed : upperPressed);
+     if (pressed == QStyle::SC_SliderHandle)
+     {
+         opt.activeSubControls = pressed;
+@@ -178,14 +167,14 @@
+     bool up = false;
+     const int min = qxt_p().minimum();
+     const int max = qxt_p().maximum();
+-    const SpanHandle altControl = (mainControl == LowerHandle ? UpperHandle : LowerHandle);
++    const QxtSpanSlider::SpanHandle altControl = (mainControl == QxtSpanSlider::LowerHandle ? QxtSpanSlider::UpperHandle : QxtSpanSlider::LowerHandle);
+ 
+     blockTracking = true;
+ 
+     switch (action)
+     {
+     case QAbstractSlider::SliderSingleStepAdd:
+-        if ((main && mainControl == UpperHandle) || (!main && altControl == UpperHandle))
++        if ((main && mainControl == QxtSpanSlider::UpperHandle) || (!main && altControl == QxtSpanSlider::UpperHandle))
+         {
+             value = qBound(min, upper + qxt_p().singleStep(), max);
+             up = true;
+@@ -194,7 +183,7 @@
+         value = qBound(min, lower + qxt_p().singleStep(), max);
+         break;
+     case QAbstractSlider::SliderSingleStepSub:
+-        if ((main && mainControl == UpperHandle) || (!main && altControl == UpperHandle))
++        if ((main && mainControl == QxtSpanSlider::UpperHandle) || (!main && altControl == QxtSpanSlider::UpperHandle))
+         {
+             value = qBound(min, upper - qxt_p().singleStep(), max);
+             up = true;
+@@ -204,16 +193,16 @@
+         break;
+     case QAbstractSlider::SliderToMinimum:
+         value = min;
+-        if ((main && mainControl == UpperHandle) || (!main && altControl == UpperHandle))
++        if ((main && mainControl == QxtSpanSlider::UpperHandle) || (!main && altControl == QxtSpanSlider::UpperHandle))
+             up = true;
+         break;
+     case QAbstractSlider::SliderToMaximum:
+         value = max;
+-        if ((main && mainControl == UpperHandle) || (!main && altControl == UpperHandle))
++        if ((main && mainControl == QxtSpanSlider::UpperHandle) || (!main && altControl == QxtSpanSlider::UpperHandle))
+             up = true;
+         break;
+     case QAbstractSlider::SliderMove:
+-        if ((main && mainControl == UpperHandle) || (!main && altControl == UpperHandle))
++        if ((main && mainControl == QxtSpanSlider::UpperHandle) || (!main && altControl == QxtSpanSlider::UpperHandle))
+             up = true;
+     case QAbstractSlider::SliderNoAction:
+         no = true;
+@@ -267,8 +256,8 @@
+ {
+     qSwap(lower, upper);
+     qSwap(lowerPressed, upperPressed);
+-    lastPressed = (lastPressed == LowerHandle ? UpperHandle : LowerHandle);
+-    mainControl = (mainControl == LowerHandle ? UpperHandle : LowerHandle);
++    lastPressed = (lastPressed == QxtSpanSlider::LowerHandle ? QxtSpanSlider::UpperHandle : QxtSpanSlider::LowerHandle);
++    mainControl = (mainControl == QxtSpanSlider::LowerHandle ? QxtSpanSlider::UpperHandle : QxtSpanSlider::LowerHandle);
+ }
+ 
+ void QxtSpanSliderPrivate::updateRange(int min, int max)
+@@ -283,17 +272,17 @@
+ {
+     switch (lastPressed)
+     {
+-        case QxtSpanSliderPrivate::LowerHandle:
++        case QxtSpanSlider::LowerHandle:
+             if (lowerPos != lower)
+             {
+-                bool main = (mainControl == QxtSpanSliderPrivate::LowerHandle);
++                bool main = (mainControl == QxtSpanSlider::LowerHandle);
+                 triggerAction(QAbstractSlider::SliderMove, main);
+             }
+             break;
+-        case QxtSpanSliderPrivate::UpperHandle:
++        case QxtSpanSlider::UpperHandle:
+             if (upperPos != upper)
+             {
+-                bool main = (mainControl == QxtSpanSliderPrivate::UpperHandle);
++                bool main = (mainControl == QxtSpanSlider::UpperHandle);
+                 triggerAction(QAbstractSlider::SliderMove, main);
+             }
+             break;
+@@ -304,7 +293,7 @@
+ 
+ /*!
+     \class QxtSpanSlider
+-    \inmodule QxtGui
++    \inmodule QxtWidgets
+     \brief The QxtSpanSlider widget is a QSlider with two handles.
+ 
+     QxtSpanSlider is a slider with two handles. QxtSpanSlider is
+@@ -364,6 +353,16 @@
+  */
+ 
+ /*!
++    \enum QxtSpanSlider::SpanHandle
++
++    This enum describes the available span handles.
++
++    \omitvalue NoHandle \omit Internal only (for now). \endomit
++    \value LowerHandle The lower boundary handle.
++    \value UpperHandle The upper boundary handle.
++ */
++
++/*!
+     \fn QxtSpanSlider::lowerValueChanged(int lower)
+ 
+     This signal is emitted whenever the \a lower value has changed.
+@@ -395,6 +394,12 @@
+  */
+ 
+ /*!
++    \fn QxtSpanSlider::sliderPressed(SpanHandle handle)
++
++    This signal is emitted whenever the \a handle has been pressed.
++ */
++
++/*!
+     Constructs a new QxtSpanSlider with \a parent.
+  */
+ QxtSpanSlider::QxtSpanSlider(QWidget* parent) : QSlider(parent)
+@@ -509,7 +514,7 @@
+             emit lowerPositionChanged(lower);
+         if (hasTracking() && !qxt_d().blockTracking)
+         {
+-            bool main = (qxt_d().mainControl == QxtSpanSliderPrivate::LowerHandle);
++            bool main = (qxt_d().mainControl == QxtSpanSlider::LowerHandle);
+             qxt_d().triggerAction(SliderMove, main);
+         }
+     }
+@@ -535,7 +540,7 @@
+             emit upperPositionChanged(upper);
+         if (hasTracking() && !qxt_d().blockTracking)
+         {
+-            bool main = (qxt_d().mainControl == QxtSpanSliderPrivate::UpperHandle);
++            bool main = (qxt_d().mainControl == QxtSpanSlider::UpperHandle);
+             qxt_d().triggerAction(SliderMove, main);
+         }
+     }
+@@ -569,11 +574,11 @@
+         action = invertedControls() ? SliderSingleStepAdd : SliderSingleStepSub;
+         break;
+     case Qt::Key_Home:
+-        main   = (qxt_d().mainControl == QxtSpanSliderPrivate::LowerHandle);
++        main   = (qxt_d().mainControl == QxtSpanSlider::LowerHandle);
+         action = SliderToMinimum;
+         break;
+     case Qt::Key_End:
+-        main   = (qxt_d().mainControl == QxtSpanSliderPrivate::UpperHandle);
++        main   = (qxt_d().mainControl == QxtSpanSlider::UpperHandle);
+         action = SliderToMaximum;
+         break;
+     default:
+@@ -596,9 +601,9 @@
+         return;
+     }
+ 
+-    qxt_d().handleMousePress(event->pos(), qxt_d().upperPressed, qxt_d().upper, QxtSpanSliderPrivate::UpperHandle);
++    qxt_d().handleMousePress(event->pos(), qxt_d().upperPressed, qxt_d().upper, QxtSpanSlider::UpperHandle);
+     if (qxt_d().upperPressed != QStyle::SC_SliderHandle)
+-        qxt_d().handleMousePress(event->pos(), qxt_d().lowerPressed, qxt_d().lower, QxtSpanSliderPrivate::LowerHandle);
++        qxt_d().handleMousePress(event->pos(), qxt_d().lowerPressed, qxt_d().lower, QxtSpanSlider::LowerHandle);
+ 
+     qxt_d().firstMovement = true;
+     event->accept();
+@@ -732,14 +737,14 @@
+     // handles
+     switch (qxt_d().lastPressed)
+     {
+-    case QxtSpanSliderPrivate::LowerHandle:
+-        qxt_d().drawHandle(&painter, QxtSpanSliderPrivate::UpperHandle);
+-        qxt_d().drawHandle(&painter, QxtSpanSliderPrivate::LowerHandle);
++    case QxtSpanSlider::LowerHandle:
++        qxt_d().drawHandle(&painter, QxtSpanSlider::UpperHandle);
++        qxt_d().drawHandle(&painter, QxtSpanSlider::LowerHandle);
+         break;
+-    case QxtSpanSliderPrivate::UpperHandle:
++    case QxtSpanSlider::UpperHandle:
+     default:
+-        qxt_d().drawHandle(&painter, QxtSpanSliderPrivate::LowerHandle);
+-        qxt_d().drawHandle(&painter, QxtSpanSliderPrivate::UpperHandle);
++        qxt_d().drawHandle(&painter, QxtSpanSlider::LowerHandle);
++        qxt_d().drawHandle(&painter, QxtSpanSlider::UpperHandle);
+         break;
+     }
+-}
++}
+\ No newline at end of file
+diff -Naur orig/qxtspanslider.h qxt/qxtspanslider.h
+--- orig/qxtspanslider.h	2015-04-23 14:07:54.272042100 -0700
++++ qxt/qxtspanslider.h	2015-04-23 13:58:34.218086500 -0700
+@@ -1,37 +1,43 @@
+-/****************************************************************************
+- **
+- ** Copyright (C) Qxt Foundation. Some rights reserved.
+- **
+- ** This file is part of the QxtGui module of the Qxt library.
+- **
+- ** This library is free software; you can redistribute it and/or modify it
+- ** under the terms of the Common Public License, version 1.0, as published
+- ** by IBM, and/or under the terms of the GNU Lesser General Public License,
+- ** version 2.1, as published by the Free Software Foundation.
+- **
+- ** This file is provided "AS IS", without WARRANTIES OR CONDITIONS OF ANY
+- ** KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY
+- ** WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR
+- ** FITNESS FOR A PARTICULAR PURPOSE.
+- **
+- ** You should have received a copy of the CPL and the LGPL along with this
+- ** file. See the LICENSE file and the cpl1.0.txt/lgpl-2.1.txt files
+- ** included with the source distribution for more information.
+- ** If you did not receive a copy of the licenses, contact the Qxt Foundation.
+- **
+- ** <http://libqxt.org>  <foundation@libqxt.org>
+- **
+- ****************************************************************************/
+ #ifndef QXTSPANSLIDER_H
+-#define QXTSPANSLIDER_H
++/****************************************************************************
++** Copyright (c) 2006 - 2011, the LibQxt project.
++** See the Qxt AUTHORS file for a list of authors and copyright holders.
++** All rights reserved.
++**
++** Redistribution and use in source and binary forms, with or without
++** modification, are permitted provided that the following conditions are met:
++**     * Redistributions of source code must retain the above copyright
++**       notice, this list of conditions and the following disclaimer.
++**     * Redistributions in binary form must reproduce the above copyright
++**       notice, this list of conditions and the following disclaimer in the
++**       documentation and/or other materials provided with the distribution.
++**     * Neither the name of the LibQxt project nor the
++**       names of its contributors may be used to endorse or promote products
++**       derived from this software without specific prior written permission.
++**
++** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++** ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++** WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++** DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
++** DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++** (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++** LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++** ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++**
++** <http://libqxt.org>  <foundation@libqxt.org>
++*****************************************************************************/
+ 
++#define QXTSPANSLIDER_H
++#include "Graphs/define/export.h"
+ #include <QSlider>
+ #include "qxtnamespace.h"
+ #include "qxtglobal.h"
+ 
+ class QxtSpanSliderPrivate;
+ 
+-class QXT_GUI_EXPORT QxtSpanSlider : public QSlider
++class GRAPHSWIDGETS_EXPORT QxtSpanSlider : public QSlider
+ {
+     Q_OBJECT
+     QXT_DECLARE_PRIVATE(QxtSpanSlider)
+@@ -54,6 +60,13 @@
+         NoOverlapping
+     };
+ 
++    enum SpanHandle
++    {
++        NoHandle,
++        LowerHandle,
++        UpperHandle
++    };
++
+     HandleMovementMode handleMovementMode() const;
+     void setHandleMovementMode(HandleMovementMode mode);
+ 
+@@ -79,6 +92,8 @@
+     void lowerPositionChanged(int lower);
+     void upperPositionChanged(int upper);
+ 
++    void sliderPressed(SpanHandle handle);
++
+ protected:
+     virtual void keyPressEvent(QKeyEvent* event);
+     virtual void mousePressEvent(QMouseEvent* event);
+@@ -87,4 +102,4 @@
+     virtual void paintEvent(QPaintEvent* event);
+ };
+ 
+-#endif // QXTSPANSLIDER_H
++#endif // QXTSPANSLIDER_H
+\ No newline at end of file
+diff -Naur orig/qxtspanslider_p.h qxt/qxtspanslider_p.h
+--- orig/qxtspanslider_p.h	2015-04-23 14:08:10.761093900 -0700
++++ qxt/qxtspanslider_p.h	2015-04-23 13:58:34.229087600 -0700
+@@ -1,30 +1,36 @@
+-/****************************************************************************
+- **
+- ** Copyright (C) Qxt Foundation. Some rights reserved.
+- **
+- ** This file is part of the QxtGui module of the Qxt library.
+- **
+- ** This library is free software; you can redistribute it and/or modify it
+- ** under the terms of the Common Public License, version 1.0, as published
+- ** by IBM, and/or under the terms of the GNU Lesser General Public License,
+- ** version 2.1, as published by the Free Software Foundation.
+- **
+- ** This file is provided "AS IS", without WARRANTIES OR CONDITIONS OF ANY
+- ** KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY
+- ** WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR
+- ** FITNESS FOR A PARTICULAR PURPOSE.
+- **
+- ** You should have received a copy of the CPL and the LGPL along with this
+- ** file. See the LICENSE file and the cpl1.0.txt/lgpl-2.1.txt files
+- ** included with the source distribution for more information.
+- ** If you did not receive a copy of the licenses, contact the Qxt Foundation.
+- **
+- ** <http://libqxt.org>  <foundation@libqxt.org>
+- **
+- ****************************************************************************/
+ #ifndef QXTSPANSLIDER_P_H
+-#define QXTSPANSLIDER_P_H
++/****************************************************************************
++** Copyright (c) 2006 - 2011, the LibQxt project.
++** See the Qxt AUTHORS file for a list of authors and copyright holders.
++** All rights reserved.
++**
++** Redistribution and use in source and binary forms, with or without
++** modification, are permitted provided that the following conditions are met:
++**     * Redistributions of source code must retain the above copyright
++**       notice, this list of conditions and the following disclaimer.
++**     * Redistributions in binary form must reproduce the above copyright
++**       notice, this list of conditions and the following disclaimer in the
++**       documentation and/or other materials provided with the distribution.
++**     * Neither the name of the LibQxt project nor the
++**       names of its contributors may be used to endorse or promote products
++**       derived from this software without specific prior written permission.
++**
++** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++** ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++** WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++** DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
++** DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++** (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++** LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++** ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++**
++** <http://libqxt.org>  <foundation@libqxt.org>
++*****************************************************************************/
+ 
++#define QXTSPANSLIDER_P_H
++#include "Graphs/define/export.h"
+ #include <QStyle>
+ #include <QObject>
+ #include "qxtspanslider.h"
+@@ -39,22 +45,15 @@
+ public:
+     QXT_DECLARE_PUBLIC(QxtSpanSlider)
+ 
+-    enum SpanHandle
+-    {
+-        NoHandle,
+-        LowerHandle,
+-        UpperHandle
+-    };
+-
+     QxtSpanSliderPrivate();
+-    void initStyleOption(QStyleOptionSlider* option, SpanHandle handle = UpperHandle) const;
++    void initStyleOption(QStyleOptionSlider* option, QxtSpanSlider::SpanHandle handle = QxtSpanSlider::UpperHandle) const;
+     int pick(const QPoint& pt) const
+     {
+         return qxt_p().orientation() == Qt::Horizontal ? pt.x() : pt.y();
+     }
+     int pixelPosToRangeValue(int pos) const;
+-    void handleMousePress(const QPoint& pos, QStyle::SubControl& control, int value, SpanHandle handle);
+-    void drawHandle(QStylePainter* painter, SpanHandle handle) const;
++    void handleMousePress(const QPoint& pos, QStyle::SubControl& control, int value, QxtSpanSlider::SpanHandle handle);
++    void drawHandle(QStylePainter* painter, QxtSpanSlider::SpanHandle handle) const;
+     void setupPainter(QPainter* painter, Qt::Orientation orientation, qreal x1, qreal y1, qreal x2, qreal y2) const;
+     void drawSpan(QStylePainter* painter, const QRect& rect) const;
+     void triggerAction(QAbstractSlider::SliderAction action, bool main);
+@@ -66,8 +65,8 @@
+     int upperPos;
+     int offset;
+     int position;
+-    SpanHandle lastPressed;
+-    SpanHandle mainControl;
++    QxtSpanSlider::SpanHandle lastPressed;
++    QxtSpanSlider::SpanHandle mainControl;
+     QStyle::SubControl lowerPressed;
+     QStyle::SubControl upperPressed;
+     QxtSpanSlider::HandleMovementMode movement;
+@@ -79,4 +78,4 @@
+     void movePressedHandle();
+ };
+ 
+-#endif // QXTSPANSLIDER_P_H
++#endif // QXTSPANSLIDER_P_H
+\ No newline at end of file

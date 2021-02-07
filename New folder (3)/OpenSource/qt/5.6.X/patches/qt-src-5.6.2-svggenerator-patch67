@@ -1,0 +1,12 @@
+--- qtsvg/src/svg/qsvggenerator.cpp.orig        2017-04-17 09:57:12.110212300 -0700
++++ qtsvg/src/svg/qsvggenerator.cpp     2017-04-17 09:56:05.605696400 -0700
+@@ -795,7 +795,8 @@
+         return d->engine->resolution();
+     case QPaintDevice::PdmDevicePixelRatio:
+     case QPaintDevice::PdmDevicePixelRatioScaled:
+-        return 1;
++    //   Revert behavior, need to log bug report with Qt themselves to close on this issue
++    //    return 1;
+     default:
+         qWarning("QSvgGenerator::metric(), unhandled metric %d\n", metric);
+         break;

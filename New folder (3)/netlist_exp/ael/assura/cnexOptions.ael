@@ -1,0 +1,406 @@
+// Copyright Keysight Technologies 2001 - 2017  
+/* This file should contain code for the netlist export options dialog. 
+   Since each tool will have different options available, this file needs 
+   to be created separately for each potential tool.  Below is the 
+   default Assura options dialog. */
+
+defun toolConvertToBoolean(value)
+{
+   if(value == "1")
+      return(TRUE);
+   else
+      return(FALSE);
+}
+
+/* NOTE: This function should be overridden in user defined AEL functions within 
+   netlist_exp/ael/{%CNEX_TOOL}/cnexOptions.ael.  The options will be different for each  
+   tool. */
+
+defun cnexNetlistDialogOptions_cb(buttonH, mainDlgH, winInst)
+{
+   decl dlgH;
+   decl pbOkay, pbCancel;
+
+   decl tool=cnexGetTool();
+
+   /* Assura option handles and values */
+
+   decl bipolarH, bipolar=FALSE;
+   decl busDelimH, busDelim;
+   decl capaH, capa, capaModelsH, capaModels;
+   decl capareaH, caparea;
+   decl capvalH, capval;
+   decl defaultH, defaultVal;
+   decl defaultWLabel, defaultWH, defaultW;
+   decl defaultLLabel, defaultLH, defaultL;
+   decl defaultQwLabel, defaultQwH, defaultQw;
+   decl defaultQlLabel, defaultQlH, defaultQl;
+   decl defaultRwLabel, defaultRwH, defaultRw;
+   decl defaultRlLabel, defaultRlH, defaultRl;
+   decl diodeH, diode;
+   decl dioareaH, dioarea;
+   decl dioperiH, dioperi;
+   decl equationH, equation;
+   decl equivH, equiv;
+   decl gnonswapH, gnonswap;
+   decl lddH, ldd;
+   decl megaH, mega;
+   decl nosubH, nosub;
+   decl resiH, resi, resiModelsH, resiModels;
+   decl ressizeH, ressize;
+   decl resvalH, resval;
+   decl reverseH, reverse;
+   decl scaleH, scale;
+   decl scaleTypeH, scaleType, scaleItems;
+   decl unspecH, unspec;
+
+   /* Notes: nopin, pin, and pininfo are subcircuit specific, and are not available in 
+      this dialog, which is for setting up global options. edifdelimiter is not specified, 
+      because the netlister is creating CDL format, so it is irrelevant. NONSWAP is the 
+      same as GNONSWAP for global cases, and is not specified. */
+
+   busDelim=getenv("busDelim", tool);
+   defaultVal=toolConvertToBoolean(getenv("defaultVal", tool));
+   defaultW=getenv("defaultW", tool);
+   defaultL=getenv("defaultL", tool);
+   defaultQw=getenv("defaultQw", tool);
+   defaultQl=getenv("defaultQl", tool);
+   defaultRw=getenv("defaultRw", tool);
+   defaultRl=getenv("defaultRl", tool);
+   equation=toolConvertToBoolean(getenv("equation", tool));
+   equiv=getenv("equiv", tool);
+   gnonswap=getenv("gnonswap", tool);
+   ldd=toolConvertToBoolean(getenv("ldd", tool));
+   mega=toolConvertToBoolean(getenv("mega", tool));
+   nosub=toolConvertToBoolean(getenv("nosub", tool));
+   reverse=toolConvertToBoolean(getenv("reverse", tool));
+   scale=toolConvertToBoolean(getenv("scale", tool));
+   scaleType=getenv("scaleType", tool);
+   scaleItems=list("MICRON", "METER");
+   if(!scaleType && !member(scaleType, scaleItems))
+   {
+      scaleType="MICRON";
+   }
+   unspec=toolConvertToBoolean(getenv("unspec", tool));
+
+   decl dlgH=api_dlg_create_dialog (
+      "CnexAssuraOptions",
+      winInst, 
+      API_RN_CAPTION,         "Assura Options",  
+      API_RN_ORIENTATION,     API_RV_VERTICAL,
+      API_RN_DEFAULT_OPTIONS, API_RV_TBL_LEFT,
+      API_RN_TBL_OPTIONS,     API_RV_TBL_LK_HEIGHT|API_RV_TBL_SM_HEIGHT,
+      API_RN_RESIZE_MASK,     API_RV_DLG_MIN_WIDTH|API_RV_DLG_MIN_HEIGHT,
+      API_RN_EQUALIZE_ALL,    FALSE,
+      API_RN_MODE_TYPE,       API_RV_MODAL_DIALOG,
+      defaultH=api_dlg_create_item("defaultH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.DEFAULT",
+         API_RN_TOGGLE_STATE, defaultVal),
+      api_dlg_create_item ("defaultsTable", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_VERTICAL,
+         API_RN_EQUALIZE_ALL, TRUE,
+         API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+         API_RN_CAPTION, "Default values",
+         api_dlg_create_item ("mosWidthLength", API_TABLE_GROUP,
+            API_RN_ORIENTATION, API_RV_HORIZONTAL,
+            API_RN_EQUALIZE_ALL, FALSE,
+            API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+            API_RN_CAPTION, "MOS Defaults",
+            defaultWLabel=api_dlg_create_item("defaultWLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Width",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultWH=api_dlg_create_item("defaultWH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "",
+               API_RN_VALUE, defaultW, 
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultLLabel=api_dlg_create_item("defaultLLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Length",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultLH=api_dlg_create_item("defaultLH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "", 
+               API_RN_SENSITIVE_FLAG, defaultVal, 
+               API_RN_VALUE, defaultL)
+         ),
+         api_dlg_create_item ("bipolarWidthLength", API_TABLE_GROUP,
+            API_RN_ORIENTATION, API_RV_HORIZONTAL,
+            API_RN_EQUALIZE_ALL, FALSE,
+            API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+            API_RN_CAPTION, "Bipolar Defaults",
+            defaultQwLabel=api_dlg_create_item("defaultQwLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Width",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultQwH=api_dlg_create_item("defaultQwH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "",
+               API_RN_VALUE, defaultQw, 
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultQlLabel=api_dlg_create_item("defaultQlLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Length",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultQlH=api_dlg_create_item("defaultQlH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "", 
+               API_RN_SENSITIVE_FLAG, defaultVal, 
+               API_RN_VALUE, defaultQl)
+         ),
+         api_dlg_create_item ("resWidthLength", API_TABLE_GROUP,
+            API_RN_ORIENTATION, API_RV_HORIZONTAL,
+            API_RN_EQUALIZE_ALL, FALSE,
+            API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+            API_RN_CAPTION, "Resistor Defaults",
+            defaultRwLabel=api_dlg_create_item("defaultRwLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Width",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultRwH=api_dlg_create_item("defaultRwH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "",
+               API_RN_VALUE, defaultW, 
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultRlLabel=api_dlg_create_item("defaultRlLabel",
+               API_LABEL_ITEM, API_RN_CAPTION, "Length",
+               API_RN_SENSITIVE_FLAG, defaultVal),
+            defaultRlH=api_dlg_create_item("defaultRlH",
+               API_EDIT_TEXT_ITEM, 
+               API_RN_CAPTION, "", 
+               API_RN_SENSITIVE_FLAG, defaultVal, 
+               API_RN_VALUE, defaultRl)
+         )
+      ),
+      // Add in table for default values here...
+      equationH=api_dlg_create_item("equationH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.EQUATION",
+         API_RN_TOGGLE_STATE, equation),
+      // Add in edit box for equivalent nodes here...
+      // Add in edit box for non-swappable MOSFET devices here...
+      lddH=api_dlg_create_item("lddH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.LDD",
+         API_RN_TOGGLE_STATE, ldd),
+      megaH=api_dlg_create_item("megaH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.MEGA",
+         API_RN_TOGGLE_STATE, mega),
+      nosubH=api_dlg_create_item("nosubH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.NOSUB_M",
+         API_RN_TOGGLE_STATE, nosub),
+      reverseH=api_dlg_create_item("reverseH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.REVERSE",
+         API_RN_TOGGLE_STATE, reverse),
+      api_dlg_create_item ("scaleTable", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_HORIZONTAL,
+         API_RN_EQUALIZE_ALL, FALSE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_LEFT,
+         scaleH=api_dlg_create_item("scaleH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.SCALE",
+            API_RN_TOGGLE_STATE, scale),
+         scaleTypeH=api_dlg_create_item ("scaleTypeH", 
+            API_DROPDOWNLIST_COMBO_ITEM, API_RN_ITEMS, scaleItems,
+            API_RN_VISIBLE_ITEM_COUNT, 2,
+            API_RN_SELECTED_INDEX, 2-listlen(member(scaleType, scaleItems)))
+      ),
+      unspecH=api_dlg_create_item("unspecH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.UNSPEC",
+         API_RN_TOGGLE_STATE, unspec),
+      api_dlg_create_item ("actTabl", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_HORIZONTAL,
+         API_RN_EQUALIZE_ALL, TRUE,
+         API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_FIX_HEIGHT,
+         pbOkay = api_dlg_create_item ("pbOkay", API_PUSH_BUTTON_ITEM,
+            API_RN_CAPTION, "OK"),
+         pbCancel = api_dlg_create_item ("pbCancel", API_PUSH_BUTTON_ITEM,
+            API_RN_CAPTION, "Cancel")
+      )
+   );
+
+   decl defaultValDependents=list(defaultWLabel, defaultWH, defaultLLabel, defaultLH, 
+                                  defaultQwLabel, defaultQwH, defaultQlLabel, defaultQlH, 
+                                  defaultRwLabel, defaultRwH, defaultRlLabel, defaultRlH);
+   api_dlg_add_callback (defaultH, "cnexOptionDefaultCheck_cb", API_VALUE_CHANGED_CALLBACK, defaultValDependents);
+
+   api_dlg_add_callback (pbOkay, "cnexOptionDialogOkay_cb", API_ACTIVATE_CALLBACK, list(dlgH, tool));
+   api_dlg_add_callback (pbCancel, "cnexOptionDialogCancel_cb", API_ACTIVATE_CALLBACK, dlgH);
+
+   api_dlg_manage(dlgH);
+
+}
+
+defun cnexOptionDefaultCheck_cb(checkH, cbData, winInst)
+{
+   decl tmpH=cbData;
+   decl defaultVal;
+
+   api_dlg_get_resources(checkH, API_RN_TOGGLE_STATE, &defaultVal);
+
+   while(tmpH)
+   {
+      api_dlg_set_resources(car(tmpH), API_RN_SENSITIVE_FLAG, defaultVal);
+      tmpH=cdr(tmpH);
+   }
+}
+
+defun cnexOptionDialogOkay_cb(buttonH, cbData, winInst)
+{
+   decl dlgH=nth(0, cbData);
+   decl tool=nth(1, cbData);
+   decl defaultH=api_dlg_find_item(dlgH, "defaultH");
+   decl defaultWH=api_dlg_find_item(dlgH, "defaultWH");
+   decl defaultLH=api_dlg_find_item(dlgH, "defaultLH");
+   decl defaultQwH=api_dlg_find_item(dlgH, "defaultQwH");
+   decl defaultQlH=api_dlg_find_item(dlgH, "defaultQlH");
+   decl defaultRwH=api_dlg_find_item(dlgH, "defaultRwH");
+   decl defaultRlH=api_dlg_find_item(dlgH, "defaultRlH");
+   decl equationH=api_dlg_find_item(dlgH, "equationH");
+   decl equivH=api_dlg_find_item(dlgH, "equivH");
+   decl gnonswapH=api_dlg_find_item(dlgH, "gnonswapH");
+   decl lddH=api_dlg_find_item(dlgH, "lddH");
+   decl megaH=api_dlg_find_item(dlgH, "megaH");
+   decl nosubH=api_dlg_find_item(dlgH, "nosubH");
+   decl reverseH=api_dlg_find_item(dlgH, "reverseH");
+   decl scaleH=api_dlg_find_item(dlgH, "scaleH");
+   decl scaleTypeH=api_dlg_find_item(dlgH, "scaleTypeH");
+   decl unspecH=api_dlg_find_item(dlgH, "unspecH");
+
+   cnexWriteToolOption(defaultH, API_RN_TOGGLE_STATE, "defaultVal", tool);
+   cnexWriteToolOption(defaultWH, API_RN_VALUE, "defaultW", tool);
+   cnexWriteToolOption(defaultLH, API_RN_VALUE, "defaultL", tool);
+   cnexWriteToolOption(defaultQwH, API_RN_VALUE, "defaultQw", tool);
+   cnexWriteToolOption(defaultQlH, API_RN_VALUE, "defaultQl", tool);
+   cnexWriteToolOption(defaultRwH, API_RN_VALUE, "defaultRw", tool);
+   cnexWriteToolOption(defaultRlH, API_RN_VALUE, "defaultRl", tool);
+   cnexWriteToolOption(equationH, API_RN_TOGGLE_STATE, "equation", tool);
+   cnexWriteToolOption(equivH, API_RN_VALUE, "equiv", tool);
+   cnexWriteToolOption(gnonswapH, API_RN_TOGGLE_STATE, "gnonswap", tool);
+   cnexWriteToolOption(lddH, API_RN_TOGGLE_STATE, "ldd", tool);
+   cnexWriteToolOption(megaH, API_RN_TOGGLE_STATE, "mega", tool);
+   cnexWriteToolOption(nosubH, API_RN_TOGGLE_STATE, "nosub", tool);
+   cnexWriteToolOption(reverseH, API_RN_TOGGLE_STATE, "reverse", tool);
+   cnexWriteToolOption(scaleH, API_RN_TOGGLE_STATE, "scale", tool);
+   cnexWriteToolDropdownOption(scaleTypeH, API_RN_SELECTED_INDEX, "scaleType", list("MICRON","METER"), tool);
+   cnexWriteToolOption(unspecH, API_RN_TOGGLE_STATE, "unspec", tool);
+
+   cnexSetupToolOptions(tool);
+
+   api_dlg_unmanage(dlgH);
+}
+
+defun cnexWriteToolOption(itemH, valType, name, tool)
+{
+   decl itemVal;
+   api_dlg_get_resources(itemH, valType, &itemVal);
+
+   if(itemVal == NULL)
+      itemVal="";
+
+   if(is_string(itemVal))
+      setenv(name, itemVal, tool);
+   else
+      setenv(name, identify_value(itemVal), tool);
+}
+
+defun cnexWriteToolDropdownOption(itemH, valType, name, itemList, tool)
+{
+   decl itemVal, itemString;
+   api_dlg_get_resources(itemH, valType, &itemVal);
+   if(itemVal == NULL)
+      itemVal=0;
+   
+   itemString=nth(itemVal, itemList);
+   if(is_string(itemString))
+   {
+      setenv(name, itemString, tool);
+   }
+}
+
+defun cnexCreateNetlistOptionList(value)
+{
+   cnexExportOptionList=append(cnexExportOptionList, list(value));
+}
+
+defun cnexSetupToolOptions(tool)
+{
+   cnexExportOptionList=NULL;
+
+   decl defaultVal=toolConvertToBoolean(getenv("defaultVal", tool));
+   decl defaultString="*.DEFAULT";
+
+   if(defaultVal)
+   {
+      decl defaultW=getenv("defaultW", tool);
+      if(defaultW)
+         defaultString=strcat(defaultString, " W=", defaultW);
+
+      decl defaultL=getenv("defaultL", tool);
+      if(defaultL)
+         defaultString=strcat(defaultString, " L=", defaultL);
+
+      decl defaultQw=getenv("defaultQw", tool);
+      if(defaultQw)
+         defaultString=strcat(defaultString, " QW=", defaultQw);
+
+      decl defaultQl=getenv("defaultQl", tool);
+      if(defaultQl)
+         defaultString=strcat(defaultString, " QL=", defaultQl);
+
+      decl defaultRw=getenv("defaultRw", tool);
+      if(defaultRw)
+         defaultString=strcat(defaultString, " RW=", defaultRw);
+
+      decl defaultRl=getenv("defaultRl", tool);
+      if(defaultRl)
+         defaultString=strcat(defaultString, " RL=", defaultRl);
+
+      cnexCreateNetlistOptionList(defaultString);
+   }
+
+   decl equation=toolConvertToBoolean(getenv("equation", tool));
+   if(equation)
+      cnexCreateNetlistOptionList("*.EQUATION");
+
+   decl equiv=getenv("equiv", tool);
+   if(equiv)
+      cnexCreateNetlistOptionList(strcat("*.EQUIV ", equiv));
+   decl gnonswap=getenv("gnonswap", tool);
+   if(gnonswap)
+      cnexCreateNetlistOptionList(strcat("*.GNONSWAP ", gnonswap));
+
+   decl ldd=toolConvertToBoolean(getenv("ldd", tool));
+   if(ldd)
+      cnexCreateNetlistOptionList("*.LDD");
+
+   decl mega=toolConvertToBoolean(getenv("mega", tool));
+   if(mega)
+      cnexCreateNetlistOptionList("*.MEGA");
+
+   decl nosub=toolConvertToBoolean(getenv("nosub", tool));
+   if(nosub)
+      cnexCreateNetlistOptionList("*.NOSUB");
+
+   decl reverse=toolConvertToBoolean(getenv("reverse", tool));
+   if(reverse)
+      cnexCreateNetlistOptionList("*.REVERSE");
+
+   decl scale=toolConvertToBoolean(getenv("scale", tool));
+   if(scale)
+   {
+      decl scaleType=getenv("scaleType", tool);
+      if(scaleType == "METER")
+         cnexCreateNetlistOptionList("*.SCALE METER");      
+      else
+         cnexCreateNetlistOptionList("*.SCALE");
+   }
+
+   decl unspec=toolConvertToBoolean(getenv("unspec", tool));
+   if(unspec)
+      cnexCreateNetlistOptionList("*.UNSPEC");
+      
+}
+
+defun cnexOptionDialogCancel_cb(buttonH, dlgH, winInst)
+{
+   api_dlg_unmanage(dlgH);
+}
+
+// Make sure to set up the option list when loading the file.
+cnexSetupToolOptions(cnexGetTool());

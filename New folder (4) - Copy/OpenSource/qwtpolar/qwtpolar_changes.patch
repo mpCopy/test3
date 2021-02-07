@@ -1,0 +1,1884 @@
+diff -Naur qwtpolar/src/qwt_polar_canvas.cpp qwtpolar_1.0.1.original/src/qwt_polar_canvas.cpp
+--- qwtpolar/src/qwt_polar_canvas.cpp	2014-08-28 16:58:48.239692162 -0700
++++ qwtpolar_1.0.1.original/src/qwt_polar_canvas.cpp	2013-03-01 14:55:19.000000000 -0800
+@@ -214,8 +214,8 @@
+                 {
+                     QWidget *bgWidget = qwtBackgroundWidget( plot() );
+ 
+-                    QwtPainter::fillPixmap( bgWidget, bs,
+-                        mapTo( bgWidget, rect().topLeft() ) );
++					QwtPainter::fillPixmap( bgWidget, bs,
++						mapTo( bgWidget, rect().topLeft() ) );
+ 
+                     p.begin( &bs );
+                 }
+@@ -318,5 +318,3 @@
+ 
+     return pos.toPoint();
+ }
+-
+-
+diff -Naur qwtpolar/src/qwt_polar_canvas.h qwtpolar_1.0.1.original/src/qwt_polar_canvas.h
+--- qwtpolar/src/qwt_polar_canvas.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_canvas.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,79 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_CANVAS_H
++#define QWT_POLAR_CANVAS_H 1
++
++#include "qwt_polar_global.h"
++#include <qwt_point_polar.h>
++#include <qframe.h>
++
++class QPainter;
++class QwtPolarPlot;
++
++/*!
++  \brief Canvas of a QwtPolarPlot.
++
++  The canvas is the widget, where all polar items are painted to.
++
++  \note In opposite to QwtPlot all axes are painted on the canvas.
++  \sa QwtPolarPlot
++*/
++class QWT_POLAR_EXPORT QwtPolarCanvas: public QFrame
++{
++    Q_OBJECT
++
++public:
++    /*!
++      \brief Paint attributes
++
++      The default setting enables BackingStore
++
++      \sa setPaintAttribute(), testPaintAttribute(), backingStore()
++     */
++
++    enum PaintAttribute
++    {
++        /*!
++          Paint double buffered and reuse the content of the pixmap buffer
++          for some spontaneous repaints that happen when a plot gets unhidden,
++          deiconified or changes the focus.
++         */
++        BackingStore = 0x01
++    };
++
++    //! Paint attributes
++    typedef QFlags<PaintAttribute> PaintAttributes;
++
++    explicit QwtPolarCanvas( QwtPolarPlot * );
++    virtual ~QwtPolarCanvas();
++
++    QwtPolarPlot *plot();
++    const QwtPolarPlot *plot() const;
++
++    void setPaintAttribute( PaintAttribute, bool on = true );
++    bool testPaintAttribute( PaintAttribute ) const;
++
++    const QPixmap *backingStore() const;
++    void invalidateBackingStore();
++
++    QwtPointPolar invTransform( const QPoint & ) const;
++    QPoint transform( const QwtPointPolar & ) const;
++
++protected:
++    virtual void paintEvent( QPaintEvent * );
++    virtual void resizeEvent( QResizeEvent * );
++
++private:
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++Q_DECLARE_OPERATORS_FOR_FLAGS( QwtPolarCanvas::PaintAttributes )
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_curve.cpp qwtpolar_1.0.1.original/src/qwt_polar_curve.cpp
+--- qwtpolar/src/qwt_polar_curve.cpp	2014-09-24 10:32:45.112436470 -0700
++++ qwtpolar_1.0.1.original/src/qwt_polar_curve.cpp	2013-03-01 14:55:19.000000000 -0800
+@@ -304,9 +304,9 @@
+         return;
+ 
+     if ( to < 0 )
+-        to = (int)dataSize() - 1;
++        to = dataSize() - 1;
+ 
+-    if ( qwtVerifyRange( (int)dataSize(), from, to ) > 0 )
++    if ( qwtVerifyRange( dataSize(), from, to ) > 0 )
+     {
+         painter->save();
+         painter->setPen( d_data->pen );
+@@ -407,13 +407,11 @@
+         for ( int i = from; i <= to; i++ )
+         {
+             QwtPointPolar point = sample( i );
+-            Q_ASSERT_X(point.radius() >= 0, __FUNCTION__, QString(" \xE2\x98\xA0 ! got Radius < 0.0 "));
+             if ( !qwtInsidePole( radialMap, point.radius() ) )
+             {
+-                double r       = radialMap.transform( point.radius() );
++                double r = radialMap.transform( point.radius() );
+                 const double a = azimuthMap.transform( point.azimuth() );
+-                auto pos_xy    = qwtPolar2Pos( pole, r, a /*radians!*/ );
+-                polylineData[i - from] = pos_xy;
++                polylineData[i - from] = qwtPolar2Pos( pole, r, a );
+             }
+             else
+             {
+diff -Naur qwtpolar/src/qwt_polar_curve.h qwtpolar_1.0.1.original/src/qwt_polar_curve.h
+--- qwtpolar/src/qwt_polar_curve.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_curve.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,161 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_CURVE_H
++#define QWT_POLAR_CURVE_H
++
++#include "qwt_polar_global.h"
++#include "qwt_polar_item.h"
++#include <qwt_point_polar.h>
++#include <qwt_series_data.h>
++
++class QPainter;
++class QwtSymbol;
++class QwtCurveFitter;
++
++/*!
++  \brief An item, that represents a series of points
++
++  A curve is the representation of a series of points in polar coordinates.
++  The points are connected to the curve using the abstract QwtData interface.
++
++  \sa QwtPolarPlot, QwtSymbol, QwtScaleMap
++*/
++
++class QWT_POLAR_EXPORT QwtPolarCurve: public QwtPolarItem
++{
++public:
++    /*!
++        Curve styles.
++        \sa setStyle(), style()
++    */
++    enum CurveStyle
++    {
++        //! Don't draw a curve. Note: This doesn't affect the symbols.
++        NoCurve,
++
++        /*!
++          Connect the points with straight lines. The lines might
++          be interpolated depending on the 'Fitted' attribute. Curve
++          fitting can be configured using setCurveFitter().
++         */
++        Lines,
++
++        //! Values > 100 are reserved for user specific curve styles
++        UserCurve = 100
++    };
++
++    /*!
++        \brief Attributes how to represent the curve on the legend
++
++        If none of the flags is activated QwtPlotCurve tries to find
++        a color representing the curve and paints a rectangle with it.
++        In the default setting all attributes are off.
++
++        \sa setLegendAttribute(), testLegendAttribute()
++     */
++
++    enum LegendAttribute
++    {
++        /*!
++          If the curveStyle() is not NoCurve a line is painted with the
++          curvePen().
++         */
++        LegendShowLine = 0x01,
++
++        //! If the curve has a valid symbol it is painted.
++        LegendShowSymbol = 0x02
++    };
++
++    //! Legend attributes
++    typedef QFlags<LegendAttribute> LegendAttributes;
++
++
++    explicit QwtPolarCurve();
++    explicit QwtPolarCurve( const QwtText &title );
++    explicit QwtPolarCurve( const QString &title );
++
++    virtual ~QwtPolarCurve();
++
++    virtual int rtti() const;
++
++    void setLegendAttribute( LegendAttribute, bool on = true );
++    bool testLegendAttribute( LegendAttribute ) const;
++
++    void setData( QwtSeriesData<QwtPointPolar> *data );
++    const QwtSeriesData<QwtPointPolar> *data() const;
++
++    size_t dataSize() const;
++    QwtPointPolar sample( int i ) const;
++
++    void setPen( const QPen & );
++    const QPen &pen() const;
++
++    void setStyle( CurveStyle style );
++    CurveStyle style() const;
++
++    void setSymbol( QwtSymbol * );
++    const QwtSymbol *symbol() const;
++
++    void setCurveFitter( QwtCurveFitter * );
++    QwtCurveFitter *curveFitter() const;
++
++    virtual void draw( QPainter *p,
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, double radius,
++        const QRectF &canvasRect ) const;
++
++    virtual void draw( QPainter *p,
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, int from, int to ) const;
++
++    virtual QwtInterval boundingInterval( int scaleId ) const;
++
++    virtual QwtGraphic legendIcon( int index, const QSizeF & ) const;
++
++protected:
++
++    void init();
++
++    virtual void drawCurve( QPainter *, int style,
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, int from, int to ) const;
++
++    virtual void drawSymbols( QPainter *, const QwtSymbol &,
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, int from, int to ) const;
++
++    void drawLines( QPainter *,
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, int from, int to ) const;
++
++private:
++    QwtSeriesData<QwtPointPolar> *d_series;
++
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++//! \return the the curve data
++inline const QwtSeriesData<QwtPointPolar> *QwtPolarCurve::data() const
++{
++    return d_series;
++}
++
++/*!
++    \param i index
++    \return point at position i
++*/
++inline QwtPointPolar QwtPolarCurve::sample( int i ) const
++{
++    return d_series->sample( i );
++}
++
++Q_DECLARE_OPERATORS_FOR_FLAGS( QwtPolarCurve::LegendAttributes )
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_fitter.h qwtpolar_1.0.1.original/src/qwt_polar_fitter.h
+--- qwtpolar/src/qwt_polar_fitter.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_fitter.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,40 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_FITTER_H
++#define QWT_POLAR_FITTER_H
++
++#include "qwt_polar_global.h"
++#include <qwt_curve_fitter.h>
++
++/*!
++  \brief A simple curve fitter for polar points
++
++  QwtPolarFitter adds equidistant points between 2 curve points,
++  so that the connection gets rounded according to the nature of
++  a polar plot.
++
++  \sa QwtPolarCurve::setCurveFitter()
++*/
++class QWT_POLAR_EXPORT QwtPolarFitter: public QwtCurveFitter
++{
++public:
++    QwtPolarFitter( int stepCount = 5 );
++    virtual ~QwtPolarFitter();
++
++    void setStepCount( int size );
++    int stepCount() const;
++
++    virtual QPolygonF fitCurve( const QPolygonF & ) const;
++
++private:
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_global.h qwtpolar_1.0.1.original/src/qwt_polar_global.h
+--- qwtpolar/src/qwt_polar_global.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_global.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,43 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_GLOBAL_H
++#define QWT_POLAR_GLOBAL_H
++
++#include <qglobal.h>
++
++// QWT_POLAR_VERSION is (major << 16) + (minor << 8) + patch.
++
++#define QWT_POLAR_VERSION       0x010000
++#define QWT_POLAR_VERSION_STR   "1.0.0"
++
++#if defined(Q_WS_WIN) || defined(Q_WS_S60)
++
++#if defined(_MSC_VER) /* MSVC Compiler */
++/* template-class specialization 'identifier' is already instantiated */
++#pragma warning(disable: 4660)
++#endif // _MSC_VER
++
++#ifdef QWT_POLAR_DLL
++
++#if defined(QWT_POLAR_MAKEDLL)     // create a Qwt DLL library 
++#define QWT_POLAR_EXPORT  __declspec(dllexport)
++#define QWT_POLAR_TEMPLATEDLL
++#else                        // use a Qwt DLL library
++#define QWT_POLAR_EXPORT  __declspec(dllimport)
++#endif
++
++#endif // QWT_POLAR_MAKEDLL
++
++#endif // Q_WS_WIN
++
++#ifndef QWT_POLAR_EXPORT
++#define QWT_POLAR_EXPORT
++#endif
++
++#endif // QWT_POLAR_GLOBAL_H
+diff -Naur qwtpolar/src/qwt_polar_grid.h qwtpolar_1.0.1.original/src/qwt_polar_grid.h
+--- qwtpolar/src/qwt_polar_grid.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_grid.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,187 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_GRID_H
++#define QWT_POLAR_GRID_H
++
++#include "qwt_polar_global.h"
++#include "qwt_polar.h"
++#include "qwt_polar_item.h"
++#include "qwt_polar_plot.h"
++
++class QPainter;
++class QPen;
++class QwtScaleMap;
++class QwtScaleDiv;
++class QwtRoundScaleDraw;
++class QwtScaleDraw;
++
++/*!
++  \brief An item which draws scales and grid lines on a polar plot.
++
++  The QwtPolarGrid class can be used to draw a coordinate grid.
++  A coordinate grid consists of major and minor gridlines.
++  The locations of the gridlines are determined by the azimuth and radial
++  scale divisions.
++
++  QwtPolarGrid is also responsible for drawing the axis representing the
++  scales. It is possible to display 4 radial and one azimuth axis.
++
++  Whenever the scale divisions of the plot widget changes the grid
++  is synchronized by updateScaleDiv().
++
++  \sa QwtPolarPlot, QwtPolar::Axis
++*/
++
++class QWT_POLAR_EXPORT QwtPolarGrid: public QwtPolarItem
++{
++public:
++    /*!
++       Mysterious flags trying to avoid conflicts, when painting the
++       scales and grid lines.
++
++      The default setting enables all flags.
++
++      \sa setDisplayFlag(), testDisplayFlag()
++     */
++    enum DisplayFlag
++    {
++        /*!
++          Try to avoid situations, where the label of the origin is
++          painted over another axis.
++         */
++        SmartOriginLabel = 1,
++
++        /*!
++        Often the outermost tick of the radial scale is close to the
++        canvas border. With HideMaxRadiusLabel enabled it is not painted.
++         */
++        HideMaxRadiusLabel = 2,
++
++        /*!
++        The tick labels of the radial scales might be hard to read, when
++        they are painted on top of the radial grid lines ( or on top
++        of a curve/spectrogram ). When ClipAxisBackground the bounding rect
++        of each label is added to the clip region.
++         */
++        ClipAxisBackground = 4,
++
++        /*!
++        Don't paint the backbone of the radial axes, when they are very close
++        to a line of the azimuth grid.
++         */
++        SmartScaleDraw = 8,
++
++        /*!
++        All grid lines are clipped against the plot area before being painted.
++        When the plot is zoomed in this will have an significant impact
++        on the performance of the painting cde.
++         */
++        ClipGridLines = 16
++    };
++
++    //! Display flags
++    typedef QFlags<DisplayFlag> DisplayFlags;
++
++    /*!
++      \brief Grid attributes
++      \sa setGridAttributes(), testGridAttributes()
++     */
++    enum GridAttribute
++    {
++        /*!
++          When AutoScaling is enabled, the radial axes will be adjusted
++          to the interval, that is currently visible on the canvas plot.
++         */
++        AutoScaling = 0x01
++    };
++
++    //! Grid attributes
++    typedef QFlags<GridAttribute> GridAttributes;
++
++    explicit QwtPolarGrid();
++    virtual ~QwtPolarGrid();
++
++    virtual int rtti() const;
++
++    void setDisplayFlag( DisplayFlag, bool on = true );
++    bool testDisplayFlag( DisplayFlag ) const;
++
++    void setGridAttribute( GridAttribute, bool on = true );
++    bool testGridAttribute( GridAttribute ) const;
++
++    void showGrid( int scaleId, bool show = true );
++    bool isGridVisible( int scaleId ) const;
++
++    void showMinorGrid( int scaleId, bool show = true );
++    bool isMinorGridVisible( int scaleId ) const;
++
++    void showAxis( int axisId, bool show = true );
++    bool isAxisVisible( int axisId ) const;
++
++    void setPen( const QPen &p );
++    void setFont( const QFont & );
++
++    void setMajorGridPen( const QPen &p );
++    void setMajorGridPen( int scaleId, const QPen &p );
++    QPen majorGridPen( int scaleId ) const;
++
++    void setMinorGridPen( const QPen &p );
++    void setMinorGridPen( int scaleId, const QPen &p );
++    QPen minorGridPen( int scaleId ) const;
++
++    void setAxisPen( int axisId, const QPen &p );
++    QPen axisPen( int axisId ) const;
++
++    void setAxisFont( int axisId, const QFont &p );
++    QFont axisFont( int axisId ) const;
++
++    void setScaleDraw( int axisId, QwtScaleDraw * );
++    const QwtScaleDraw *scaleDraw( int axisId ) const;
++    QwtScaleDraw *scaleDraw( int axisId );
++
++    void setAzimuthScaleDraw( QwtRoundScaleDraw * );
++    const QwtRoundScaleDraw *azimuthScaleDraw() const;
++    QwtRoundScaleDraw *azimuthScaleDraw();
++
++    virtual void draw( QPainter *p,
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, double radius,
++        const QRectF &rect ) const;
++
++    virtual void updateScaleDiv( const QwtScaleDiv &azimuthMap,
++        const QwtScaleDiv &radialMap, const QwtInterval & );
++
++    virtual int marginHint() const;
++
++protected:
++    void drawRays( QPainter *, const QRectF &,
++        const QPointF &pole, double radius,
++        const QwtScaleMap &azimuthMap, const QList<double> & ) const;
++    void drawCircles( QPainter *, const QRectF &,
++        const QPointF &pole, const QwtScaleMap &radialMap,
++        const QList<double> & ) const;
++
++    void drawAxis( QPainter *, int axisId ) const;
++
++private:
++    void updateScaleDraws(
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, const double radius ) const;
++
++private:
++    class GridData;
++    class AxisData;
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++Q_DECLARE_OPERATORS_FOR_FLAGS( QwtPolarGrid::DisplayFlags )
++Q_DECLARE_OPERATORS_FOR_FLAGS( QwtPolarGrid::GridAttributes )
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar.h qwtpolar_1.0.1.original/src/qwt_polar.h
+--- qwtpolar/src/qwt_polar.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,84 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_H
++#define QWT_POLAR_H 1
++
++#include "qwt_polar_global.h"
++
++namespace QwtPolar
++{
++    //! Unit of an angle
++    enum AngleUnit
++    {
++        //! 0.0 -> 2_M_PI
++        Radians,
++
++        //! 0.0 -> 360.0
++        Degrees,
++
++        //! 0.0 - 400.0
++        Gradians,
++
++        //! 0.0 - 1.0
++        Turns
++    };
++
++    //! An enum, that identifies the type of a coordinate
++    enum Coordinate
++    {
++        //! Azimuth
++        Azimuth,
++
++        //! Radius
++        Radius
++    };
++
++    /*!
++      Indices used to identify an axis.
++      \sa Scale
++     */
++    enum Axis
++    {
++        //! Azimuth axis
++        AxisAzimuth,
++
++        //! Left axis
++        AxisLeft,
++
++        //! Right axis
++        AxisRight,
++
++        //! Top axis
++        AxisTop,
++
++        //! Bottom axis
++        AxisBottom,
++
++        //! Number of available axis
++        AxesCount
++    };
++
++    /*!
++      Indices used to identify a scale.
++      \sa Axis
++     */
++    enum Scale
++    {
++        //! Azimuth scale
++        ScaleAzimuth = Azimuth,
++
++        //! Radial scale
++        ScaleRadius = Radius,
++
++        //! Number of scales
++        ScaleCount
++    };
++}
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_item.cpp qwtpolar_1.0.1.original/src/qwt_polar_item.cpp
+--- qwtpolar/src/qwt_polar_item.cpp	2014-08-28 16:58:48.243692220 -0700
++++ qwtpolar_1.0.1.original/src/qwt_polar_item.cpp	2013-03-01 14:55:19.000000000 -0800
+@@ -12,7 +12,7 @@
+ #include <qwt_scale_div.h>
+ #include <qpainter.h>
+ 
+-class QWT_POLAR_EXPORT QwtPolarItem::PrivateData
++class QwtPolarItem::PrivateData
+ {
+ public:
+     PrivateData():
+@@ -93,9 +93,9 @@
+    detach() is equivalent to calling attach( NULL )
+    \sa attach()
+ */
+-void QwtPolarItem::detach()
+-{
+-    attach( NULL );
++void QwtPolarItem::detach() 
++{ 
++    attach( NULL ); 
+ }
+ 
+ /*!
+@@ -258,8 +258,8 @@
+ }
+ 
+ /*!
+-   On multi core systems rendering of certain plot item
+-   ( f.e QwtPolarSpectrogram ) can be done in parallel in
++   On multi core systems rendering of certain plot item 
++   ( f.e QwtPolarSpectrogram ) can be done in parallel in 
+    several threads.
+ 
+    The default setting is set to 1.
+@@ -417,11 +417,11 @@
+    showing an icon and a text.
+ 
+    QwtLegendData is basically a list of QVariants that makes it
+-   possible to overload and reimplement legendData() to
++   possible to overload and reimplement legendData() to 
+    return almost any type of information, that is understood
+    by the receiver that acts as the legend.
+ 
+-   The default implementation returns one entry with
++   The default implementation returns one entry with 
+    the title() of the item and the legendIcon().
+ 
+    \sa title(), legendIcon(), QwtLegend
+@@ -456,7 +456,7 @@
+ 
+    The default implementation returns an invalid icon
+ 
+-   \param index Index of the legend entry
++   \param index Index of the legend entry 
+                 ( usually there is only one )
+    \param size Icon size
+ 
+diff -Naur qwtpolar/src/qwt_polar_itemdict.h qwtpolar_1.0.1.original/src/qwt_polar_itemdict.h
+--- qwtpolar/src/qwt_polar_itemdict.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_itemdict.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,55 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_ITEMDICT_H
++#define QWT_POLAR_ITEMDICT_H
++
++/*! \file !*/
++
++#include "qwt_polar_global.h"
++#include "qwt_polar_item.h"
++#include <qlist.h>
++
++typedef QList<QwtPolarItem *>::ConstIterator QwtPolarItemIterator;
++/// \var typedef QList< QwtPolarItem *> QwtPolarItemList
++/// \brief See QT 4.x assistant documentation for QList
++typedef QList<QwtPolarItem *> QwtPolarItemList;
++
++/*!
++  \brief A dictionary for polar plot items
++
++  QwtPolarItemDict organizes polar plot items in increasing z-order.
++  If autoDelete() is enabled, all attached items will be deleted
++  in the destructor of the dictionary.
++
++  \sa QwtPolarItem::attach(), QwtPolarItem::detach(), QwtPolarItem::z()
++*/
++class QWT_POLAR_EXPORT QwtPolarItemDict
++{
++public:
++    explicit QwtPolarItemDict();
++    ~QwtPolarItemDict();
++
++    void setAutoDelete( bool );
++    bool autoDelete() const;
++
++    const QwtPolarItemList& itemList() const;
++
++    void detachItems( int rtti = QwtPolarItem::Rtti_PolarItem,
++        bool autoDelete = true );
++
++protected:
++    void insertItem( QwtPolarItem * );
++    void removeItem( QwtPolarItem * );
++
++private:
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_item.h qwtpolar_1.0.1.original/src/qwt_polar_item.h
+--- qwtpolar/src/qwt_polar_item.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_item.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,178 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_ITEM_H
++#define QWT_POLAR_ITEM_H
++
++#include "qwt_polar_global.h"
++#include <qwt_text.h>
++#include <qwt_legend_data.h>
++#include <qwt_graphic.h>
++#include <qwt_interval.h>
++
++class QString;
++class QRect;
++class QPointF;
++class QPainter;
++class QwtPolarPlot;
++class QwtScaleMap;
++class QwtScaleDiv;
++
++/*!
++  \brief Base class for items on a polar plot
++
++  A QwtPolarItem is "something that can be painted on the canvas".
++  It is connected to the QwtPolar framework by a couple of virtual
++  methods, that are individually implemented in derived item classes.
++
++  QwtPolar offers an implementation of the most common types of items,
++  but deriving from QwtPolarItem makes it easy to implement additional
++  types of items.
++*/
++class QWT_POLAR_EXPORT QwtPolarItem
++{
++public:
++    /*!
++        \brief Runtime type information
++
++        RttiValues is used to cast plot items, without
++        having to enable runtime type information of the compiler.
++     */
++    enum RttiValues
++    {
++        //! Unspecific value, that can be used, when it doesn't matter
++        Rtti_PolarItem = 0,
++
++        //! For QwtPolarGrid
++        Rtti_PolarGrid,
++
++        //! For QwtPolarMarker
++        Rtti_PolarMarker,
++
++        //! For QwtPolarCurve
++        Rtti_PolarCurve,
++
++        //! For QwtPolarSpectrogram
++        Rtti_PolarSpectrogram,
++
++        /*! 
++           Values >= Rtti_PolarUserItem are reserved for plot items
++           not implemented in the QwtPolar library.
++         */
++        Rtti_PolarUserItem = 1000
++    };
++
++    /*!
++       \brief Plot Item Attributes
++       \sa setItemAttribute(), testItemAttribute()
++     */
++    enum ItemAttribute
++    {
++        //! The item is represented on the legend.
++        Legend    = 0x01,
++
++        /*!
++          The boundingRect() of the item is included in the
++          autoscaling calculation.
++         */
++        AutoScale = 0x02
++    };
++
++    //! Item attributes
++    typedef QFlags<ItemAttribute> ItemAttributes;
++
++    /*!
++       \brief Render hints
++       \sa setRenderHint(), testRenderHint()
++     */
++    enum RenderHint
++    {
++        //! Enable antialiasing
++        RenderAntialiased = 0x01
++    };
++
++    //! Item attributes
++    typedef QFlags<RenderHint> RenderHints;
++
++    explicit QwtPolarItem( const QwtText &title = QwtText() );
++    virtual ~QwtPolarItem();
++
++    void attach( QwtPolarPlot *plot );
++    void detach();
++
++    QwtPolarPlot *plot() const;
++
++    void setTitle( const QString &title );
++    void setTitle( const QwtText &title );
++    const QwtText &title() const;
++
++    virtual int rtti() const;
++
++    void setItemAttribute( ItemAttribute, bool on = true );
++    bool testItemAttribute( ItemAttribute ) const;
++
++    void setRenderHint( RenderHint, bool on = true );
++    bool testRenderHint( RenderHint ) const;
++
++    void setRenderThreadCount( uint numThreads );
++    uint renderThreadCount() const;
++
++    double z() const;
++    void setZ( double z );
++
++    void show();
++    void hide();
++    virtual void setVisible( bool );
++    bool isVisible () const;
++
++    virtual void itemChanged();
++    virtual void legendChanged();
++
++    /*!
++      \brief Draw the item
++
++      \param painter Painter
++      \param azimuthMap Maps azimuth values to values related to 0.0, M_2PI
++      \param radialMap Maps radius values into painter coordinates.
++      \param pole Position of the pole in painter coordinates
++      \param radius Radius of the complete plot area in painter coordinates
++      \param canvasRect Contents rect of the canvas in painter coordinates
++    */
++    virtual void draw( QPainter *painter,
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, double radius,
++        const QRectF &canvasRect ) const = 0;
++
++    virtual QwtInterval boundingInterval( int scaleId ) const;
++
++    virtual void updateScaleDiv( const QwtScaleDiv &,
++        const QwtScaleDiv &, const QwtInterval & );
++
++    virtual int marginHint() const;
++
++    void setLegendIconSize( const QSize & );
++    QSize legendIconSize() const;
++
++    virtual QList<QwtLegendData> legendData() const;
++    virtual QwtGraphic legendIcon( int index, const QSizeF  & ) const;
++
++private:
++    // Disabled copy constructor and operator=
++    QwtPolarItem( const QwtPolarItem & );
++    QwtPolarItem &operator=( const QwtPolarItem & );
++
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++Q_DECLARE_OPERATORS_FOR_FLAGS( QwtPolarItem::ItemAttributes )
++Q_DECLARE_OPERATORS_FOR_FLAGS( QwtPolarItem::RenderHints )
++
++Q_DECLARE_METATYPE( QwtPolarItem * )
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_layout.cpp qwtpolar_1.0.1.original/src/qwt_polar_layout.cpp
+--- qwtpolar/src/qwt_polar_layout.cpp	2014-08-28 16:58:48.238692147 -0700
++++ qwtpolar_1.0.1.original/src/qwt_polar_layout.cpp	2013-03-01 14:55:19.000000000 -0800
+@@ -104,8 +104,8 @@
+     QwtPolarPlot::LegendPosition legendPos;
+     double legendRatio;
+ 
+-    int margin;
+-    int spacing;
++    unsigned int margin;
++    unsigned int spacing;
+ };
+ 
+ /*!
+diff -Naur qwtpolar/src/qwt_polar_layout.h qwtpolar_1.0.1.original/src/qwt_polar_layout.h
+--- qwtpolar/src/qwt_polar_layout.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_layout.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,78 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_LAYOUT_H
++#define QWT_POLAR_LAYOUT_H
++
++#include "qwt_polar_global.h"
++#include "qwt_polar_plot.h"
++
++/*!
++  \brief Layout class for QwtPolarPlot.
++
++  Organizes the geometry for the different QwtPolarPlot components.
++  It is used by the QwtPolar widget to organize its internal widgets
++  or by QwtPolarRnderer to render its content to a QPaintDevice like
++  a QPrinter, QPixmap/QImage or QSvgRenderer.
++*/
++
++class QWT_POLAR_EXPORT QwtPolarLayout
++{
++public:
++
++    //! \brief Options to configure the plot layout engine
++    enum Option
++    {
++        //! Ignore the dimension of the scrollbars.
++        IgnoreScrollbars = 0x01,
++
++        //! Ignore all frames.
++        IgnoreFrames     = 0x02,
++
++        //! Ignore the title.
++        IgnoreTitle      = 0x04,
++
++        //! Ignore the legend.
++        IgnoreLegend     = 0x08
++    };
++
++    //! Options to configure the plot layout engine
++    typedef QFlags<Option> Options;
++
++    explicit QwtPolarLayout();
++    virtual ~QwtPolarLayout();
++
++    void setLegendPosition( QwtPolarPlot::LegendPosition pos, double ratio );
++    void setLegendPosition( QwtPolarPlot::LegendPosition pos );
++    QwtPolarPlot::LegendPosition legendPosition() const;
++
++    void setLegendRatio( double ratio );
++    double legendRatio() const;
++
++    virtual void activate( const QwtPolarPlot *,
++        const QRectF &rect, Options options = 0 );
++
++    virtual void invalidate();
++
++    const QRectF &titleRect() const;
++    const QRectF &legendRect() const;
++    const QRectF &canvasRect() const;
++
++    class LayoutData;
++
++protected:
++    QRectF layoutLegend( Options options, QRectF & ) const;
++
++private:
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++Q_DECLARE_OPERATORS_FOR_FLAGS( QwtPolarLayout::Options )
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_magnifier.h qwtpolar_1.0.1.original/src/qwt_polar_magnifier.h
+--- qwtpolar/src/qwt_polar_magnifier.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_magnifier.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,58 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_MAGNIFIER_H
++#define QWT_POLAR_MAGNIFIER_H 1
++
++#include "qwt_polar_global.h"
++#include "qwt_magnifier.h"
++
++class QwtPolarPlot;
++class QwtPolarCanvas;
++
++/*!
++  \brief QwtPolarMagnifier provides zooming, by magnifying in steps.
++
++  Using QwtPlotMagnifier a plot can be zoomed in/out in steps using
++  keys, the mouse wheel or moving a mouse button in vertical direction.
++
++  Together with QwtPolarPanner it is possible to implement
++  an individual navigation of the plot canvas.
++
++  \sa QwtPolarPanner, QwtPolarPlot, QwtPolarCanvas
++*/
++
++class QWT_POLAR_EXPORT QwtPolarMagnifier: public QwtMagnifier
++{
++    Q_OBJECT
++
++public:
++    explicit QwtPolarMagnifier( QwtPolarCanvas * );
++    virtual ~QwtPolarMagnifier();
++
++    void setUnzoomKey( int key, int modifiers );
++    void getUnzoomKey( int &key, int &modifiers ) const;
++
++    QwtPolarPlot *plot();
++    const QwtPolarPlot *plot() const;
++
++    QwtPolarCanvas *canvas();
++    const QwtPolarCanvas *canvas() const;
++
++protected:
++    virtual void rescale( double factor );
++    void unzoom();
++
++    virtual void widgetKeyPressEvent( QKeyEvent * );
++
++private:
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_marker.cpp qwtpolar_1.0.1.original/src/qwt_polar_marker.cpp
+--- qwtpolar/src/qwt_polar_marker.cpp	2014-08-28 16:58:48.271692619 -0700
++++ qwtpolar_1.0.1.original/src/qwt_polar_marker.cpp	2013-03-01 14:55:19.000000000 -0800
+@@ -97,11 +97,8 @@
+     const double a = azimuthMap.transform( d_data->pos.azimuth() );
+ 
+     const QPointF pos = qwtPolar2Pos( pole, r, a );
+-    if(std::max(std::fabs(pos.y()),std::fabs(pos.x()))>5e3)
+-    {
+-        qWarning()<<__FUNCTION__ <<":  screen coords are absurdly large; "
+-                                 <<"probably got math error.";
+-    }
++
++
+     // draw symbol
+     QSize sSym( 0, 0 );
+     if ( d_data->symbol->style() != QwtSymbol::NoSymbol )
+diff -Naur qwtpolar/src/qwt_polar_marker.h qwtpolar_1.0.1.original/src/qwt_polar_marker.h
+--- qwtpolar/src/qwt_polar_marker.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_marker.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,70 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_MARKER_H
++#define QWT_POLAR_MARKER_H
++
++#include "qwt_polar_global.h"
++#include "qwt_polar_item.h"
++#include <qwt_point_polar.h>
++#include <qstring.h>
++
++class QRect;
++class QwtText;
++class QwtSymbol;
++
++/*!
++  \brief A class for drawing markers
++
++  A marker can be a a symbol, a label or a combination of them, which can
++  be drawn around a center point inside a bounding rectangle.
++
++  The setSymbol() member assigns a symbol to the marker.
++  The symbol is drawn at the specified point.
++
++  With setLabel(), a label can be assigned to the marker.
++  The setLabelAlignment() member specifies where the label is
++  drawn. All the Align*-constants in Qt::AlignmentFlags (see Qt documentation)
++  are valid. The alignment refers to the center point of
++  the marker, which means, for example, that the label would be painted
++  left above the center point if the alignment was set to AlignLeft|AlignTop.
++*/
++
++class QWT_POLAR_EXPORT QwtPolarMarker: public QwtPolarItem
++{
++public:
++    explicit QwtPolarMarker();
++    virtual ~QwtPolarMarker();
++
++    virtual int rtti() const;
++
++    void setPosition( const QwtPointPolar & );
++    QwtPointPolar position() const;
++
++    void setSymbol( const QwtSymbol *s );
++    const QwtSymbol *symbol() const;
++
++    void setLabel( const QwtText& );
++    QwtText label() const;
++
++    void setLabelAlignment( Qt::Alignment );
++    Qt::Alignment labelAlignment() const;
++
++    virtual void draw( QPainter *painter,
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, double radius,
++        const QRectF &canvasRect ) const;
++
++    virtual QwtInterval boundingInterval( int scaleId ) const;
++
++private:
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_panner.h qwtpolar_1.0.1.original/src/qwt_polar_panner.h
+--- qwtpolar/src/qwt_polar_panner.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_panner.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,52 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_PANNER_H
++#define QWT_POLAR_PANNER_H 1
++
++#include "qwt_polar_global.h"
++#include "qwt_panner.h"
++
++class QwtPolarPlot;
++class QwtPolarCanvas;
++
++/*!
++  \brief QwtPolarPanner provides panning of a polar plot canvas
++
++  QwtPolarPanner is a panner for a QwtPolarCanvas, that
++  adjusts the visible area after dropping
++  the canvas on its new position.
++
++  Together with QwtPolarMagnifier individual ways
++  of navigating on a QwtPolarPlot widget can be implemented easily.
++
++  \sa QwtPolarMagnifier
++*/
++
++class QWT_POLAR_EXPORT QwtPolarPanner: public QwtPanner
++{
++    Q_OBJECT
++
++public:
++    explicit QwtPolarPanner( QwtPolarCanvas * );
++    virtual ~QwtPolarPanner();
++
++    QwtPolarPlot *plot();
++    const QwtPolarPlot *plot() const;
++
++    QwtPolarCanvas *canvas();
++    const QwtPolarCanvas *canvas() const;
++
++protected Q_SLOTS:
++    virtual void movePlot( int dx, int dy );
++
++protected:
++    virtual void widgetMousePressEvent( QMouseEvent * );
++};
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_picker.cpp qwtpolar_1.0.1.original/src/qwt_polar_picker.cpp
+--- qwtpolar/src/qwt_polar_picker.cpp	2014-08-28 16:58:48.288692862 -0700
++++ qwtpolar_1.0.1.original/src/qwt_polar_picker.cpp	2013-03-01 14:55:19.000000000 -0800
+@@ -13,6 +13,13 @@
+ #include <qwt_picker_machine.h>
+ #include <qwt_point_polar.h>
+ 
++class QwtPolarPicker::PrivateData
++{
++public:
++    PrivateData()
++    {
++    }
++};
+ 
+ /*!
+   \brief Create a polar plot picker
+@@ -37,7 +44,7 @@
+ 
+   \sa QwtPolarPlot::autoReplot(), QwtPolarPlot::replot(), scaleRect()
+ */
+-QwtPolarPicker::QwtPolarPicker(
++QwtPolarPicker::QwtPolarPicker( 
+         RubberBand rubberBand, DisplayMode trackerMode,
+         QwtPolarCanvas *canvas ):
+     QwtPicker( rubberBand, trackerMode, canvas )
+diff -Naur qwtpolar/src/qwt_polar_picker.h qwtpolar_1.0.1.original/src/qwt_polar_picker.h
+--- qwtpolar/src/qwt_polar_picker.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_picker.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,98 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_PICKER_H
++#define QWT_POLAR_PICKER_H
++
++#include "qwt_polar_global.h"
++#include "qwt_picker.h"
++#include <qvector.h>
++#include <qpainterpath.h>
++
++class QwtPolarPlot;
++class QwtPolarCanvas;
++class QwtPointPolar;
++
++/*!
++  \brief QwtPolarPicker provides selections on a plot canvas
++
++  QwtPolarPicker is a QwtPicker tailored for selections on
++  a polar plot canvas.
++*/
++
++class QWT_POLAR_EXPORT QwtPolarPicker: public QwtPicker
++{
++    Q_OBJECT
++
++public:
++    explicit QwtPolarPicker( QwtPolarCanvas * );
++    virtual ~QwtPolarPicker();
++
++    explicit QwtPolarPicker(
++        RubberBand rubberBand, DisplayMode trackerMode,
++        QwtPolarCanvas * );
++
++    QwtPolarPlot *plot();
++    const QwtPolarPlot *plot() const;
++
++    QwtPolarCanvas *canvas();
++    const QwtPolarCanvas *canvas() const;
++
++    virtual QRect pickRect() const;
++
++Q_SIGNALS:
++
++    /*!
++      A signal emitted in case of selectionFlags() & PointSelection.
++      \param pos Selected point
++    */
++    void selected( const QwtPointPolar &pos );
++
++    /*!
++      A signal emitting the selected points,
++      at the end of a selection.
++
++      \param points Selected points
++    */
++    void selected( const QVector<QwtPointPolar> &points );
++
++    /*!
++      A signal emitted when a point has been appended to the selection
++
++      \param pos Position of the appended point.
++      \sa append(). moved()
++    */
++    void appended( const QwtPointPolar &pos );
++
++    /*!
++      A signal emitted whenever the last appended point of the
++      selection has been moved.
++
++      \param pos Position of the moved last point of the selection.
++      \sa move(), appended()
++    */
++    void moved( const QwtPointPolar &pos );
++
++protected:
++    QwtPointPolar invTransform( const QPoint & ) const;
++
++    virtual QwtText trackerText( const QPoint & ) const;
++    virtual QwtText trackerTextPolar( const QwtPointPolar & ) const;
++
++    virtual void move( const QPoint & );
++    virtual void append( const QPoint & );
++    virtual bool end( bool ok = true );
++
++private:
++    virtual QPainterPath pickArea() const;
++
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_plot.cpp qwtpolar_1.0.1.original/src/qwt_polar_plot.cpp
+--- qwtpolar/src/qwt_polar_plot.cpp	2014-08-28 16:58:48.277692706 -0700
++++ qwtpolar_1.0.1.original/src/qwt_polar_plot.cpp	2013-03-01 14:55:19.000000000 -0800
+@@ -21,8 +21,6 @@
+ #include <qpainter.h>
+ #include <qevent.h>
+ 
+-#include <iostream>
+-
+ static inline double qwtDistance(
+     const QPointF &p1, const QPointF &p2 )
+ {
+@@ -60,7 +58,7 @@
+     QwtScaleEngine *scaleEngine;
+ };
+ 
+-class  QWT_POLAR_EXPORT  QwtPolarPlot::PrivateData
++class QwtPolarPlot::PrivateData
+ {
+ public:
+     QBrush canvasBrush;
+@@ -540,8 +538,6 @@
+     scaleData.stepSize = stepSize;
+     scaleData.doAutoScale = false;
+ 
+-    Q_EMIT scaleDivChanged();
+-
+     autoRefresh();
+ }
+ 
+@@ -562,8 +558,6 @@
+     scaleData.isValid = true;
+     scaleData.doAutoScale = false;
+ 
+-    Q_EMIT scaleDivChanged();
+-
+     autoRefresh();
+ }
+ 
+@@ -660,8 +654,6 @@
+         d_data->zoomFactor = zoomFactor;
+         updateLayout();
+         autoRefresh();
+-
+-        Q_EMIT zoomFactorChanged();
+     }
+ }
+ 
+@@ -676,8 +668,6 @@
+         d_data->zoomFactor = 1.0;
+         d_data->zoomPos = QwtPointPolar();
+         autoRefresh();
+-
+-        Q_EMIT zoomFactorChanged();
+     }
+ }
+ 
+@@ -939,11 +929,7 @@
+     const QRectF cr = canvasRect;
+     const QRectF pr = plotRect( cr );
+ 
+-    static double previous_radius=0.0;
+     const double radius = pr.width() / 2.0;
+-    //std::cout << previous_radius << "," << radius << "\r"; std::cout.flush();
+-    previous_radius     = radius;
+-
+ 
+     if ( d_data->canvasBrush.style() != Qt::NoBrush )
+     {
+@@ -1295,7 +1281,7 @@
+ }
+ 
+ /*!
+-  \brief Attach/Detach a plot item
++  \brief Attach/Detach a plot item 
+ 
+   \param plotItem Plot item
+   \param on When true attach the item, otherwise detach it
+@@ -1356,7 +1342,7 @@
+   \brief Identify the plot item according to an item info object,
+          that has bee generated from itemToInfo().
+ 
+-  The default implementation simply tries to unwrap a QwtPlotItem
++  The default implementation simply tries to unwrap a QwtPlotItem 
+   pointer:
+ 
+ \code
+diff -Naur qwtpolar/src/qwt_polar_plot.h qwtpolar_1.0.1.original/src/qwt_polar_plot.h
+--- qwtpolar/src/qwt_polar_plot.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_plot.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,219 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_PLOT_H
++#define QWT_POLAR_PLOT_H 1
++
++#include "qwt_polar_global.h"
++#include "qwt_polar.h"
++#include "qwt_polar_itemdict.h"
++#include <qwt_interval.h>
++#include <qwt_scale_map.h>
++#include <qwt_point_polar.h>
++#include <qframe.h>
++
++class QwtRoundScaleDraw;
++class QwtScaleEngine;
++class QwtScaleDiv;
++class QwtTextLabel;
++class QwtPolarCanvas;
++class QwtPolarLayout;
++class QwtAbstractLegend;
++
++/*!
++  \brief A plotting widget, displaying a polar coordinate system
++
++  An unlimited number of plot items can be displayed on
++  its canvas. Plot items might be curves (QwtPolarCurve), markers
++  (QwtPolarMarker), the grid (QwtPolarGrid), or anything else derived
++  from QwtPolarItem.
++
++  The coordinate system is defined by a radial and a azimuth scale.
++  The scales at the axes can be explicitely set (QwtScaleDiv), or
++  are calculated from the plot items, using algorithms (QwtScaleEngine) which
++  can be configured separately for each axis. Autoscaling is supported
++  for the radial scale.
++
++  In opposite to QwtPlot the scales might be different from the
++  view, that is displayed on the canvas. The view can be changed by
++  zooming - f.e. by using QwtPolarPanner or QwtPolarMaginfier.
++*/
++class QWT_POLAR_EXPORT QwtPolarPlot: public QFrame, public QwtPolarItemDict
++{
++    Q_OBJECT
++
++    Q_PROPERTY( QBrush plotBackground READ plotBackground WRITE setPlotBackground )
++    Q_PROPERTY( double azimuthOrigin READ azimuthOrigin WRITE setAzimuthOrigin )
++
++
++public:
++    /*!
++        Position of the legend, relative to the canvas.
++        \sa insertLegend()
++     */
++    enum LegendPosition
++    {
++        //! The legend will be left from the canvas.
++        LeftLegend,
++
++        //! The legend will be right from the canvas.
++        RightLegend,
++
++        //! The legend will be below the canvas.
++        BottomLegend,
++
++        //! The legend will be between canvas and title.
++        TopLegend,
++
++        /*!
++          External means that only the content of the legend
++          will be handled by QwtPlot, but not its geometry.
++          This might be interesting if an application wants to
++          have a legend in an external window ( or on the canvas ).
++
++          \note The legend is not painted by QwtPolarRenderer
++         */
++        ExternalLegend
++    };
++
++    explicit QwtPolarPlot( QWidget *parent = NULL );
++    QwtPolarPlot( const QwtText &title, QWidget *parent = NULL );
++
++    virtual ~QwtPolarPlot();
++
++    void setTitle( const QString & );
++    void setTitle( const QwtText & );
++
++    QwtText title() const;
++
++    QwtTextLabel *titleLabel();
++    const QwtTextLabel *titleLabel() const;
++
++    void setAutoReplot( bool tf = true );
++    bool autoReplot() const;
++
++    void setAutoScale( int scaleId );
++    bool hasAutoScale( int scaleId ) const;
++
++    void setScaleMaxMinor( int scaleId, int maxMinor );
++    int scaleMaxMinor( int scaleId ) const;
++
++    int scaleMaxMajor( int scaleId ) const;
++    void setScaleMaxMajor( int scaleId, int maxMajor );
++
++    QwtScaleEngine *scaleEngine( int scaleId );
++    const QwtScaleEngine *scaleEngine( int scaleId ) const;
++    void setScaleEngine( int scaleId, QwtScaleEngine * );
++
++    void setScale( int scaleId, double min, double max, double step = 0 );
++
++    void setScaleDiv( int scaleId, const QwtScaleDiv & );
++    const QwtScaleDiv *scaleDiv( int scaleId ) const;
++    QwtScaleDiv *scaleDiv( int scaleId );
++
++    QwtScaleMap scaleMap( int scaleId, double radius ) const;
++    QwtScaleMap scaleMap( int scaleId ) const;
++
++    void updateScale( int scaleId );
++
++    double azimuthOrigin() const;
++
++    void zoom( const QwtPointPolar&, double factor );
++    void unzoom();
++
++    QwtPointPolar zoomPos() const;
++    double zoomFactor() const;
++
++    // Canvas
++
++    QwtPolarCanvas *canvas();
++    const QwtPolarCanvas *canvas() const;
++
++    void setPlotBackground ( const QBrush &c );
++    const QBrush& plotBackground() const;
++
++    virtual void drawCanvas( QPainter *, const QRectF & ) const;
++
++    // Legend
++
++    void insertLegend( QwtAbstractLegend *,
++        LegendPosition = RightLegend, double ratio = -1.0 );
++
++    QwtAbstractLegend *legend();
++    const QwtAbstractLegend *legend() const;
++
++    void updateLegend();
++    void updateLegend( const QwtPolarItem * );
++
++    // Layout
++    QwtPolarLayout *plotLayout();
++    const QwtPolarLayout *plotLayout() const;
++
++    QwtInterval visibleInterval() const;
++    QRectF plotRect() const;
++    QRectF plotRect( const QRectF & ) const;
++
++    int plotMarginHint() const;
++
++    virtual QVariant itemToInfo( QwtPolarItem * ) const;
++    virtual QwtPolarItem *infoToItem( const QVariant & ) const;
++
++Q_SIGNALS:
++    /*!
++      A signal indicating, that an item has been attached/detached
++
++      \param plotItem Plot item
++      \param on Attached/Detached
++     */
++    void itemAttached( QwtPolarItem *plotItem, bool on );
++
++    /*! 
++      A signal with the attributes how to update 
++      the legend entries for a plot item.
++                
++      \param itemInfo Info about a plot, build from itemToInfo()
++    
++      \sa itemToInfo(), infoToItem(), QwtAbstractLegend::updateLegend()
++     */
++    void legendDataChanged( const QVariant &itemInfo,
++        const QList<QwtLegendData> &data );
++
++    /*!
++      A signal that is emitted, whenever the layout of the plot
++      has been recalculated.
++     */
++    void layoutChanged();
++
++public Q_SLOTS:
++    virtual void replot();
++    void autoRefresh();
++    void setAzimuthOrigin( double );
++
++protected:
++    virtual bool event( QEvent * );
++    virtual void resizeEvent( QResizeEvent * );
++
++    virtual void updateLayout();
++
++    virtual void drawItems( QPainter *painter,
++        const QwtScaleMap &radialMap, const QwtScaleMap &azimuthMap,
++        const QPointF &pole, double radius,
++        const QRectF &canvasRect ) const;
++
++private:
++    friend class QwtPolarItem;
++    void attachItem( QwtPolarItem *, bool );
++
++    void initPlot( const QwtText & );
++
++    class ScaleData;
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_renderer.h qwtpolar_1.0.1.original/src/qwt_polar_renderer.h
+--- qwtpolar/src/qwt_polar_renderer.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_renderer.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,72 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_RENDERER_H
++#define QWT_POLAR_RENDERER_H 1
++
++#include "qwt_polar_global.h"
++#include <qobject.h>
++#include <qsize.h>
++
++class QwtPolarPlot;
++class QRectF;
++class QPainter;
++class QPrinter;
++class QPaintDevice;
++#ifndef QWT_NO_POLAR_SVG
++#ifdef QT_SVG_LIB
++class QSvgGenerator;
++#endif
++#endif
++
++/*!
++  \brief Renderer for exporting a polar plot to a document, a printer
++         or anything else, that is supported by QPainter/QPaintDevice
++*/
++class QWT_POLAR_EXPORT QwtPolarRenderer: public QObject
++{
++    Q_OBJECT
++
++public:
++    explicit QwtPolarRenderer( QObject *parent = NULL );
++    virtual ~QwtPolarRenderer();
++
++    void renderDocument( QwtPolarPlot *, const QString &format,
++        const QSizeF &sizeMM, int resolution = 85 );
++
++    void renderDocument( QwtPolarPlot *,
++        const QString &title, const QString &format,
++        const QSizeF &sizeMM, int resolution = 85 );
++
++#ifndef QWT_NO_POLAR_SVG
++#ifdef QT_SVG_LIB
++#if QT_VERSION >= 0x040500
++    void renderTo( QwtPolarPlot *, QSvgGenerator & ) const;
++#endif
++#endif
++#endif
++    void renderTo( QwtPolarPlot *, QPrinter & ) const;
++    void renderTo( QwtPolarPlot *, QPaintDevice & ) const;
++
++    virtual void render( QwtPolarPlot *,
++        QPainter *, const QRectF &rect ) const;
++
++    bool exportTo( QwtPolarPlot *, const QString &documentName,
++        const QSizeF &sizeMM = QSizeF( 200, 200 ), int resolution = 85 );
++
++    virtual void renderTitle( QPainter *, const QRectF & ) const;
++
++    virtual void renderLegend(
++        const QwtPolarPlot *, QPainter *, const QRectF & ) const;
++
++private:
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++#endif
+diff -Naur qwtpolar/src/qwt_polar_spectrogram.h qwtpolar_1.0.1.original/src/qwt_polar_spectrogram.h
+--- qwtpolar/src/qwt_polar_spectrogram.h	1969-12-31 16:00:00.000000000 -0800
++++ qwtpolar_1.0.1.original/src/qwt_polar_spectrogram.h	2013-03-01 14:55:19.000000000 -0800
+@@ -0,0 +1,92 @@
++/* -*- mode: C++ ; c-file-style: "stroustrup" -*- *****************************
++ * QwtPolar Widget Library
++ * Copyright (C) 2008   Uwe Rathmann
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the Qwt License, Version 1.0
++ *****************************************************************************/
++
++#ifndef QWT_POLAR_SPECTROGRAM_H
++#define QWT_POLAR_SPECTROGRAM_H
++
++#include "qwt_polar_global.h"
++#include "qwt_polar_item.h"
++#include <qimage.h>
++
++class QwtRasterData;
++class QwtColorMap;
++
++/*!
++  \brief An item, which displays a spectrogram
++
++  A spectrogram displays threedimenional data, where the 3rd dimension
++  ( the intensity ) is displayed using colors. The colors are calculated
++  from the values using a color map.
++
++  \sa QwtRasterData, QwtColorMap
++*/
++class QWT_POLAR_EXPORT QwtPolarSpectrogram: public QwtPolarItem
++{
++public:
++    /*!
++        Attributes to modify the drawing algorithm.
++        The default setting disables ApproximatedAtan
++
++        \sa setPaintAttribute(), testPaintAttribute()
++    */
++    enum PaintAttribute
++    {
++        /*!
++           Use qwtFastAtan2 instead of atan2 for translating
++           widget into polar coordinates.
++         */
++
++        ApproximatedAtan = 0x01
++    };
++
++    //! Paint attributes
++    typedef QFlags<PaintAttribute> PaintAttributes;
++
++    explicit QwtPolarSpectrogram();
++    virtual ~QwtPolarSpectrogram();
++
++    void setData( QwtRasterData *data );
++    const QwtRasterData *data() const;
++
++    void setColorMap( QwtColorMap * );
++    const QwtColorMap *colorMap() const;
++
++    void setPaintAttribute( PaintAttribute, bool on = true );
++    bool testPaintAttribute( PaintAttribute ) const;
++
++    virtual int rtti() const;
++
++    virtual void draw( QPainter *painter,
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, double radius,
++        const QRectF &canvasRect ) const;
++
++    virtual QwtInterval boundingInterval( int scaleId ) const;
++
++protected:
++    virtual QImage renderImage(
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, const QRect &rect ) const;
++
++    virtual void renderTile(
++        const QwtScaleMap &azimuthMap, const QwtScaleMap &radialMap,
++        const QPointF &pole, const QPoint &imagePos,
++        const QRect &tile, QImage *image ) const;
++
++private:
++    class TileInfo;
++    void renderTile( const QwtScaleMap &, const QwtScaleMap &,
++        const QPointF &pole, TileInfo * ) const;
++
++    class PrivateData;
++    PrivateData *d_data;
++};
++
++Q_DECLARE_OPERATORS_FOR_FLAGS( QwtPolarSpectrogram::PaintAttributes )
++
++#endif

@@ -1,0 +1,53 @@
+<html>
+<head>
+<title>PCB Importer User Manual Chapter 2 About ODB++ and IPC2581</title>
+<style>
+body {background-color:#FFFFFF;
+      text-decoration:none;
+      font-family:Verdana,Arial,Helvetica,sans-serif;
+      font-size:100%;
+      margin-left:50px;
+     }
+
+h1,h2,h3,h4 {color:#C00000;}
+
+pre {font-family :Courier New, Courier, Monospaced;}
+
+p   {line-height:1.5;}
+</style>
+</head>
+
+<body>
+<table width=825>
+<td width=825>
+<h1>About ODB++ and IPC2581</h1>
+<p>ODB++ and IPC2581 are manufacturing data formats. These formats are normally exported from a completed board layout and sent to the PCB fabricator. The contain the geometry for each conductor layer and all of the drill information for creating vias. They should also contain component and net information (though this is not 100% mandatory)</p>
+
+<h2>ODB++</h2>
+<p>ODB++ was created by Valor and is a quasi proprietary format. However it has been used in the PCB industry for over 15 years and the great majority of PCB layout tools can produce this format.</p>
+
+<p>The actual database is not a single file -- rather it is organized into a strict hierarchy of directories and files.</p>
+
+<img src="./figure2.gif" width=741 height=556 hspace=42 vspace=10 alt="ODB++ hierarchy"><br>
+
+<p>For purposes of exchanging ODB++ files, the Valor standard is to use the Unix tar commmand to roll up all the directories and files into a tar file and then to use the gzip compression utility to compress the tar file. When you see a ODB++ file with the extension .tgz you know that it is a tar-gzipped file.</p>
+
+<p>The PCB Importer can read either the .tgz form (in which case it automatically unpacks the data into a temporary directory) or it can read the directory hierarchy when the user points to the top of the hierarchy.</p>
+
+<p>Many Windows based PCB layout tools do not produce the .tgz format. Instead they rely on the zip utility to combine and compress the directory hierarchy. Because there are variations in zip files, The PCB Importer does not read the ODB++ file directly from a zip archive. Instead, the user must first unzip the data and then point NETEX-ADS to the top of the hierarchy.</p>
+
+
+<h2>IPC2581</h2>
+<p>IPC2581 is a newer manufacturing output. Unlike ODB++, this is a non proprietary standard created by the IPC. However very few programs produce the format at this time.</p>
+
+
+<p>IPC2581 delivers essentially the same information as ODB++ but contained in a single XML file. One advantage of IPC2581 over ODB++ is that it generally contains usable information about each conductor and dielectric layer's thickness and material which is not present in ODB++.</p>
+
+
+
+
+
+</td>
+</table>
+</body>
+</html>

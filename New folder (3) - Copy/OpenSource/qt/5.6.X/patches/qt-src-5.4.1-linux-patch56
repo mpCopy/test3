@@ -1,0 +1,167 @@
+
+--- ./qtbase/src/testlib/3rdparty/linux_perf_event_p.h.orig     2015-04-13 17:07:36.000000000 -0700
++++ ./qtbase/src/testlib/3rdparty/linux_perf_event_p.h  2015-04-13 17:07:58.000000000 -0700
+@@ -14,6 +14,7 @@
+ #ifndef _UAPI_LINUX_PERF_EVENT_H
+ #define _UAPI_LINUX_PERF_EVENT_H
+
++#undef __STRICT_ANSI__
+ #include <linux/types.h>
+ #include <linux/ioctl.h>
+ #include <asm/byteorder.h>
+
+--- ./qtbase/src/network/ssl/qsslcontext_openssl.cpp.orig       2015-02-16 20:56:38.000000000 -0800
++++ ./qtbase/src/network/ssl/qsslcontext_openssl.cpp    2015-04-13 17:18:21.000000000 -0700
+@@ -441,7 +441,7 @@
+             unsigned char *data = reinterpret_cast<unsigned char *>(m_sessionASN1.data());
+             if (!q_i2d_SSL_SESSION(session, &data))
+                 qCWarning(lcSsl, "could not store persistent version of SSL session");
+-            m_sessionTicketLifeTimeHint = session->tlsext_tick_lifetime_hint;
++            //m_sessionTicketLifeTimeHint = session->tlsext_tick_lifetime_hint;
+         }
+     }
+ 
+ 
+--- ./qtbase/src/3rdparty/xcb/include/xcb/xcb_pixel.h.orig      2014-02-01 20:35:35.000000000 +0100
++++ ./qtbase/src/3rdparty/xcb/include/xcb/xcb_pixel.h   2014-02-11 11:11:18.000000000 +0100
+@@ -33,6 +33,9 @@
+ #include <xcb/xcb_image.h>
+ #endif
+ 
++#undef _X_INLINE
++#define _X_INLINE
++
+ /**
+  * XCB Image fast pixel ops.
+  *
+
+ 
+
+--- ./qtbase/src/3rdparty/xcb/include/xcb/xcb_bitops.h.orig     2014-02-01 20:35:35.000000000 +0100
++++ ./qtbase/src/3rdparty/xcb/include/xcb/xcb_bitops.h  2014-02-11 11:10:48.000000000 +0100
+@@ -38,6 +38,9 @@
+  * @{
+  */
+ 
++#undef _X_INLINE
++#define _X_INLINE
++
+ 
+ /**
+  * Create a low-order bitmask.
+
+ 
+
+--- ./qtbase/src/plugins/platforms/offscreen/qoffscreenintegration_x11.cpp.orig 2014-02-01 20:35:39.000000000 +0100
++++ ./qtbase/src/plugins/platforms/offscreen/qoffscreenintegration_x11.cpp      2014-02-13 08:06:37.043558016 +0100
+@@ -52,6 +52,8 @@
+ #include <qpa/qplatformsurface.h>
+ #include <qsurface.h>
+ 
++#include <stdio.h>
++
+ QT_BEGIN_NAMESPACE
+ 
+ QOffscreenIntegration *QOffscreenIntegration::createOffscreenIntegration()
+@@ -231,7 +233,9 @@
+ 
+ void (*QOffscreenX11GLXContext::getProcAddress(const QByteArray &procName)) ()
+ {
+-    return (void (*)())glXGetProcAddressARB(reinterpret_cast<const GLubyte *>(procName.constData()));
++    //return (void (*)())glXGetProcAddressARB(reinterpret_cast<const GLubyte *>(procName.constData()));
++    fprintf(stderr, "** QOffscreenX11GLXContext::getProcAddress() called, but no support compiled\n");
++    return NULL;
+ }
+ 
+ QSurfaceFormat QOffscreenX11GLXContext::format() const
+
+--- qtbase/src/plugins/platforms/xcb/qxcbconnection.cpp.orig    2015-04-14 15:12:02.000000000 -0700
++++ qtbase/src/plugins/platforms/xcb/qxcbconnection.cpp 2015-04-14 15:19:28.000000000 -0700
+@@ -1751,7 +1751,8 @@
+ #ifndef QT_NO_XKB
+     const xcb_query_extension_reply_t *reply = xcb_get_extension_data(m_connection, &xcb_xkb_id);
+     if (!reply || !reply->present) {
+-        qWarning() << "Qt: XKEYBOARD extension not present on the X server.";
++        if( ! qgetenv("QT_SHOW_XKEYBOARD_EXTENTION_WARNING").isNull())
++          qWarning() << "Qt: XKEYBOARD extension not present on the X server.";
+         xkb_first_event = 0;
+         return;
+     }
+
+--- qtwebkit/Source/JavaScriptCore/offlineasm/offsets.rb.orig    2015-04-21 15:44:55.000000000 -0700
++++ qtwebkit/Source/JavaScriptCore/offlineasm/offsets.rb 2015-04-21 15:45:10.000000000 -0700
+@@ -108,7 +108,7 @@
+     File.open(file, "rb") {
+         | inp |
+         loop {
+-            byte = inp.getbyte
++            byte = inp.getc
+             break unless byte
+             fileBytes << byte
+         } 
+--- qtbase/src/plugins/platforms/xcb/qxcbkeyboard.cpp.orig	2015-05-26 14:12:00.000000000 -0700
++++ qtbase/src/plugins/platforms/xcb/qxcbkeyboard.cpp	2015-05-26 14:48:17.000000000 -0700
+@@ -617,6 +617,18 @@
+     char *xkb_config = (char *)xcb_get_property_value(config_reply);
+     int length = xcb_get_property_value_length(config_reply);
+ 
++    if (length == 0 && xkb_config && ! qgetenv("QT_EOD_XKB_WRKAROUND").isNull() )
++    {
++        //provide a default map
++        xkb_names.rules   = qstrdup("xorg");
++        xkb_names.model   = qstrdup("pc105");
++        xkb_names.layout  = qstrdup("us");
++        xkb_names.variant = 0;
++        xkb_names.options = 0;
++        free(config_reply);
++        return;
++    }   
++
+     // on old X servers xkb_config can be 0 even if config_reply indicates a succesfull read
+     if (!xkb_config || length == 0)
+         return;
+@@ -1401,6 +1413,9 @@
+ void QXcbKeyboard::handleKeyEvent(xcb_window_t sourceWindow, QEvent::Type type, xcb_keycode_t code,
+                                   quint16 state, xcb_timestamp_t time)
+ {
++   if (! qgetenv("QT_EOD_XKB_WRKAROUND").isNull())
++        code += 1;    
++
+     Q_XCB_NOOP(connection());
+ 
+     if (!m_config)
+
+--- ./qtbase/src/corelib/io/qlockfile_unix.cpp.orig        2015-06-02 19:27:13.000000000 -0700
++++ ./qtbase/src/corelib/io/qlockfile_unix.cpp     2015-06-02 19:28:13.000000000 -0700
+@@ -155,6 +155,7 @@
+     }
+     // Ensure nobody else can delete the file while we have it
+     if (!setNativeLocks(fd))
++       if( ! qgetenv("QT_SHOW_SETNATIVE_LOCKS_WARNING").isNull())
+         qWarning() << "setNativeLocks failed:" << strerror(errno);
+
+     // We hold the lock, continue.
+
+--- qtbase/src/corelib/global/qlogging.cpp.orig 2015-05-27 10:16:37.000000000 -0700
++++ qtbase/src/corelib/global/qlogging.cpp      2015-05-27 10:17:18.000000000 -0700
+@@ -1411,7 +1411,7 @@
+     Q_UNUSED(message);
+ #endif
+
+-#if (defined(Q_OS_UNIX) || defined(Q_CC_MINGW))
++#if ( defined(Q_CC_MINGW))
+     abort(); // trap; generates core dump
+ #else
+     exit(1); // goodbye cruel world
+
+--- ./qtwebkit/Source/WebCore/xml/XSLTProcessorQt.cpp.orig	2015-06-11 10:28:24.000000000 -0700
++++ ./qtwebkit/Source/WebCore/xml/XSLTProcessorQt.cpp	2015-06-11 10:28:50.000000000 -0700
+@@ -84,7 +84,7 @@
+     }
+ 
+     Console* console = m_document->domWindow()->console();
+-    console->addMessage(XMLMessageSource, level, description, sourceLocation.uri().toString(), sourceLocation.line(), sourceLocation.column());
++    //console->addMessage(XMLMessageSource, level, description, sourceLocation.uri().toString(), sourceLocation.line(), sourceLocation.column());
+ }
+ 
+ class XSLTUriResolver : public QAbstractUriResolver {

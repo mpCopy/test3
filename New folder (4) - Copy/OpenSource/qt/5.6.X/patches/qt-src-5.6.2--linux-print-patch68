@@ -1,0 +1,29 @@
+--- qtbase/src/plugins/printsupport/cups/qppdprintdevice.cpp.orig	2016-09-15 22:49:42.000000000 -0700
++++ qtbase/src/plugins/printsupport/cups/qppdprintdevice.cpp	2017-02-10 17:10:35.000000000 -0800
+@@ -91,8 +91,8 @@
+ {
+     if (m_ppd)
+         ppdClose(m_ppd);
+-    if (m_cupsDest)
+-        cupsFreeDests(1, m_cupsDest);
++    //if (m_cupsDest)
++    //    cupsFreeDests(1, m_cupsDest);
+     m_cupsDest = 0;
+     m_ppd = 0;
+ }
+@@ -446,7 +446,14 @@
+     }
+ 
+     // Get the print instance and PPD file
+-    m_cupsDest = cupsGetNamedDest(CUPS_HTTP_DEFAULT, m_cupsName, m_cupsInstance);
++    //m_cupsDest = cupsGetNamedDest(CUPS_HTTP_DEFAULT, m_cupsName, m_cupsInstance);
++    // Support building on Redhat 5 and running on SuSe11
++    cups_dest_t   *dests;  
++    int num_dests;
++    num_dests = cupsGetDests(&dests);
++    /* Get the default destination */
++    m_cupsDest = cupsGetDest(NULL, NULL, num_dests, dests);
++
+     if (m_cupsDest) {
+         const char *ppdFile = cupsGetPPD(m_cupsName);
+         if (ppdFile) {

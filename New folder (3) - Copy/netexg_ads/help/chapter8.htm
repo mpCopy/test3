@@ -1,0 +1,82 @@
+<html>
+<head>
+<title>PCB Importer User Manual Chapter 8 Drills</title>
+<style>
+body {background-color:#FFFFFF;
+      text-decoration:none;
+      font-family:Verdana,Arial,Helvetica,sans-serif;
+      font-size:100%;
+      margin-left:50px;
+     }
+
+h1,h2,h3,h4 {color:#C00000;}
+
+pre {font-family :Courier New, Courier, Monospaced;}
+
+p   {line-height:1.5;}
+</style>
+</head>
+
+<body>
+<table width=825>
+<td width=825>
+<h1>Drills</h1>
+<p>ODB and IPC-2581 do not store via information directly. Instead they store the drill data that will be used to manufacture the board. The PCB importer reads the drill information and converts this into the required entities the dielectric layers that act to interconnect the conductor layers.</p>
+
+<p>The user generally does not need to make any adjustments to the drill conversion except for a single case - to instruct the program to identify back drills.</p>
+
+<p>The drill dialog is accessed from the main dialog by clicking on the "Drill ..." button.</p>
+
+<img src="./odb_drill_dialog.gif" width=433 height=473 vspace=15 hspace=195 alt="drill dialog">
+
+<p><b>Fields and Entries</b></p>
+
+<p><b>Gerber File </b>- one or more drill files which have been converted into Gerber format. This is done automatically when the drill data in the ODB or IPC file is detected and processed. No user intervention is needed here.</p>
+
+<p><b>Top Layer</b> - the top layer (i.e. layer 1) where the drill begins. The number is the "stackup" layer. "1" indicates the top conductor layer.</p>
+
+<p><b>Bottom Layer</b> - the bottom layer (i.e. layer 5) where the drill ends. The number is the "stackup" layer. Drills are assumed to go from top to bottom except for the special case of back drills.</p>
+
+<p>Boards with buried or blind vias generally will have more than one drill file associated with them.</p>
+
+<p><b>Drill Settings</b></p>
+<ul>
+<p><b>Check for Back Drills</b> - if checked, the program will check each drill file against all the others in order to determine if the coordinates line up. If it detects such a condition it will assume that one of the files is a back drill and will use it to remove the via that would have otherwise been produced by the front drill.</p>
+
+<p>For a detailed explanation of backdrilling see this page: <a href="./backdrill.htm">Back Drilling to Reduce Via Parasitics</a></p>
+<ul>
+<p><b>Snap</b> - when checking for back drills a small snap radius can be defined so that tiny variations in the X,Y location will be absorbed. Such a snap distance should be set to be 10X smaller than the smallest drill diameter.</p>
+
+<br>
+
+<p><b>Arc Res</b> - drills are circular but are broken into segments. The arc res determines the number of segments based on how many degrees seach segment subtends. If set = 0 then it has no effect.</p>
+
+<img src="./arcres.gif" width=452 height=310 hspace=180 alt="arc resolution"><br>
+
+<br>
+
+<p><b>Chord Error</b> - chord error is an alternate approach to determining how many segments are used to approximate the drill. If set = 0 then it has no effect</p>
+
+<img src="./chord_error.gif" width=350 height=267 hspace=237 alt="chord error"><br>
+
+<br><br>
+
+<p><b>No of Sides</b> - the user can specify directly the number of sides of the polygon use to represent the drill. Must be a value of 4 or greater.</p>
+</ul>
+
+<br>
+<p><b>Drop Vias in Output</b> - if checked the vias will not be generated in the output. This option is generally not used if the ADFI is intended for simulation but might be useful if one wants to make a 3D display of the board while minimizing the number of 3D entities.</p>
+</ul>
+
+<br>
+<p><b>Mount Hole Settings</b></p>
+<ul>
+<p><b>Detect Mount Holes</b> - This is used to differentiate drills used to produce vias from drills used to produce mounting holes. Any drill whose diameter exceeds the size parameter will be treated as a non plated mounting hole. Generally speaking this has little relevance to simulation.</p>
+
+</ul>
+
+</td>
+</table>
+
+</body>
+</html>

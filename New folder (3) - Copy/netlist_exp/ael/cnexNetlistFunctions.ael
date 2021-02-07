@@ -1,0 +1,1980 @@
+// Copyright Keysight Technologies 2001 - 2018  
+// cnexNetlistFunctions.ael.  Netlisting functions for performing Netlist Exports from ADS.
+// This file is currently set up to output HSpice style netlists.
+
+// Header functions
+
+defun cnexExportNetlistHeader(context)
+{
+    return cnex_export_netlist_header(context);
+}
+
+defun cnex_export_netlist_header(context)
+{
+   /* This routine should output any data that must appear at the 
+      head of a netlist.  This includes statements such as global nodes,
+      options (e.g. relative tolerance), equivalent nodes, or whatever else 
+      your brand of Spice supports.    */
+
+   /* The length of the return string can be any length, and may 
+      contain multiple lines. */
+   decl designName = db_get_design_name(context);
+   decl net="";
+
+   if(cnexDesignNameComment)
+   {
+      net=strcat(net, commentLine, " Design Name: ", designName, "\n");
+   }
+
+   if(cnexDateTimeComment)
+   {
+      net=strcat(net, commentLine, " Date:        ", format_date_time("%B %d, %Y %X"), "\n");
+   }
+
+   decl autoFile, fileH, readLine;
+
+   while(cnexAutoIncludes)
+   {
+      autoFile=car(cnexAutoIncludes);
+      cnexAutoIncludes=cdr(cnexAutoIncludes);
+
+      if((fileH=fopen(autoFile, "R")))
+      {
+         while((readLine=fgets(fileH)) != NULL)
+         {
+            net=strcat(net, readLine, "\n");
+         }
+         fclose(fileH);
+      }
+   }
+
+   if(cnexComments)
+   {
+      decl commentList=parse(cnexComments, "\n", "");
+      while(commentList)
+      {
+         net=strcat(net, commentLine, " ", car(commentList), "\n");
+         commentList=cdr(commentList);
+      }
+   }
+   else
+   {
+      /* There is an old Spice rule that the first line of the file is a comment.
+         Just in case, output an empty first line, so that there is no question of 
+         whether the first line is a comment or not. */
+      if(net == "")
+      {
+         net=strcat(commentLine,"\n");
+      }
+   }
+
+   decl tmpList;
+    
+   // Add in the options to the final netlist
+
+   decl cnexOption;
+   tmpList=cnexExportOptionList;
+
+   while(tmpList)
+   {
+      cnexOption=car(tmpList);
+      tmpList=cdr(tmpList);
+      net=strcat(net, cnexOption, "\n");
+   }
+
+   // Add in the include files to the final netlist
+
+   decl includeFile;
+   cnex_get_user_includes();   
+   tmpList=cnexExportFileIncludeList;
+   while(tmpList)
+   {
+      includeFile=car(tmpList);
+      tmpList=cdr(tmpList);
+      net=strcat(net, cnex_include_file(includeFile), "\n");
+   }
+
+   // Output the *.GLOBAL statement
+   if(cnexExportGlobalNodeList)
+   {
+      net=strcat(net, "*.GLOBAL ");
+      while(cnexExportGlobalNodeList)
+      {
+         net=strcat(net, car(cnexExportGlobalNodeList), " ");
+         cnexExportGlobalNodeList=cdr(cnexExportGlobalNodeList);
+      }
+
+      net=strcat(net, "\n");
+   }
+
+   // Output a resistor ignore option
+   if(cnexShortWithResistors)
+   {
+      net=strcat(net, "*.RESI 0 $[", cnexResistorShortModel, "]\n");
+   }
+   
+   cnex_export_write_to_netlistHeader( net );
+
+   return(net);
+}
+
+defun cnexExportNetlistFooter()
+{
+    return cnex_export_netlist_footer();
+}
+
+defun cnex_export_netlist_footer()
+{
+   /* This routine should output any data that must appear at the 
+      end of a netlist.  This includes statements such as probes,
+      analysis statements (e.g. .DC), or whatever else 
+      your brand of Spice supports. */
+
+   /* The length of the return string can be any length, and may 
+      contain multiple lines. */
+
+   decl net;
+   
+   net="\n.end";
+   cnex_export_write_to_netlistFooter( net );
+
+   return(net);
+}
+
+defun cnexOutputTopcellHeader(context)
+{
+    return cnex_output_topcell_header(context);
+}
+
+// Subcircuit functions
+defun cnex_output_topcell_header(context)
+{
+    return(cnex_output_subcircuit_header(context, TRUE));
+}
+
+defun cnexOutputTopcellFooter(context)
+{
+    return cnex_output_topcell_footer(context);
+}
+
+defun cnex_output_topcell_footer(context)
+{
+   return(cnex_output_subcircuit_footer(context, TRUE));
+}
+
+defun cnexOutputSubcircuit(designName)
+{
+    return cnex_output_subcircuit(designName);
+}
+
+defun cnex_get_empty_subckt_text(designName)
+{
+    decl net;
+    if (caseInsensitiveOutput)
+    {
+        net = strcat(".subckt ", tolower(designName), "\n");
+        net = strcat(net, ".ends ", tolower(designName), "\n");
+    }
+    else
+    {
+        net = strcat(".subckt ", designName, "\n");
+        net = strcat(net, ".ends ", designName, "\n");
+    }
+    return net;
+}
+
+defun cnex_output_subcircuit(designName)
+{
+    // Output the subcircuit header, circuit data, and subcircuit footer
+
+    decl context = de_find_design_context_from_name(designName);
+    decl net;
+
+    if (context)
+    {
+        cnexSubcircuitPortNodeList = NULL;
+        cnexSubcircuitEquivNodeList = NULL;
+        cnex_output_subcircuit_header(context, FALSE);
+        cnex_output_circuit_data(context, FALSE);
+        cnex_output_subcircuit_footer(context, FALSE);
+    }
+    else
+    {
+        net = cnex_get_empty_subckt_text (designName);
+    }
+
+    cnex_export_write_to_netlist(net);
+}
+
+defun cnex_get_port_name_and_num_from_pin_iter(pinIter, context)
+{
+    decl portName, portNum;
+    portName = db_get_pin_term_name(pinIter);//db_get_pin_name(pinIter);
+    portNum = db_get_pin_term_number(pinIter);
+    if (cnex_has_bus_notation(portName))
+    {
+        decl rootName = cnex_get_bus_root(portName);
+        decl symbolContext = cnex_get_symbol_context(context);
+        if (symbolContext)
+        {
+            decl symbolPinIter = db_create_pin_iter(symbolContext); // Get pins on symbol context.
+            for (; db_pin_iter_is_valid(symbolPinIter); symbolPinIter = db_pin_iter_get_next(symbolPinIter))
+            {
+                decl symPinName = db_get_pin_name(symbolPinIter);
+                if ((symPinName != portName) && cnex_has_bus_notation(symPinName) && (cnex_get_bus_root(symPinName) == rootName))
+                {
+                    portName = symPinName;
+                    portNum = db_get_pin_term_number(symbolPinIter);
+                    break;
+                }
+            }
+        }
+    }
+    return list(portName, portNum);
+}
+
+// Typical return list is   list(("P1", 1, "P1"), ("P2", 2, "P2"))
+defun cnex_process_pins_and_get_port_data(context)
+{
+    //start_debugger();
+    decl portName, portNum, nodeName, portNameList, portList; 
+    decl pinIter = db_create_pin_iter(context);
+    for (; db_pin_iter_is_valid(pinIter); pinIter = db_pin_iter_get_next(pinIter))
+    {
+        decl portNameAndNum = cnex_get_port_name_and_num_from_pin_iter(pinIter, context);
+        portName =  nth(0, portNameAndNum);
+        portNum = nth(1, portNameAndNum) ;
+
+        decl pinTerm = db_get_pin_term(pinIter);
+        decl netH = db_get_term_net(pinTerm);
+        nodeName = cnex_get_node_name(netH);
+
+        // Keep track of the port name list.
+        if (!member(portName, cnexSubcircuitPortNodeList))
+        {
+            cnexSubcircuitPortNodeList = append(cnexSubcircuitPortNodeList, list(portName, list(nodeName)));
+        }
+
+        portNameList = cnex_expand_bus_notation(portName);
+        while (portNameList)
+        {
+            portList = append(portList, list(list(car(portNameList), portNum, car(portNameList))));
+            portNameList = cdr(portNameList);
+        }
+    }
+    return portList;
+}
+
+
+defun cnex_extract_inherited_connection_list(context)
+{
+    decl instH;
+    decl instIter = db_create_inst_iter(context);
+    instIter = db_inst_iter_exclude_port_insts(instIter);
+    for (; db_inst_iter_is_valid(instIter); instIter = db_inst_iter_get_next(instIter))
+    {
+        if (!db_is_instance_deactivated(instIter))
+        {
+            /* Check for inherited connections. */
+
+            instH = db_inst_iter_get_instance(instIter);
+            decl propList = de_get_edit_property("DUMMY_STRING_ARG", instH); 
+            decl propName, propType, propValue, propInherited;
+
+            while (propList)
+            {
+                propName = car(propList);
+                propList = cdr(propList);
+                propType = car(propList);
+                propList = cdr(propList);
+                propValue = car(propList);
+                propList = cdr(propList);
+                propInherited = car(propList);
+                propList = cdr(propList);
+
+                if (propInherited == 1)
+                {
+                    if (stripstr(propValue) == NULL)
+                    {
+                        propName = strcat("inh_", propName);
+                        if (!member(propName, cnexInheritedConnectionList))
+                        {
+                            cnexInheritedConnectionList = append(cnexInheritedConnectionList, list(propName));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// termOrder is like "1,2"  in the cnex record file/db etc..
+// portList is like list(("P1", 1, "P1"), (P2", 2, "P2"))
+defun cnex_construct_term_order_related_net_substring(portList, termOrder)
+{
+    decl portName, portNum, portRecord, portTmp, portNumList;
+    decl i, j;
+    decl termList;
+    decl nodeList;
+    decl net="";
+    if (termOrder)
+    {
+        termList = parse(termOrder, " ", "");
+    }
+    /* Note: This expects terminal orders to be specified using bus notation.  It will not handle cases where
+    the terminal order is expanded, but the ports are not, or where the ports are expanded, but the
+    terminal order is not. */
+
+    if (termList)
+    {
+        /* There is a component record for this schematic, and it has a special terminal order specified. */
+        while (termList)
+        {
+            portNum = car(termList);
+            termList = cdr(termList);
+
+            for (j = 0; j<listlen(portList); j++)
+            {
+                portRecord = nth(j, portList);
+                if (is_string(portNum))
+                {
+                    /* Match the specified terminal order to the name of the port */
+                    portNumList = cnex_expand_bus_notation(portNum);
+                    while (portNumList)
+                    {
+                        portTmp = car(portNumList);
+                        portNumList = cdr(portNumList);
+                        if (nth(2, portRecord) == portTmp)
+                        {
+                            nodeList = cnex_expand_bus_notation(nth(0, portRecord));
+                            while (nodeList)
+                            {
+                                net = strcat(net, " ", car(nodeList));
+                                nodeList = cdr(nodeList);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    /* Match the specified terminal order to the port number */
+                    if (nth(1, portRecord) == portNum)
+                    {
+                        nodeList = cnex_expand_bus_notation(nth(0, portRecord));
+                        while (nodeList)
+                        {
+                            net = strcat(net, " ", car(nodeList));
+                            nodeList = cdr(nodeList);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        decl portSearch;
+        j = 0;
+        i = 0;
+        while (portList)
+        {
+            portSearch = TRUE;
+            while (portSearch)
+            {
+                portRecord = nth(j, portList);
+                if (portRecord)
+                {
+                    if (nth(1, portRecord) == i)
+                    {
+                        nodeList = cnex_expand_bus_notation(nth(0, portRecord));
+                        while (nodeList)
+                        {
+                            net = strcat(net, " ", car(nodeList));
+                            nodeList = cdr(nodeList);
+                        }
+                        portList = delete_nth(j, portList);
+                        // Continue searching - there could be more ports with the same port number.
+                    }
+                    else
+                    {
+                        // Record is not port i.  Go on to the next record.
+                        j++;
+                    }
+                }
+                else
+                {
+                    // There are no more ports numbered i.  Break out and increment to the next port number.
+                    portSearch = FALSE;
+                    break;
+                }
+            }
+            i++;
+            j = 0;
+        }
+    }
+    return net;
+}
+
+defun cnex_extract_param_related_net_substring(context, paramList, instRecord)
+{
+    decl net = "";
+    decl parmDefH;
+    if (paramList)
+    {
+        /* There is a component record for this subcircuit, and it specifies a set of parameters to output.
+        This may differ from the ADS parameter attributes, so obey it instead of the attributes that have
+        been set up for ADS. */
+        decl itemDefH = db_get_item_definition(context);
+
+        if (itemDefH)
+        {
+            decl parmName, parmAttribute, parmValueH, parmValue;
+            decl paramMapList = nth(4, instRecord);
+            decl paramTypeList = nth(5, instRecord);
+            decl outputName, tmpList;
+
+            while (paramList)
+            {
+                parmName = car(paramList);
+                paramList = cdr(paramList);
+                decl parmDefList = dm_item_get_parms(itemDefH);
+                parmDefH = dm_first_parm_definition(parmDefList);
+                for (; parmDefH != NULL; parmDefH = dm_next_parm_definition(parmDefH))
+                {
+                    if (parmName == dm_parm_get_name(parmDefH))
+                    {
+                        parmValueH = dm_parm_get_defvalue(parmDefH);
+                        parmValue = cnex_get_inst_val_from_param_head(parmName, parmDefH);
+                        if (is_string(parmValue))
+                        {
+                            parmValue = stripstr(parmValue);
+                        }
+
+                        if (parmValue)
+                        {
+                            // Convert ADS units and expressions to Tool equivalent
+                            parmValue = cnex_export_format_value(parmValue);
+                            if (is_string(parmValue))
+                            {
+                                if (tmpList = nth(1, member(parmName, paramMapList)))
+                                {
+                                    outputName = nth(1, tmpList);
+                                    if (!outputName)
+                                    {
+                                        /* This is actually a screw up.  The parameters for a
+                                        subcircuit must be named.  Use the ADS parameter name. */
+                                        outputName = parmName;
+                                    }
+                                }
+                                else
+                                {
+                                    outputName = parmName;
+                                }
+                                net = strcat(net, " ", outputName, "=", parmValue);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        /* No parameter list is specified.  Assume no record was ever generated, and output
+        the parameters based on the parameter attribute settings. */
+        decl itemDefH = db_get_item_definition(context);
+        if (itemDefH)
+        {
+            decl parmName, parmAttribute, parmValueH, parmValue;
+
+            decl parmDefList = dm_item_get_parms(itemDefH);
+            parmDefH = dm_first_parm_definition(parmDefList);
+            for (; parmDefH != NULL; parmDefH = dm_next_parm_definition(parmDefH))
+            {
+                parmAttribute = dm_parm_get_attr(parmDefH);
+                if (!parmAttribute)
+                    parmAttribute = 0;
+                if ((parmAttribute & PARM_NOT_NETLISTED) != PARM_NOT_NETLISTED)
+                {
+                    parmName = dm_parm_get_name(parmDefH);
+                    parmValueH = dm_parm_get_defvalue(parmDefH);
+                    parmValue = cnex_get_inst_val_from_param_head(parmName, parmDefH);
+                    if (is_string(parmValue))
+                    {
+                        parmValue = stripstr(parmValue);
+                    }
+
+                    if (parmValue)
+                    {
+                        // Convert ADS units and expressions to Spice equivalent
+
+                        parmValue = cnex_export_format_value(parmValue);
+                        if (is_string(parmValue))
+                        {
+                            /* Convert the ADS multiplicity parameter to the tool equivalent. */
+                            if (parmName == "_M")
+                            {
+                                parmName = "m";
+                            }
+                            net = strcat(net, " ", parmName, "=", parmValue);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return net;
+}
+
+defun cnexOutputSubcircuitHeader(context, topLevel)
+{
+    return cnex_output_subcircuit_header(context, topLevel);
+}
+
+defun cnex_get_subckt_start_title(designName)
+{
+    decl net;
+    if (caseInsensitiveOutput)
+    {
+        net = strcat(".subckt ", tolower(designName));
+    }
+    else
+    {
+        net = strcat(".subckt ", designName);
+    }
+    return net;
+}
+
+    // TBD add unit tests for inherited connection 
+defun cnex_get_inherited_connection_related_net_substring(context, topLevel)
+{
+    decl net;
+    cnexInheritedConnectionList = NULL;
+    cnex_extract_inherited_connection_list(context);
+
+    while (cnexInheritedConnectionList && !topLevel)
+    {
+        net = strcat(net, " ", car(cnexInheritedConnectionList));
+        cnexInheritedConnectionList = cdr(cnexInheritedConnectionList);
+    }
+}
+
+defun cnex_get_net_port_substring(context, instRecord)
+{
+    // Get the ports, then output them in the port number order.
+    decl portList = cnex_process_pins_and_get_port_data(context); // typically list(("P1", 1, "P1"), ("P2", 2, "P2"))
+    decl termOrder = nth(2, instRecord);
+    decl net_port_substring = cnex_construct_term_order_related_net_substring(portList, termOrder);
+    return net_port_substring;
+}
+
+defun cnex_get_net_param_substring(context, instRecord)
+{
+    // Output the parameters
+    decl params = nth(3, instRecord);
+    decl paramList;
+
+    if (params)
+    {
+        paramList = parse(params, " ", "");
+    }
+    else
+    {
+        paramList = NULL;
+    }
+
+    decl net_param_substring = cnex_extract_param_related_net_substring(context, paramList, instRecord);
+    return net_param_substring;
+}
+
+
+defun cnex_output_subcircuit_header(context, topLevel)
+{
+    // This routine should be modified to return a string for the  
+    // beginning of a subnetwork definition.
+
+    // The returned value can be more than one line, by including 
+    // newline characters within the returned string.
+
+    // Currently, this routine does not check for maximum line lengths, and 
+    // does not split lines by using continuation characters.
+    decl designName = db_get_design_name(context);
+    decl componentName = db_get_component_name(context);
+    decl instRecord = cnex_get_component_record(context, NULL, componentName, NULL);
+
+    decl net = cnex_get_subckt_start_title(designName);
+    decl net_port_substring = cnex_get_net_port_substring(context, instRecord);
+    net = strcat(net, net_port_substring);
+
+    decl inheritedConnSubString = cnex_get_inherited_connection_related_net_substring(context, topLevel);
+    net = strcat(net, " ", inheritedConnSubString);
+
+    decl net_param_substring = cnex_get_net_param_substring(context, instRecord);
+    net = strcat(net, net_param_substring);
+
+    cnex_export_write_to_netlist(net);
+
+    return(net);
+}
+
+defun cnexOutputSubcircuitFooter(context, topLevel)
+{
+    return cnex_output_subcircuit_footer(context, topLevel);
+}
+
+defun cnex_output_subcircuit_footer(context, topLevel)
+{
+    decl designName = db_get_design_name(context);
+   // This routine should be modified to return a string that ends a 
+   // subnetwork definition.
+   decl componentName = db_get_component_name(context);
+      
+   decl net;
+   if(caseInsensitiveOutput)
+   {
+      net=strcat(".ends ", tolower(designName), "\n");
+   }
+   else
+   {
+      net=strcat(".ends ", designName, "\n");
+   }
+   
+   cnex_export_write_to_netlist( net );
+   return(net);
+}
+
+defun cnex_instance_is_a_port( instSpecial )
+{
+    return (instSpecial & INST_PORT) == INST_PORT;
+}
+
+defun cnex_instance_is_a_variable( instSpecial )
+{
+    return (instSpecial & INST_VARIABLE) == INST_VARIABLE;
+}
+
+defun cnex_instance_is_a_ground( instSpecial )
+{
+    return (instSpecial & ITEM_GROUND) == ITEM_GROUND;
+}
+
+defun cnex_instance_is_a_design( instSpecial )
+{
+    return (instSpecial & ITEM_DESIGN_INST) == ITEM_DESIGN_INST;
+}
+
+defun cnex_instance_is_a_draw_sheet( instSpecial )
+{
+    return (instSpecial & ITEM_DRAWSHEET) == ITEM_DRAWSHEET;
+}
+
+defun cnex_instance_is_a_global( instSpecial )
+{
+    return (instSpecial & ITEM_GLOBAL) == ITEM_GLOBAL;
+}
+
+defun cnex_instance_is_a_globalNode( instSpecial )
+{
+    return (instSpecial & ITEM_GLOBAL_NODE) == ITEM_GLOBAL_NODE;
+}
+
+defun cnex_instance_is_not_all_parm( instSpecial )
+{
+    return (instSpecial & ITEM_NOT_ALL_PARM) == ITEM_NOT_ALL_PARM;
+}
+
+defun cnex_instance_is_primitive( instSpecial )
+{
+    return (instSpecial == ITEM_AUTO_INCR_1ST_PARAM) || 
+           (instSpecial == 2147483648) ||
+           (instSpecial == INST_NORMAL) ||
+           (instSpecial == ITEM_BOM_ITEM) ||
+           (instSpecial == INST_LINE);
+}
+
+defun cnex_get_corresponding_output_node_name_for_this_node_name(nodeName)
+{
+    decl outputNodeName=car(nth(1, member(nodeName, cnexSubcircuitEquivNodeList)));
+    return outputNodeName;
+}
+
+defun cnex_update_corresponding_output_node_name_for_this_node_name(nodeName, newOutputNodeName)
+{
+    decl tmpRecord=nth(1, member(nodeName, cnexSubcircuitEquivNodeList));
+    decl origOutputNodeName = car(tmpRecord);
+    repla(tmpRecord, newOutputNodeName, 0);
+
+    decl len = listlen(cnexSubcircuitEquivNodeList);
+    decl i = 0;
+    while(i<len)
+    {
+       ++i;
+       decl tempRec = nth(i, cnexSubcircuitEquivNodeList); 
+       decl existingName = car(tempRec);
+       if (strcmp(existingName, origOutputNodeName) == 0)
+       {
+           repla(tempRec, newOutputNodeName, 0);
+       }
+       ++i;
+    }
+}
+
+defun cnex_add_to_global_subckt_equivalent_node_list(nodeNameInDb, outputNodeNameForCnex)
+{
+    //de_info(list(nodeNameInDb, outputNodeNameForCnex));
+     // Add the node name to the subcircuit node list.  The format of the list is nodeNameInDb, equivalent output name.
+     if (!member(nodeNameInDb, cnexSubcircuitEquivNodeList))
+     {
+         cnexSubcircuitEquivNodeList = append(cnexSubcircuitEquivNodeList, list(nodeNameInDb, list(outputNodeNameForCnex)));
+     }
+}
+
+defun cnex_process_all_output_nodes_for_shorting_event(outputNodeName, outputNameList)
+{
+    // Check all of the other nodes in the output list, and update their output 
+    // value if they were shorted to one of the members of the output name list
+    // Because of prioritization done above, this should only be changing numeric nodes 
+    // at this point
+
+    decl tmpList=cnexSubcircuitEquivNodeList;
+    decl i;
+    for(i=0; i<listlen(cnexSubcircuitEquivNodeList); i=i+2)
+    { 
+        decl nodeName=nth(i, cnexSubcircuitEquivNodeList);
+        decl tmpRecord=nth(i+1, cnexSubcircuitEquivNodeList);
+        if(member(car(tmpRecord), outputNameList))
+        {
+            repla(cnexSubcircuitEquivNodeList, list(outputNodeName), i+1);
+        }
+    }
+}
+
+defun cnex_update_all_correponding_output_node_names_with_this_output_node_name(rawPinList, outputNodeName)
+{
+    // Update the nodes in rawPinList so they all output the same node
+    decl tmpList=rawPinList;
+    decl tmpRecord;
+         
+    while(tmpList)
+    {
+        // The record is a pointer to the list.  Changing the value of the 
+        // record will change the value permanently in cnexSubcircuitEquivNodeList.
+        decl dbNodeName = car(tmpList);
+        decl newOutputNodeName = outputNodeName;
+        cnex_update_corresponding_output_node_name_for_this_node_name(dbNodeName, newOutputNodeName);
+        tmpList=cdr(tmpList);
+    }
+}
+
+defun cnex_add_bus_node_to_global_subckt_equivalent_node_list(tmpBusList)
+{
+    // Add each of the bus node names to the equivalency list
+    while (tmpBusList)
+    {
+        decl nodeNameInDb = car(tmpBusList);
+        decl outputNodeNameForCnex = nodeNameInDb;
+        tmpBusList = cdr(tmpBusList);
+                
+        cnex_add_to_global_subckt_equivalent_node_list(nodeNameInDb, outputNodeNameForCnex);
+    }
+}
+
+defun cnex_check_and_add_if_global_node(outputNodeNameForCnex)
+{
+    // Add the node to the global node table if it ends in the special "!" character
+    if (rightstr(outputNodeNameForCnex, 1) == "!")
+    {
+        if (!member(outputNodeNameForCnex, cnexExportGlobalNodeList))
+           cnexExportGlobalNodeList = append(cnexExportGlobalNodeList, list(outputNodeNameForCnex));
+    }
+}
+
+// Make a list of all of the nodes in the rep.  This will 
+// form the foundation of the node equivalency list.  The list 
+// should expand all bus nodes
+defun cnex_extract_subCkt_equivalent_and_global_nodes(context)
+{
+    decl dbNetIter = db_create_net_iter(context);
+    for (; db_net_iter_is_valid(dbNetIter); dbNetIter = db_net_iter_get_next(dbNetIter))
+    {
+        decl nodeNameInDb = cnex_get_node_name(dbNetIter);
+        decl outputNodeNameForCnex = cnex_get_output_node_name(dbNetIter);
+
+        // Check to see if this is a bus node
+        decl tmpBusList = cnex_expand_bus_notation(outputNodeNameForCnex);
+        if (listlen(tmpBusList) > 1)
+        {
+            cnex_add_bus_node_to_global_subckt_equivalent_node_list(tmpBusList);
+        }
+        else
+        {
+            cnex_add_to_global_subckt_equivalent_node_list(nodeNameInDb, outputNodeNameForCnex);
+        }
+
+        cnex_check_and_add_if_global_node(outputNodeNameForCnex);
+    }
+}
+
+defun cnex_process_deactivated_and_shorted_instance(instH)
+{
+    decl instAndNetlistFuncPairList;
+    decl evalFunc = cnexShortMultiportInstance;
+    if (cnexShortWithResistors)
+    {
+        instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, list(list(instH, evalFunc)));
+    }
+    else
+    {
+        decl net = evalFunc(instH, NULL);
+        cnex_export_write_to_netlist(net);
+    }
+    return instAndNetlistFuncPairList;
+}
+
+defun cnex_is_ignorable_inst(instSpecial)
+{
+    if (cnex_instance_is_a_port(instSpecial) || cnex_instance_is_a_ground(instSpecial) ||
+        cnex_instance_is_a_draw_sheet(instSpecial) || cnex_instance_is_a_global(instSpecial))
+        return TRUE;
+    else
+        return FALSE;
+}
+
+defun cnex_process_ignorable_inst(instH)
+{
+    // Ignore the instance, it is a port
+}
+
+defun cnex_process_inst_variable(instH)
+{
+    decl net = cnexVariableInstance(instH, NULL);
+    cnex_export_write_to_netlist(net);
+}
+
+defun cnex_process_a_design(instH)
+{
+    decl instAndNetlistFuncPairList, evalFunc, instFunction,net;
+    // This is an instance of a subcircuit
+    decl instRecord = cnex_get_component_record(NULL, instH, NULL, NULL);
+    if (instRecord)
+    {
+        instFunction = nth(0, instRecord);
+        if (cnex_bound(instFunction))
+        {
+            evalFunc = evaluate(strcat(instFunction, ";"));
+            if (identify_value(evalFunc) != "<function>")
+            {
+                evalFunc = cnexSubcircuitInstance;
+                instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, list(list(instH, evalFunc)));
+            }
+            else
+            {
+                // Check to see if this is a shorted component.  If it is not, delay processing.
+                if ((instFunction == "cnexShortInstance") ||
+                    (instFunction == "cnexShortMultiportInstance"))
+                {
+                    if (cnexShortWithResistors)
+                    {
+                        instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, list(list(instH, evalFunc)));
+                    }
+                    else
+                    {
+                        net = evalFunc(instH, instRecord);
+                        cnex_export_write_to_netlist(net);
+                    }
+                }
+                else
+                {
+                    instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, list(list(instH, evalFunc)));
+                }
+            }
+        }
+        else
+        {
+            evalFunc = cnexSubcircuitInstance;
+            instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, list(list(instH, evalFunc)));
+        }
+    }
+    return instAndNetlistFuncPairList;
+}
+
+defun cnex_process_a_global_node(instH)
+{
+    // Accumulate the global nodes to the global node list.
+    decl instName = db_get_instance_name(instH);// TBD remove this.
+    cnexGlobalNodeInstance(instH, NULL);
+}
+
+defun cnex_process_not_all_parm(instH, instSpecial)
+{
+    decl dsnName, net;
+    // 1073741824 corresponds to DM_ITEM_NOT_ALL_PARM.
+    // Ignore AEL Dataset expression components 
+    decl instName = db_get_instance_name(instH);
+    dsnName = db_get_instance_component_name(instH);
+    net = strcat("WARNING! Instance ", instName, " of type ", dsnName, " has unsupported instance type of ", identify_value(instSpecial), ".\n");
+    cnex_export_write_to_log(net);
+}
+
+defun cnex_process_primitive_instance(instH)
+{
+    decl instAndNetlistFuncPairList, instFunction, evalFunc, net;
+    decl instRecord = cnex_get_component_record(NULL, instH, NULL, NULL);
+    decl instName = db_get_instance_name(instH);
+    if (instRecord)
+    {
+        instFunction = nth(0, instRecord);
+        if (cnex_bound(instFunction))
+        {
+            evalFunc = evaluate(strcat(instFunction, ";"));
+            if (identify_value(evalFunc) != "<function>")
+            {
+                cnexInstanceNameList = cnex_expand_bus_notation(instName);
+                for (cnexBusInstanceIterator = 0; cnexBusInstanceIterator < listlen(cnexInstanceNameList); cnexBusInstanceIterator++)
+                {
+                    net = cnexUnknownInstance(instH, instRecord);
+                    cnex_export_write_to_netlist(net);
+                }
+            }
+            else
+            {
+                // Check to see if this is a shorted component.  If it is not, delay processing.
+                if ((instFunction == "cnexShortInstance") ||
+                    (instFunction == "cnexShortMultiportInstance"))
+                {
+                    if (cnexShortWithResistors)
+                    {
+                        instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, list(list(instH, evalFunc)));
+                    }
+                    else
+                    {
+                        net = evalFunc(instH, instRecord);
+                        cnex_export_write_to_netlist(net);
+                    }
+                }
+                else
+                {
+                    instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, list(list(instH, evalFunc)));
+                }
+            }
+        }
+        else
+        {
+            cnexInstanceNameList = cnex_expand_bus_notation(instName);
+            for (cnexBusInstanceIterator = 0; cnexBusInstanceIterator < listlen(cnexInstanceNameList); cnexBusInstanceIterator++)
+            {
+                net = cnexUnknownInstance(instH, instRecord);
+                cnex_export_write_to_netlist(net);
+            }
+        }
+    }
+    else
+    {
+        cnexInstanceNameList = cnex_expand_bus_notation(instName);
+        for (cnexBusInstanceIterator = 0; cnexBusInstanceIterator < listlen(cnexInstanceNameList); cnexBusInstanceIterator++)
+        {
+            net = cnexUnknownInstance(instH, instRecord);
+            cnex_export_write_to_netlist(net);
+        }
+    }
+    return instAndNetlistFuncPairList;
+}
+
+defun cnex_process_unknown_item_attribute_type(instH, instSpecial)
+{
+    decl instName, net, dsnName;
+    // What is this?  It does not correspond to any of the item attributes.  This branch should not 
+    // be encountered, the code is here just in case.
+    instName = db_get_instance_name(instH);
+    dsnName = db_get_instance_component_name(instH);
+    net = strcat("WARNING! Instance ", instName, " of type ", dsnName, " is an unknown instance type of ", identify_value(instSpecial), ".\n");
+    cnex_export_write_to_log(net);
+}
+
+// Finish processing the remaining instances that do not have short circuited nodes
+defun cnex_process_non_short_circuited_nodes(instAndNetlistFuncPairList)
+{
+    //start_debugger();
+    decl instAndEvalFuncPair, instH, evalFunc, instRecord, instName, net;
+    while (instAndNetlistFuncPairList)
+    {
+        instAndEvalFuncPair = car(instAndNetlistFuncPairList);
+        instAndNetlistFuncPairList = cdr(instAndNetlistFuncPairList);
+        instH = car(instAndEvalFuncPair);
+        evalFunc = nth(1, instAndEvalFuncPair);
+        instRecord = cnex_get_component_record(NULL, instH, NULL, NULL);
+        instName = db_get_instance_name(instH);
+        cnexInstanceNameList = cnex_expand_bus_notation(instName);
+
+        for (cnexBusInstanceIterator = 0; cnexBusInstanceIterator < listlen(cnexInstanceNameList); cnexBusInstanceIterator++)
+        {
+            net = evalFunc(instH, instRecord);
+            cnex_export_write_to_netlist(net);
+        }
+    }
+}
+
+defun cnexOutputCircuitData(context, topLevel)
+{
+    return cnex_output_circuit_data(context, topLevel);
+}
+
+defun cnex_output_circuit_data(context, topLevel)
+{
+    //start_debugger();
+    decl instList, instAndNetlistFuncPairList, instH, instSpecial;
+
+    // TBD : check if these globals need to reset here.
+    cnexBusInstanceIterator = 0;
+    cnexMaxInstanceIterator = 1;
+    cnexSubcircuitInstanceMappedList = NULL;
+    cnexSubcircuitNodeMappedList = NULL;
+
+    cnex_extract_subCkt_equivalent_and_global_nodes(context);
+
+    instList = cnex_get_instances(context);
+    while (instList)
+    {
+        instH = car(instList);
+        decl instName = db_get_instance_name(instH);
+        //de_info(list("cnex_output_circuit_data", instName));
+        instList = cdr(instList);
+        if (db_is_instance_deactivated_and_shorted(instH))
+        {
+            decl retList = cnex_process_deactivated_and_shorted_instance(instH);
+            if (retList)
+                instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, retList);
+
+            continue;
+        }
+
+        if (!db_is_instance_deactivated(instH))
+        {
+            instSpecial = cnex_get_instance_special_attribute(instH);
+
+            if (cnex_is_ignorable_inst(instSpecial))
+            {
+                cnex_process_ignorable_inst(instH);
+            }
+            else if (cnex_instance_is_a_variable(instSpecial))
+            {
+                cnex_process_inst_variable(instH);
+            }
+            else if (cnex_instance_is_a_design(instSpecial))
+            {
+                decl retList = cnex_process_a_design(instH);
+                if (retList)
+                    instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, retList);
+            }
+            else if (cnex_instance_is_a_globalNode(instSpecial))
+            {
+                cnex_process_a_global_node(instH);
+            }
+            else if (cnex_instance_is_not_all_parm(instSpecial))
+            {
+                cnex_process_not_all_parm(instH, instSpecial);
+            }
+            else if (cnex_instance_is_primitive(instSpecial))
+            {
+                decl retList = cnex_process_primitive_instance(instH);
+                if (retList)
+                    instAndNetlistFuncPairList = append(instAndNetlistFuncPairList, retList);
+            }
+            else
+            {
+                cnex_process_unknown_item_attribute_type(instH, instSpecial);
+            }
+        }
+    }
+    cnex_process_non_short_circuited_nodes(instAndNetlistFuncPairList);
+}
+
+// Global node accumulation
+
+defun cnexGlobalNodeInstance(instH, instRecord)
+{
+   if(instH)
+   {
+      decl varValue;
+
+      decl paramIter = db_create_param_iter(instH);  
+      for ( ; db_param_iter_is_valid(paramIter); paramIter = db_param_iter_get_next(paramIter) ) 
+      { 
+        if (db_param_iter_is_repeatable(paramIter) || db_param_value_uses_compound_form(paramIter))
+        {
+            // Iterate over the sub-parameters
+            decl subParamIter = db_param_iter_get_sub_parameters(paramIter);
+            for ( ; db_param_iter_is_valid(subParamIter); subParamIter = db_param_iter_get_next(subParamIter) ) 
+            {
+                 decl subparamH = db_param_iter_get_param(subParamIter);
+                 if (db_param_value_uses_string_form(subparamH))
+                 {
+                    // Get the string value of the string parameter.
+                    varValue = db_get_param_string_value(subparamH);
+                    if(varValue && !member(varValue, cnexExportGlobalNodeList))
+                    {
+                       cnexExportGlobalNodeList=append(cnexExportGlobalNodeList, list(varValue));
+                    }
+                 }
+            }
+        }
+      }
+   }
+}
+
+defun cnex_get_name_value_pair_list(instH,instRecord)
+{
+   decl firstPassParamNameValuePairList = list();
+   if(instH)
+   {
+      decl varValue;
+      decl varName;
+
+      decl paramIter = db_create_param_iter(instH);  
+      for ( ; db_param_iter_is_valid(paramIter); paramIter = db_param_iter_get_next(paramIter) ) 
+      { 
+        if (db_param_iter_is_repeatable(paramIter) || db_param_value_uses_compound_form(paramIter))
+        {
+            // Iterate over the sub-parameters
+            decl sublevel1ParamIter = db_param_iter_get_sub_parameters(paramIter);
+            for ( ; db_param_iter_is_valid(sublevel1ParamIter); sublevel1ParamIter = db_param_iter_get_next(sublevel1ParamIter) ) 
+            {
+                 //decl subparamH = db_param_iter_get_param(sublevel1ParamIter);
+                 if (db_param_iter_is_repeatable(sublevel1ParamIter) || db_param_value_uses_compound_form(sublevel1ParamIter))
+                 {
+                     decl sublevel2ParamIter = db_param_iter_get_sub_parameters(sublevel1ParamIter);
+                     if (db_param_iter_is_valid(sublevel2ParamIter) && db_param_value_uses_string_form(sublevel2ParamIter))
+                     {
+                        // Get the string value of the string parameter.
+                        varName = db_get_param_string_value(sublevel2ParamIter);
+                        sublevel2ParamIter = db_param_iter_get_next(sublevel2ParamIter);
+                        
+                        if(db_param_iter_is_valid(sublevel2ParamIter))
+                        {
+                           varValue = db_get_param_string_value(sublevel2ParamIter);
+                           decl strippedOfOptimparams = cnex_export_format_param_value(varName,varValue);
+                           decl paramNameValuePair = list(list(varName,strippedOfOptimparams));
+                           firstPassParamNameValuePairList = append(firstPassParamNameValuePairList,paramNameValuePair);
+                           //net=strcat(net, ".param ", varName, "=", strippedOfOptimparams, "\n");
+                        }
+                        
+                     }
+                 }
+            }
+        }
+      }
+   }
+   
+   return firstPassParamNameValuePairList;
+}
+
+defun cnexVariableInstance(instH, instRecord)
+{
+    /* This function will output a .param statement for each variable found
+       in a VAR component.  The VAR component will always call this function, so
+       if your tool format requires different formatting that what is provided
+       in this function, this function must be rewritten. */
+
+    decl context = db_get_instance_owner_design(instH);
+    decl expressionContext = db_setup_expression_context(context, TRUE);
+
+    decl net = "";
+    decl sourceList = cnex_get_name_value_pair_list(instH, instRecord);
+    while (sourceList != NULL)
+    {
+        decl paramNameValuePair = car(sourceList);
+        sourceList = cdr(sourceList);
+        decl paramName  = nth(0, paramNameValuePair);
+        decl paramValue = nth(1, paramNameValuePair);
+        
+        if (( leftstr(paramValue, 1) == "'" ||  leftstr(paramValue, 1) == "\"") &&
+            (rightstr(paramValue, 1) == "'" || rightstr(paramValue, 1) == "\""))
+        {
+            //It is a string
+            net = strcat(net, ".param ", paramName, "=", paramValue, "\n");
+        }
+        else
+        {
+            net = strcat(net
+                , ".param "
+                , paramName
+                , "="
+                , paramValue
+                , "\n"
+            );
+        }
+    }
+    
+    return(net);
+}
+
+// Instance Functions
+
+defun cnexUnknownInstance(instH, instRecord)
+{
+   decl net;
+   decl instName=cnex_get_instance_name(instH, instRecord);
+   decl dsnName;
+   dsnName = db_get_instance_component_name(instH);
+
+            
+   if((instName != "") && (dsnName != ""))
+      net=strcat("WARNING! Instance ", instName, " of type ", dsnName, " does not have a netlisting definition.");
+   else
+      net="";
+      
+   cnex_export_write_to_log( net );
+
+   net="";
+
+   return(net);
+}
+
+defun cnexIgnoreInstance(instH, instRecord)
+{
+   return("");
+}
+
+defun cnex_get_output_node_name_list_for_raw_pin_list(rawPinList)
+{
+    decl outputNameList;
+    decl tmpList=rawPinList;
+         
+    while(tmpList)
+    {
+        // Get the current output node for the specified node
+        decl outputNodeName = cnex_get_corresponding_output_node_name_for_this_node_name(car(tmpList));
+        outputNameList=append(outputNameList, list(outputNodeName));
+        tmpList=cdr(tmpList);
+    }
+    return outputNameList;
+}
+
+defun cnex_get_highest_priority_node(outputNameList)
+{
+    // Process the output name list to determine which node has priority.
+    decl outputNodeName=car(outputNameList);
+    decl tmpList=outputNameList;
+    while(tmpList)
+    {
+        decl newOutputName=car(tmpList);
+        outputNodeName=cnex_prioritized_shorted_output(outputNodeName, newOutputName);           
+        tmpList=cdr(tmpList);
+    }
+
+    return outputNodeName;
+}
+
+defun cnex_get_net_substring_for_short_with_resistors_option(instH, instRecord)
+{
+   decl net, instName, nodeName, pinList, netInstName, nodeName2;
+   pinList=cnex_get_pin_connections(instH, instRecord);
+   /* Output zero ohm resistors connecting each of the terminals */
+   instName=cnex_get_instance_name(instH, instRecord);
+   while(listlen(pinList) > 1)
+   {
+       nodeName=car(pinList);
+       pinList=cdr(pinList);
+       nodeName2=car(pinList);
+       if(nodeName && nodeName2 && (nodeName != nodeName2))
+       {
+          netInstName=strcat(instName, "_", nodeName, "_", nodeName2);
+          if(net)
+            net=strcat(net, "\n");
+          else
+            net="";               
+          net=strcat(net, netInstName, " ", nodeName, " ", nodeName2, " 0 $[", cnexResistorShortModel, "]");
+       }
+   }
+   return net;
+}
+
+defun cnex_get_net_substring_for_short_with_resistors_option_multiport(instH, instRecord)
+{
+    decl net, equivName, nodeName, netInstName;
+    decl pinList=cnex_get_pin_connections(instH, instRecord);
+    // Output zero ohm resistors connecting each of the terminal pairs
+    instName=cnex_get_instance_name(instH, instRecord);
+
+    while(pinList && listlen(pinList) > 1)
+    { 
+        nodeName=car(pinList);
+        pinList=cdr(pinList);
+        equivName=car(pinList);
+        pinList=cdr(pinList);
+        if(nodeName && equivName && (nodeName != equivName))
+        { 
+            netInstName=strcat(instName, "_", nodeName, "_", equivName);
+            if(net)
+               net=strcat(net, "\n");
+            else
+               net="";               
+            net=strcat(net, netInstName, " ", nodeName, " ", equivName, " 0 $[", cnexResistorShortModel, "]");
+        }
+     }
+     return net;
+}
+
+defun cnex_append_output_nodes_for_first_two_raw_pins(rawPinList)
+{
+    decl node1 = cnex_get_corresponding_output_node_name_for_this_node_name(nth(0, rawPinList));
+    decl node2 = cnex_get_corresponding_output_node_name_for_this_node_name(nth(1, rawPinList));
+    return list(node1, node2);
+}
+
+defun cnex_get_final_output_node_name_for_two_node_names_in_list(outputCount, outputNameList)
+{ 
+    decl finalOutputNodeName;
+    finalOutputNodeName=nth(outputCount, outputNameList);
+
+    decl firstNewOutputName=nth(outputCount, outputNameList);
+    finalOutputNodeName=cnex_prioritized_shorted_output(finalOutputNodeName, firstNewOutputName);
+
+    decl secondNewOutputName=nth(outputCount+1, outputNameList);
+    finalOutputNodeName=cnex_prioritized_shorted_output(finalOutputNodeName, secondNewOutputName);
+
+    return finalOutputNodeName;
+}
+
+defun cnexShortMultiportInstance(instH, instRecord)
+{
+   // Process node name pairs, and add them in to the equivalent node list 
+   // Essentially, pin 1 is shorted to pin 2, pin 3 is shorted to pin 4, etc. 
+   // The term_order field for the component should be set up appropriately.
+    
+   decl net;
+
+   if(cnexShortWithResistors)
+   {
+       net = cnex_get_net_substring_for_short_with_resistors_option_multiport(instH, instRecord);
+   }
+   else
+   {
+      decl rawPinList=cnex_get_raw_pin_connections(instH, instRecord);
+      decl outputNameList;
+
+      if(listlen(rawPinList) > 1)
+      {
+         decl tmpList=rawPinList;
+         decl outputCount=0;
+         while(rawPinList && listlen(rawPinList) > 1)
+         {
+            decl outputNamesForNextTwoPins = cnex_append_output_nodes_for_first_two_raw_pins(rawPinList);
+            outputNameList = append(outputNameList, outputNamesForNextTwoPins);
+
+            decl finalOutputNodeName = cnex_get_final_output_node_name_for_two_node_names_in_list(outputCount, outputNameList);
+            
+            // Update the two nodes that were just processed so they output the same node
+            tmpList=rawPinList;
+
+            decl firstNodeName = car(tmpList);
+            cnex_update_corresponding_output_node_name_for_this_node_name(firstNodeName, finalOutputNodeName);
+
+            tmpList=cdr(tmpList);
+            decl secondNodeName = car(tmpList);
+            cnex_update_corresponding_output_node_name_for_this_node_name(secondNodeName, finalOutputNodeName);
+            
+            // Remove the two processed nodes from the raw pin list
+            rawPinList=cdr(rawPinList);
+            rawPinList=cdr(rawPinList);
+            outputCount=outputCount+2;
+         }
+      }
+      
+      // Nothing should be output for the shorted instance.
+      net="";
+   }
+
+   return(net);
+}
+
+defun cnexShortInstance(instH, instRecord)
+{
+   // Process the node names, and add them all to the equivalent node list
+   /* Get the pins and add them to the equivalent node list. */
+   decl outputNodeName;
+   decl net;
+   decl a = cnexSubcircuitEquivNodeList;
+
+   if(cnexShortWithResistors)
+   {
+       net = cnex_get_net_substring_for_short_with_resistors_option(instH, instRecord);
+   }
+   else
+   {
+      decl rawPinList=cnex_get_raw_pin_connections(instH, instRecord);
+      
+      if(listlen(rawPinList) > 1)
+      {
+         decl outputNameList = cnex_get_output_node_name_list_for_raw_pin_list(rawPinList);
+
+         outputNodeName = cnex_get_highest_priority_node(outputNameList);
+         
+         cnex_update_all_correponding_output_node_names_with_this_output_node_name(rawPinList, outputNodeName);
+
+         cnex_process_all_output_nodes_for_shorting_event(outputNodeName, outputNameList);
+      }
+      
+      /* Nothing should be output for the shorted instance. */
+      net="";
+   }
+   
+   return(net);
+}
+
+defun cnexNetlistInstance(instH, instRecord)
+{
+   /* This is a generic netlisting function for outputting component lines 
+      in spice format.  The ADS components that have been set up all utilize 
+      this function - if you modify this function, you should make sure that 
+      the ADS components still export correctly.  You do not need to use 
+      this function for all components - the function called is defined in 
+      the component definition file by the Netlist_Function line. */
+   decl paramList, paramRecord;
+   decl paramRecord, paramName, paramVal, paramH;
+   decl outputParamName;
+   decl evalFunc, isModelParam;
+
+   decl componentName=cnex_get_component_name(instH, instRecord);
+   decl instName=cnex_get_instance_name(instH, instRecord);
+
+   decl net=strcat(componentName, componentInstanceSeparator, instName);
+
+   /* Get the pins and add them to the output line */
+
+   decl pinList=cnex_get_pin_connections(instH, instRecord);
+    
+   while(pinList)
+   {
+      net=strcat(net, " ", car(pinList));
+      pinList=cdr(pinList);
+   }
+
+   /* Get the parameters and add them to the output line */
+
+   decl paramList=cnex_get_parameter_values(instH, instRecord);
+   decl paramRecord, paramName;
+
+   while(paramList)
+   {
+      paramRecord=car(paramList);
+      paramName=nth(0, paramRecord);
+      if(paramName && paramName != "" && nth(1, paramRecord) && nth(1, paramRecord) != "")
+         net=strcat(net, " ", paramName, "=", nth(1, paramRecord));
+      else if( (!paramName || paramName == "") && nth(1, paramRecord) && nth(1, paramRecord) != "" )
+         net=strcat(net, " ", nth(1, paramRecord));
+      else if( paramName && paramName != "" )
+         net=strcat(net, " ", paramName);
+      paramList=cdr(paramList);
+   }
+
+   return(net);
+}
+
+defun cnexSubcircuitInstance(instH, instRecord)
+{
+   // This routine outputs a component as a subnetwork.  It will be 
+   // called for any component that does not have a component defintion file, 
+   // but has a subcircuit type of ITEM_DESIGN_DATA or ITEM_DESIGN_INST.  
+   // If there is a component definition file, the data in the instRecord will be obeyed.
+
+   decl net="";
+   decl componentName=cnex_get_component_name(instH, instRecord);
+   decl instName=cnex_get_instance_name(instH, instRecord);
+   decl instPrefix="x";
+
+   decl termOrder, pinList;
+   decl pinH, netName;
+   decl paramList, paramRecord;
+   decl paramRecord, paramName, paramVal, paramH;
+   decl outputParamName;
+   decl evalFunc;
+   decl dsnName;
+   decl parmDefH, paramAttribute;
+
+   decl net=strcat(instPrefix, componentInstanceSeparator, instName);
+
+   // Get the pins and output them.  The order is based on the pin number. 
+
+   /* Get the pins and add them to the output line */
+
+   decl pinList=cnex_get_pin_connections(instH, instRecord);
+
+   while(pinList)
+   {
+      net=strcat(net, " ", car(pinList));
+      pinList=cdr(pinList);
+   }
+
+ 
+   decl cTool = cnex_get_tool();
+   // For calibre we do not want momemtum related parameters to be output..we simply want to treat it as a subcircuit
+   if(strcasecmp(cTool,"calibre") == 0)
+   {
+        decl dialogData = "";
+        decl dsnName;
+        dsnName = db_get_instance_component_name(instH);
+      
+        decl itemDefH  = db_get_instance_item_definition(instH);
+        if (itemDefH)
+        {
+            dialogData = dm_item_get_dialog_name(itemDefH);
+        }
+        
+        if (index(componentName, "MomCmpt") >= 0 && dialogData == momcmpt_dialog)
+        {
+            net = strcat(net, " ", dsnName);
+            return net;
+        }
+   }
+   
+   /* Output the subcircuit name */
+
+   net=strcat(net, " ", componentName);
+
+   /* Get the parameters and add them to the output line */
+
+   decl paramList=cnex_get_parameter_values(instH, instRecord);
+   decl paramRecord, paramName;
+
+   while(paramList)
+   {
+      paramRecord=car(paramList);
+      paramName=nth(0, paramRecord);
+      if(paramName == "_M")
+      {
+         paramName="m";
+      }
+      if(paramName && (paramName != ""))
+      {
+         net=strcat(net, " ", paramName, "=", nth(1, paramRecord));
+      }
+      else
+      {
+         net=strcat(net, " ", nth(1, paramRecord));
+      }
+      paramList=cdr(paramList);
+   }
+
+   return(net);
+
+}
+
+defun cnex_export_format_param_value(paramName,paramValue)
+{
+    if( paramValue == NULL || paramValue == "" )
+        return "";
+        
+    decl firstLevelFormatVal = paramValue;
+    firstLevelFormatVal = stripstr(firstLevelFormatVal);
+    if( (leftstr(firstLevelFormatVal,1) == "'" || leftstr(firstLevelFormatVal,1) == "\"") && 
+        (rightstr(firstLevelFormatVal,1) == "'" || rightstr(firstLevelFormatVal,1) == "\"") )
+    {
+        //It is a string...just pass it as it is
+        return firstLevelFormatVal;
+    }
+    
+    // let us now strip-off the optimcockpit parameters
+    firstLevelFormatVal = cnex_strip_off_optim_params(paramName,firstLevelFormatVal);
+    decl tmpList = parse(firstLevelFormatVal);
+    // we should now be left ideally with tmpList whose size is either 1 or 2
+    // if it is 2 then the first one MUST be a int/real/complex number and the second one an unit
+    decl secondLevelFormatVal;
+    if(listlen(tmpList) <= 2)
+    {
+        decl firstTokenIsNumber = nth(0,tmpList);
+                
+        if( is_type("int",firstTokenIsNumber) ||
+            is_type("double",firstTokenIsNumber) ||
+            is_type("complex",firstTokenIsNumber) )
+        {
+            secondLevelFormatVal = evaluate(fmt_tokens(tmpList));
+        }
+        else
+        {
+            //the first argument is not a number it could probably be some variable
+            //we are assuming that the 2nd token is then some unit
+            //let us try to evaluate
+            
+            if(listlen(tmpList)==2)
+            {
+                decl secondTokenIsUnit = nth(1,tmpList);
+                decl exprVal = evaluate(strcat("1.0",secondTokenIsUnit));
+                if(exprVal != NULL && exprVal != "")
+                {
+                    if(exprVal != 1)
+                        secondLevelFormatVal = strcat(firstTokenIsNumber,"*",exprVal);
+                    else
+                        secondLevelFormatVal = firstTokenIsNumber;
+                }
+                else
+                {
+                    secondLevelFormatVal = "";
+                }
+                    
+            }
+            else
+            {
+                secondLevelFormatVal = firstTokenIsNumber;
+            }
+        }
+    }
+    else //If it is greater than 2 then it is probably an expression
+    {
+        secondLevelFormatVal = firstLevelFormatVal;
+    }
+    
+    return secondLevelFormatVal;
+}
+
+defun cnex_strip_off_optim_params(varName,varValue)
+{
+    //strip off trailing and leading spaces
+    decl paramVal = stripstr(varValue);
+              
+    decl indexNumArr = list();
+    indexNumArr = append(indexNumArr, list(index(paramVal,"tune")));
+    indexNumArr = append(indexNumArr, list(index(paramVal,"notune")));
+    indexNumArr = append(indexNumArr, list(index(paramVal,"opt")));
+    indexNumArr = append(indexNumArr, list(index(paramVal,"noopt")));
+    indexNumArr = append(indexNumArr, list(index(paramVal,"stat")));
+    indexNumArr = append(indexNumArr, list(index(paramVal,"nostat")));
+    indexNumArr = append(indexNumArr, list(index(paramVal,"doe")));
+    indexNumArr = append(indexNumArr, list(index(paramVal,"nodoe")));
+        
+    decl minVal = strlen(paramVal);
+    decl i = 0;
+    for(i=0; i<8; i++)
+    {
+        decl in = nth(i,indexNumArr);
+        if(in == -1)
+            continue;
+            
+        if(in <= minVal)
+            minVal = in;
+    }
+    
+    if(minVal < strlen(paramVal))
+        paramVal = midstr(paramVal,0,minVal-1);
+
+    if(strlen(paramVal) > 2)
+    {
+        if((leftstr(paramVal,1) == "'" || leftstr(paramVal,1) == "\"") && (rightstr(paramVal,1) == "'" || rightstr(paramVal,1) == "\""))
+        {
+            decl tmpVal = midstr(paramVal,1,strlen(paramVal)-2);
+            paramVal = tmpVal;
+        }
+    }
+    
+    return paramVal;
+}
+
+/* Core netlisting functions.  These functions return data from instance handles 
+   or instance records. */
+
+defun cnexExportFormatValue(val)
+{
+    return cnex_export_format_value(val);
+}
+
+defun cnex_export_format_value(val)
+{
+   decl valList;
+   decl valSeg;
+   decl newValue="";
+   decl isExpression=FALSE;
+   decl numList=list("1", "2", "3", "4", "5", "6", "7", "8", "9", "0");
+   decl expressionList=list("+","-","*","^","/","(",")","{","}");
+   decl tmp;
+   decl firstValue=TRUE;
+   decl lastWasNumber=FALSE;
+   decl lastWasExpression=FALSE;
+   decl numVal, scaleVal;
+
+   if(!is_string(val))
+      return(val);
+
+   if(val)
+   {
+      valList=parse(val, " ", "+-*^/(){}");
+   }
+
+   /* ADS numbers are number followed by a space followed by the unit and scalar.
+      Spice requires that there are no spaces between the number and the scalar, and units are 
+      irrelevant.  Remove the trailing space after a number.
+      Additionally, if the value is an inline expression, put expression marks around the 
+      value (as designated by the required globals, expressionStart and expressionEnd).
+      
+      The code must also handle cases where a variable is specified, but the units and scalar 
+      are specified outside of the variable (e.g L1 nH), which is allowed in ADS.  This is  
+      converted to an expression (L1*1n).
+    */
+
+   valSeg="";
+
+   while(valList)
+   {
+      valSeg=car(valList);
+      valList=cdr(valList);
+
+      if(member(leftstr(valSeg, 1), numList))
+      {
+         newValue=strcat(newValue, valSeg);
+         numVal=valSeg;
+         lastWasNumber=TRUE;
+         lastWasExpression=FALSE;
+      }
+      else
+      {          
+         if(cnexConvertScalars)
+         {
+            /* Evaluate all scalar values into scientific notation */
+            if(tolower(leftstr(valSeg, 1)) != "e")
+            {
+               if(lastWasNumber)
+               {
+                  if(member(valSeg, expressionList))
+                  {
+                     isExpression=TRUE;
+                     newValue=strcat(newValue, valSeg);
+                     lastWasNumber=FALSE;
+                  }
+                  else
+                  {
+                     scaleVal=cnex_export_scalar_expand(valSeg);
+                     if(scaleVal)
+                     {
+                        newValue=leftstr(newValue, strlen(newValue)-strlen(numVal));
+                        numVal=identify_value(evaluate(strcat(numVal, "*", scaleVal)));
+                        newValue=strcat(newValue, numVal);
+                     }
+                     else
+                     {
+                        /* This probably represents a syntax error.  Assume that the value is a variable or 
+                           function of sort, and hope it all works out... */
+
+                        if(tmp=member(valSeg, cnexExportExpressionMappingList))
+                        {
+                           valSeg=nth(1, nth(1, tmp));
+                        }
+                        newValue=strcat(newValue, valSeg);
+                        lastWasNumber=FALSE;
+                     }
+                  }
+               }
+               else
+               {
+                  if(member(valSeg, expressionList))
+                  {
+                     isExpression=TRUE;
+                  }
+                  else if(tmp=member(valSeg, cnexExportExpressionMappingList))
+                  {
+                     valSeg=nth(1, nth(1, tmp));
+                  }
+                  newValue=strcat(newValue, valSeg);
+                  lastWasNumber=FALSE;
+               }
+            }
+         }
+         else
+         {
+            if(tmp=member(valSeg, cnexExportUnitMappingList))
+            {
+               valSeg=nth(1, nth(1, tmp));
+               if(!lastWasNumber && !firstValue && !lastWasExpression)
+               {
+                  // This is a case where a variable has a scalar suffix (e.g. "x nH").
+                  // Convert the value into an expression by multiplying by the scalar                 
+                  newValue=strcat(newValue, "*1", valSeg);
+                  isExpression=TRUE;
+                  lastWasExpression=FALSE;
+               }
+               else
+               {
+                  newValue=strcat(newValue, valSeg);
+                  lastWasExpression=FALSE;
+               }
+            }
+            else if(tmp=member(valSeg, cnexExportExpressionMappingList))
+            {
+               valSeg=nth(1, nth(1, tmp));
+               newValue=strcat(newValue, valSeg);
+               lastWasExpression=FALSE;
+            }
+            else
+            {
+               if(member(valSeg, expressionList))
+               {
+                  isExpression=TRUE;
+                  lastWasExpression=TRUE;
+                  newValue=strcat(newValue, valSeg);
+               }
+               else if((cnex_export_scalar_expand(valSeg) != NULL) && !lastWasNumber && !firstValue && !lastWasExpression)
+               {
+                  // This is a case where a variable has a scalar suffix (e.g. "x nH").
+                  // Convert the value into an expression by multiplying by the scalar                 
+                  newValue=strcat(newValue, "*1", valSeg);
+                  isExpression=TRUE;
+                  lastWasExpression=FALSE;
+               }
+               else
+               {
+                  newValue=strcat(newValue, valSeg);
+                  lastWasExpression=FALSE;
+               }        
+            }
+         }
+         lastWasNumber=FALSE;
+      }
+      firstValue=FALSE;
+   }
+
+   if(isExpression)
+   {
+      newValue=strcat(expressionStart, newValue, expressionEnd);
+   }
+
+   return(newValue);
+}
+
+defun cnexExportScalarExpand(val)
+{
+    return cnex_export_scalar_expand(val);
+}
+
+defun cnex_export_scalar_expand(val)
+{
+   decl returnVal;
+
+   if(is_string(val))
+   {
+      if(leftstr(val, 1) == "a")
+      {
+         returnVal="1e-18";
+      }
+      else if(leftstr(val, 1) == "f")
+      {
+         if(val == "ft")
+            returnVal=".3048";
+         else
+            returnVal="1e-15";
+         }
+      else if(leftstr(val, 1) == "p")
+      {
+         returnVal="1e-12";
+      }
+      else if(leftstr(val, 1) == "n")
+      {
+         returnVal="1e-9";
+      }
+      else if(leftstr(val, 1) == "u")
+      {
+         returnVal="1e-6";
+      }
+      else if(leftstr(val, 1) == "m")
+      {
+         if(val == "meter")
+         {
+            returnVal="1";
+         }
+         else if(val == "mil")
+         {
+            returnVal="2.54e-05";
+         }
+         else
+            returnVal="1e-3";
+      }
+      else if(leftstr(val, 1) == "k" || leftstr(val, 1) == "K")
+      {
+         returnVal="1e3";
+      }
+      else if(leftstr(val, 1) == "M")
+      {
+         returnVal="1e6";
+      }
+      else if(leftstr(val, 1) == "g" || leftstr(val, 1) == "G")
+      {
+         returnVal="1e9";
+      }
+      else if(leftstr(val, 1) == "t" || leftstr(val, 1) == "T")
+      {
+         returnVal="1e12";
+      }
+      else if(tolower(val) == "celsius")
+      {
+         returnVal="1";
+      }
+      else if(val == "in")
+      {
+         returnVal=".0254";
+      }
+      else
+      {
+         // Not a valid scalar or unit
+         returnVal=NULL;
+      }
+   }
+   return(returnVal);
+}
+
+defun cnex_prioritized_shorted_output(outputNodeName, newOutputName)
+{
+   if(outputNodeName != newOutputName)
+   {
+      if( ((outputNodeName != cnexGroundNode) && (outputNodeName != "0")) &&
+          ((newOutputName == cnexGroundNode) || (newOutputName == "0")) )
+      {
+         // Ground is the highest priority
+         outputNodeName=newOutputName;
+      }
+      else if(member(newOutputName, cnexSubcircuitPortNodeList))
+      {
+         // Ports have the second highest priority
+         if(!member(outputNodeName, cnexSubcircuitPortNodeList))
+         {
+            outputNodeName=newOutputName;
+         }
+         else
+         {
+            // Generate an error message in the log file that two ports 
+            // are shorted together
+            decl context = de_get_current_design_context();
+            decl designName = db_get_design_name(context);
+            cnex_export_write_to_log( strcat("ERROR!  Port ", outputNodeName, " and port ", newOutputName, " in the design ",
+                                         designName, 
+                                         " are shorted together." ));
+         }
+      }
+      else if( member(newOutputName, cnexExportGlobalNodeList) )
+      {
+         // Global named nodes take priority over non-global nodes
+         if(!member(outputNodeName, cnexExportGlobalNodeList) )
+         {
+            outputNodeName=newOutputName;
+         }
+         else
+         {
+            // Generate an error message in the log file that two global nodes 
+            // are shorted together
+            cnex_export_write_to_log( strcat("ERROR!  Global node ", outputNodeName, " and global node ", 
+                                         newOutputName, " are shorted together." ));                  
+         }
+      }
+      else if( (leftstr(outputNodeName, strlen(numericNodePrefix)) == numericNodePrefix) &&
+               (leftstr(newOutputName, strlen(numericNodePrefix)) != numericNodePrefix) )
+      {
+         // If the new name is a named net, and the old name was a numeric/system net, 
+         // use the named net
+         outputNodeName=newOutputName;
+      }
+      else
+      {
+         // Either the shorted output name is already a named net, or the name being checked 
+         // is a numeric net.  In either of these cases, stay with the current net name.
+      }
+   }
+   
+   return(outputNodeName);
+}

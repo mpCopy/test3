@@ -1,0 +1,337 @@
+// Copyright Keysight Technologies 2001 - 2018  
+// Globals that are set by the CNEX_config file
+
+decl caseInsensitiveOutput=TRUE;
+decl componentInstanceSeparator=NULL;
+decl cnexGroundNode=NULL;
+decl cnexExportEquivNodeList=NULL;
+decl cnexExportExpressionMappingList=NULL;
+decl expressionStart=NULL;
+decl expressionEnd=NULL;
+decl illegalInstanceChars=NULL;
+decl illegalNodeChars=NULL;
+decl commentLine="*";
+decl lineContinuationCharacter="+";
+decl lineContinuationMode=0;
+decl maxLineLength=0;
+decl numericNodePrefix=NULL;
+decl cnexConvertScalars=FALSE;
+decl cnexExportUnitMappingList=NULL;
+decl cnexShortWithResistors=NULL;
+decl cnexResistorShortModel=NULL;
+
+// Globals that are used within the main code.  Do not remove these variables, or change 
+// their names!
+
+decl cnexExportLogFile=NULL;               // Default value will be set in the code
+decl cnexExportNetlistFile=NULL;           // Default value will be set in the code 
+decl cnexExportGlobalNodeList=NULL;
+decl cnexSubcircuitEquivNodeList=NULL;
+decl cnexSubcircuitPortNodeList=NULL;
+decl cnexSubcircuitInstanceMappedList=NULL;
+decl cnexSubcircuitNodeMappedList=NULL;
+decl cnexBusInstanceIterator=0;
+decl cnexMaxInstanceIterator=0;
+decl cnexIteratorIncrementor=1;
+decl cnexInstanceNameList=NULL;
+decl cnexInheritedConnectionList=NULL;
+
+defun cnexExportReadGlobals()
+{
+   return cnex_export_read_globals();
+}
+
+defun cnex_export_read_globals()
+{
+   // Read the global variables from the appropriate file
+
+   decl cnexTool=cnex_get_tool();
+
+   decl fullPath, fileH;
+   decl dirList;
+
+   /* Add the installation directory configuration files to the global file list.
+      Note that this should be $HPEESOF_DIR/netlist_exp/config. */
+
+   decl installDir=cnex_get_install_dir();
+   if(installDir && filestat(installDir))
+   {
+      dirList=append(dirList, list(strcat(installDir,"/config")));
+   }
+
+   /* Add the custom directory for CNEX files to the global file list.
+      Note that this should be $HPEESOF_DIR/custom/netlist_exp/config */
+
+   decl customDir=cnex_get_custom_dir();
+   if(customDir && filestat(customDir))
+   {
+      dirList=append(dirList, list(strcat(customDir,"/config")));
+   }
+
+   /* Add the users home directory configuration files to the global file list.
+      Note that this should be $HOME/hpeesof/netlist_exp/config. */
+
+   decl homeDir=cnex_get_home_dir();
+   if(homeDir && filestat(homeDir))
+   {
+      dirList=append(dirList, list(strcat(homeDir,"/config")));
+   }
+
+   /* Add in <design kit>/netlist_exp/config directories to the directory list. */
+
+   
+  decl tmpList=cnex_setup_library_paths();
+  decl kitName, kitRecord, kitPath;
+  decl designKitComponentString="", designKitAelString="";
+
+  while(tmpList)
+  {
+    kitPath=car(tmpList);
+    tmpList=cdr(tmpList);
+    kitPath=expandenv(kitPath);
+    /* The Kit has been set up for a CNEX tool, and potentially has 
+		configuration files for the current tool. */
+	
+    if(kitPath && filestat(strcat(kitPath, "/netlist_exp/config")))
+    {
+		dirList=append(dirList, list(strcat(kitPath, "/netlist_exp/config")));
+    }
+  }
+   
+
+   /* Add in the current working directory configuration files.  This will 
+      correspond to the project the user is currently working in. */
+
+   dirList=append(dirList, list("."));
+
+   /* Read all files in the global configuration list for the currently active 
+      CNEX tool. */
+
+   decl readLine, readLineList, recordName;
+   decl tmpList, tmp1, tmp2, replaceList;
+
+   while(dirList)
+   {
+      fullPath=car(dirList);
+      dirList=cdr(dirList);
+      fullPath=strcat(fullPath, "/CNEX_config.", cnexTool);
+
+      if(fileH=fopen(fullPath, "R"))
+      {
+         while((readLine = fgets(fileH)) != NULL)
+         {
+            readLineList=parse(readLine, " =", "");
+            recordName=toupper(car(readLineList));
+            readLineList=cdr(readLineList);
+
+            if(recordName == "CASE_INSENSITIVE_OUTPUT")
+            {
+               /* Designates whether the netlist format is case sensitive or not. */ 
+               if(car(readLineList) == "FALSE")
+               {
+                  caseInsensitiveOutput=FALSE;
+               }
+               else
+               {
+                  caseInsensitiveOutput=TRUE;
+               }
+            }
+            else if(recordName == "COMPONENT_INSTANCE_SEPARATOR")
+            {
+               /* Specifies a character to use between the component name and the 
+                  instance name.  Can be empty. */
+               componentInstanceSeparator=car(readLineList);
+               if(!componentInstanceSeparator)
+                  componentInstanceSeparator="";
+            }
+            else if(recordName == "GROUND")
+            {
+               /* Designates how to replace node 0 with a prespecified name. */
+               cnexGroundNode=car(readLineList);
+            }
+            else if(recordName == "EQUIV")
+            {
+               tmp1=nth(0, readLineList);
+               tmp2=nth(1, readLineList);
+               if(tmp1 && tmp2)
+               {
+                  if(!(replaceList=nth(1, member(tmp1, cnexExportExpressionMappingList))))
+                  {
+                     cnexExportEquivNodeList=append(cnexExportEquivNodeList, list(tmp2, list(tmp1)));
+                  }
+                  else
+                  {
+                     repla(replaceList, tmp1, 0);
+                  }
+               }
+            }
+            else if(recordName == "EXPRESSION_START")
+            {
+               expressionStart=car(readLineList);
+            }
+            else if(recordName == "EXPRESSION_END")
+            {
+               expressionEnd=car(readLineList);
+            }
+            else if(recordName == "EXPRESSION_MAPPING")
+            {
+               tmp1=nth(0, readLineList);
+               tmp2=nth(1, readLineList);
+               if(!tmp2)
+                  tmp2="";
+               if(!(replaceList=nth(1, member(tmp1, cnexExportExpressionMappingList))))
+               {
+                  tmpList=list(tmp1, tmp2);
+                  cnexExportExpressionMappingList=append(cnexExportExpressionMappingList,
+                                                         list(nth(0, readLineList)));
+                  cnexExportExpressionMappingList=append(cnexExportExpressionMappingList,
+                                                         list(tmpList));
+               }
+               else
+               {
+                  repla(replaceList, tmp2, 1);
+               }
+            }
+            else if(recordName == "ILLEGAL_INSTANCE_CHARACTERS")
+            {
+               illegalInstanceChars=nth(0, readLineList);
+            }
+            else if(recordName == "ILLEGAL_NODE_CHARACTERS")
+            {
+               illegalNodeChars=nth(0, readLineList);
+            }
+            else if(recordName == "LINE_CONTINUATION_CHARACTER")
+            {
+               lineContinuationCharacter=car(readLineList);
+            }
+            else if(recordName == "LINE_CONTINUATION_MODE")
+            {
+               lineContinuationMode=evaluate(car(readLineList));
+            }
+            else if(recordName == "LINE_COMMENT")
+            {
+               commentLine=car(readLineList);
+            }
+            if(recordName == "MAX_LINE_LENGTH")
+            {
+               maxLineLength=evaluate(car(readLineList));
+            }
+            else if(recordName == "NUMERIC_NODE_PREFIX")
+            {
+               numericNodePrefix=car(readLineList);
+            }
+            else if(recordName == "RESISTOR_SHORT_MODEL")
+            {
+               cnexResistorShortModel=car(readLineList);
+            }
+            else if(recordName == "SCALAR_TO_SCIENTIFIC")
+            {
+               if(car(readLineList) == "FALSE")
+               {
+                  cnexConvertScalars=FALSE;
+               }
+               else
+               {
+                  cnexConvertScalars=TRUE;
+               }
+            }
+            else if(recordName == "SCALAR_UNIT_MAPPING")
+            {
+               tmp1=nth(0, readLineList);
+               tmp2=nth(1, readLineList);
+               if(!tmp2)
+                  tmp2="";
+
+               if(!(replaceList=nth(1, member(tmp1, cnexExportUnitMappingList))))
+               {
+                  tmpList=list(tmp1, tmp2);
+                  cnexExportUnitMappingList=append(cnexExportUnitMappingList,
+                                                   list(nth(0, readLineList)));
+                  cnexExportUnitMappingList=append(cnexExportUnitMappingList,
+                                                   list(tmpList));
+               }
+               else
+               {
+                  repla(replaceList, tmp2, 1);
+               }
+            }
+            else if(recordName == "SHORT_WITH_RESISTORS")
+            {
+               if(car(readLineList) == "TRUE")
+                  cnexShortWithResistors=TRUE;               
+               else
+                  cnexShortWithResistors=FALSE;
+            }
+         }
+
+         fclose(fileH);
+      }
+   }
+
+   /* Set defaults in case the values were not set properly. */
+   if(!componentInstanceSeparator)
+      componentInstanceSeparator="";
+
+   if(!lineContinuationCharacter)	
+      lineContinuationCharacter="+";
+
+   if(!commentLine)
+      commentLine="*";
+
+   if(!expressionStart)
+      expressionStart="";
+
+   if(!expressionEnd)
+      expressionEnd="";
+
+   if(maxLineLength < 40)
+      maxLineLength=40;
+
+   if(!illegalInstanceChars)
+      illegalInstanceChars="";
+
+   if(!illegalNodeChars)
+      illegalNodeChars="";
+
+}
+
+defun cnexExportClearGlobals()
+{
+    return cnex_export_clear_blobals();
+}
+
+defun cnex_export_clear_globals()
+{
+   // Clear all globals.  This releases the memory that the values are using.
+
+   maxLineLength=0;
+   lineContinuationCharacter="+";
+   lineContinuationMode=0;
+   componentInstanceSeparator=NULL;
+   commentLine="*";
+   expressionStart=NULL;
+   expressionEnd=NULL;
+   illegalInstanceChars=NULL;
+   illegalNodeChars=NULL;
+   caseInsensitiveOutput=TRUE;
+   cnexConvertScalars=FALSE;
+   numericNodePrefix=NULL;
+   cnexGroundNode=NULL;
+   cnexExportEquivNodeList=NULL;
+   cnexExportFileIncludeList=NULL;
+   cnexExportUnitMappingList=NULL;
+   cnexExportExpressionMappingList=NULL;
+
+   cnexExportGlobalNodeList=NULL;
+
+   cnexSubcircuitEquivNodeList=NULL;
+   cnexSubcircuitInstanceMappedList=NULL;
+   cnexSubcircuitNodeMappedList=NULL;
+
+   cnexBusInstanceIterator=0;
+   cnexMaxInstanceIterator=0;
+   cnexIteratorIncrementor=1;
+   cnexInstanceNameList=NULL;
+   cnexShortWithResistors=NULL;
+   cnexResistorShortModel=NULL;
+}

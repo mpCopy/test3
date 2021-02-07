@@ -1,0 +1,42 @@
+<html>
+<head>
+<title>PCB Importer User Manual Chapter 1 Introduction</title>
+<style>
+body {background-color:#FFFFFF;
+      text-decoration:none;
+      font-family:Verdana,Arial,Helvetica,sans-serif;
+      font-size:100%;
+      margin-left:50px;
+     }
+
+h1,h2,h3,h4 {color:#C00000;}
+
+pre {font-family :Courier New, Courier, Monospaced;}
+
+p   {line-height:1.5;}
+</style>
+</head>
+
+<body>
+<table width=825>
+<td width=825>
+<h1>Introduction</h1>
+<p>PCB Importer is a program that extracts physically connected nets from ODB++ and IPC-2581 PCB formats by collecting together all touching or overlapping geometries on conductor layers. Drill data used to create vias is provides connection information from layer to layer. Component data is used to identify pins and reference designators. Net data is used to label groups of conductors.</p>
+
+<p>When all of this information has been processed the program writes a file known as ADFI which can be imported intelligently by ADS. An ADS substrate definition is created based on the stackup information found in the ODB++ or the IPC2581 file.</p>
+
+<img src="./figure1.gif" width=630 height=224 hspace=42 alt="figure1 - NETEX-ADS program flow"><br>
+
+
+<h2>Additional Features</h2>
+<p>Because printed circuit board layouts can be large and complex, the user can select only a portion of the layout to import into ADS. There are two separate selection modes:</p>
+
+<h3>By Window</h3>
+<p>In this mode the user selects (graphically) a window (or windows) to extract. All conductors are clipped at the window boundary.</p>
+
+<h3>By Net</h3>
+<p>In this mode the user selects one or more nets to extract. In addition to these nets, the user can select a proximity distance and all conductors that fall inside of the net's footprint are also selected. This is very useful when one has a long critical net that crosses the board.</p>
+</td>
+</table>
+</body>
+</html>

@@ -1,0 +1,416 @@
+diff -Naur include/QtCore/qdebug.h include.head/QtCore/qdebug.h
+--- include/QtCore/qdebug.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtCore/qdebug.h	2016-07-22 14:20:48.000000000 -0700
+@@ -74,7 +74,7 @@
+         };
+ 
+         // ### Qt 6: unify with space, introduce own version member
+-        bool testFlag(FormatFlag flag) const { return (context.version > 1) ? (flags & flag) : false; }
++        bool testFlag(FormatFlag flag) const { return (context.version > 1) ? ((flags & flag) != 0) : false; }
+         void setFlag(FormatFlag flag) { if (context.version > 1) { flags |= flag; } }
+         void unsetFlag(FormatFlag flag) { if (context.version > 1) { flags &= ~flag; } }
+         int verbosity() const
+diff -Naur include/QtCore/qglobal.h include.head/QtCore/qglobal.h
+--- include/QtCore/qglobal.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtCore/qglobal.h	2016-07-22 14:20:48.000000000 -0700
+@@ -887,22 +887,22 @@
+ #endif
+ #if defined(QT_NO_WARNINGS)
+ #  if defined(Q_CC_MSVC)
+-QT_WARNING_DISABLE_MSVC(4251) /* class 'type' needs to have dll-interface to be used by clients of class 'type2' */
+-QT_WARNING_DISABLE_MSVC(4244) /* conversion from 'type1' to 'type2', possible loss of data */
+-QT_WARNING_DISABLE_MSVC(4275) /* non - DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier' */
+-QT_WARNING_DISABLE_MSVC(4514) /* unreferenced inline function has been removed */
+-QT_WARNING_DISABLE_MSVC(4800) /* 'type' : forcing value to bool 'true' or 'false' (performance warning) */
+-QT_WARNING_DISABLE_MSVC(4097) /* typedef-name 'identifier1' used as synonym for class-name 'identifier2' */
+-QT_WARNING_DISABLE_MSVC(4706) /* assignment within conditional expression */
++//QT_WARNING_DISABLE_MSVC(4251) /* class 'type' needs to have dll-interface to be used by clients of class 'type2' */
++//QT_WARNING_DISABLE_MSVC(4244) /* conversion from 'type1' to 'type2', possible loss of data */
++//QT_WARNING_DISABLE_MSVC(4275) /* non - DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier' */
++//QT_WARNING_DISABLE_MSVC(4514) /* unreferenced inline function has been removed */
++//QT_WARNING_DISABLE_MSVC(4800) /* 'type' : forcing value to bool 'true' or 'false' (performance warning) */
++//QT_WARNING_DISABLE_MSVC(4097) /* typedef-name 'identifier1' used as synonym for class-name 'identifier2' */
++//QT_WARNING_DISABLE_MSVC(4706) /* assignment within conditional expression */
+ #    if _MSC_VER <= 1310 // MSVC 2003
+-QT_WARNING_DISABLE_MSVC(4786) /* 'identifier' : identifier was truncated to 'number' characters in the debug information */
++//QT_WARNING_DISABLE_MSVC(4786) /* 'identifier' : identifier was truncated to 'number' characters in the debug information */
+ #    endif
+-QT_WARNING_DISABLE_MSVC(4355) /* 'this' : used in base member initializer list */
++//QT_WARNING_DISABLE_MSVC(4355) /* 'this' : used in base member initializer list */
+ #    if _MSC_VER < 1800 // MSVC 2013
+-QT_WARNING_DISABLE_MSVC(4231) /* nonstandard extension used : 'identifier' before template explicit instantiation */
++//QT_WARNING_DISABLE_MSVC(4231) /* nonstandard extension used : 'identifier' before template explicit instantiation */
+ #    endif
+-QT_WARNING_DISABLE_MSVC(4710) /* function not inlined */
+-QT_WARNING_DISABLE_MSVC(4530) /* C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc */
++//QT_WARNING_DISABLE_MSVC(4710) /* function not inlined */
++//QT_WARNING_DISABLE_MSVC(4530) /* C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc */
+ #  elif defined(Q_CC_BOR)
+ #    pragma option -w-inl
+ #    pragma option -w-aus
+diff -Naur include/QtCore/qlist.h include.head/QtCore/qlist.h
+--- include/QtCore/qlist.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtCore/qlist.h	2016-07-22 14:20:48.000000000 -0700
+@@ -55,6 +55,7 @@
+ #ifdef Q_CC_MSVC
+ #pragma warning( push )
+ #pragma warning( disable : 4127 ) // "conditional expression is constant"
++#pragma warning( disable : 4244 )
+ #endif
+ 
+ QT_BEGIN_NAMESPACE
+@@ -844,9 +845,10 @@
+ inline bool QList<T>::op_eq_impl(const QList &l, QListData::ArrayCompatibleLayout) const
+ {
+     const T *lb = reinterpret_cast<const T*>(l.p.begin());
++    const T *le = reinterpret_cast<const T*>(l.p.end());
+     const T *b  = reinterpret_cast<const T*>(p.begin());
+     const T *e  = reinterpret_cast<const T*>(p.end());
+-    return std::equal(b, e, lb);
++    return std::equal(b, e, lb, le);
+ }
+ 
+ template <typename T>
+diff -Naur include/QtCore/qmetatype.h include.head/QtCore/qmetatype.h
+--- include/QtCore/qmetatype.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtCore/qmetatype.h	2016-07-22 14:20:48.000000000 -0700
+@@ -666,7 +666,7 @@
+                      const QMetaObject *metaObject);
+     QMetaType(const QMetaType &other);
+     QMetaType &operator =(const QMetaType &);
+-    inline bool isExtended(const ExtensionFlag flag) const { return m_extensionFlags & flag; }
++    inline bool isExtended(const ExtensionFlag flag) const { return (m_extensionFlags & flag) != 0; }
+ 
+     // Methods used for future binary compatible extensions
+     void ctor(const QMetaTypeInterface *info);
+@@ -1365,7 +1365,7 @@
+         static yes_type checkType(QObject* );
+ #endif
+         static no_type checkType(...);
+-        Q_STATIC_ASSERT_X(sizeof(T), "Type argument of Q_DECLARE_METATYPE(T*) must be fully defined");
++        Q_STATIC_ASSERT_X(sizeof(T) != 0, "Type argument of Q_DECLARE_METATYPE(T*) must be fully defined");
+         enum { Value = sizeof(checkType(static_cast<T*>(Q_NULLPTR))) == sizeof(yes_type) };
+     };
+ 
+diff -Naur include/QtCore/qtextboundaryfinder.h include.head/QtCore/qtextboundaryfinder.h
+--- include/QtCore/qtextboundaryfinder.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtCore/qtextboundaryfinder.h	2016-07-22 14:20:48.000000000 -0700
+@@ -70,7 +70,7 @@
+     QTextBoundaryFinder(BoundaryType type, const QString &string);
+     QTextBoundaryFinder(BoundaryType type, const QChar *chars, int length, unsigned char *buffer = Q_NULLPTR, int bufferSize = 0);
+ 
+-    inline bool isValid() const { return d; }
++    inline bool isValid() const { return d != nullptr; }
+ 
+     inline BoundaryType type() const { return t; }
+     QString string() const;
+diff -Naur include/QtCore/qvariant.h include.head/QtCore/qvariant.h
+--- include/QtCore/qvariant.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtCore/qvariant.h	2016-07-22 14:20:48.000000000 -0700
+@@ -47,6 +47,11 @@
+ #include <QtCore/qbytearraylist.h>
+ #endif
+ 
++#if defined(Q_CC_MSVC)
++#pragma warning( push )
++#pragma warning( disable : 4127 ) // conditional expression is constant
++#endif
++
+ QT_BEGIN_NAMESPACE
+ 
+ 
+@@ -855,4 +860,8 @@
+ 
+ QT_END_NAMESPACE
+ 
++#if defined(Q_CC_MSVC)
++#pragma warning( pop )
++#endif
++
+ #endif // QVARIANT_H
+diff -Naur include/QtCore/qvector.h include.head/QtCore/qvector.h
+--- include/QtCore/qvector.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtCore/qvector.h	2016-07-22 14:20:48.000000000 -0700
+@@ -51,6 +51,12 @@
+ 
+ #include <algorithm>
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( push )
++#pragma warning( disable : 4127 ) // "conditional expression is constant"
++#pragma warning( disable : 4244)
++#endif
++
+ QT_BEGIN_NAMESPACE
+ 
+ class QRegion;
+@@ -765,9 +771,10 @@
+     if (d->size != v.d->size)
+         return false;
+     const T *vb = v.d->begin();
++    const T *ve = v.d->end();
+     const T *b  = d->begin();
+     const T *e  = d->end();
+-    return std::equal(b, e, vb);
++    return std::equal(b, e, vb,ve);
+ }
+ 
+ template <typename T>
+@@ -975,4 +982,8 @@
+ 
+ QT_END_NAMESPACE
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( pop )
++#endif
++
+ #endif // QVECTOR_H
+diff -Naur include/QtCore/qversionnumber.h include.head/QtCore/qversionnumber.h
+--- include/QtCore/qversionnumber.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtCore/qversionnumber.h	2016-07-22 14:20:48.000000000 -0700
+@@ -41,6 +41,10 @@
+ #include <QtCore/qmetatype.h>
+ #include <QtCore/qtypeinfo.h>
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( push )
++#pragma warning( disable : 4244)
++#endif
+ QT_BEGIN_NAMESPACE
+ 
+ class QVersionNumber;
+@@ -310,4 +314,8 @@
+ 
+ Q_DECLARE_METATYPE(QVersionNumber)
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( pop )
++#endif
++
+ #endif //QVERSIONNUMBER_H
+diff -Naur include/QtGui/qevent.h include.head/QtGui/qevent.h
+--- include/QtGui/qevent.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qevent.h	2016-07-22 14:20:48.000000000 -0700
+@@ -50,6 +50,10 @@
+ #include <QtGui/qvector2d.h>
+ #include <QtGui/qtouchdevice.h>
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( push )
++#pragma warning( disable : 4244 )
++#endif
+ QT_BEGIN_NAMESPACE
+ 
+ 
+@@ -991,4 +995,7 @@
+ 
+ QT_END_NAMESPACE
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( pop)
++#endif
+ #endif // QEVENT_H
+diff -Naur include/QtGui/qmatrix4x4.h include.head/QtGui/qmatrix4x4.h
+--- include/QtGui/qmatrix4x4.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qmatrix4x4.h	2016-07-22 14:20:48.000000000 -0700
+@@ -40,6 +40,11 @@
+ #include <QtGui/qgenericmatrix.h>
+ #include <QtCore/qrect.h>
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( push )
++#pragma warning( disable : 4244)
++#endif
++
+ QT_BEGIN_NAMESPACE
+ 
+ 
+@@ -1124,4 +1129,8 @@
+ 
+ QT_END_NAMESPACE
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( pop)
++#endif
++
+ #endif
+diff -Naur include/QtGui/qpaintengine.h include.head/QtGui/qpaintengine.h
+--- include/QtGui/qpaintengine.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qpaintengine.h	2016-07-22 14:20:48.000000000 -0700
+@@ -212,7 +212,7 @@
+     inline void setDirty(DirtyFlags df);
+     inline void clearDirty(DirtyFlags df);
+ 
+-    bool hasFeature(PaintEngineFeatures feature) const { return gccaps & feature; }
++    bool hasFeature(PaintEngineFeatures feature) const { return (gccaps & feature) != 0; }
+ 
+     QPainter *painter() const;
+ 
+@@ -312,7 +312,7 @@
+ 
+ inline bool QPaintEngine::testDirty(DirtyFlags df) {
+     Q_ASSERT(state);
+-    return state->dirtyFlags & df;
++    return (state->dirtyFlags & df) != 0;
+ }
+ 
+ inline void QPaintEngine::setDirty(DirtyFlags df) {
+diff -Naur include/QtGui/qpainter.h include.head/QtGui/qpainter.h
+--- include/QtGui/qpainter.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qpainter.h	2016-07-22 14:20:48.000000000 -0700
+@@ -447,7 +447,7 @@
+     void setRenderHint(RenderHint hint, bool on = true);
+     void setRenderHints(RenderHints hints, bool on = true);
+     RenderHints renderHints() const;
+-    inline bool testRenderHint(RenderHint hint) const { return renderHints() & hint; }
++    inline bool testRenderHint(RenderHint hint) const { return (renderHints() & hint)!=0; }
+ 
+     QPaintEngine *paintEngine() const;
+ 
+diff -Naur include/QtGui/qquaternion.h include.head/QtGui/qquaternion.h
+--- include/QtGui/qquaternion.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qquaternion.h	2016-07-22 14:20:48.000000000 -0700
+@@ -38,6 +38,10 @@
+ #include <QtGui/qvector3d.h>
+ #include <QtGui/qvector4d.h>
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( push )
++#pragma warning( disable : 4244)
++#endif
+ QT_BEGIN_NAMESPACE
+ 
+ 
+@@ -392,4 +396,8 @@
+ 
+ QT_END_NAMESPACE
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( pop )
++#endif
++
+ #endif
+diff -Naur include/QtGui/qrgba64.h include.head/QtGui/qrgba64.h
+--- include/QtGui/qrgba64.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qrgba64.h	2016-07-22 14:20:48.000000000 -0700
+@@ -37,6 +37,11 @@
+ #include <QtCore/qglobal.h>
+ #include <QtCore/qprocessordetection.h>
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( push )
++#pragma warning( disable : 4244 )
++#endif
++
+ QT_BEGIN_NAMESPACE
+ 
+ class QRgba64 {
+@@ -225,4 +230,7 @@
+ 
+ QT_END_NAMESPACE
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( pop )
++#endif
+ #endif // QRGBA64_H
+diff -Naur include/QtGui/qtextlayout.h include.head/QtGui/qtextlayout.h
+--- include/QtGui/qtextlayout.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qtextlayout.h	2016-07-22 14:20:48.000000000 -0700
+@@ -63,7 +63,7 @@
+ public:
+     QTextInlineObject(int i, QTextEngine *e) : itm(i), eng(e) {}
+     inline QTextInlineObject() : itm(0), eng(Q_NULLPTR) {}
+-    inline bool isValid() const { return eng; }
++    inline bool isValid() const { return eng != Q_NULLPTR; }
+ 
+     QRectF rect() const;
+     qreal width() const;
+@@ -203,7 +203,7 @@
+ {
+ public:
+     inline QTextLine() : index(0), eng(Q_NULLPTR) {}
+-    inline bool isValid() const { return eng; }
++    inline bool isValid() const { return eng != Q_NULLPTR; }
+ 
+     QRectF rect() const;
+     qreal x() const;
+diff -Naur include/QtGui/qvector2d.h include.head/QtGui/qvector2d.h
+--- include/QtGui/qvector2d.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qvector2d.h	2016-07-22 14:20:48.000000000 -0700
+@@ -37,6 +37,10 @@
+ #include <QtCore/qpoint.h>
+ #include <QtCore/qmetatype.h>
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( push )
++#pragma warning( disable : 4244)
++#endif
+ QT_BEGIN_NAMESPACE
+ 
+ 
+@@ -274,5 +278,8 @@
+ #endif
+ 
+ QT_END_NAMESPACE
++#ifdef Q_CC_MSVC
++#pragma warning( pop )
++#endif
+ 
+ #endif
+diff -Naur include/QtGui/qvector3d.h include.head/QtGui/qvector3d.h
+--- include/QtGui/qvector3d.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qvector3d.h	2016-07-22 14:20:48.000000000 -0700
+@@ -37,6 +37,10 @@
+ #include <QtCore/qpoint.h>
+ #include <QtCore/qmetatype.h>
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( push )
++#pragma warning( disable : 4244)
++#endif
+ QT_BEGIN_NAMESPACE
+ 
+ 
+@@ -301,5 +305,8 @@
+ #endif
+ 
+ QT_END_NAMESPACE
++#ifdef Q_CC_MSVC
++#pragma warning( pop )
++#endif
+ 
+ #endif
+diff -Naur include/QtGui/qvector4d.h include.head/QtGui/qvector4d.h
+--- include/QtGui/qvector4d.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtGui/qvector4d.h	2016-07-22 14:20:48.000000000 -0700
+@@ -37,6 +37,10 @@
+ #include <QtCore/qpoint.h>
+ #include <QtCore/qmetatype.h>
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( push )
++#pragma warning( disable : 4244)
++#endif
+ QT_BEGIN_NAMESPACE
+ 
+ 
+@@ -303,4 +307,7 @@
+ 
+ QT_END_NAMESPACE
+ 
++#ifdef Q_CC_MSVC
++#pragma warning( pop )
++#endif
+ #endif
+diff -Naur include/QtWidgets/qwidget.h include.head/QtWidgets/qwidget.h
+--- include/QtWidgets/qwidget.h	2016-07-22 14:30:33.000000000 -0700
++++ include.head/QtWidgets/qwidget.h	2016-07-22 14:20:48.000000000 -0700
+@@ -854,7 +854,7 @@
+ inline bool QWidget::testAttribute(Qt::WidgetAttribute attribute) const
+ {
+     if (attribute < int(8*sizeof(uint)))
+-        return data->widget_attributes & (1<<attribute);
++        return (data->widget_attributes & (1<<attribute)) != 0;
+     return testAttribute_helper(attribute);
+ }
+ 

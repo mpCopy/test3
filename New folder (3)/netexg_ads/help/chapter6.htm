@@ -1,0 +1,150 @@
+<html>
+<head>
+<title>PCB Importer User Manual Chapter 6 Extractions</title>
+<style>
+body {background-color:#FFFFFF;
+      text-decoration:none;
+      font-family:Verdana,Arial,Helvetica,sans-serif;
+      font-size:100%;
+      margin-left:50px;
+     }
+
+h1,h2,h3,h4 {color:#C00000;}
+
+pre {font-family :Courier New, Courier, Monospaced;}
+
+p   {line-height:1.5;}
+</style>
+</head>
+
+<body>
+<table width=825>
+<td width=825>
+<h1>Extractions</h1>
+<p>While it is possible to import an entire PCB layout into ADS this is not always practical since many high speed boards are so large that one cannot actually do any useful simulation on the entire board. Instead, users generally focus on either some critical nets or a small critical region.</p>
+
+<p>The ADS Layout editor was not designed to handle extremely large databases so manually deleting all the data you don't need to simulate is very time consuming.</p>
+
+<p>The PCB Importer allows the user to specify:</p>
+
+<ul>
+<p>a) one or more nets and any conductors in proximity to those nets</p>
+
+<p>or</p>
+
+<p>b) one or more windows of the layout.</p>
+</ul>
+
+<br>
+
+<h3>Selection by Net</h3>
+
+<p>If you know the net or nets you wish to select then you can specify the names and the PCB Importer will extract all conductors associated with the names.</p>
+
+<p>To do this, click on the Extract button from the main menu and the Exract Dialog will open as seen below:</p>
+
+<img src="./extract_window1.gif" width=462 height=384 vspace=10 hspace=175 alt="Net and Window Extraction Dialog"><br>
+
+<p>There are several ways to select the nets. </p>
+<ul>
+<p>
+You can click on a net name seen in the Available Net Names field. Use the ctrl and shift keys to select multiple nets as you would in the file manager.
+</p>
+
+<p>You could type in the name of the net directly into the Nets to Extract field.</p>
+
+<p>You could type in a DOS wildcard expression into the Nets to Extract field. Any nets matching the expression will be extracted.<sup>1</sup></p>
+
+</ul>
+<br><br>
+<p><font size="-1">[1] if you use a wildcard expression such as A* you will not be able to see which matching nets are selected. So make sure that you pick an expression that collects only the nets you want and does not inadvertently select other nets.</font></p>
+
+<br><br>
+
+<p><b>Proximity Nets</b></p>
+
+<p>Extracting just the nets to simulate is of little value if you can't take into account all of the other conductors in close proximity to the selected nets that have an influence through capacitive (and possibly inductive) coupling.</p>
+
+<p>Hence, if you select extraction by net, the user can also specify a "proximity distance." The part of any conductor that falls within this distance is also extracted.</p>
+
+<p><b>Example</b></p>
+
+<p>In the first snapshot, two nets were selected: TCK_HARD and TCK_SOFT. </p>
+
+
+<img src="./extract_selection1.gif" width=462 height=384 hspace=175 alt="two nets selected (no proximity)"><br>
+
+
+
+<p>No proximity data was requested. You can see the two nets and the 4 components that they attach to in the screen shot below.</p>
+
+<img src="./net_extraction_wo_proximity.gif" width=615 height=446 alt="two nets extracted without proximity extraction."><br>
+
+<p>The process was repeated except that the Extract Proximity Nets option was checked and the distance set to 0.1 inch.</p>
+
+<img src="./extract_selection2.gif" width=462 height=384 hspace=175 vspace=15 alt="two nets selected and proximity equal to 0.1 inch."><br>
+
+<p>One can see from the 3D view below, that in addition to the selected nets, there is also conductors from all layers that fall within 0.1 inch of the footprint of the selected nets. This allows the simulator to take into account the effects of the surrounding metal on the nets beging analyzed.</p>
+
+<img src="./net_extraction_w_proximity.gif" width=578 height=502 alt="two nets extracted with 0.1 inch proximity extraction."><br>
+ 
+
+<p>While there is a lot more data, it is still 100X less than extracting the entire board.</p>
+
+</td>
+</table>
+
+<br><br>
+
+<table width=825>
+<td width=825>
+<p><b>Extractions by Window</b></p>
+<p>For some types of layout it may be better to extract a small window from the layout. In this case one gets everything inside of the window. (Components that cross the window are extracted in their entirety.)</p>
+
+<p>To extract by window, open the Net and Window Extractions dialog box and then click on the Define ... button. This will launch the GBRVU program and display all the conductor and drill data in GBRVU's window.</p>
+
+
+<img src="./gbrvu_win_extract1.gif" width=539 height=653 hspace=140 alt="pcb layout ready for window extraction."><br>
+
+<p>Here is the extraction toolbar and the functions of the buttons</p>
+
+<img src="./gbrvu_selection_toolbar.gif" width=593 height=232 hspace=112 alt="gbrvu window selection toolbar."><br>
+
+<p><b>Rectangular Selection</b></p>
+<p>To make a rectangular selection make sure the rectangular selection button is pressed in, and the mode is set to Single. then use the cursor to define the corners of a window. (Click and hold, drag, release) If you are satisfied with your selection click the Finish button.</p>
+
+<img src="./gbrvu_rect_selection.gif" width=539 vspace=15 height=653 hspace=140 alt="rectangular single selection"><br>
+
+<p>If you are not satisfied, you can merely make a new selection.</p>
+
+<p>If you want to create an irregular shape you can do it in rectangular mode by using the + and - toolbar buttons to add to the current selection or remove from the current selection.</p>
+
+<img src="./gbrvu_rect_plus_minus_selection.gif" vspace=15 width=539 height=643 hspace=140 alt="gbrvu window selection toolbar."><br>
+
+<p><b>Polygonal Selection</b></p>
+<p>Press the polygonal selection toolbar button. Then move the cursor to the first vertex and click up/down. Move to the next vertex and click again. Continue until you have created the desired polygon shape. Clicking on the original starting point will complete the selection.</p>
+
+<br><br>
+
+<p><b>Panning and Zooming</b></p>
+<p>Often it is necessary to pan and zoom before making the selection. One way to do this is to uncheck both the rectangular and polygonal selection buttons. Once those are unselected the regular pan and zoom buttons on the gbrvu toolbar become active.</p>
+
+<p>When using the zoom window toolbutton, Dragging from upper left to lower right zooms in. Dragging from lower right to upper left zooms out.</p>
+
+<br><br>
+
+
+<b>Closing the GBRVU Display</b>
+<p>You must close the GBRVU display either by clicking on the Finish button, or by closing the entire GBRVU program. You will not be able to continue using the PCB Importer dialog until GBRVU is closed (not minimized).</p>
+
+
+
+
+
+
+
+</td>
+</table>
+
+</body>
+</html>

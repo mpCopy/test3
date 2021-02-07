@@ -1,0 +1,235 @@
+// Copyright Keysight Technologies 1999 - 2017  
+// @(#) $Source: /cvs/wlv/src/spctrn/ael/spcutil.ael,v $ $Revision: 1.4 $ $Date: 2011/08/25 01:15:04 $  
+defun spcutil_write_to_log(errMsg)
+{
+    decl fp;
+
+    //print_val("from spcutil_write_to_log");
+    fp=fopen("spctoiff.log", "a");
+    if(fp)
+    {
+        fprintf(fp, "%s\n",errMsg);
+        fclose(fp);
+    }
+
+}
+
+/* traverse the data stored in lists of                    */
+/* list(subckt,list("inst1,nodeName1,nodeName2,...","inst2,..."))) */
+/* find the instance, find its pins by name, get their location, place wire label */
+defun spcutil_place_wire_labels(wireLabelList)
+{
+    decl oneSubckt, subcktName;
+    decl instList, oneInst, instName, nodeList, nodeName;
+    decl winInst, designP, instP, pinP, pinNo, pinLoc;
+    decl repP, fact, errMsg, windowOpen=FALSE;
+
+    while(wireLabelList)
+    {
+        /* pull off one subckt */
+        oneSubckt = car(wireLabelList);
+
+        /* open the design */
+        subcktName = oneSubckt[0];
+        //fprintf(stderr, "opening design %s\n",subcktName);
+
+        /* first see if the design is already open */
+        de_set_window(SCHEMATIC_WINDOW);
+        designP = db_find_design(subcktName);
+        if( designP == NULL )
+        {
+            /* design wasn't open - open it */
+            if(!windowOpen)
+            {
+                de_open_window(SCHEMATIC_WINDOW);
+                de_set_window(SCHEMATIC_WINDOW);
+                windowOpen = TRUE;
+
+                /* if this doesn't work, try commands like     */
+                /* api_get_windows_by_id(SCHEMATIC_WINDOW) and */
+                /* de_show_design_in_window(designP,winInstP)  */
+            }
+            designP = de_load_design(subcktName, FALSE);
+        }
+        
+        if( designP == NULL )
+        {
+            /* design still not found - record warning and try to continue */
+            errMsg = sprintf("WARNING: Failed opening design %s", subcktName);
+            spcutil_write_to_log(errMsg);
+        }
+        else
+        {
+            de_show_design_in_window(designP, api_get_current_window());
+
+            /* get the design rep and conversion factor */
+            repP = db_get_rep(designP, REP_SCHEM);
+            if( repP == NULL )
+            {
+                /* design still not found - record warning and try to continue */
+                errMsg = sprintf("WARNING: Failed finding schematic rep for design %s", subcktName);
+                spcutil_write_to_log(errMsg);
+                /* this is pretty serious - don't try to continue */
+                return(FALSE);
+            }
+            fact = db_get_rep_db_factor(repP);
+
+            /* traverse the instances */
+            instList = oneSubckt[1];
+            //print_val(instList);
+            while(instList)
+            {
+                oneInst = parse(car(instList));
+
+                /* find the instance */
+                instName = car(oneInst);
+
+                //fprintf(stderr, "found instance %s\n",instName);
+                instP = db_find_instance(designP, REP_SCHEM, instName);
+
+                if(! instP)
+                {
+                    /* inst not found - record warning and try to continue */
+                    errMsg = sprintf("WARNING: Instance %s not found in design %s", 
+                                                  instName, subcktName);
+                    spcutil_write_to_log(errMsg);
+                }
+                else
+                {
+                    /* get the first pin of the inst */
+                    pinP = db_get_instance_attribute(instP, INST_PIN_HEAD);
+                    while(pinP)
+                    {
+                        /* get the pin's number */
+                        pinNo = db_get_pin_attribute(pinP, PIN_NUMBER);
+
+                        nodeList = cdr(oneInst);
+                        //print_val(nodeList);
+                        /* find the nodeName by indexing into the list */
+                        nodeName = nodeList[pinNo-1];
+
+                        pinLoc = db_get_pin_attribute(pinP, PIN_LOCATION);
+
+                        /*fprintf(stderr, "attach wire label %s at %f,%f\n",
+                                          nodeName,
+                                          db_get_location_x(pinLoc)/fact,
+                                          db_get_location_y(pinLoc)/fact);*/
+
+                        de_set_named_connection(nodeName);
+
+                        // TRUE means to set the named connection
+                        // FALSE would set the name to "", effectively unnaming the pin
+                        de_named_connection( db_get_location_x(pinLoc)/fact,
+                                       db_get_location_y(pinLoc)/fact, TRUE);
+
+                        /* get the next pin of the inst */
+                        pinP = db_instance_next_pin(pinP);
+                    }
+                }
+
+                /* traverse the inst's pin list, look up corresponding node */
+                /* get pin location and attach wire label at that location */
+                instList = cdr(instList);
+            }
+            de_save_design(NULL, designP);
+        }
+
+        wireLabelList = cdr(wireLabelList);
+    }
+
+    return(TRUE);
+}
+
+/* read the file and store the data in lists of                    */
+/* list(subckt,list("inst1,nodeName1,nodeName2,...","inst2,..."))) */
+defun spcutil_read_wire_label_file(fp)
+{
+    decl inStrg, parsedStrg, readingInsts=FALSE, subcktName;
+    decl wireLabelList=NULL, tmpList=NULL;
+
+    inStrg = fgets(fp);
+    while(inStrg!=NULL)
+    {
+        //print_val(list(inStrg, readingInsts));
+        parsedStrg = parse(inStrg);
+        if(!readingInsts)
+        {
+        //print_val(parsedStrg);
+            /* looking for ".subckt mysub1" */
+            if(parsedStrg[0] == "." && parsedStrg[1] == "subckt")
+            {
+                subcktName = parsedStrg[2];     /* store subckt name */
+                readingInsts = TRUE;
+            }
+
+            /* if we don't find a .subckt line to start, we are in a file */
+            /* that we don't know what to do with                         */
+            
+        }
+        else    /* readingInsts */
+        { 
+
+            /* read inst lines ex: "c1 _net1 _net2" */
+            /* stop when ".ends mysub1" is found */
+            if(parsedStrg[0] == "." && parsedStrg[1] == "ends")
+            {
+                //print_val("tmpList = ");
+                //print_val(tmpList);
+                /* store subckt info */
+                wireLabelList = append(wireLabelList,list(list(subcktName,tmpList)));     
+                tmpList = NULL;
+                //print_val(wireLabelList);
+                readingInsts = FALSE;
+            }
+            else    /* found an inst line ex: "c1 _net1 _net2" */
+            {
+                /* store inst info as is - parse it later */
+                tmpList = append(tmpList, list(inStrg));
+            }
+
+        }
+        inStrg = fgets(fp);
+    }
+
+    return(wireLabelList);
+}
+
+defun dump_data(wireLabelList)
+{
+    decl oneSubckt = car(wireLabelList);
+    decl subcktName = car(oneSubckt);
+    decl oneInst = car(car(cdr(oneSubckt)));
+
+    print_val(oneSubckt);
+    print_val(subcktName);
+    print_val(oneInst);
+}
+
+defun spctoiff_connect_pins(wireLabelFileName)
+{
+    decl fp, errMsg="", wireLabelList;
+
+    //print_val("from spctoiff_connect_pins");
+    errMsg = sprintf("Attaching named connections from wire labels file %s.", wireLabelFileName);
+    spcutil_write_to_log(errMsg);
+
+    fp = fopen(wireLabelFileName, "R");
+    if(! fp)
+    {
+        errMsg = sprintf("ERROR: Failed opening wire labels file %s.", wireLabelFileName);
+        spcutil_write_to_log(errMsg);
+        return(FALSE);
+    }
+    
+    /* read the file and store the data in lists of                    */
+    /* list(subckt,list("inst1,nodeName1,nodeName2,...","inst2,..."))) */
+    wireLabelList = spcutil_read_wire_label_file(fp);
+
+    fclose(fp);
+
+    //dump_data(wireLabelList);
+
+    /* find the instance, find its pins by name, get their location, place wire label */
+    return(spcutil_place_wire_labels(wireLabelList));
+
+}

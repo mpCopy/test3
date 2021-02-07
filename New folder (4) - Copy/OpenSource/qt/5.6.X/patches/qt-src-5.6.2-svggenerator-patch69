@@ -1,0 +1,23 @@
+#
+# Fix output of rectangles with negative height.  TFS 145387
+# Authored by Qt
+#
+--- qtsvg/src/svg/qsvggenerator.cpp.orig
++++ qtsvg/src/svg/qsvggenerator.cpp
+@@ -1060,7 +1060,14 @@ void QSvgPaintEngine::drawPolygon(const QPointF *points, int pointCount,
+ void QSvgPaintEngine::drawRects(const QRectF *rects, int rectCount)
+ {
+     Q_D(QSvgPaintEngine);
+-
++    // If the rectangle is not valid, it still has meaning in SVG so we can't use
++    // the rect tag for it
++    for (int i=0; i < rectCount; ++i) {
++        if (!rects[i].isValid()) {
++            QPaintEngine::drawRects(rects, rectCount);
++            return;
++        }
++    }
+     for (int i=0; i < rectCount; ++i) {
+         const QRectF &rect = rects[i];
+         *d->stream << "<rect";
+

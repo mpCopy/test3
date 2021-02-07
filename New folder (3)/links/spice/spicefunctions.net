@@ -1,0 +1,305 @@
+; @(#) $Source: /cvs/wlv/src/spctrn/misc/spicefunctions.net,v $ $Revision: 1.13 $ $Date: 2010/11/17 15:18:28 $  
+; Spice Equivalent function File for ADS
+; This file contains user defined function statements for ADS.
+; The purpose of the functions is to map PSpice and HSpice functions into 
+; ADS equivalents, when the Spice Translator has been used to 
+; translate a Spice netlist into an ADS netlist or ADS schematic.
+
+
+; HSpice Distribution functions
+
+; UNIF Uniform distribution function using relative variation
+#ifndef SPC_UNIF
+#define SPC_UNIF
+#ifndef mcMultUsed
+    unif(nom_val, rel_var)=_randvar(_uniform(nom_val-rel_var/nom_val, nom_val+rel_var/nom_val), mcTrial, nom_val) 
+#else
+    unif(nom_val, rel_var, mult)=_randvar(_uniform(nom_val-rel_var/nom_val, nom_val+rel_var/nom_val), mult, nom_val) 
+#endif
+#endif
+
+; AUNIF Uniform distribution function using absolute variation
+#ifndef SPC_AUNIF
+#define SPC_AUNIF
+#ifndef mcMultUsed
+    aunif(nom_val, abs_var)=_randvar(_uniform(nom_val-abs_var,nom_val+abs_var), mcTrial, nom_val) 
+#else
+    aunif(nom_val, abs_var, mult)=_randvar(_uniform(nom_val-abs_var,nom_val+abs_var), mult, nom_val) 
+#endif
+#endif
+
+;AGAUSS absolute gaussian variation in HSpice
+#ifndef SPC_AGAUSS
+#define SPC_AGAUSS
+#ifndef mcMultUsed
+    agauss(nom_val, abs_var, sigma)=_randvar(_gaussian(nom_val,abs_var/sigma,4,4), mcTrial, nom_val) 
+#else
+    agauss(nom_val, abs_var, sigma, mult)=_randvar(_gaussian(nom_val,abs_var/sigma,4,4), mult, nom_val) 
+#endif
+#endif
+
+;GAUSS relative gaussian variation in HSpice
+; this was previously called gauss() but gauss() is now a reserved word in ADS
+#ifndef SPC_GAUSS
+#define SPC_GAUSS
+#ifndef mcMultUsed
+    hspice_gauss(nom_val, rel_var, sigma)=_randvar(_gaussian(nom_val,(rel_var*nom_val)/sigma,4,4), mcTrial, nom_val) 
+#else 
+    hspice_gauss(nom_val, rel_var, sigma, mult)=_randvar(_gaussian(nom_val,(rel_var*nom_val)/sigma,4,4), mult, nom_val) 
+#endif   
+#endif   
+
+;LIMIT Limit random limit distribution function using absolute variation, 
+;      +/- abs_variation is added to nominal_val based on whether the 
+;      random outcome of a -1 to 1 distribution is greater or less than 0.
+#ifndef SPC_LIMIT
+#define SPC_LIMIT
+;  limit(nom_val, abs_var)=if _randvar(_uniform(-1, 1), 1, 0) >= 0 then \
+;                             nom_val+abs_var \
+;                         else \
+;			     nom_val-abs_var \
+;			 endif 
+; PSpice definition of limit function?
+;limit(nom_val, min_val, max_val)=pwl(nom_val, min_val, min_val, max_val, max_val)
+; alternate PSpice definition of limit function if the above causes
+;   convergence problems
+; 6 July 2017: protected against min and max arguments reversed
+limit(nom_val, min_val, max_val)=if min_val < max_val then \
+                             if nom_val < min_val then min_val \
+                             elseif nom_val > max_val then max_val \
+                             else nom_val endif \
+                           else if nom_val < max_val then max_val \
+                             elseif nom_val > min_val then min_val \
+                             else nom_val endif \
+                           endif
+
+#endif   
+
+
+#ifndef SPC_PAR
+#define SPC_PAR
+  par(x)=x           ; Parameter for output function
+#endif   
+
+; Trigonometric functions
+
+;sin(x)=sin(x)        ; Already exists, no translation required
+;cos(x)=cos(x)        ; Already exists, no translation required
+;tan(x)=tan(x)        ; Already exists, no translation Required
+#ifndef SPC_SIN
+#define SPC_SIN
+  SIN(x)=sin(x)
+#endif   
+#ifndef SPC_COS
+#define SPC_COS
+  COS(x)=cos(x)
+#endif   
+#ifndef SPC_TAN
+#define SPC_TAN
+  TAN(x)=tan(x)
+#endif   
+
+; HSpice atan is equivalent to ADS arctan function
+;  Starting in ADS2002C, atan is now built into ADS
+;  For releases prior to ADS2002C, uncomment the next line
+;atan(x)=arctan(x)     
+
+#ifndef SPC_ASIN
+#define SPC_ASIN
+  ASIN(x)=asin(x)
+#endif   
+#ifndef SPC_ACOS
+#define SPC_ACOS
+  ACOS(x)=acos(x)
+#endif   
+#ifndef SPC_ATAN
+#define SPC_ATAN
+  ATAN(x)=atan(x)
+#endif   
+
+
+;sinh(x)=sinh(x)      ; Already exists, no translation required
+;cosh(x)=cosh(x)      ; Already exists, no translation required
+;tanh(x)=tanh(x)      ; Already exists, no translation required
+#ifndef SPC_SINH
+#define SPC_SINH
+  SINH(x)=sinh(x)
+#endif
+#ifndef SPC_COSH
+#define SPC_COSH
+  COSH(x)=cosh(x)
+#endif
+#ifndef SPC_TANH
+#define SPC_TANH
+  TANH(x)=tanh(x)
+#endif
+
+;abs(x)=abs(x)        ; Already exists, no translation required
+#ifndef SPC_ABS
+#define SPC_ABS
+  ABS(x)=abs(x)
+#endif
+
+;sqrt(x)=sqrt(x)      ; Already exists, no translation required
+#ifndef SPC_SQRT
+#define SPC_SQRT
+  SQRT(x)=sqrt(x)
+#endif
+
+; HSpice equivalent function
+; pow(x,y): x raised to power integer power of y
+;  Starting in ADS2002C, pow is now built into ADS
+;  For releases prior to ADS2002C, uncomment the next line
+;pow(x,y)=(x)^(int(y)) 
+#ifndef SPC_POW
+#define SPC_POW
+  POW(x,y)=pow(x,y)
+#endif
+
+; pwr(x,y): x raised to the power y returning with sign of x
+#ifndef SPC_PWR
+#define SPC_PWR
+
+; In PSpice pwrs function is defined to calculate pwr without
+; changing the sign.
+  pwrs(x,y)=sgn(x)*(abs(x)^(y)) 
+
+; The previous definition of pwr was
+; pwr(x,y)=sgn(x)*(abs(x)^(y)) 
+; This will retain the sign. But pwr is supposed to just calculate
+; the power without worring about the sign.
+  pwr(x,y) = (abs(x)^(y)) 
+   
+  PWR(x,y)=pwr(x,y)
+#endif
+
+; This expression must be converted to ln(x) or log_spice(x)
+;log(x)=              
+#ifndef SPC_LOG_SPICE
+#define SPC_LOG_SPICE
+  log_spice(x)=sgn(x)*ln(abs(x))
+#endif
+
+; HSpice equivalent log base 10 function
+;  Starting in ADS2002C, this function is now built into ADS
+;  For releases prior to ADS2002C, uncomment the following line
+;log10(x)=sgn(x)*log(abs(x))       
+#ifndef SPC_LOG10
+#define SPC_LOG10
+  LOG10(x)=log10(x)
+#endif
+
+;exp(x)=exp(x)        ; Already exists, no translation required
+#ifndef SPC_EXP
+#define SPC_EXP
+  EXP(x)=exp(x)
+#endif
+
+;db(x)=db(x)          ; Already exists, no translation required
+#ifndef SPC_DB
+#define SPC_DB
+  DB(x)=db(x)
+#endif
+
+;int(x) return largest integer less than or equal to x
+;int(x)=int(x)        ; Already exists, no translation required
+#ifndef SPC_INT
+#define SPC_INT
+  INT(x)=int(x)
+#endif
+
+;sgn(x) return sign of x, 1 x>0, 0, x=0, -1, x<0
+;sgn(x)=sgn(x)        ; Already exists, no translation required
+#ifndef SPC_HSPICE_SGN
+#define SPC_HSPICE_SGN
+  hspice_sgn(x)=if (x==0) then 0 else sgn(x) endif
+  SGN(x)=sgn(x)
+#endif
+
+;sign(x,y) return absolute value of x with the sign of y
+#ifndef SPC_SIGN
+#define SPC_SIGN
+  sign(x,y)=sgn(y)*abs(x)
+  SIGN(x,y)=sign(x,y)
+#endif
+
+;min(x,y)=min(x,y)    ; Already exists, no translation required
+;max(x,y)=max(x,y)    ; Already exists, no translation required
+#ifndef SPC_MIN
+#define SPC_MIN
+  MIN(x,y)=min(x,y)
+#endif
+#ifndef SPC_MAX
+#define SPC_MAX
+  MAX(x,y)=max(x,y)
+#endif
+
+;v(x,<y>)             ; Voltage at node <between nodes> - cannot be 
+                      ; translated to an equivalent function
+
+;i(x)                 ; Current in device - cannot be translated, 
+                      ; no equivalent function
+
+; m(x) magnitude of x, use ADS internal function mag
+#ifndef SPC_M
+#define SPC_M
+  m(x)=mag(x)
+  M(x)=mag(x)
+#endif
+
+;p(x) phase of x, use ADS internal function phaserad
+#ifndef SPC_P
+#define SPC_P
+  p(x)=phaserad(x)
+  P(x)=phaserad(x)
+#endif
+
+;r(x) real portion of x, use ADS internal function real
+#ifndef SPC_R
+#define SPC_R
+  r(x)=real(x)
+  R(x)=real(x)
+#endif
+
+;img(x) imaginary portion of x, use ADS internal function imag
+#ifndef SPC_IMG
+#define SPC_IMG
+  img(x)=imag(x)
+  IMG(x)=imag(x)
+#endif
+
+;stp(x) step function, use ADS internal function step
+#ifndef SPC_STP
+#define SPC_STP
+  stp(x)=step(x)
+  STP(x)=step(x)
+#endif
+
+; Utility functions
+
+; divide_zero(x):  Returns 1e-28 if x is zero, or x if x is not zero.  This is 
+; to avoid divide by zero errors in ADS.  HSpice will replace the zero by the 
+; value EPSMIN for calculation purposes if a divide by zero is encountered.  To use 
+; this function, change your denominator from /(x) to /divide_zero(x).
+
+#ifndef SPC_DIVIDE_ZERO
+#define SPC_DIVIDE_ZERO
+  divide_zero(x)=if x == 0 then 1.0e-28 else x endif
+#endif
+
+; Comparison Functions for Spice. The (a<b) format will be translated into
+; ADS_SPC_LT(a,b). This way all the comparison operators will be implemented
+; using function calls. 
+#ifndef SPC_COMPARISON
+#define SPC_COMPARISON
+ADS_SPC_LT(x,y) = if (x<y) then 1 else 0 endif
+ADS_SPC_GT(x,y) = if (x>y) then 1 else 0 endif
+ADS_SPC_EQ(x,y) = if (x==y) then 1 else 0 endif
+ADS_SPC_NEQ(x,y) = if (x!=y) then 1 else 0 endif
+ADS_SPC_GTE(x,y) = if (x>=y) then 1 else 0 endif
+ADS_SPC_LTE(x,y) = if (x<=y) then 1 else 0 endif
+ADS_SPC_IF(x,y,z) = if (x!=0) then y else z endif
+#endif
+
+; spice_vswitch is now part of built-in library: ckt.library
+#uselib "ckt", "spice_vswitch"

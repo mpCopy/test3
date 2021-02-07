@@ -1,0 +1,24 @@
+--- ./qtbase/src/widgets/widgets/qmdiarea.cpp.orig	2015-04-15 11:35:51.210048000 -0700
++++ ./qtbase/src/widgets/widgets/qmdiarea.cpp	2015-10-28 11:35:02.783687000 -0700
+@@ -816,6 +816,21 @@
+     Q_UNUSED(to);
+ #else
+     childWindows.move(from, to);
++
++    // indicesToActivatedChildren contains indices into
++    // childWindows.  The ordering of childWindows just changed,
++    // so we need to update indicesToActivatedChildren.
++    // --tom parker   Keysight Technologies   October 2015
++    for ( int i = 0; i < indicesToActivatedChildren.count(); ++i )
++    {
++        const int index = indicesToActivatedChildren.at( i );
++        if ( index == from )
++            indicesToActivatedChildren[i] = to;
++        else if ( from < index && index <= to )
++            --indicesToActivatedChildren[i];
++        else if ( to <= index && index < from )
++            ++indicesToActivatedChildren[i];
++    }
+ #endif // QT_NO_TABBAR
+ }
+ 

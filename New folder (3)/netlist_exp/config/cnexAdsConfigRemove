@@ -1,0 +1,257 @@
+#!/opt/hpeesofRD/bin/perl
+# iffAdsConfig
+#    This perl script is used to install configuration variables for the LMS Toolkit package.
+#
+#    It will overwrite any existing value for the following ADS environment variables:
+#        LMS_FILE_DIRECTORY         <PATH>
+#
+#    It will add the following values if it they do not exist, or leave it alone otherwise:
+#        LMS_NO_MENU                <TRUE or FALSE>, <FALSE> by default 
+#
+#    It will add {%LMS_FILE_DIRECTORY}/LMSStartup to USER_AEL if it does not exist 
+#    in USER_AEL already.
+#
+
+use Getopt::Long;
+use FileHandle;
+use Fcntl;
+use File::Path;
+
+#  $hpeesof_dir = $ENV{"HPEESOF_DIR"};
+# HPEESOF_DIR will be the current working directory.
+$hpeesof_dir = ".";
+$config_dir = "$hpeesof_dir/config";
+$custom_config_dir = "$hpeesof_dir/custom/config";
+$home_dir = $ENV{"HOME"};
+$home_config_dir = "$home_dir/hpeesof/config";
+$de_config = "de.cfg";
+$config = "de_sim.cfg";
+$dirname = "$config_dir";
+$config_file = "$dirname/$config";
+
+$main_config_file = "$config_dir/$config";
+$main_de_file = "$config_dir/$de_config";
+$custom_config_file = "$custom_config_dir/$config";
+$home_config_file = "$home_config_dir/$config";
+
+sub removeConfigValue
+{
+    my $configFile = shift(@_);
+
+    local $foundMenu=0;
+    local $foundCnexMenu=0;
+    local $pathList;
+    local $pathValue;
+    local @pathValueList;
+    local $tmp;
+    local $configH = new FileHandle;
+    local $pos;
+    local $lineLen;
+    local $newLine;
+    local @remainder;
+    # local $remainderPos;
+    local $i;
+
+    if($configH->open("$configFile"))
+    {
+	# Store the config file into a list
+	@remainder = $configH->getlines();
+	#chop(@remainder);
+	$configH->close;
+    }
+    if($configH->open("> $configFile"))
+    {
+        FILE_LOOP: while ($_ = shift(@remainder))
+        {
+	    chomp;
+	    if( /USER_MENU_FUNCTION_LIST=/ )
+	    {
+		$foundMenu=1;
+		($menuAelName, $pathList)=split(/=/, $_, 2);
+		@menuList=split(/[;:]/, $pathList);
+		$_=$pathList;
+		$i=0;
+		$foundCnexMenu = 0;
+		$outputMenuList="USER_MENU_FUNCTION_LIST=";
+	        MENU_PATH_LOOP: while(@menuList)
+		{
+		    $pathValue=shift(@menuList);
+		    $_=$pathValue;
+		    if( /app_add_cnex_menus/ )
+		    {
+			$foundCnexMenu = 1;
+		    }
+		    else
+		    {
+			if($i > 0)
+			{
+			    $outputMenuList=sprintf("%s;%s", $outputMenuList, $pathValue);
+			}
+			else
+			{
+			    $outputMenuList=sprintf("%s%s", $outputMenuList, $pathValue);
+			}
+			$i=$i+1;
+		    }
+
+		}
+
+		$configH->printf("%s\n", $outputMenuList);
+
+	    }
+	    else
+	    {
+		$configH->printf("%s\n", $_);
+	    }
+	}
+
+	$configH->close;
+	return("1");
+    }
+    else
+    {
+	return("0");	
+    }
+
+
+}
+
+sub removeHomeConfigValue
+{
+    my $configFile = shift(@_);
+
+    local $foundMenu=0;
+    local $foundCnexMenu=0;
+    local $pathList;
+    local $pathValue;
+    local @pathValueList;
+    local $tmp;
+    local $configH = new FileHandle;
+    local $pos;
+    local $lineLen;
+    local $newLine;
+    local @remainder;
+    # local $remainderPos;
+    local $i;
+
+    if($configH->open("$configFile"))
+    {
+	# Store the config file into a list
+	@remainder = $configH->getlines();
+	#chop(@remainder);
+	$configH->close;
+    }
+    if($configH->open("> $configFile"))
+    {
+        FILE_LOOP: while ($_ = shift(@remainder))
+        {
+	    chomp;
+	    if( /USER_MENU_FUNCTION_LIST=/ )
+	    {
+		$foundMenu=1;
+		($menuAelName, $pathList)=split(/=/, $_, 2);
+		@menuList=split(/[;:]/, $pathList);
+		$_=$pathList;
+		$i=0;
+		$foundCnexMenu = 0;
+		$outputMenuList="USER_MENU_FUNCTION_LIST=";
+	        MENU_PATH_LOOP: while(@menuList)
+		{
+		    $pathValue=shift(@menuList);
+		    $_=$pathValue;
+		    if( /app_add_cnex_menus/ )
+		    {
+			$foundCnexMenu = 1;
+		    }
+		    else
+		    {
+			if($i > 0)
+			{
+			    $outputMenuList=sprintf("%s;%s", $outputMenuList, $pathValue);
+			}
+			else
+			{
+			    $outputMenuList=sprintf("%s%s", $outputMenuList, $pathValue);
+			}
+			$i=$i+1;
+		    }
+		}
+
+		$configH->printf("%s\n", $outputMenuList);
+
+	    }
+	    else
+	    {
+		$configH->printf("%s\n", $_);
+	    }
+	}
+
+	$configH->close;
+	return("1");
+    }
+    else
+    {
+	return("0");	
+    }
+
+
+}
+
+sub removeCnexConfigFile
+{
+    my $configFile = shift(@_);
+
+    local $foundCnex=0;
+    local $configH = new FileHandle;
+    local @remainder;
+    # local $remainderPos;
+    local $i;
+
+    if($configH->open("$configFile"))
+    {
+	# Store the config file into a list
+	@remainder = $configH->getlines();
+	#chop(@remainder);
+	$configH->close;
+    }
+
+    if($configH->open("> $configFile"))
+    {
+        FILE_LOOP: while ($_ = shift(@remainder))
+        {
+	    chomp;
+	    if( /\+ CNEX/ )
+	    {
+		$foundCnex=1;
+	    }
+	    else
+	    {
+		$configH->printf("%s\n", $_);
+	    }
+	}
+
+	$configH->close;
+	return("1");
+    }
+    else
+    {
+	return("0");	
+    }
+
+
+}
+
+# Add +CNEX into $HPEESOF_DIR/config/de_sim.cfg
+printf("\tRemoving CNEX config file from $main_config_file\n");
+removeCnexConfigFile($main_config_file);
+
+# Remove app_add_cnex_menus from USER_MENU_FUNCTION_LIST in custom de_sim.cfg
+
+printf("\tRemoving app_add_cnex_menus from USER_MENU_FUNCTION_LIST in $custom_config_file\n");
+removeConfigValue($custom_config_file);
+
+# Remove app_add_cnex_menus from USER_MENU_FUNCTION_LIST in home de_sim.cfg if required
+
+printf("\tRemoving app_add_cnex_menus from USER_MENU_FUNCTION_LIST in $home_config_file\n");
+removeHomeConfigValue($home_config_file);
+

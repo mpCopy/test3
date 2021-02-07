@@ -1,0 +1,82 @@
+<html>
+<head>
+<title>PCB Importer User Manual Chapter 10 Miscellaneous Issues and Trouble Shooting</title>
+<style>
+body {background-color:#FFFFFF;
+      text-decoration:none;
+      font-family:Verdana,Arial,Helvetica,sans-serif;
+      font-size:100%;
+      margin-left:50px;
+     }
+
+h1,h2,h3,h4 {color:#C00000;}
+
+pre {font-family :Courier New, Courier, Monospaced;}
+
+p   {line-height:1.5;}
+</style>
+</head>
+
+<body>
+<table width=825>
+<td width=825>
+<h1>Miscellaneous Issues and Trouble Shooting</h1>
+<p>This section covers a variety of miscellaneous issues and trouble shooting that don't come under the other topics.</p>
+
+<br>
+<p><b>Q.</b> I have a ODB++ file in zip format but it doesn't open when I ask the PCB Importer to import it. What should I do?</p>
+
+<p><b>A.</b> Unless the ODB++ file has been assembled in .tgz or .tar format, it must be unzipped first. Then select the directory option when opening it and point to the directory that contains the following directories:</p>
+<pre>
+[fonts]
+[matrix]         required
+[misc]
+[steps]          required
+</pre>
+
+<br>
+
+<p><b>Q.</b> I am not seeing my components, ports or any nets when I get the data into ADS. Why not?</p>
+
+<p><b>A.</b> There are a couple of possible reasons:</p>
+<ul>
+<p>i) the ODB (or IPC) file did not contain component and net information. While this is rare, it is possible to produce a valid ODB file that does not have component and net information.</p>
+
+<p>ii) you did not load the layer COMP_PLUS_TOP and/or COMP_PLUS_BOTTOM. These layers contain the component placement and footprint information.</p>
+</ul>
+
+<br>
+
+<p><b>Q.</b> I selected a couple of nets and a proximity distance but I am getting the entire board in ADS. Why?</p>
+
+<p><b>A.</b> You may have selected a net such as GND, VSS, VCC that essentially covers the entire board. When that net is expanded it will grab everything around it.</p>
+
+<b>or</b>
+
+<p>You may have accidentally selected a proximity distance that is quite large. For example if you thought the data was in mm and you selected a 2.5 mm expansion distance but the data was actually in inches then you would potentially get the entire board.</p>
+
+<br>
+
+<p><b>Q.</b> Why, if the input is ODB++, do you provide a Gerber viewer?</p>
+
+<p><b>A.</b> The PCB Importer does not view ODB++ natively. Intstead, it converts the geometry layers into Gerber and we use an existing viewer, GBRVU to show the layout.</p>
+
+<br>
+<p><b>Q.</b> Does the ODB++ and the IPC2581 includes all the substrate parameters?</p>
+
+<p><b>A.</b> ODB++ does not. You get the stackup order but no information about the thickness of each layer, the material or electrical properties. Therefore this information should be entered using the Properties ... button from the main menu.</p>
+
+<p>IPC 2581 has a structure for including the thickness and electrical properties. However there is no guarantee that the PCB software that creates the IPC2581 file will actually populate the file with the correct information.</p>
+
+<br>
+
+<p><b>Q.</b> Can I model the effects of the solder mask on the top and bottom of the PCB?</p>
+
+<p><b>A.</b> Currently you cannot as this data is not imported and transferred to ADS by the PCB Importer.</p>
+
+
+</td>
+</table>
+
+</body>
+</html>

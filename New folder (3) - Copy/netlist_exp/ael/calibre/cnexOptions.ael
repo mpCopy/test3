@@ -1,0 +1,178 @@
+// Copyright Keysight Technologies 2001 - 2017  
+/* This file should contain code for the netlist export options dialog. 
+   Since each tool will have different options available, this file needs 
+   to be created separately for each potential tool.  Below is the 
+   default Calibre options dialog. */
+
+defun calibreConvertToBoolean(value)
+{
+   if(value == "1")
+   {
+      return(TRUE);
+   }
+   else
+   {
+      return(FALSE);
+   }
+}
+
+/* NOTE: This function should be overridden in user defined AEL functions within 
+   netlist_exp/ael/{%CNEX_TOOL}/cnexOptions.ael.  The options will be different for each  
+   tool. */
+
+defun cnexNetlistDialogOptions_cb(buttonH, mainDlgH, winInst)
+{
+   decl dlgH;
+   decl pbOkay, pbCancel;
+
+   decl tool=cnexGetTool();
+
+   /* Calibre option handles and values */
+
+   decl capaH, capa, capaModelsH, capaModels;
+   decl diodeH, diode;
+   decl equivH, equiv;
+   decl lddH, ldd;
+
+   capa=calibreConvertToBoolean(getenv("capa", tool));
+   capaModels=getenv("capaModels", tool);
+   diode=calibreConvertToBoolean(getenv("diode", tool));
+   equiv=getenv("equiv", tool);
+   ldd=calibreConvertToBoolean(getenv("ldd", tool));
+
+   decl dlgH=api_dlg_create_dialog (
+      "CnexCalibreOptions",
+      winInst, 
+      API_RN_CAPTION,         "Calibre Options",  
+      API_RN_ORIENTATION,     API_RV_VERTICAL,
+      API_RN_DEFAULT_OPTIONS, API_RV_TBL_LEFT,
+      API_RN_TBL_OPTIONS,     API_RV_TBL_LK_HEIGHT|API_RV_TBL_SM_HEIGHT,
+      API_RN_RESIZE_MASK,     API_RV_DLG_MIN_WIDTH|API_RV_DLG_MIN_HEIGHT,
+      API_RN_EQUALIZE_ALL,    FALSE,
+      API_RN_MODE_TYPE,       API_RV_MODAL_DIALOG,
+      api_dlg_create_item ("capaTabl", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_HORIZONTAL,
+         API_RN_EQUALIZE_ALL, FALSE,
+         API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_FIX_HEIGHT,
+         capaH=api_dlg_create_item("capaH",
+            API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "Ignore Capacitors",
+            API_RN_TOGGLE_STATE, capa),
+         capaModelsH=api_dlg_create_item("capaModelsH",
+            API_EDIT_TEXT_ITEM, API_RN_CAPTION, "", 
+            API_RN_SENSITIVE_FLAG, capa, 
+            API_RN_VALUE, capaModels)
+      ),
+      diodeH=api_dlg_create_item("diodeH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "Ignore Diodes",
+         API_RN_TOGGLE_STATE, diode),
+      /* Add in edit box for equivalent nodes here...*/
+      lddH=api_dlg_create_item("lddH",
+         API_CHECK_BUTTON_ITEM, API_RN_CAPTION, "*.LDD",
+         API_RN_TOGGLE_STATE, ldd),
+      api_dlg_create_item ("actTabl", API_TABLE_GROUP,
+         API_RN_ORIENTATION, API_RV_HORIZONTAL,
+         API_RN_EQUALIZE_ALL, TRUE,
+         API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+         API_RN_TBL_OPTIONS, API_RV_TBL_FIX_HEIGHT,
+         pbOkay = api_dlg_create_item ("pbOkay", API_PUSH_BUTTON_ITEM,
+            API_RN_CAPTION, "OK"),
+         pbCancel = api_dlg_create_item ("pbCancel", API_PUSH_BUTTON_ITEM,
+            API_RN_CAPTION, "Cancel")
+      )
+   );
+
+   api_dlg_add_callback (capaH, "cnexOptionCapaCheck_cb", API_VALUE_CHANGED_CALLBACK, capaModelsH);
+
+   api_dlg_add_callback (pbOkay, "cnexOptionDialogOkay_cb", API_ACTIVATE_CALLBACK, dlgH);
+   api_dlg_add_callback (pbCancel, "cnexOptionDialogCancel_cb", API_ACTIVATE_CALLBACK, dlgH);
+
+   api_dlg_manage(dlgH);
+
+}
+
+defun cnexOptionDialogOkay_cb(buttonH, dlgH, winInst)
+{
+   decl capaH=api_dlg_find_item(dlgH, "capaH");
+   decl capaModelsH=api_dlg_find_item(dlgH, "capaModelsH");
+   decl diodeH=api_dlg_find_item(dlgH, "diodeH");
+   decl equivH=api_dlg_find_item(dlgH, "equivH");
+   decl lddH=api_dlg_find_item(dlgH, "lddH");
+
+   cnexWriteCalibreOption(capaH, API_RN_TOGGLE_STATE, "capa");
+   cnexWriteCalibreOption(capaModelsH, API_RN_VALUE, "capaModels");
+   cnexWriteCalibreOption(diodeH, API_RN_TOGGLE_STATE, "diode");
+   cnexWriteCalibreOption(equivH, API_RN_VALUE, "equiv");
+   cnexWriteCalibreOption(lddH, API_RN_TOGGLE_STATE, "ldd");
+
+   cnexSetupCalibreOptions();
+
+   api_dlg_unmanage(dlgH);
+}
+
+defun cnexWriteCalibreOption(itemH, valType, name)
+{
+   decl itemVal;
+   decl tool=cnexGetTool();
+
+   api_dlg_get_resources(itemH, valType, &itemVal);
+
+   if(itemVal == NULL)
+      itemVal="";
+
+   if(is_string(itemVal))
+      setenv(name, itemVal, tool);
+   else
+      setenv(name, identify_value(itemVal), tool);
+
+}
+
+defun cnexOptionCapaCheck_cb(checkH, capaModelsH, winInst)
+{
+   decl bipVal, capaVal;
+
+   api_dlg_get_resources(checkH, API_RN_TOGGLE_STATE, &capaVal);
+   api_dlg_set_resources(capaModelsH, API_RN_SENSITIVE_FLAG, capaVal);
+
+}
+
+defun cnexCreateNetlistOptionList(value)
+{
+   cnexExportOptionList=append(cnexExportOptionList, list(value));
+}
+
+defun cnexSetupCalibreOptions()
+{
+   decl tool=cnexGetTool();
+   cnexExportOptionList=NULL;
+
+   decl capa=calibreConvertToBoolean(getenv("capa", tool));
+   if(capa)
+   {
+      decl capaModels=getenv("capaModels", tool);
+      cnexCreateNetlistOptionList(strcat("*.CAPA ", capaModels));
+   }
+
+   decl diode=calibreConvertToBoolean(getenv("diode", tool));
+   if(diode)
+   {
+      cnexCreateNetlistOptionList("*.DIODE");
+   }
+
+   decl equiv=getenv("equiv", tool);
+   if(equiv)
+      cnexCreateNetlistOptionList(strcat("*.EQUIV ", equiv));
+
+   decl ldd=calibreConvertToBoolean(getenv("ldd", tool));
+   if(ldd)
+      cnexCreateNetlistOptionList("*.LDD");
+
+}
+
+defun cnexOptionDialogCancel_cb(buttonH, dlgH, winInst)
+{
+  api_dlg_unmanage(dlgH);
+}
+
+// Make sure to set up the option list when loading the file.
+cnexSetupCalibreOptions();

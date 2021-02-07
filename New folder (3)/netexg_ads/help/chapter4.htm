@@ -1,0 +1,83 @@
+<html>
+<head>
+<title>PCB Import User Manual Chapter 4 Setting Layer Properties</title>
+<style>
+body {background-color:#FFFFFF;
+      text-decoration:none;
+      font-family:Verdana,Arial,Helvetica,sans-serif;
+      font-size:100%;
+      margin-left:50px;
+     }
+
+h1,h2,h3,h4 {color:#C00000;}
+
+pre {font-family :Courier New, Courier, Monospaced;}
+
+p   {line-height:1.5;}
+</style>
+</head>
+
+<body>
+<table width=825>
+<td width=825>
+<h1>Setting Layer Properties</h1>
+<p>After the PCB Importer parses the ODB (or IPC2581) data the user should check to see that the correct layer thickness has been imported. Unfortunately, ODB++ does not make it easy to pass this information and it is generally missing from the ODB++ database. Hence the user will have to enter the thicknesses using the Properties dialog.</p>
+
+<p>To access the dialog that sets the thickness click on the Properties ... button that is located below the column labeled Details.</p>
+
+<img src="./button_to_launch_layer_properties.gif" width=673 height=502 hspace=73 vspace=10 alt="button to launch layer properties dialog"><br>
+
+<p>The Layer Properties Dialog will Open</p>
+
+
+<img src="./layer_properties_dialog.gif" width=673 height=472 hspace=83 vspace=10 alt="layer properties"><br>
+
+<p>The values shown for Thickness are default ones and do not represent the board thickness. To modify the values: </p>
+
+<ul>
+<li><p>first highlights the layer (or layers) by clicking on the stackup number (holding the ctrl key down enables one to select multiple layers)</p></li>
+
+<li><p>Enter a Thickness and a Material, color and Conductivity, Permittivity and Permeability values.</p></li>
+
+<li><p>Click on Modify to update the selected layers. Then click OK to make your changes permanent.</p></li>
+
+</ul>
+
+<p>The snapshot below shows how the table is updated for all the conductor layers.</p>
+
+<img src="./layer_properties_dialog2.gif" width=673 height=472 hspace=83 vspace=10 alt="layer properties"><br>
+
+
+<p>Now repeat the process for the dielectric layers.</p>
+
+<br>
+
+<p><b>Notes on Thickness, Material and Electrical Properties</b></p>
+
+<p>The layer data passed to ADS concerning thickness, material, and electrical properties is used to create a substrate defnition. One can always edit the substrate parameters in ADS to change the thickness or other properties. Since the ADFI file is two dimensional data and the 3D extrusion is done later, no geometric information is lost or needs to be modified by changing layer thickness.</p>
+
+<p><b>Adding or Modifying to Available List of Materials</b></p>
+
+<p>The pulldown that allows a user to select a material reads the available materials and their electrical properties from a text file called ntxgmatlib.txt which is located in the NETEX-ADS installation directory.</p>
+
+<p>A user can edit this file to add a material and its electrical properties.</p>
+
+<p>The default materials are shown below:</p>
+
+<pre>
+#material   d|c        Er      Conductivity    rel permeability
+Air          d         1.00      1E-14          1.0000
+FR4          d         5.5       1E-14          1.0000
+BeO          d         6.7       1E-14          1.0000
+Alumina      d         9.1       1E-14          1.0000
+Silicon      d         11.7      1E-14          1.0000
+G10          d         5.5       1E-14          1.0000
+Teflon       d         2.1       1E-22          1.0000
+Copper       c         1.0       5.9E7          1.0000
+Gold         c         1.0       4.5E7          1.0000
+</pre>
+
+</td>
+</table>
+</body>
+</html>
