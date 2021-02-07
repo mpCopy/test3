@@ -1,0 +1,57 @@
+#! /usr/bin/ksh
+
+adsNetlistSuffix=".ckt"
+adsResultSuffix=".rad"
+
+projects="";
+cleanup=0;
+
+for argument in $*
+do
+    if [ "X$argument" = "X--cleanup" ]
+    then
+    cleanup=1
+    else
+        base=`basename $argument $adsNetlistSuffix`
+        if [ "X$base" != "X$argument" -a "X$base" != "X$adsNetlistSuffix" ]
+        then
+        projects="$projects `dirname $argument`/$base"
+        fi
+    fi 
+done
+
+if [ $cleanup = 0 ]
+then
+    adssim $* > adsSim.log 2>&1
+    error=$?
+
+    if [ $error != 0 ]
+    then
+#        echo "adssim error $error"; 
+        exit $error
+    fi
+
+    for project in $projects
+    do
+        if [ -f spectra.raw ]
+        then
+            mv spectra.raw $project$adsResultSuffix
+        fi
+    done
+else
+    for project in $projects
+    do
+        if [ -f $project$adsResultSuffix ]
+        then
+            rm -f $project$adsResultSuffix
+        fi
+        if [ -f $project$adsNetlistSuffix ]
+        then
+            rm -f $project$adsNetlistSuffix
+    fi
+    done
+    rm -f adsSim.log debug.log.sim;
+fi
+
+exit 0;
+

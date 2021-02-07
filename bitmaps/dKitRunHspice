@@ -1,0 +1,63 @@
+#! /usr/bin/ksh
+
+hspiceNetlistSuffix=".hsp"
+hspiceResultSuffix=".rhs"
+
+projects="";
+cleanup=0;
+
+for argument in $*
+do
+    if [ "X$argument" = "X--cleanup" ]
+    then
+	cleanup=1
+    else
+        base=`basename $argument $hspiceNetlistSuffix`
+        if [ "X$base" != "X$argument" -a "X$base" != "X$hspiceNetlistSuffix" ]
+        then
+	    projects="$projects `dirname $argument`/$base"
+        fi
+    fi 
+done
+
+if [ $cleanup = 0 ]
+then
+    hspice $* > hspice.res 2>hspice.log
+    error=$?
+
+    if [ $error != 0 ]
+    then
+       	exit $error
+    fi
+
+    for project in $projects
+    do
+        if [ -f hspice.res ]
+        then
+            mv hspice.res $project$hspiceResultSuffix
+        fi
+    done
+else
+    for project in $projects
+    do
+        if [ -f $project$hspiceResultSuffix ]
+        then
+    	    rm -f $project$hspiceResultSuffix
+        fi
+        if [ -f $project$hspiceNetlistSuffix ]
+        then
+    	    rm -f $project$hspiceNetlistSuffix
+	fi
+        if [ -f $project.ic ]
+        then
+    	    rm -f $project.ic
+	fi
+        if [ -f $project.st0 ]
+        then
+    	    rm -f $project.st0
+	fi
+    done
+    rm -f hspice.log
+fi
+
+exit 0;

@@ -1,0 +1,81 @@
+
+# remove the results directory first (suffix netlist .scs)
+
+spectreNetlistSuffix=".scs"
+spectreResultSuffix=".rsp"
+
+projects="";
+cleanup=0;
+
+for argument in $*
+do
+    if [ "X$argument" = "X--cleanup" ]
+    then
+	cleanup=1
+    else
+        base=`basename $argument $spectreNetlistSuffix`
+        if [ "X$base" != "X$argument" -a "X$base" != "X$spectreNetlistSuffix" ]
+        then
+	    projects="$projects `dirname $argument`/$base"
+        fi 
+    fi
+done
+
+if [ $cleanup = 0 ]
+then
+
+ ### ensure the simulation will not fail due to old files
+
+    for project in $projects
+    do
+        if [ -d $project.raw ]
+        then
+       	    echo moving $project.raw out of the way to $project.raw.prev
+            mv $project.raw $project.raw.prev
+        fi
+        if [ -d $project$spectreResultSuffix.prev ]
+        then
+            echo clearing $project$spectreResultSuffix.prev
+            rm -rf $project$spectreResultSuffix.prev
+        fi
+        if [ -d $project$spectreResultSuffix ]
+        then
+            echo moving $project$spectreResultSuffix out of the way to $project$spectreResultSuffix.prev
+            mv -f $project$spectreResultSuffix $project$spectreResultSuffix.prev
+        fi
+    done
+
+    #spectre -spp $*
+    spectre -basic $* > spectre.log
+    error=$?
+
+    if [ $error != 0 ]
+    then
+       	exit $error
+    fi
+
+    for project in $projects
+    do
+        if [ -d $project.raw ]
+        then
+    	    mv $project.raw $project$spectreResultSuffix
+        fi
+    done
+
+else
+
+    for project in $projects
+    do
+        if [ -d $project$spectreResultSuffix ]
+        then
+    	    rm -rf $project$spectreResultSuffix
+        fi
+        if [ -f $project$spectreNetlistSuffix ]
+        then
+    	    rm -f $project$spectreNetlistSuffix
+        fi
+    done
+    rm -f spectre.log;
+fi
+
+exit 0;
