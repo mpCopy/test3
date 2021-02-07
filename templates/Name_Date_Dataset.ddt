@@ -1,0 +1,53 @@
+defun  _DDStemplateSaveRestore_()
+{
+decl goId, goId2, goId3, goId4, ptId, plyPtId, ddsId, dssId, ddWinId, ddoId, goId1, pageId, markerID, plotId, axisID, traceID, legendID, goId0;
+
+ddsId = get_dds();
+
+set(ddsId, "ddsFileVersion", 1.0);
+
+ddoId = get(ddsId, "CurrentObject");
+
+	set(ddoId, "FileModifiedDateAndTime", "2008-10-22T23:12:09Z");
+	dssId = get(ddoId, "DatasetServer");
+set(ddoId, "EnableExpressionUpdates", FALSE);
+pageId = get(ddoId, "CurrentPage");
+if (pageId == NULL) pageId = get_first(ddoId, "Page");
+if (pageId == NULL) pageId = get_new(ddoId, "Page");
+goId0 = get_new(pageId, "Text");
+// Text:
+	set(goId0, "String", "Data Display:           @DDS_File_Name\nDataset Date/Time:  @Default_Dataset_Modified_Date  @Default_Dataset_Modified_Time \nDataset:                   @Default_Dataset_Name");
+	set(goId0, "Font", "Arial For CAE");
+	set(goId0, "FontSize", 167);
+	set(goId0, "TextColor", 0);
+	set(goId0, "FillPattern", -1);
+	set(goId0, "FillColor", 0);
+	set(goId0, "OutlineOnOff", TRUE);
+// Embedded Expressions:
+	set(goId0, "ComplexNumberFormat", ddsComplexFormatMagPhase);
+	set(goId0, "Format", ddsFormatAutomatic);
+	set(goId0, "NumDigits", 3);
+	set(goId0, "NumDataPoints", 3);
+	set(goId0, "TextDataSeparator", ", ");
+// Base Class Object:
+ set(goId0, "Name", "");
+       set(goId0, "Uid", 1071243347);
+ // Graphical Object:
+ set(goId0, "Right", 1391);
+ set(goId0, "Bottom", -1102);
+ set(goId0, "Left", -2176);
+  set(goId0, "Top", -1603);
+ set(goId0, "Zrot", 0.000000);
+ set(goId0, "Yrot", 0.000000);
+ set(goId0, "Xrot", 0.000000);
+ set(goId0, "Status", 0);
+ set(goId0, "LineColor", 0);
+ set(goId0, "LineType", 0);
+ set(goId0, "LineWidth", 28);
+ // Need to add Popup, LocalPopup, Owner...
+set(ddoId, "UpdateAllExpressions", TRUE);
+set(ddoId, "EnableExpressionUpdates", TRUE);
+
+}
+
+_DDStemplateSaveRestore_() ;

@@ -1,0 +1,107 @@
+! @(#) $Source: /cvs/sr/src/geminiui/templates/ampp2d.p2d,v $ $Revision: 1.8 $ $Date: 2004/07/02 21:10:55 $
+! --------------------------------------------------------------------------
+! ampp2d.p2d
+! --------------------------------------------------------------------------
+! This is a sample P2D data file containing an ACDATA block, an 
+! NDATA block and an IMTDATA block.
+! --------------------------------------------------------------------------
+!
+BEGIN ACDATA
+! This line and all lines starting with the comment (!) character are ignored
+! Do not have a blank line or comments as the first line in this file
+! In a P2D file ACDATA is a required block of data. It may have one or two 
+! sections.
+! (a) Required - Full 2-port small signal S-parameters vs frequency
+! (b) Optional - Full 2-port large signal S-parameters vs (frequency X power)
+! The small signal data must preceed the large signal data in this block.
+# AC( GHZ   S  RI   R 50.0    FC   1.  0. )
+!  Optional Selection: HZ, KHZ, MKZ, or GHZ;  Default is GHZ
+!  Optional Selection: S, Z, Y, H, or G;      Default is  S
+!  Optional Selection: MA, DB, or RI;         Default is RI
+!  Optional Selection: R xx; where xx = reference resistance; Default R 50.0
+!  Optional Selection: FC x1 x2 is for frequency conversion: Fout=x1*Fin + x2
+!                                               Default is  Fout = Fin
+%  F   n11x  n11y  n21x  n21y  n12x  n12y  n22x  n22y
+!  The above line is the format line showing the order in the following data
+!  lines
+!  The columns of data can be in any order
+1.0000   0.3926   -0.1211  -0.0003  -0.0021  -0.0003  -0.0021  0.3926 -0.1211
+2.0000   0.3517   -0.3054  -0.0096  -0.0298  -0.0096  -0.0298  0.3517 -0.3054
+3.0000   0.0430   -0.5916  -2.6933  -0.1433  -0.5933  -0.1433  0.0430 -0.5916
+4.0000   0.4071   -0.2756  2.4617   0.6234   0.3617   0.4234   0.4071 -0.2756
+5.0000   0.2041   0.2880   2.6848   -0.5367  0.3848   -0.4367  0.2041 0.2880
+6.0000   0.5666   0.0343   2.0383   -0.7437  0.0383   -0.7437  0.5666 0.0343
+7.0000   0.0430   0.6916   -2.6933  0.1433   -0.6933  0.1433   0.0430 0.6916
+8.0000   0.3059   0.5659   -0.1000  0.1424   -0.1000  0.1424   0.3059 0.5659
+9.0000   0.3071   0.4145   -0.0307  0.0673   -0.0307  0.0673   0.3071 0.4145
+10.0000  0.3419   0.3336   -0.0134  0.0379   -0.0134  0.0379   0.3419 0.3336
+! This is the end of the small signal ACDATA section
+!
+! This is the beginning of the large signal ACDATA section
+% F
+1.00
+% P1 P2 n11x  n11y  n21x  n21y  n12x  n12y  n22x  n22y
+-15.00 -25.00 0.3926 -0.1211 -0.0003 -0.0021 -0.0003 -0.0021 0.3926 -0.1211
+-10.00 -20.00 0.3826 -0.1221 -0.0004 -0.0022 -0.0003 -0.0021 0.3926 -0.1211
+-5.00 -15.00 0.3726 -0.1231 -0.0007 -0.0029 -0.0003 -0.0021 0.3926 -0.1211
+0.00 -10.00 0.3856 -0.1245 -0.0010 -0.0129 -0.0003 -0.0021 0.3926 -0.1211
+% F
+2.00
+% P1 P2 n11x  n11y  n21x  n21y  n12x  n12y  n22x  n22y
+-15.00 -25.00 0.3517 -0.3054 -0.0096 -0.0298 -0.0096 -0.0298 0.3517 -0.3054
+-10.00 -20.00 0.3517 -0.3154 -0.0098 -0.0298 -0.0096 -0.0298 0.3517 -0.3054
+-5.00 -15.00 0.3517 -0.3254 -0.0104 -0.0298 -0.0096 -0.0298 0.3517 -0.3054
+0.00 -10.00 0.3517 -0.3354 -0.0106 -0.0298 -0.0096 -0.0298 0.3517 -0.3054
+! .... (more frequencies and power sweeps under each frequency may be added)
+! This is the end of the large signal ACDATA section
+END
+BEGIN   NDATA
+!  This is an optional block of data
+#  AC( GHZ   RI  S   R  50.0  )
+!  Optional Selection: HZ, KHZ, MKZ, or GHZ;  Default is GHZ
+!  Optional Selection: S, Z, Y, H, or G;      Default is  S
+!  Optional Selection: MA, DB, or RI;         Default is RI
+!  Optional Selection: R xx; where xx = reference resistance; Default R 50.0
+%  F    nfmin   n11x     n11y     rn
+!  The above line is the format line showing the order in the following data
+!  lines
+!  The columns of data can be in any order
+1.0000   2.0000   0.3926   -0.1211    .4
+2.0000   2.5000   0.3517   -0.3054    .45
+3.0000   3.0000   0.0430   -0.5916    .5
+4.0000   3.5000   0.4071   -0.2756    .55
+5.0000   4.0000   0.2041   0.2880     .6
+6.0000   4.5000   0.5666   0.0343     .65
+7.0000   5.0000   0.0430   0.6916     .7
+8.0000   5.5000   0.3059   0.5659     .75
+9.0000   6.0000   0.3071   0.4145     .8
+10.0000  6.5000   0.3419   0.3336     .85
+END
+BEGIN  IMTDATA  
+! This is an optional block and may be used some mixer component if the file 
+! format is supported.
+! Intermodulation table for double balanced mixer #1
+! Signal Level (dBm)   LO Level (dBm)
+# -10                 7
+! M x LO ( Horizontal )   N x Signal (Vertical )
+!\ 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
+!
+  99  26  35  39  50  41  53  49  51  42  62  51  60
+  24   0  35  13  40  24  45  28  49  33  53  42  60  47  63
+  73  73  74  70  71  64  69  64  69  62  74  62  72  60
+  67  64  69  50  77  47  74  44  74  47  75  44  70
+  86  90  86  88  88  85  86  85  90  85  85  85
+  90  80  90  71  90  68  90  65  88  65  85
+  90  90  90  90  90  90  90  90  90  90
+  90  90  90  90  90  87  90  90  90
+  99  95  99  95  99  95  99  95
+  90  95  90  90  90  99  90
+  99  99  99  99  99  99
+  90  99  90  95  90
+  99  99  99  99
+  90  99  90
+  99  99
+  99
+  END
+!
+! --------------------------------------------------------------------------
