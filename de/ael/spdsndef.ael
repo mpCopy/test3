@@ -1,0 +1,114 @@
+// Copyright 1997 - 2014 Keysight Technologies, Inc  
+// @(#) $Source: /cvs/wlv/src/hptolemyaddons/src/hptolemy/ptpde/spdsndef.ael,v $ $Revision: 100.36 $ $Date: 2012/11/14 17:28:12 $  
+// To test modifications, save a copy of this file into $HOME/hpeesof/de/ael
+// and restart hpads.
+
+/***********************************************/
+/* define Sigproc network design type          */
+/***********************************************/
+
+/* artwork choices */
+set_design_choices( 0, "Synchronized", 3,
+                       "Fixed",        1,
+                       "AEL Macro",    2,
+                       "None",         0);
+
+set_design_sub_choices( 0, 1, 
+"ALMK", 0);
+
+set_design_sub_choices( 0, 2,
+"conn", 0);
+
+/* item choices DMDESIGN_ITEM_ATTR_CHOICES */ 
+/* if the string 'Simulate from Layout' or 'Layout Object' is modified, please also
+ * modify the string in delabel.ael -- deddefSimulateLabel or deddefLayoutObjLabel
+ * and if any of the strings are modified, modify geminidsndef.ael
+ */
+set_design_choices( 1, "Allow only one instance", ITEM_UNIQUE, // 8
+                       "Include in BOM", ITEM_BOM_ITEM, // 262144
+                       "Layout Object", ITEM_LAYOUT_OBJECT, // 524288
+                       "Simulate from Layout (SimLay)", ITEM_NETLIST_FROM_LAYOUT); //2097152
+
+/* parameter choices DMDESIGN_PARM_ATTR_CHOICES */
+/* the  length of this list has to be the same as choice 2 and 6 in both */
+/* geminidsndef.ael and spdsndef.ael because we have to create the max   */
+/* num of toggles up front.                                              */
+/* When the label is "Spare", the toggle button will be unmapped.        */
+/* Spare has to be at the end to match max length, for dialog to         */
+/* look/work ok.                                                         */
+set_design_choices( 2, "Display parameter on schematic", PARM_NO_DISPLAY,  // 512
+                       "Optimizable", PARM_OPTIMIZABLE, // 1024
+                       "Allow statistical distribution", PARM_STATISTICAL, // 2048
+                       "Not edited", PARM_NOT_EDITED, // 1
+                       "Not netlisted", PARM_NOT_NETLISTED);  // 64
+
+/* form set choices DMDESIGN_FORM_SET_CHOICES */
+/* note, in DE1.0 we decided that the psninfo dialog does not support      */
+/* selection of formsets, so the labels below is not used and              */
+/* the selection to the old formsetListIndx is suppose to be valuetypeIndx */
+/* so this list needs to have the same length as selection 7. The only     */
+/* reason this list is still here is because the pde code is not easily    */
+/* readily changed at this time.                                           */
+set_design_choices (3, "Real",            "StdFormSet",
+                       "Integer",         "StdFormSet",
+                       "FixedPoint",      "StdFormSet",
+                       "Complex",         "StdFormSet",
+                       "String",          "StringAndReferenceSet",
+                       "Precision",       "StringAndReferenceSet",
+                       "IntegerArray",    "StringAndReferenceSet",
+                       "FixedPointArray", "StringAndReferenceSet",
+                       "RealArray",       "StringAndReferenceSet",
+                       "ComplexArray",    "StringAndReferenceSet",
+                       "StringArray",     "StringAndReferenceSet");
+
+/* netlist choices DMDESIGN_NETLIST_CHOICES */
+set_design_choices( 4, "Subnetwork", network_netlist,
+                       "Not Simulated", "  ",
+                       "Wireless Test Bench", ARFWTBNetlistFmt);
+
+set_design_sub_choices( 4, 2, "Add", 0, "Add2", 1, "Bits", 2, "Delay", 3, 
+                       "DownSample", 4, "Fork", 5, "Fork2", 6,
+                       "Gain", 7, "Mpy", 8, "Mpy2", 9, "NumericSink", 10, "RampFloat", 11, 
+                       "SineGen", 12, "UpSample", 13, "WaveForm", 14);
+
+/* symbol list: DMDESIGN_SYMBOL_CHOICES */
+set_design_choices( 5, "SYM_COMPLEX_1in_1out", 0, "SYM_COMPLEX_1in_2out", 1, "SYM_COMPLEX_1in_3out", 2, 
+                       "SYM_COMPLEX_2in_1out", 3, "SYM_COMPLEX_2in_2out", 4, "SYM_COMPLEX_2in_3out", 5, 
+                       "SYM_COMPLEX_3in_1out", 6, "SYM_COMPLEX_3in_2out", 7, "SYM_COMPLEX_3in_3out", 8,
+                       "SYM_INT_1in_1out", 9, "SYM_INT_1in_2out", 10, "SYM_INT_1in_3out", 11, 
+                       "SYM_INT_2in_1out", 12, "SYM_INT_2in_2out", 13, "SYM_INT_2in_3out", 14, 
+                       "SYM_INT_3in_1out", 15, "SYM_INT_3in_2out", 16, "SYM_INT_3in_3out", 17,
+                       "SYM_FIX_1in_1out", 18, "SYM_FIX_1in_2out", 19, "SYM_FIX_1in_3out", 20, 
+                       "SYM_FIX_2in_1out", 21, "SYM_FIX_2in_2out", 22, "SYM_FIX_2in_3out", 23, 
+                       "SYM_FIX_3in_1out", 24, "SYM_FIX_3in_2out", 25, "SYM_FIX_3in_3out", 26,
+                       "SYM_FLOAT_1in_1out", 27, "SYM_FLOAT_1in_2out", 28, "SYM_FLOAT_1in_3out", 29, 
+                       "SYM_FLOAT_2in_1out", 30, "SYM_FLOAT_2in_2out", 31, "SYM_FLOAT_2in_3out", 32, 
+                       "SYM_FLOAT_3in_1out", 33, "SYM_FLOAT_3in_2out", 34, "SYM_FLOAT_3in_3out", 35,
+                       "SYM_TIMED_1in_1out", 36, "SYM_TIMED_1in_2out", 37, "SYM_TIMED_1in_3out", 38, 
+                       "SYM_TIMED_2in_1out", 39, "SYM_TIMED_2in_2out", 40, "SYM_TIMED_2in_3out", 41, 
+                       "SYM_TIMED_3in_1out", 42, "SYM_TIMED_3in_2out", 43, "SYM_TIMED_3in_3out", 44,
+		       "SYM_TestBench",45 );
+
+/* value type choices
+   if the order is changed, DecmodExSPDefValList in 
+   decmodcb.ael needs to be updated */
+set_design_choices (7, "Real",            PARM_REAL,          // 65536
+                       "Integer",         PARM_INT,           // 131072
+                       "FixedPoint",      PARM_FIX,           // 4194304
+                       "Complex",         PARM_COMPLEX,       // 524288
+                       "String",          PARM_STRING,        // 262144
+                       "Precision",       PARM_PRECISION,     // 8388608
+                       "IntegerArray",    PARM_INTARRAY,     // 1677216
+                       "FixedPointArray", PARM_FIXARRAY,     // 33554432
+                       "RealArray",       PARM_REALARRAY,    // 67108864
+                       "ComplexArray",    PARM_COMPLEXARRAY, // 134217728
+                       "StringArray",     PARM_STRINGARRAY); // 268435456
+
+
+
+
+
+
+
+
+

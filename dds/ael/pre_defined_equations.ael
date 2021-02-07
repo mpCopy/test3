@@ -1,0 +1,119 @@
+// Copyright Keysight Technologies 2006 - 2012  
+//////////////////////////////////////////////////////////////////////
+//  $Author: gb9 $
+//  $Date: 2011/04/11 22:15:51 $
+//  $Source: /cvs/sr/src/dds/ael/pre_defined_equations.ael,v $
+//  $Revision: 1.5 $
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// This AEL file defines the predefined non-dataset nodes for the
+// dataset browser. The browser will treat the top level name as
+// a pseudo dataset. In flat (default) mode all of the entries will
+// be displayed under the pseudo dataset. In tree mode the defined
+// hierarchy will be maintained.
+//
+// Format:
+//
+//    preDefinedEquationList := list(<node>[,<node]);
+//
+//    <node> := list(<NodeEntry>)
+//    <NodeEntry> := <NodeName>[,<LeafEntry>[,...]|<node>]
+//    <LeafEntry> := <LeafName>,<ExpressionName>
+//    <ExpressionName> := "Internal"|<AELexpression>
+//    <LeafName> := A equation name to display in the list.
+//    <AELexpression> := A valid AEL expression
+//    <NodeName> := The name of the tree node.
+//
+//     list(
+//          list("Other Equations",
+//               list("Node1",
+//                    "Equation2","Internal",
+//                    "Equation3","Internal"
+//                    ),
+//               list("Node2",
+//                    list("Node3",
+//                         "Equation4","Internal",
+//                         "Equation5","Internal"
+//               )
+//           );
+//
+//
+//      [-] Other Equation
+//          [-] Node1
+//              Equation2
+//              Equation3
+//          [-] Node2
+//              [-] Node3
+//                  Equation4
+//                  Equation5
+//        
+//
+// The <NodeName> is a list only item and is not used in the hiearachy
+// of the data. The <LeafName> must be a valid equation name. This will
+// be what DDS will use for the trace or equation reference.
+//
+// DDS requires the minimum of "Equations" node to exist. All other
+// nodes are optional. The "Equations" node is where all the user
+// defined equations are listed.
+//
+// Normally equation entries are only executed when the equation is
+// inserted. This is because the equation doesn't depend on any other
+// variable. To "trick" DDS to evaluate the AEL expression pass in
+// another variable that will be updated on some interval that will
+// cause the other equation to be executed. Good choices are the
+// DDS file time or the default dataset name. Here are examples
+// using both....
+//
+//	 list("Local Equations",
+//		  list("System Properties",
+//			   "System_Current_Date_and_Time", "date_time(DDS_File_Size,Default_Dataset_Name)",
+//			   "System_Current_Directory", "getcwd(DDS_File_Size,Default_Dataset_Name)"
+//			   )
+//		  )
+//
+// Note that in this example a new "Top Level" pseudo dataset is being
+// added called "Local Equations". Then a collector called
+// "System Properties" is added. And under that two equations are
+// added. One for System_Current_Date_and_Time which executed the
+// AEL routine data_time(). And the other is "System_Current_Directory"
+// which executed "getcwd()". In both cases we pass in the pre defined
+// equations "DDS_File_Size" and "Default_Dataset_Name". This causes
+// the AEL expression to be evaluated when ever the DDS file size
+// changes (as in the file is saved) or when the default dataset name
+// changes. Both of these AEL expressions ignore the passed in parameters.
+// If you want to call an AEL expression that is expecting parameters
+// just add these to the end of the expected parameters and AEL will
+// ignore the additional parameter. However, the dataset code will
+// still update them when the "dummy" equation is changed.
+//////////////////////////////////////////////////////////////////////
+
+decl ddsPreDefineEquationsList =
+	list(list("Equations"),
+		 list("Predefined Equations",
+			  list("Default Dataset Properties",
+				   "Default_Dataset_Name", ddsInternalEquationName,
+				   "Default_Dataset_Path", ddsInternalEquationName,
+				   "Default_Dataset_Size", ddsInternalEquationName,
+				   "Default_Dataset_Modified_Time", ddsInternalEquationName,
+				   "Default_Dataset_Modified_Date", ddsInternalEquationName
+				   ),
+			  list("Data Display Properties",
+				   "DDS_File_Name", ddsInternalEquationName,
+				   "DDS_File_Path", ddsInternalEquationName,
+				   "DDS_File_Size", ddsInternalEquationName,
+				   "DDS_File_Created_Time", ddsInternalEquationName,
+				   "DDS_File_Created_Date", ddsInternalEquationName,
+				   "DDS_File_Created_TimeZone", ddsInternalEquationName,
+				   "DDS_File_Modified_Time", ddsInternalEquationName,
+				   "DDS_File_Modified_Date", ddsInternalEquationName,
+				   "DDS_File_Modified_TimeZone", ddsInternalEquationName
+				   )
+			  )
+//		 ,list("Local Equations",
+//			  list("System Properties",
+//				   "System_Current_Date_and_Time", "date_time(DDS_File_Size,Default_Dataset_Name)",
+//				   "System_Current_Directory", "getcwd(DDS_File_Size,Default_Dataset_Name)"
+//				   )
+//			  )
+		 );

@@ -1,0 +1,132 @@
+// Copyright Keysight Technologies 1998 - 2011  
+// Public functions which should not be considered as orphaned go here
+if (0)
+{
+    app_add_user_menus();
+    app_find_empty_user_menu();
+}
+
+//--------------------------------------------------------------//
+// app_find_empty_user_menu()                                   //
+// This function returns the default name of the first user     //
+//     menu which appears to be unused. It tests 2 things - if  //
+//     the name has been reset from the default and if there    //
+//     are any menu picks (sub-menus), since a user menu can    //
+//     be used without changing the default name.               //
+//--------------------------------------------------------------//
+//winType = MAIN_WINDOW, SCHEMATIC_WINDOW or LAYOUT_WINDOW
+defun app_find_empty_user_menu( winType )
+{
+    decl i, menuCascadeH=NULL, userName;
+    decl nameIsDefault, numSubMenus=0;
+
+    // Do not edit this list of pre-defined default names.
+    decl userMenuList = list(deUserMenuName, deUser2MenuName,
+            deUser3MenuName, deUser4MenuName, deUser5MenuName);
+
+    api_select_window(winType);
+    for (i = 0; i < listlen(userMenuList); i++)
+    {
+        menuCascadeH = api_find_menu(NULL, userMenuList[i]);
+        if (menuCascadeH != NULL)
+        {
+            // first see if the label still matches the default //
+            // name or if another application has reset it      //
+            userName = check_user_menu(i+1);   /* 1-5 are valid args */
+            nameIsDefault = (strcmp(userName, userMenuList[i]) == 0);
+
+            // now see if there are any sub-menus defined 
+            numSubMenus = api_total_sub_menus(menuCascadeH);
+
+            // if the label still matches the default name and there are no  //
+            // sub-menus, return the default name as the first free menu.    //
+            // This name can be used to add sub-menus by calling add_menu()  //
+            // and to reset the label by calling set_user_menu_label()       //
+            if( nameIsDefault && numSubMenus <= 0)
+                return(userMenuList[i]);
+        }
+        menuCascadeH = NULL;
+    }
+    return(NULL);
+}
+
+// this function can be used for testing to fill the first 2 menus if
+// none are currently in use
+//defun prefill_menus ()
+//{
+//    decl userMenuList = list(deUserMenuName, deUser2MenuName,
+//            deUser3MenuName, deUser4MenuName, deUser5MenuName);
+
+      // add 2 sub-menus to first user menu and change the name
+//    add_menu("menu 1 pick 1", "", userMenuList[0]);
+//    add_menu("menu 1 pick 2", "", userMenuList[0]);
+//    set_user_menu_label("Menu 1", userMenuList[0]);
+
+      // change the name of the 2nd menu but don't add any sub-menus
+//    set_user_menu_label("Menu 2", userMenuList[1]);
+//}
+
+
+//defun my_menu_cb()
+//{
+//    fputs(stderr, "menuPickA from my first menu was selected");
+//}
+
+//--------------------------------------------------------------//
+// app_add_user_menus () --                                     //
+//   The hook function for pre-configuring user menus.  This    //
+//   function is called once for each window type, immediately  //
+//   after the window is defined with regular stuff (i.e.       //
+//   menus, toolbars, palettes, ..., etc.) and before this      //
+//   first such window instance is created.                     //  
+//                                                              //
+// Sample code is included to help the user learn how to use    //
+//   the available functions. This can be replaced as needed.   //
+//                                                              //
+// Warning: Do not delete this function.                        //
+//--------------------------------------------------------------//
+// winType = MAIN_WINDOW, SCHEMATIC_WINDOW or LAYOUT_WINDOW
+defun app_add_user_menus(winType)
+{
+//    decl freeMenuName=NULL;
+
+    // this function can be used for testing to fill the first 2 menus if
+    // none are currently in use
+    //prefill_menus();
+
+    if (winType == MAIN_WINDOW)
+    {
+        // this is an example of how to use this code
+        // to get the default name of the first free menu
+//        freeMenuName = app_find_empty_user_menu(winType);
+//        fputs(stderr, freeMenuName);
+
+        // this is an example of how to set the label of the menu
+//        set_user_menu_label("my first menu", freeMenuName);
+
+        // this is an example of how to add a menu pick to the menu
+//        add_menu("menuPickA", "my_menu_cb", freeMenuName);
+    }
+    else if (winType == SCHEMATIC_WINDOW)
+    {
+    }
+    else if (winType == LAYOUT_WINDOW)
+    {
+    }
+}
+
+
+//--------------------------------------------------------------//
+// app_user_exit_func () --                                     //
+//   The hook function for possible user wrap-up on program exit//
+//   This function is called right before PDE has finished all  //
+//   exit queries and is ready to return control back to        //
+//   Layered API for final exit () call                         //
+//                                                              //
+// Warning: Do not delete this function.                        //
+//--------------------------------------------------------------//
+
+defun app_user_exit_func ()
+{
+   //fputs (stderr, "User exit function is called");
+}

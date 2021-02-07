@@ -1,0 +1,2556 @@
+// Copyright Keysight Technologies 1997 - 2011  
+// @(#) $Source: /cvs/wlv/src/iff/ael/iffmap.ael,v $ $Revision: 100.42 $ $Date: 2011/08/28 20:26:41 $  
+//
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+decl IffCurrentMapObjectPath;    // The current symbol object path
+decl IffCurrentMapLongName;      // The current symbol long name
+decl IffCurrentMapShortName;     // The current symbol short name
+decl IffCurrentMapSymbolName;    // The current symbol name for mapping
+
+decl IffCurrentMapSymbolData;    // Current symbol data
+
+decl IffCurrentMapSymbolList;    // Hanger for symbol list
+decl IffCurrentMapSchematicList; // Hanger for schematic list
+
+decl IffMapDebugFlag = TRUE;     // Print Debug Messages????
+
+decl IffCurrentMapPropList;
+decl IffCurrentMapParmList;
+
+decl IffResParmPostLst;
+
+// Object Path mapping lists
+
+decl IffDesignObjectPathMap;
+decl IffFileObjectPathMap;
+decl IffFullObjectPathMap;
+decl IffIndexObjectPathMap;
+decl IffPartitionObjectPathMap;
+decl IffSymbolObjectPathMap;
+
+//////////////////////////////////////////////////////////////////////
+// Initialize the mapping globals used....
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_initialize()
+{
+  if( IffDebugMessageLevel > 10 )
+    IffMapDebugFlag = TRUE;
+  else
+    IffMapDebugFlag = FALSE;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_initialize()");
+
+  IffCurrentMapObjectPath = NULL;
+  IffCurrentMapLongName   = NULL;
+  IffCurrentMapShortName  = NULL;
+  IffCurrentMapSymbolName = NULL;
+  
+  IffCurrentMapSymbolData    = NULL;
+  IffCurrentMapSymbolList    = NULL;
+  IffCurrentMapSchematicList = NULL;
+
+  IffResParmPostLst = list(strcat("_", IffParmMidStr, "_LABEL"),
+			   strcat("_", IffParmMidStr, "_ATTR"),
+			   strcat("_", IffParmMidStr, "_FORMSET"),
+			   strcat("_", IffParmMidStr, "_FORM_NAME"),
+			   strcat("_", IffParmMidStr, "_INDEX"),
+			   strcat("_", IffParmMidStr, "_UNIT"),
+			   strcat("_", IffParmMidStr, "_DEFAULT_VALUE_CB"),
+			   strcat("_", IffParmMidStr, "_MODIFIED_CB"),
+                           strcat("_", IffParmMidStr, "_MODIFIED_CB_ARG"));
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_initialize()");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//    symbolList = list(
+//                     list(designObjectPath, longName, shortName,
+//                          // [3] Complete Property List name and values
+//                          list(list(propName, propValue)
+//                               [, ...]
+//                              ),
+//                          // [4] The symbol pin list and pin properties
+//                          list(list(iffPinName, iffPinNumber, 
+//                                    list(list(pinPropName, pinPropValue)
+//                                         [, ...]
+//                                        )
+//                                    list(list(iffPinNum,  adsPinNum, 
+//                                              iffPinName, adsPinName),
+//                                         list(iffPropMap, 
+//                                              adsPropMap, order, case)
+//                                         [, ...]
+//                                        )
+//                                   )
+//                               [, ...] 
+//                              ),
+//                          // [5] Property mapping
+//                          list(list(iffPropMap, adsPropMap, order, case)
+//                               [, ...]
+//                              ),
+//                          // [6] The objectpath for the symbol
+//                          symbolObjectPath,
+//                          // [7] Visible properties and locations
+//                          list(propName, 
+//                               list(propName, x,y,rot,textrule, shaderule)
+//                               [, ...]
+//                              ),
+//                           // [8] List of ADS Parameters (mapped)
+//                           list(paramName, list(....)
+//                               [, ...]
+//                               ),
+//                           // [9] List of ADS Properties (mapped)
+//                           list(propName, list(propValue)
+//                               [, ...]
+//                               )
+//                           // [10] List of ADS Reserved Properties
+//                           list(propName, list(propValue)
+//                               [, ...]
+//                               )
+//                           // [11] Is symbol being built?
+//                           TRUE or FALSE
+//                         )
+//                         [, ...]
+//                     )
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_get_symbol(objectPath, symObjPath, longName, shortName)
+{
+  decl symbolList = IffCurrentMapSymbolList;
+  decl symbolData = NULL;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_get_symbol()");
+
+  if( symbolList != NULL )
+    {
+      symbolData = car(symbolList);
+      while( symbolData != NULL )
+	{
+	  if(( car(symbolData) == objectPath ) ||
+	     ( nth(6, symbolData) == symObjPath ))
+	    {
+	      if( symObjPath != NULL )
+		  repla(symbolData, symObjPath, 6);
+	      if( longName != NULL )
+		  repla(symbolData, longName, 1);
+	      if( shortName != NULL )
+		  repla(symbolData, shortName, 2);
+		
+	      if( IffMapDebugFlag == TRUE )
+		print_value(strcat("found symbol data", car(symbolData)));
+
+	      if( IffMapDebugFlag == TRUE )
+		print_value("End:   iff_in_map_get_symbol()");
+
+	      return(symbolData);
+	    }
+
+	  symbolList = cdr(symbolList);
+	  symbolData = car(symbolList);
+	}
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value(strcat("Build new symbol data for ", objectPath));
+
+  symbolData = list(list(objectPath, longName, shortName, NULL, NULL, NULL, 
+			 symObjPath, NULL, NULL, NULL, NULL, FALSE));
+
+  if( IffCurrentMapSymbolList == NULL )
+    IffCurrentMapSymbolList = symbolData;
+  else
+    IffCurrentMapSymbolList = append(IffCurrentMapSymbolList, symbolData);
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_get_symbol()");
+
+  return(car(symbolData));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_symbol(objectPath, symObjPath, longName, shortName)
+{
+  decl curSymbolList;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_symbol()");
+
+  IffCurrentMapObjectPath = objectPath;
+  IffCurrentMapLongName   = longName;
+  IffCurrentMapShortName  = shortName;
+
+
+  // Add to the symbol list or get current entry...
+  curSymbolList = iff_in_map_get_symbol(objectPath, 
+					symObjPath, longName, shortName);
+
+  IffCurrentMapSymbolData = curSymbolList;
+
+  repla(IffCurrentMapSymbolData, TRUE, 11);
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_symbol()");
+
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_add_symbol_pin(pinName, pinNumber, xloc, yloc, propList)
+{
+    decl pinList;
+    decl pinData;
+    decl i, pinRecord;
+    decl replaceRecord=FALSE;
+
+    if( IffMapDebugFlag == TRUE )
+        print_value("Begin: iff_in_map_add_symbol_pin()");
+
+    if( IffCurrentMapSymbolData == NULL )
+    {
+        if( IffMapDebugFlag == TRUE )
+	    print_value("End:   iff_in_map_add_symbol_pin()");
+
+	return;
+    }
+
+    pinList = nth(4, IffCurrentMapSymbolData);
+    pinData = list(list(pinName, pinNumber, propList, NULL));
+
+    if( pinList == NULL )
+        pinList = pinData;
+    else
+    {
+        // Check to see if pinData already exists
+	for(i=0; i<listlen(pinList); i++)
+	{
+	    pinRecord=nth(i, pinList);
+
+	    if(nth(0, pinRecord) == pinName)
+	    {
+	        replaceRecord=TRUE;
+		repla(pinRecord, pinNumber, 1);
+		repla(pinRecord, propList, 2);
+		break;
+	    }
+	}
+
+	if(!replaceRecord)
+	    pinList = append(pinList, pinData);
+
+    }
+
+    repla(IffCurrentMapSymbolData, pinList, 4);
+
+    if( IffMapDebugFlag == TRUE )
+        print_value("End:   iff_in_map_add_symbol_pin()");
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_symbol_end()
+{
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_symbol_end()");
+
+  IffCurrentMapObjectPath = NULL;
+  IffCurrentMapLongName   = NULL;
+  IffCurrentMapShortName  = NULL;
+  IffCurrentMapSymbolName = NULL;
+
+  IffCurrentMapSymbolData    = NULL;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_symbol_end()");
+}
+
+//////////////////////////////////////////////////////////////////////
+// Add to the list of visible properties in the current symbol data.
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_add_visible_property(propList)
+{
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_add_visible_property()");
+
+  if( IffCurrentMapSymbolData == NULL )
+    {
+      if( IffMapDebugFlag == TRUE )
+	print_value("End:   iff_in_map_add_visible_property()");
+      return;
+    }
+
+  decl curPropList = nth(7, IffCurrentMapSymbolData);
+  if( curPropList == NULL )
+    curPropList = propList;
+  else
+    curPropList = append(curPropList, propList);
+
+  repla(IffCurrentMapSymbolData, curPropList, 7);
+
+  if( IffMapDebugFlag == TRUE )
+    print_value(IffCurrentMapSymbolData);
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_add_visible_property()");
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_add_properties(objectPath, propList)
+{
+  decl curSymbolList;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_add_properties()");
+
+  IffCurrentMapObjectPath = objectPath;
+  IffCurrentMapLongName   = NULL;
+  IffCurrentMapShortName  = NULL;
+
+  // Add to the symbol list or get current entry...
+  curSymbolList = iff_in_map_get_symbol(objectPath, objectPath, NULL, NULL);
+
+  IffCurrentMapSymbolData = curSymbolList;
+
+  if( propList != NULL )
+    repla(IffCurrentMapSymbolData, propList, 3);
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_add_properties()");
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_add_properties_end()
+{
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_add_properties_end()");
+
+  iff_in_map_symbol_end();
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_add_properties_end()");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//  instDataList = list(schematicObjectPath,
+//                     list(objectName, longName, shortName,
+//                         list(instName, list(instProps)[, ...]
+//                             )[, ...]
+//                         )[, ...]
+//                     )[, ...]
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_cmps(schemObjectPath, instDataList)
+{
+
+  decl schematicList = IffCurrentMapSchematicList;
+  decl schematicData = NULL;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_cmps()");
+
+  if( schematicList != NULL )
+    {
+      schematicData = car(schematicList);
+      while( schematicData != NULL )
+	{
+	  if( car(schematicData) == schemObjectPath )
+	    {
+	      if( IffMapDebugFlag == TRUE )
+		print_value(strcat("Replacing instance data ",
+				   schemObjectPath));
+	      repla(schematicData, instDataList, 1);
+	      if( IffMapDebugFlag == TRUE )
+		print_value("End:   iff_in_map_cmps()");
+	      return;
+	    }
+	  schematicList = cdr(schematicList);
+	  schematicData = car(schematicList);
+	}
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value(strcat("Build new instance data for ", schemObjectPath));
+
+  schematicData = list(list(schemObjectPath, instDataList));
+  if( IffCurrentMapSchematicList == NULL )
+    IffCurrentMapSchematicList = schematicData;
+  else
+    IffCurrentMapSchematicList = append(IffCurrentMapSchematicList, schematicData);
+
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_cmps()");
+
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_build_prop_map(propMapping)
+{
+  decl mapStrLst;
+  decl mapLst;
+  decl fullMapLst;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_build_prop_map()");
+
+  if( propMapping == NULL )
+    return(NULL);
+
+  fullMapLst = NULL;
+  mapStrLst = parse(propMapping, ",", "");
+  while( mapStrLst != NULL )
+    {
+      mapLst = list(parse(car(mapStrLst), "|", ""));
+      mapStrLst = cdr(mapStrLst);
+      if( fullMapLst == NULL )
+	fullMapLst = mapLst;
+      else
+	fullMapLst = append(fullMapLst, mapLst);
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_build_prop_map()");
+
+  return( fullMapLst );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_find_reserved_prop(data, propIdx, mapIdx, resPropName)
+{
+  decl propMapLst;
+  decl propList;  
+  
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_find_reserved_prop()");
+
+  propList = nth(propIdx, data);
+  while( propList != NULL )
+    {
+      if( car(car(propList)) == resPropName )
+	{
+	  propMapLst = iff_in_map_build_prop_map(nth(1, car(propList)));
+	  repla(data, propMapLst, mapIdx);
+	  if( IffMapDebugFlag == TRUE )
+	    print_value("End:   iff_in_map_find_reserved_prop()");
+	  return( TRUE );
+	}
+      propList = cdr(propList);
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_find_reserved_prop()");
+  return( FALSE );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_find_symbol(symbolName)
+{
+  decl symbolList = IffCurrentMapSymbolList;
+  decl symbolData = NULL;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_find_symbol()");
+
+  if( IffMapDebugFlag == TRUE )
+    print_value(strcat("Looking for symbolName = ", symbolName));
+
+  if( symbolList != NULL )
+    {
+      symbolData = car(symbolList);
+      while( symbolData != NULL )
+	{
+	  if(( car(symbolData) == symbolName ) || 
+	     ( nth(1, symbolData) == symbolName ) ||
+	     ( nth(2, symbolData) == symbolName ) ||
+	     ( nth(6, symbolData) == symbolName ))
+	    {
+	      if(( IffMapDebugFlag == TRUE ) &&
+		 (( nth(1, symbolData) == symbolName ) ||
+		  ( nth(2, symbolData) == symbolName )))
+		 {
+		   print_value("ERROR: Found symbol data using name...");
+		 }
+
+	      if( IffMapDebugFlag == TRUE )
+		print_value(strcat("Found data for symbolName = ", car(symbolData)));
+	      if( IffMapDebugFlag == TRUE )
+		print_value("End:   iff_in_map_find_symbol()");
+
+	      return(symbolData);
+	    }
+	  symbolList = cdr(symbolList);
+	  symbolData = car(symbolList);
+	}
+    }
+
+  return(NULL);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Open the symbol and get either the head pin or property handle
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_get_data_handle(objectPath, getPropHandle)
+{
+    decl symbolPath;
+    decl desHandle;
+    decl repHandle;
+    decl symHandle;
+    decl dataHandle;
+    decl itemHandle;
+    decl tmp;
+    decl i;
+    decl dirSep = iff_get_directory_delimiter();
+    
+    symbolPath = ifftolib_get_instance_name(objectPath, FALSE);
+    
+    // tmp = leftstr(symbolPath, strlen(symbolPath)-4);
+    tmp=symbolPath;
+
+    itemHandle = dm_find_item_definition(symbolPath);
+    if( itemHandle == NULL )
+    {
+        // If full path failed then try just the design name.
+        i = index(tmp, dirSep);
+	if( i != -1 )
+	{
+	    while( i != -1 )
+	    {
+	        tmp = rightstr(tmp, strlen(tmp)-1-i);
+		i = index(tmp, dirSep);
+	    }
+	    itemHandle = dm_find_item_definition(tmp);
+	}
+
+	if( itemHandle == NULL )
+	{
+	    if( IffDebugMessageLevel > 15 )
+	        print_value(strcat("failed to get item handle for ", symbolPath));
+	    return(NULL);
+	}
+    }
+
+    // load the design using just the schematic name
+    symbolPath = dm_get_item_definition_attribute(itemHandle, ITEM_SCHEM_NAME);
+
+    desHandle = db_get_design(symbolPath);
+    if( desHandle == NULL )
+    {
+        if( IffDebugMessageLevel > 15 )
+	    print_value(strcat("failed to get design handle for ", symbolPath));
+	return(NULL); // Unable to open design so return false
+    }
+
+    repHandle = db_get_rep(desHandle, REP_SCHEM);
+    if( repHandle == NULL )
+    {
+        if( IffDebugMessageLevel > 15 )
+	    print_value(strcat("failed to get rep handle for ", symbolPath));
+	return(NULL); // Unable to open rep so return false
+    }
+
+    symHandle = db_get_rep_attribute(repHandle, REP_SYMBOL);
+    if( symHandle == NULL )
+    {
+        if( IffDebugMessageLevel > 15 )
+	    print_value(strcat("failed to get symbol handle for ", symbolPath));
+	return(NULL); // Unable to get symbol so return false
+    }
+
+    if( getPropHandle == FALSE )
+    {
+        dataHandle = db_get_symbol_attribute(symHandle, SYMB_PORT_HEAD);
+	if( dataHandle == NULL )
+	{
+	    if( IffDebugMessageLevel > 15 )
+	        print_value(strcat("failed to get pin handle for ", symbolPath));
+	    return(NULL); // No pins on this symbol...
+	}
+    }
+    else
+    {
+        dataHandle = db_get_symbol_attribute(symHandle, SYMB_PROPERTY);
+	if( dataHandle == NULL )
+	{
+	    if( IffDebugMessageLevel > 15 )
+	        print_value(strcat("failed to get property handle for ", 
+				   symbolPath));
+	    return(NULL); // No properties so return false
+	}
+    }
+
+    return( dataHandle );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Take the give symbol objectpath and check each symbol pin for
+// the passed in property if found make a list that includes the
+// pin number, pin name, and property value. When all the pins
+// have been check return the list.
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_get_symbol_pin_property(objectPath, propertyName)
+{
+  decl pinHandle;
+  decl propHandle;
+  decl propName;
+  decl propType;
+  decl propValue;
+  decl pinNo;
+  decl pinName;
+  decl returnList;
+
+  pinHandle = iff_in_map_get_data_handle(objectPath, FALSE);
+
+  returnList = NULL;
+
+  while( pinHandle != NULL )
+    {
+      
+      pinNo = db_get_pin_attribute(pinHandle,PIN_NUMBER);
+      pinName = db_get_pin_attribute(pinHandle,PIN_NAME);
+      propValue = NULL;
+
+      propHandle = db_get_pin_attribute(pinHandle, PIN_PROPERTY);
+      while( propHandle != NULL )
+	{
+	  propName = db_get_property_attribute(propHandle, PROPERTY_NAME);
+	  if( IffDebugMessageLevel > 15 )
+	    print_value(strcat("checking property ", propName));
+	  if(( propName != NULL )  && ( propName == propertyName ))
+	    {
+	      propType = db_get_property_attribute(propHandle, PROPERTY_TYPE);
+	      if( IffDebugMessageLevel > 15 )
+		print_value(strcat("correct name, check type ", 
+				   identify_value(propType)));
+	      if( propType == 3 )
+		{
+		  propValue = db_get_property_attribute(propHandle, 
+							PROPERTY_VALUE_STRING);
+		}
+	    }
+	  propHandle = db_next_property(propHandle);
+	}
+
+      if( returnList == NULL )
+	returnList = list(pinNo, pinName, propValue);
+      else
+	returnList = append(returnList, list(pinNo, pinName, propValue));
+
+      pinHandle = db_next_port(pinHandle);
+    }
+
+  return(returnList);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Take the give symbol objectpath and see if you can get the 
+// property value for the passed in property name. If found then
+// return the value. If not found return NULL. Properties are
+// restricted to "string" type properties.
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_get_symbol_property(objectPath, propertyName)
+{
+  decl desHandle;
+  decl repHandle;
+  decl symHandle;
+  decl propHandle;
+  decl propName;
+  decl propType;
+  decl propValue;
+
+  propHandle = iff_in_map_get_data_handle(objectPath, TRUE);
+
+  while( propHandle != NULL )
+    {
+      propName = db_get_property_attribute(propHandle, PROPERTY_NAME);
+      if( IffDebugMessageLevel > 15 )
+	print_value(strcat("checking property ", propName));
+      if(( propName != NULL )  && ( propName == propertyName ))
+	{
+	  propType = db_get_property_attribute(propHandle, PROPERTY_TYPE);
+	  if( IffDebugMessageLevel > 15 )
+	    print_value(strcat("correct name, check type ", 
+			       identify_value(propType)));
+	  if( propType == 3 )
+	    {
+	      propValue = db_get_property_attribute(propHandle, 
+						     PROPERTY_VALUE_STRING);
+	      return(propValue);
+	    }
+
+	  return(NULL);
+	}
+      propHandle = db_next_property(propHandle);
+    }
+  return(NULL);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Read the symbol and get the pin mapping data.
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_read_symbol_and_get_pin_mapping(symbolData)
+{
+  decl objectPath = car(symbolData);
+  decl mapping;
+  decl propName;
+  decl propData;
+  decl pinList;
+  decl pinNo;
+  decl pinName;
+  decl pinFullData;
+  decl pinData;
+  decl pinMap;
+  decl foundPin;
+  decl tmpData;
+
+  propName = IffPinMappingName;
+  pinList = iff_in_map_get_symbol_pin_property(objectPath, propName);
+
+  if( pinList == NULL )
+    return(FALSE);
+
+  if( IffMapDebugFlag == TRUE )
+    print_value(strcat("Need pin data for ", nth(0,symbolData)));
+
+  while( pinList != NULL )
+    {
+      foundPin = FALSE;
+      pinNo    = car(pinList);  pinList = cdr(pinList);
+      pinName  = car(pinList);  pinList = cdr(pinList);
+      mapping  = car(pinList);  pinList = cdr(pinList);
+
+      pinMap  = iff_in_map_build_prop_map(mapping);
+
+      // If mapped find matching pin record...
+      if( pinMap != NULL )
+	{
+	  pinFullData = nth(4, symbolData);
+	  while(( pinFullData != NULL ) && ( foundPin == FALSE ))
+	    {
+	      // Get the pin data for the specific pin
+	      pinData = car(pinFullData);
+	      
+	      // Check pin numbers
+	      if( val(nth(1,pinData)) == val(car(car(pinMap))) )
+		{
+		  foundPin = TRUE;
+		  repla(pinData, pinMap, 3);
+
+		  // Add the mapping property onto the pin...
+		  tmpData = nth(2, pinData);
+		  if( tmpData == NULL )
+		    tmpData = list(list(propName, mapping));
+		  else
+		    tmpData = append(tmpData, list(list(propName, mapping)));
+		  repla(pinData, tmpData, 2);
+
+		}
+	      pinFullData = cdr(pinFullData);
+	    }
+	}
+
+      // If we didn't find the pin then create a new pin record..
+      if( foundPin == FALSE )
+	{
+	  pinFullData = nth(4, symbolData);
+
+	  // Use the mapped name if available
+	  if( pinMap != NULL )
+	    {
+	      pinNo   = identify_value(car(car(pinMap)));
+	      pinName = nth(2,(car(pinMap)));
+	    }
+
+	  // Build a new pin record (skipping properties)
+	  pinData = list(pinName, pinNo, NULL, pinMap);
+
+	  // Add the mapping property onto the pin...
+	  if( pinMap != NULL )
+	    {
+	      tmpData = nth(2, pinData);
+	      if( tmpData == NULL )
+		tmpData = list(list(propName, mapping));
+	      else
+		tmpData = append(tmpData, list(list(propName, mapping)));
+	      repla(pinData, tmpData, 2);
+	    }
+
+	  if( pinFullData == NULL )
+	    pinFullData = list(pinData);
+	  else
+	    pinFullData = append(pinFullData, list(pinData));
+
+	  repla(symbolData, pinFullData, 4);
+	}
+    }
+  return(TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Read the symbol and get the property mapping data.
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_read_symbol_and_get_property_mapping(symbolData)
+{
+  decl objectPath = car(symbolData);
+  decl mapping;
+  decl propName;
+  decl propData;
+
+  propName = IffPropertyMappingName;
+  mapping = iff_in_map_get_symbol_property(objectPath, propName);
+
+  if( mapping == NULL )
+    return(FALSE);
+  
+  if( IffMapDebugFlag == TRUE )
+    print_value(strcat("Found symbol mapping..", mapping));
+
+  propData = nth(3, symbolData);
+  if( propData == NULL )
+    propData = list(list(propName, mapping));
+  else
+    propData = append(propData, list(list(propName, mapping)));
+  repla(symbolData, propData, 3);
+
+  mapping = iff_in_map_build_prop_map(mapping);
+  repla(symbolData, mapping, 5);
+  return(TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_read_symbol_and_get_mapping(symbolData, 
+					     pinMapFound, 
+					     propMapFound)
+{
+
+  if( pinMapFound == FALSE )
+    pinMapFound = iff_in_map_read_symbol_and_get_pin_mapping(symbolData);
+
+  if( propMapFound == FALSE )
+    propMapFound = iff_in_map_read_symbol_and_get_property_mapping(symbolData);
+
+  if(( pinMapFound == FALSE ) || ( propMapFound == FALSE ))
+    return(FALSE);
+  else
+    return(TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_props(propList, propMapList)
+{
+  decl getnext;
+  decl prop;
+  decl propMap;
+  decl propMapLst;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_props()");
+
+  while( propList != NULL )
+    {
+      getnext = FALSE;
+      prop = car(propList);
+      propMapLst = propMapList;
+
+      if( IffMapDebugFlag == TRUE )
+	print_value(strcat("Checking property mapping for ", car(prop)));
+
+      while(( propMapLst != NULL ) && ( getnext == FALSE ))
+	{
+	  propMap = car(propMapLst);
+
+	  if( car(prop) == car(propMap) )
+	    {
+	      if( IffMapDebugFlag == TRUE )
+		{
+		  print_value("Mapping property name");
+		  print_value(strcat("    IFF Prop Name = ", car(prop)));
+		  print_value(strcat("    ADS Prop Name = ", nth(1,propMap)));
+		}
+	      repla(prop, nth(1,propMap), 0);
+	      getnext = TRUE;
+	    }
+	  propMapLst = cdr(propMapLst);
+	}
+      propList = cdr(propList);
+    }
+  
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_props()");
+
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_ex_map_props(propList, propMapList)
+{
+  decl getnext;
+  decl prop;
+  decl propMap;
+  decl propMapLst;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_ex_map_props()");
+
+  while( propList != NULL )
+    {
+      getnext = FALSE;
+      prop = car(propList);
+      propMapLst = propMapList;
+
+      if( IffMapDebugFlag == TRUE )
+	print_value(strcat("Checking property mapping for ", car(prop)));
+
+      while(( propMapLst != NULL ) && ( getnext == FALSE ))
+	{
+	  propMap = car(propMapLst);
+
+	  if( car(prop) == nth(1,propMap) )
+	    {
+	      if( IffMapDebugFlag == TRUE )
+		{
+		  print_value("Mapping property name");
+		  print_value(strcat("    ADS Prop Name = ", car(prop)));
+		  print_value(strcat("    IFF Prop Name = ", nth(0,propMap)));
+		}
+	      repla(prop, nth(0,propMap), 0);
+	      getnext = TRUE;
+	    }
+	  propMapLst = cdr(propMapLst);
+	}
+      propList = cdr(propList);
+    }
+  
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_ex_map_props()");
+
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_check_for_reserved(propName, resPropList)
+{
+  decl postList = IffResParmPostLst;
+
+  while( postList != NULL )
+    {
+      if( member( strcat(propName, car(postList)), resPropList) != NULL )
+	{
+	  return(TRUE);
+	}
+
+      postList = cdr(postList);
+    }
+
+  return(FALSE);
+}
+
+//////////////////////////////////////////////////////////////////////
+// This routine checks a list for a member that matches. The first
+// test is done exactly. If nothing matches then a caseless check
+// is made.
+//////////////////////////////////////////////////////////////////////
+defun iff_member(name, lst)
+{
+  decl testName;
+  decl newLst;
+
+  newLst = member(name, lst);
+  if( newLst != NULL )
+    return(newLst);
+
+  newLst = lst;
+  while( newLst != NULL )
+    {
+      testName = car(newLst);
+      if(( is_string(testName) == TRUE ) && 
+	 ( strcasecmp(name, testName) == 0 ))
+	{
+	  return( newLst );
+	}
+      newLst = cdr(newLst);
+    }
+
+  return( NULL );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Take the property list and convert it into three lists, ADS
+// parameters, ADS properties and reserved properties. Each list
+// has the property names and values mapped to the ADS form.
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_split_property_list(symbolData)
+{
+  decl propList = nth(3, symbolData);
+  decl propData;
+  decl propName;
+  decl propValue;
+  decl resPropList = NULL;
+  decl curPropList = NULL;
+  decl curParmList = NULL;
+  decl visPropList;
+  decl propMapList;
+  decl tmpPropList;
+  decl tmpPropName;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_split_property_list()");
+
+  propMapList = nth(5, symbolData);
+
+  //
+  // First remove all researved properties and build new lists.
+  // The list are reserved properties, parameters and properties.
+  // Also map each property name and value to ADS form.
+  //
+  while( propList != NULL )
+    {
+      propData    = car(propList);
+      propName    = car(propData);
+      propValue   = nth(1, propData);
+      visPropList = nth(7, symbolData);
+
+      //
+      // Map the property name (and value)
+      //
+      tmpPropList = list(list(propName, propValue));
+      iff_in_map_props(tmpPropList, propMapList);
+      tmpPropName = car(car(tmpPropList));
+
+      if(( IffDebugMessageLevel > 10 ) && ( tmpPropName != propName ))
+	{
+	  print_value("PropName before");
+	  print_value(propName);
+	  print_value("PropName after");
+	  print_value(tmpPropName);
+	}
+
+      tmpPropList = list(tmpPropName, list(propValue));
+
+      if( iffimport_is_reserved_attr(tmpPropName) == TRUE )
+	{
+	  if( resPropList == NULL )
+	    resPropList = tmpPropList;
+	  else
+	    resPropList = append(resPropList, tmpPropList);
+	}
+      else if( iff_member(propName, visPropList) != NULL )  // Use non-mapped prop
+	{
+	  if( curParmList == NULL )
+	    curParmList = tmpPropList;
+	  else
+	    curParmList = append(curParmList, tmpPropList);
+	}
+      else
+	{
+	  if( curPropList == NULL )
+	    curPropList = tmpPropList;
+	  else
+	    curPropList = append(curPropList, tmpPropList);
+	}
+
+      propList  = cdr(propList);
+    }
+
+  if( IffDebugMessageLevel > 10 )
+    {
+      print_value("----------reserved properties----------");
+      print_value(resPropList);
+      print_value("----------parameters----------");
+      print_value(curParmList);
+      print_value("----------properties----------");
+      print_value(curPropList);
+    }
+
+  //
+  // Now recheck the new property list and see if there are any
+  // coresponding reserved properties exist. 
+  //
+  propList = curPropList;
+  curPropList = NULL;
+  while( propList != NULL )
+    {
+      propName = car(propList);  
+      propList = cdr(propList);
+      propValue = car(car(propList));
+      propList = cdr(propList);
+
+      tmpPropList = list(propName, list(propValue));
+
+      if( iff_in_map_check_for_reserved(propName, resPropList) == TRUE )
+	{
+	  if( curParmList == NULL )
+	    curParmList = tmpPropList;
+	  else
+	    curParmList = append(curParmList, tmpPropList);
+	}
+      else
+	{
+	  if( curPropList == NULL )
+	    curPropList = tmpPropList;
+	  else
+	    curPropList = append(curPropList, tmpPropList);
+	}
+    }
+
+  if( IffDebugMessageLevel > 10 )
+    {
+      print_value("----------reserved properties (post)----------");
+      print_value(resPropList);
+      print_value("----------parameters (post)----------");
+      print_value(curParmList);
+      print_value("----------properties (post)----------");
+      print_value(curPropList);
+      print_value("-------------------------------------");
+    }
+
+  //
+  // Update the symbol data with the new lists.
+  //
+
+  // ATM 725 - need to support PSN components with parameters
+  // Request is that if a PSN is imported, the properties need to be 
+  // parameters.  The new default is that parameters will be netlisted 
+  // by default, but not visible on screen.  This assumes no mapping 
+  // was done by the user.  If resPropList is NULL, and curParmList is NULL,
+  // use curPropList as curParmList.
+
+  if(!resPropList && !curParmList)
+  {
+      // This should only come up if there is a PSN being imported that 
+      // has had no mapping of any sort done on it.
+      repla(symbolData, curPropList, 8);
+      repla(symbolData, NULL, 9);
+      repla(symbolData, NULL, 10);
+  }
+  else
+  {
+      repla(symbolData, curParmList, 8);
+      repla(symbolData, curPropList, 9);
+      repla(symbolData, resPropList, 10);
+  }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_split_property_list()");
+
+}
+
+//////////////////////////////////////////////////////////////////////
+// Check the symbol data and verify that each visable property
+// there exists a default property name value pair.
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_check_vis_props(symbolData)
+{
+  decl symProps;
+  decl tmpProps;
+  decl testProp;
+  decl visProps;
+  decl visProp;
+  decl newProps;
+  decl matchFound;
+  decl excludeList = list("REF", "NAME", "LABEL", "ref", "name", "label");
+
+  symProps = nth(3, symbolData);
+  visProps = nth(7, symbolData);
+  newProps = NULL;
+
+  while( visProps != NULL )
+    {
+      visProp = car(visProps);
+      visProps = cdr(cdr(visProps));
+      
+      // Check for excluded properties....
+      if( member(visProp, excludeList) != NULL )
+	continue;
+
+      matchFound = FALSE;
+      tmpProps = symProps;
+      while( tmpProps != NULL )
+	{
+	  testProp = car(tmpProps);
+	  tmpProps = cdr(tmpProps);
+	  if( strcasecmp(car(testProp),visProp) == 0 )
+	    matchFound = TRUE;
+	}
+
+      if( matchFound == FALSE )
+	newProps = append(newProps, list(list(visProp, "")));
+    }
+  
+  if( newProps != NULL )
+    {
+      symProps = append(symProps, newProps);
+      repla(symbolData, symProps, 3);      
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// Build property mapping information for each instance/design that
+// is being imported. This is done by first checking each instance
+// and verify that a symbol entry exists. If on doesn't exist one
+// is created for it. Next each symbol entry is checked for property
+// and pin mapping. If none is found then the library is checked to
+// see if it is defined there. 
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_build_mapping(createData)
+{
+  decl symbolList;
+  decl symbolData = NULL;
+  decl pinData = NULL;
+  decl pinList;
+  decl allPinsMapped;
+  decl pinMapFound;
+  decl propMapFound;
+  decl mapFound;
+  decl schematicList;
+  decl schematicData = NULL;
+  decl instList;
+  decl instObjPath;
+  decl notMappedList = NULL;
+  decl longName;
+  decl shortName;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_build_mapping()");
+
+  //
+  // Go thru each instance and verify that a symbol has been
+  // created for each. If not then create the data for the
+  // symbol.
+  //
+  schematicList = IffCurrentMapSchematicList;
+  while( schematicList != NULL )
+    {
+      schematicData = car(schematicList);
+      instList = nth(1, schematicData);
+      while( instList != NULL )
+	{
+	  instObjPath = car(car(instList));
+
+	  if( iff_in_map_find_symbol(instObjPath) == NULL )
+	    {
+	      iff_in_map_add_properties(instObjPath, NULL);
+	      iff_in_map_add_properties_end();
+	    }
+	  instList = cdr(instList);
+	}
+      schematicList = cdr(schematicList);
+    }
+
+
+  //
+  // Check each symbol in the list for property and pin mapping..
+  //
+  symbolList = IffCurrentMapSymbolList;
+  while( symbolList != NULL )
+    {
+      symbolData = car(symbolList);
+
+      // Make sure all visable properties are in the property list 
+      iff_in_map_check_vis_props(symbolData);
+
+      //
+      // Look for the researved property for property mapping
+      // in the current list of properties.
+      //
+      propMapFound =iff_in_map_find_reserved_prop(symbolData, 3, 5, 
+						  IffPropertyMappingName);
+      //
+      // Now look for the researved pin property for pin mapping
+      // on each pin in the list. All must be mapped to be considered
+      // a valid pin mapping.
+      //
+      allPinsMapped = TRUE;
+      pinMapFound = FALSE;
+      pinList = nth(4, symbolData);
+      while( pinList != NULL )
+	{
+	  pinData = car(pinList);
+
+	  mapFound = iff_in_map_find_reserved_prop(pinData, 2, 3, 
+						   IffPinMappingName);
+	  if( mapFound == TRUE )
+	    pinMapFound = TRUE;
+	  else
+	    allPinsMapped = FALSE;
+
+	  pinList = cdr(pinList);
+	}
+
+      //
+      // Check to see if all the pins got mapped. If some did
+      // and others didn't then we have a problem. Issue a
+      // message and remove any pin mapping that has been
+      // done upto this point.
+      //
+      if(( pinMapFound == TRUE ) && ( allPinsMapped == FALSE ))
+	{
+	  pinMapFound = FALSE;
+	  if( IffMapDebugFlag == TRUE )
+	    print_value(strcat("Incomplete pin mapping found for ", 
+			       nth(2,symbolData), ", ignoring..."));
+	  pinList = nth(4, symbolData);
+	  while( pinList != NULL )
+	    {
+	      pinData = car(pinList);
+	      repla(pinData, NULL, 3);
+	      pinList = cdr(pinList);
+	    }
+	}
+
+      // 
+      // If the propMap was found but the pin map wasn't and there were
+      // no pins found then this is a symbol without pins. 
+      //
+      if(( propMapFound == TRUE ) && 
+	 ( pinMapFound == FALSE ) && ( nth(4, symbolData) == NULL ))
+	{
+	  pinMapFound = TRUE;
+	}
+
+      //
+      // If either pin or property mapping is not found then the symbol
+      // must be opened and examined for mapping. Only the mapping
+      // that was not found in the IFF will be used off the symbol
+      // (if it is mapped there).
+      //
+
+      if(( pinMapFound == FALSE ) || ( propMapFound == FALSE ))
+      {
+	  mapFound = iff_in_map_read_symbol_and_get_mapping(symbolData, 
+							    pinMapFound, 
+							    propMapFound);
+
+	  if(( mapFound == FALSE ) && ( nth(11, symbolData) == TRUE ))
+          {
+	      ifftolib_build_names_from_objectpath(car(symbolData), 
+						   &longName, &shortName);
+	      if( notMappedList == NULL )
+		notMappedList = list(shortName);
+	      else
+		notMappedList = append(notMappedList, list(shortName));
+	  }
+      }
+
+      //
+      // And finally split the properties into parameters and properties.
+      //
+      iff_in_map_split_property_list(symbolData);
+
+      symbolList = cdr(symbolList);
+    }
+
+  if( createData == TRUE )
+    {
+      if(( notMappedList != NULL ) && ( IffInteractive == TRUE ))
+	iff_map_launch_libtrans_dlg(notMappedList);
+      else
+	iff_build_design_data();
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_build_mapping()");
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_find_symbol_pin(symbolName, symbolData, pinName, pinNum)
+{
+  decl pinList;
+  decl pinData;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_find_symbol_pin()");
+
+  pinList = nth(4, symbolData);
+  
+  while( pinList != NULL )
+    {
+      pinData = car(pinList);
+      if(( nth(0, pinData) == pinName ) && 
+	 ( nth(1, pinData) == identify_value(pinNum) ))
+	{
+	  if( IffMapDebugFlag == TRUE )
+	    print_value("End:   iff_in_map_find_symbol_pin()");
+
+	  return(pinData);
+	}
+      else if(nth(0, pinData) == pinName )
+      {
+          // This is a kludge.  For some reason, the C program output a 0 for the 
+          // pin number.  This is probably because the pin number was invalid to 
+          // begin with.  Change pinNum to the value of pinData that was expected.
+          
+          if( IffMapDebugFlag == TRUE )
+	    print_value("End:   iff_in_map_find_symbol_pin()");
+
+	  return(pinData);
+      }
+      pinList = cdr(pinList);
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    {  
+      print_value(strcat("ERROR: Pin data not found for symbol ", symbolName));
+      print_value("       Unable to map symbol pins....");
+      print_value(strcat("         Pin Name --> ", pinName));
+      print_value(strcat("         Pin Num  --> ", pinNum));
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_find_symbol_pin()");
+
+  return(NULL);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_get_symbol_default_names(symbolName)
+{
+    decl symbolData;
+
+    if(( IffCurrentMapSymbolName != NULL ) && 
+       ( IffCurrentMapSymbolName == symbolName ))
+    {
+        symbolData = IffCurrentMapSymbolData;
+    }
+    else
+    {
+        symbolData = iff_in_map_find_symbol(symbolName);
+        IffCurrentMapSymbolName = symbolName;
+        IffCurrentMapSymbolData = symbolData;
+    }
+    return( symbolData );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_symbol_pin(symbolName, pinName, pinNum, propList)
+{
+  decl symbolData;
+  decl pinData;
+  decl pinMapLst;
+  decl propMapLst;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_symbol_pin()");
+
+  symbolData = iff_in_map_get_symbol_default_names(symbolName);
+
+  if( symbolData == NULL )
+    {
+      if( IffMapDebugFlag == TRUE )
+	print_value("End:   iff_in_map_symbol_pin()");
+      return;   
+    }
+
+  pinData = iff_in_map_find_symbol_pin(symbolName, 
+				       symbolData, *pinName, *pinNum);
+
+  if( pinData == NULL )
+    {
+      if( IffMapDebugFlag == TRUE )
+	print_value("End:   iff_in_map_symbol_pin()");
+
+      return;
+    }
+
+  if (*pinNum==0)
+  {
+      // This is an illegal pin Number.  Try using what is in pinData.
+      *pinNum=nth(1, pinData);
+      if (is_string(*pinNum))
+      {
+          *pinNum=val(*pinNum);
+      }
+      if (*pinNum==0)
+      {
+          *pinNum=1; // Set the pin to something valid so we can do the import.
+      }
+  }
+
+  pinMapLst = nth(3, pinData);
+  if( pinMapLst == NULL )
+    {
+      if( IffMapDebugFlag == TRUE )
+	print_value("End:   iff_in_map_symbol_pin()");
+
+      return;
+    }
+
+  propMapLst = cdr(pinMapLst);
+  pinMapLst  = car(pinMapLst);
+
+  *pinNum  = identify_value(nth(1, pinMapLst));
+  *pinName = nth(3, pinMapLst);
+
+  iff_in_map_props(propList, propMapLst);
+  
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_symbol_pin()");
+
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_get_symbol_pin_props(objectPath, iffPinNum)
+{
+  decl symbolData;
+  decl allPinData;
+  decl pinData;
+  decl propList = NULL;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_get_symbol_pin_props()");
+
+  symbolData = iff_in_map_get_symbol_default_names(objectPath);
+  allPinData = nth(4, symbolData);
+  
+  while( allPinData != NULL )
+    {
+      pinData = car(allPinData);
+      allPinData = cdr(allPinData);
+
+      if( val(nth(1, pinData)) == iffPinNum )
+	{
+	  propList = nth(2, pinData);
+	  allPinData = NULL;
+	}
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_get_symbol_pin_props()");
+
+  return( propList );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_single_prop(symbolName, propName)
+{
+    decl symbolData;
+    decl propMapList;
+    decl propList;
+    decl propValue = "";
+
+    if( IffMapDebugFlag == TRUE )
+        print_value("Begin: iff_in_map_single_prop()");
+
+    symbolData = iff_in_map_get_symbol_default_names(symbolName);
+
+    if( symbolData != NULL )
+    {
+        propMapList = nth(5, symbolData);
+        propList = list(list(propName, propValue));
+        iff_in_map_props(propList, propMapList);
+        propName = car(car(propList));
+    }
+
+    if( IffMapDebugFlag == TRUE )
+        print_value("End:   iff_in_map_single_prop()");
+
+    return( propName );
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_ex_map_single_prop(symbolName, propName)
+{
+  decl symbolData;
+  decl propMapList;
+  decl propList;
+  decl propValue = "";
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_ex_map_single_prop()");
+
+  symbolData = iff_in_map_get_symbol_default_names(symbolName);
+
+  if( symbolData != NULL )
+    {
+      propMapList = nth(5, symbolData);
+      propList = list(list(propName, propValue));
+      iff_ex_map_props(propList, propMapList);
+      propName = car(car(propList));
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_ex_map_single_prop()");
+
+  return( propName );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_create_parm(symbolName, propName, propLabel, 
+			     attrib, formSet, unitCode, callback, propValue)
+{
+  decl newParam;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_create_parm()");
+
+  newParam = create_parm(propName,
+			 propLabel,attrib,formSet,unitCode,propValue,callback);
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_create_parm()");
+
+  return( newParam );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Give a string return the list with each item seperated by ,. This
+// is like parse() execpt it only deals with commas and also handle
+// null items as null strings.
+//////////////////////////////////////////////////////////////////////
+defun iff_parse(str)
+{
+  decl c;
+  decl newStr;
+  decl retLst = NULL;
+  decl emptyStr = FALSE;
+  decl lastChar;
+
+  c = index(str,",");
+  while( c != -1 )
+    {
+      emptyStr = FALSE;
+      newStr = leftstr(str,c);
+      lastChar = rightstr(str, strlen(str)-c);
+      str = rightstr(str, strlen(str)-c-1);
+
+      if( iff_matchup_parens(&newStr, &str) == TRUE )
+	{
+	  c = index(str, ",");
+	  if( c == -1 )
+	    {
+	      newStr = strcat(newStr, str);
+	      str = "";
+	    }
+	  else
+	    {
+	      newStr = strcat(newStr,leftstr(str,c));
+	      str = rightstr(str, strlen(str)-c-1);
+	    }
+	}
+      else if( c == 0 )
+	{
+	  newStr = "";
+	  emptyStr = TRUE;
+	}
+
+      if(retLst == NULL )
+	retLst = list(newStr);
+      else
+	retLst = append(retLst, list(newStr));
+      c = index(str,",");
+    }
+
+  if(( str != NULL ) && 
+     (( emptyStr == TRUE ) || ( strlen(str) > 0 ) || ( lastChar == ",")))
+    {
+      if(retLst == NULL )
+	retLst = list(str);
+      else
+	retLst = append(retLst, list(str));
+    }
+
+  return(retLst);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Determine if the symbol has a order mapping defined. If it does
+// then return the mapping list. If not then return NULL.
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_has_order_mapping(symbolName)
+{
+  decl symbolData;
+  decl propMapList;
+  decl propMap;
+  decl propList;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_has_order_mapping()");
+
+  symbolData = iff_in_map_get_symbol_default_names(symbolName);
+
+  if( symbolData != NULL )
+    {
+      propMapList = nth(5, symbolData);
+      while( propMapList != NULL )
+	{
+	  propMap = car(propMapList);
+	  if(( listlen(propMap) > 2 ) && ( nth(2, propMap) > 0 ))
+	    {
+	      if( IffMapDebugFlag == TRUE )
+		print_value("End:   iff_in_map_has_order_mapping()");
+	      return( nth(5, symbolData) );
+	    }
+	  propMapList = cdr(propMapList);
+	}
+    }
+  
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_has_order_mapping()");
+
+  return( NULL );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_attach_visible_parameters(masterObjPath, symObjPath)
+{
+  decl masterSymbolList;
+
+  masterSymbolList = iff_in_map_get_symbol(masterObjPath, NULL, NULL, NULL);
+
+  repla(IffCurrentMapSymbolData, nth(7,masterSymbolList), 7);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_attach_symbol_properties(objectPath)
+{
+    decl symbolData;
+    decl propList;
+    decl propName;
+    decl propValue;
+    decl invalidCount = 0;
+    decl msg;
+
+    return;
+
+    if( IffMapDebugFlag == TRUE )
+        print_value("Begin: iff_in_map_attach_symbol_properties()");
+
+    symbolData = iff_in_map_get_symbol_default_names(objectPath);
+    propList = nth(9, symbolData);
+    while( propList != NULL )
+    {
+        propName  = car(propList);
+	propList  = cdr(propList);
+	propValue = car(car(propList));
+	propList  = cdr(propList);
+
+	if (is_string(propValue))
+	{
+            propValue=iff_import_fix_escaping(propValue);
+	}
+
+	if( ifftolib_valid_name( propName ) == TRUE )
+	{
+	    add_symbol_property(propName, propValue);
+	}
+	else
+	{
+	    msg = strcat("WARNING: Invalid property name \"", propName,
+			 "\" on symbol \"", ifftolib_get_symbolname(), "\".",
+			 "  All illegal characters will be mapped to underscores.");
+	    iff_log_message(list(msg));
+	    
+	    add_symbol_property(strcat("HPEESOF_PROP_NAME_",  invalidCount),
+				propName);
+	    add_symbol_property(strcat("HPEESOF_PROP_VALUE_", invalidCount),
+				propValue);
+	    invalidCount++;
+	}
+    }
+ 
+    if( IffMapDebugFlag == TRUE )
+        print_value("End:   iff_in_map_attach_symbol_properties()");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_find_reserved_property(objectPath, propName, deleteit)
+{
+  decl symbolData;
+  decl tmpPropName;
+  decl propValue;
+  decl propList;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_find_reserved_property()");
+
+  propValue = NULL;
+  symbolData = iff_in_map_get_symbol_default_names(objectPath);  
+  propList = nth(10, symbolData);
+
+  if( propList != NULL )
+    {
+      propList = member(propName, propList);
+      if( propList != NULL )
+	{
+	  tmpPropName  = car(propList);
+	  if( deleteit == TRUE )
+	    repla(propList, NULL, 0);
+
+	  propList  = cdr(propList);
+	  propValue = car(car(propList));
+
+	  if( deleteit == TRUE )
+	    repla(propList, NULL, 0);
+	}
+    }
+ 
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_find_reserved_property()");
+
+  return(propValue);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_find_res_parm(objectPath, propName, propExt, defValue)
+{
+    decl tmp;
+    decl propValue;
+
+    tmp = strcat(propName, "_", IffParmMidStr, "_", propExt);
+    propValue = iff_in_map_find_reserved_property(objectPath, tmp, FALSE);
+    if( propValue == NULL )
+        propValue = defValue;
+
+    return(propValue);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Add a error handler for the evaluate() function. If error occurs
+// set the iff_evaluate_errno to 1.
+//////////////////////////////////////////////////////////////////////
+decl iff_evaluate_errno;
+defun iff_evaluate_error_handler()
+{
+  iff_evaluate_errno = 1;
+}
+
+//////////////////////////////////////////////////////////////////////
+// A protected function to the AEL evaluate() call. If the string
+// can not be evaluated a error message is displayed in the log and
+// AEL execution continues.
+//////////////////////////////////////////////////////////////////////
+defun iff_eval(attrStr, prop, name, def)
+{
+    iff_evaluate_errno = 0;
+
+    if( attrStr == "-2147483648" )
+      return(-2147483647-1);
+	
+    decl oldHandle = on_error(iff_evaluate_error_handler);
+    decl attr = evaluate(attrStr);
+    on_error(oldHandle);
+
+    if( iff_evaluate_errno == 1 )
+    {
+        decl tmp;
+	tmp = strcat("\n",
+		     "WARNING: Unable to evaluate ", name, " string.\n\n",
+		     "         Parameter Name = \"", prop, "\"\n",
+		     "         Attribute String = \"", attrStr, "\"\n");
+	iff_log_message(list(tmp));
+	attr = evaluate(def);
+    }
+
+    return(attr);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Give a unit/scalar string search the possible units and see if
+// there is a match up. If there is then return the unitcode, unitname,
+// matching unit/scalar and the tools unit/scalar in a list form. If
+// no match is found then return NULL.
+//////////////////////////////////////////////////////////////////////
+defun iff_get_unit_data_from_unit(testUnit)
+{
+  decl my_units;
+  decl cur_unit;
+  decl myUnitName;
+  decl myUnitData;
+  decl myUnitCode;
+  decl myUnitList;
+  decl iffUnitList;
+  decl iffUnit;
+  
+  my_units = IffUnits;
+
+  while( my_units )
+    {
+      cur_unit = car(my_units);
+
+      myUnitName = car(cur_unit);
+      myUnitData = nth(1, cur_unit);
+
+      myUnitCode = car(myUnitData);
+      myUnitList = nth(1, myUnitData);
+      iffUnitList = nth(2, myUnitData);
+
+      while( iffUnitList )
+	{
+	  iffUnit = car(iffUnitList);
+	  if( strcasecmp(iffUnit,testUnit) == 0 )
+	    return(list(myUnitCode,myUnitName,iffUnit,car(myUnitList)));
+
+	  iffUnitList = cdr(iffUnitList);
+	  myUnitList = cdr(myUnitList);
+	}
+      my_units = cdr(my_units);
+    }
+  return(NULL);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Create the parameter data and push it onto the parameter stack
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_create_parameter(objectPath, propName, propValue)
+{
+  decl label;
+  decl attr;
+  decl attrStr;
+  decl formset;
+  decl unitcode;
+  decl unitname;
+  decl default_cb;
+  decl form_name;
+  decl tmp;
+  decl callbackFunction, callbackFunctionArg;
+  
+  label      = iff_in_map_find_res_parm(objectPath, propName, "LABEL", "");
+
+  tmp        = IffDefaultAttr;
+  attrStr    = iff_in_map_find_res_parm(objectPath, propName, "ATTR", tmp);
+  attr       = iff_eval(attrStr, propName, "attribute", tmp);
+
+  tmp        = "FORMSET";
+  formset    = iff_in_map_find_res_parm(objectPath, 
+					propName, tmp, IffDefaultFormSet);
+
+  tmp        = "UNIT";
+  unitcode   = iff_in_map_find_or_guess_unitcode(objectPath, 
+						 propName, &propValue, tmp, -1);
+  unitcode   = iff_eval(unitcode, propName, "unit code", "-1");
+
+  tmp        = "DEFAULT_VALUE_CB";
+  default_cb = iff_in_map_find_res_parm(objectPath, propName, tmp, NULL);
+
+  tmp        = "FORM_NAME";
+  form_name  = iff_in_map_find_res_parm(objectPath, propName, tmp, 
+					iff_get_form_name(&propValue));
+
+  tmp               = "MODIFIED_CB";
+  callbackFunction  = iff_in_map_find_res_parm(objectPath, propName, tmp, 
+                                        NULL);
+
+  tmp                  = "MODIFIED_CB_ARG";
+  callbackFunctionArg  = iff_in_map_find_res_parm(objectPath, propName, tmp, 
+                                        NULL);
+
+  // Dump the index...
+  tmp        = "INDEX";
+  tmp        = iff_in_map_find_res_parm(objectPath, propName, tmp, NULL);
+
+  // Verify that the property value is valid for the current tool.
+  propValue = iff_validate_property_value(objectPath, propName, propValue);
+
+  tmp = list(propName, label, attr, formset, unitcode, default_cb, 
+             callbackFunction, callbackFunctionArg, form_name,  propValue);
+  ifftolib_append_parameter_stack(propName, tmp);
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_attach_symbol_parameters(objectPath)
+{
+    decl symbolData;
+    decl propList;
+    decl propListLen;
+    decl propName;
+    decl propValue;
+    decl invalidCount = 0;
+    decl msg;
+    decl count;
+    decl tmp;
+    decl tmpList = NULL;
+    decl curPropList;
+
+    if( IffMapDebugFlag == TRUE )
+        print_value("Begin: iff_in_map_attach_symbol_parameters()");
+
+    symbolData = iff_in_map_get_symbol_default_names(objectPath);
+
+    propList = list();
+    propList = append(propList, nth(8, symbolData));
+    count = 1;
+    propListLen = listlen(propList) / 2;
+  
+    // Search the list for indexed parameters. Note you have
+    // to search the entire list since there maybe duplicate indexed 
+    // parameters
+
+    while( count <= propListLen )
+    {
+        tmpList   = propList;
+	propName  = car(propList);
+	propList  = cdr(propList);
+	propValue = car(car(propList));
+	propList  = cdr(propList);
+	
+	if (is_string(propValue))
+	{
+            propValue=iff_import_fix_escaping(propValue);
+	}
+
+	if( propName != NULL )
+	{
+	    tmp = strcat(propName, "_", IffParmMidStr, "_INDEX");
+	    tmp = iff_in_map_find_reserved_property(objectPath, tmp, FALSE);
+	}
+	else
+	{
+	    tmp = NULL;
+	}
+
+	if(( tmp != NULL ) && ( val(tmp) == count ))
+	{
+	    if( ifftolib_valid_name( propName ) == FALSE )
+	    {
+	        msg = strcat("WARNING: Invalid parameter name \"", propName,
+			     "\" on symbol \:", 
+			     ifftolib_get_symbolname(), "\".",
+			     "  All illegal characters will be mapped to underscores.");
+		iff_log_message(list(msg));
+	    }
+	    iff_in_map_create_parameter(objectPath, propName, propValue);
+	    repla(tmpList, NULL, 0);
+	    repla(tmpList, NULL, 1);
+	}
+	else if( propList == NULL )
+	{
+	    count++;
+	    propList = list();
+	    propList = append(propList, nth(8, symbolData));
+	}
+    }
+
+    // Now get all non-indexed parameters
+
+    propList = list();
+    propList = append(propList, nth(8, symbolData));
+
+    while( propList != NULL )
+    {
+        propName  = car(propList);
+	propList  = cdr(propList);
+	propValue = car(car(propList));
+	propList  = cdr(propList);
+      
+	if( propName != NULL )
+	{
+	    if( ifftolib_valid_name( propName ) == FALSE )
+	    {
+	        msg = strcat("WARNING: Invalid parameter name \"", propName,
+			     "\" on symbol \:", 
+			     ifftolib_get_symbolname(), "\".",
+			     "  All illegal characters will be mapped to underscores.");
+		iff_log_message(list(msg));
+	    }
+	    iff_in_map_create_parameter(objectPath, propName, propValue);
+	}
+    }
+
+    // At this point in time the reserved stack should be clear. If
+    // not then there were reserved properties that were not used
+    // for the parameters. Add them back into the property stack
+    // for later export.
+  
+    curPropList = list();
+    curPropList = append(curPropList, nth(9, symbolData));
+    propList    = list();
+    propList    = append(propList, nth(10, symbolData));
+    count       = 0;
+
+    while( propList != NULL )
+    {
+        propName  = car(propList);
+	propList  = cdr(propList);
+	propValue = car(car(propList));
+	propList  = cdr(propList);
+      
+	if( propName != NULL )
+	{
+	    count++;
+	    if( curPropList == NULL )
+	        curPropList = list(propName, list(propValue));
+	    else
+	        curPropList = append(curPropList, list(propName, list(propValue)));
+	}
+    }
+
+    // If any reserved properties were found then update the property list
+
+    // Left over properties are added as symbol properties
+
+    // propList = nth(9, symbolData);
+
+    while( curPropList != NULL )
+    {
+        propName  = car(curPropList);
+	curPropList  = cdr(curPropList);
+	propValue = car(car(curPropList));
+	curPropList  = cdr(curPropList);
+
+	if (is_string(propValue))
+	{
+            propValue=iff_import_fix_escaping(propValue);
+	}
+
+	if( ifftolib_valid_name( propName ) == TRUE )
+	{
+	    add_symbol_property(propName, propValue);
+	}
+	else
+	{
+	    msg = strcat("WARNING: Invalid property name \"", propName,
+			 "\" on symbol \"", ifftolib_get_symbolname(), "\".",
+			 "  All illegal characters will be mapped to underscores.");
+	    iff_log_message(list(msg));
+	    
+	    add_symbol_property(strcat("HPEESOF_PROP_NAME_",  invalidCount),
+				propName);
+	    add_symbol_property(strcat("HPEESOF_PROP_VALUE_", invalidCount),
+				propValue);
+	    invalidCount++;
+	}
+    }
+
+    //if( count > 0 )
+    //    repla(symbolData, curPropList, 9);
+
+    if( IffMapDebugFlag == TRUE )
+        print_value("End:   iff_in_map_attach_symbol_parameters()");
+}
+
+//////////////////////////////////////////////////////////////////////
+// Search the symbol data records for the requested objectpath. If it
+// is not in the list then open the library and load the symbol property
+// and pin mapping data.
+//////////////////////////////////////////////////////////////////////
+defun iff_ex_map_is_loaded(objectPath, shortName)
+{
+  decl symbolData;
+  decl mapFound;
+
+  symbolData = iff_in_map_get_symbol_default_names(objectPath);
+  if( symbolData != NULL )
+    return;                // Previously loaded.....
+
+  iff_in_map_symbol(objectPath, objectPath, shortName, shortName);
+  iff_in_map_symbol_end();
+  symbolData = iff_in_map_get_symbol_default_names(objectPath);
+
+  mapFound = iff_in_map_read_symbol_and_get_mapping(symbolData, FALSE, FALSE);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Take the objectPath and find the pin mapping data for that object.
+// Then mapping the pinName and pinNumber back to the IFF forms. If
+// no mapping is found for the pin then the ADS name/number is used.
+//////////////////////////////////////////////////////////////////////
+defun iff_ex_map_pin(objectPath, pinName, pinNumber)
+{
+  decl symbolData;
+  decl pinFullData;
+  decl pinData;
+  decl pinMapping;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_ex_map_pin()");
+
+  symbolData = iff_in_map_get_symbol_default_names(objectPath);
+
+  if( symbolData != NULL )
+    {
+      pinFullData = nth(4, symbolData);
+      while( pinFullData != NULL )
+	{
+	  pinData = car(pinFullData);
+	  pinMapping = nth(3, pinData);
+
+	  if( pinMapping == NULL )
+	    return;
+
+	  pinMapping = car(pinMapping);
+	  if( *pinNumber == nth(1, pinMapping) )
+	    {
+	      *pinNumber = nth(0, pinMapping);
+	      *pinName   = nth(2, pinMapping);
+	      return;
+	    }
+
+	  pinFullData = cdr(pinFullData);
+	}
+    }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_ex_map_pin()");
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// Check to see if the property mapping exists for a symbol
+//////////////////////////////////////////////////////////////////////
+defun iff_ex_map_has_prop_mapping(symbolName)
+{
+  decl symbolData;
+  decl propMapList;
+
+  symbolData = iff_in_map_get_symbol_default_names(symbolName);
+  if( symbolData == NULL )
+    return( FALSE );
+  
+  propMapList = nth(5, symbolData);
+  if( propMapList == NULL )
+    return( FALSE );
+
+  return( TRUE );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Check to see if all the pins have pin mapping defined. If any
+// pin does not then no pin mapping exists.
+//////////////////////////////////////////////////////////////////////
+defun iff_ex_map_has_pin_mapping(symbolName)
+{
+  decl symbolData;
+  decl pinFullData;
+  decl pinData;
+  decl pinMapping;
+
+  symbolData = iff_in_map_get_symbol_default_names(symbolName);
+  if( symbolData == NULL )
+    return( FALSE );
+
+  pinFullData = nth(4, symbolData);
+  if( pinFullData == NULL )
+    return( FALSE );
+
+  while( pinFullData != NULL )
+    {
+      pinData = car(pinFullData);
+      pinMapping = nth(3, pinData);
+
+      if( pinMapping == NULL )
+	return( FALSE );
+
+      pinFullData = cdr(pinFullData);
+    }
+
+  return( TRUE );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Code that follows is for mapping an object path.
+//////////////////////////////////////////////////////////////////////
+
+defun iff_load_objectpath_maps(fileList)
+{
+    decl dirDelim=api_get_directory_delimiter(), i;
+    decl mapFileName="iffpath.map";
+    decl currentMapFile;
+    decl localFileList=fileList;
+    
+    if (!localFileList || !is_list(localFileList))
+    {
+        localFileList=list(strcat(expandenv("$HPEESOF_DIR"), dirDelim, "config", dirDelim, mapFileName),
+                           strcat(expandenv("$HPEESOF_DIR"), dirDelim, "config", dirDelim, "custom", dirDelim, mapFileName),
+                           strcat(expandenv("$HOME"), dirDelim, "hpeesof", dirDelim, "config", dirDelim, mapFileName));
+    }
+
+    for (i=0; i<listlen(localFileList); i++)
+    {
+        currentMapFile=nth(i, localFileList);
+        if (filestat(nth(i, localFileList)))
+        {
+            iffReadObjectPathMap(currentMapFile);
+        }
+    }
+
+}
+
+defun iffReadObjectPathMap(currentMapFile)
+{
+    decl fileH, line, lineList;
+    decl importPath, exportPath;
+    decl category="FULLPATH";
+    decl tmpList, index;
+    decl line1=TRUE;
+
+    if (fileH=fopen(currentMapFile, "R"))
+    {
+        while ((line=fgets(fileH)) != NULL)
+        {
+            importPath="";
+            exportPath="";
+            if (line1)
+            {
+                if (stripstr(line) != "// HPEESOF_FULL_PATH mapping")
+                {
+                    // This may not be a valid mapping file.  Exit without reading the file.
+                    break;
+                }
+                line1=FALSE;
+            }
+            if (leftstr(line, 2) != "//")
+            {
+
+                if (leftstr(line, 1) == "%")
+                {
+                    // The remainder of the line is the category
+                    category=nth(1, parse(line, " ", "%"));
+                }
+                else
+                {
+                    
+                    lineList=parse(line, "|", "");
+                    importPath=nth(0, lineList);
+                    exportPath=nth(1, lineList);
+
+                    if (category == "FULL")
+                    {
+                        // Add the source and destination to the list, 
+                        // or override the current value if it is
+                        // already in the list
+                        if (tmpList=member(importPath, IffFullObjectPathMap))
+                        {
+                            index=listlen(IffFullObjectPathMap)-listlen(tmpList);
+                            repla(IffFullObjectPathMap, list(exportPath), index+1);
+                        }
+                        else
+                        {
+                            IffFullObjectPathMap=append(IffFullObjectPathMap, list(importPath, list(exportPath)));
+                        }
+
+                    }
+                    else if (category == "DESIGN")
+                    {
+                        if (tmpList=member(importPath, IffDesignObjectPathMap))
+                        {
+                            index=listlen(IffDesignObjectPathMap)-listlen(tmpList);
+                            repla(IffDesignObjectPathMap, list(exportPath), index+1);
+                        }
+                        else
+                        {
+                            IffDesignObjectPathMap=append(IffDesignObjectPathMap, list(importPath, list(exportPath)));
+                        }
+                    }
+                    else if (category == "FILE")
+                    {
+                        // Add the source and destination to the list, 
+                        // or override the current value if it is
+                        // already in the list
+                    
+                        if (tmpList=member(importPath, IffFileObjectPathMap))
+                        {
+                            index=listlen(IffFileObjectPathMap)-listlen(tmpList);
+                            repla(IffFileObjectPathMap, list(exportPath), index+1);
+                        }
+                        else
+                        {
+                            IffFileObjectPathMap=append(IffFileObjectPathMap, list(importPath, list(exportPath)));
+                        }
+                    }
+                    else if (category == "INDEX")
+                    {
+                        // Add the source and destination to the list, 
+                        // or override the current value if it is
+                        // already in the list
+                        if (tmpList=member(importPath, IffIndexObjectPathMap))
+                        {
+                            index=listlen(IffIndexObjectPathMap)-listlen(tmpList);
+                            repla(IffIndexObjectPathMap, list(exportPath), index+1);
+                        }
+                        else
+                        {
+                            IffIndexObjectPathMap=append(IffIndexObjectPathMap, list(importPath, list(exportPath)));
+                        }
+                    }                    
+                    else if (category == "PARTITION")
+                    {
+                        // Add the source and destination to the list, 
+                        // or override the current value if it is
+                        // already in the list
+                        if (tmpList=member(importPath, IffPartitionObjectPathMap))
+                        {
+                            index=listlen(IffPartitionObjectPathMap)-listlen(tmpList);
+                            repla(IffPartitionObjectPathMap, list(exportPath), index+1);
+                        }
+                        else
+                        {
+                            IffPartitionObjectPathMap=append(IffPartitionObjectPathMap, list(importPath, list(exportPath)));
+                        }
+                    }
+                    else if (category == "SYMBOL")
+                    {
+                        // Add the source and destination to the list, 
+                        // or override the current value if it is
+                        // already in the list
+                        if (tmpList=member(importPath, IffSymbolObjectPathMap))
+                        {
+                            index=listlen(IffSymbolObjectPathMap)-listlen(tmpList);
+                            repla(IffSymbolObjectPathMap, list(exportPath), index+1);
+                        }
+                        else
+                        {
+                            IffSymbolObjectPathMap=append(IffSymbolObjectPathMap, list(importPath, list(exportPath)));
+                        }
+                    }
+                }
+                
+            }
+        }
+        fclose(fileH);
+    }
+    
+}
+
+defun iffMapObjectPath(objectPath, instH)
+{
+    decl newObjectPath;
+    decl objectPathList;
+    decl tmpPath, name, newName, pathType;
+    decl searchMapPath;
+    decl i;
+
+    // If a user defined function for mapping exists, use it
+
+    if(bound("iff_user_map_object_path"))
+    {
+        newObjectPath=iff_user_map_object_path(objectPath, instH);
+    }
+
+    if(newObjectPath == NULL)
+    {
+        // Use the built in mapping mechanism...
+                                                
+        // Check to see if a full path matches the object path
+
+        if (newObjectPath=car(nth(1, member(objectPath, IffFullObjectPathMap))))
+        {
+            return(newObjectPath);
+        }
+
+        // Parse the object path and search for the individual portions.
+
+        objectPathList=iffParseString(objectPath, IffObjectPathMainDelim, "");
+        newObjectPath="";
+    
+        for (i=0;i<listlen(objectPathList);i++)
+        {
+            tmpPath=iffParseString(nth(i, objectPathList), IffObjectPathSubDelim, "");
+            name=nth(0, tmpPath);
+            pathType=nth(1, tmpPath);
+            if (is_string(pathType))
+            {
+                if (pathType=="design")
+                {
+                    searchMapPath=IffDesignObjectPathMap;
+                }
+                else if (pathType=="file")
+                {
+                    searchMapPath=IffFileObjectPathMap;
+                }
+                else if (pathType=="index")
+                {
+                    searchMapPath=IffIndexObjectPathMap;
+                }
+                else if (pathType=="partition")
+                {
+                    searchMapPath=IffPartitionObjectPathMap;
+                }
+                else if (pathType=="symbol")
+                {
+                    searchMapPath=IffSymbolObjectPathMap;
+                }
+                
+                if (newName=car(nth(1, member(name, searchMapPath))))
+                {
+                    newObjectPath=strcat(newObjectPath, IffObjectPathMainDelim, newName);
+                    newObjectPath=strcat(newObjectPath, IffObjectPathSubDelim, pathType);            
+                }
+                else
+                {
+                    newObjectPath=strcat(newObjectPath, IffObjectPathMainDelim, nth(i, objectPathList));
+                }
+            }
+            else
+            {
+                // Unable to map this object path.  Return the original
+                       return(objectPath);
+            }
+        }
+
+        // Check to see if the new object path is valid?
+
+    }
+
+    return(newObjectPath);
+}
+    
+//
+// This section is to set up c-mode for Emacs.
+//
+// Local Variables:
+// mode: c
+// header-comment-character: ?*
+// header-prefix: "/* -*-C-*-"
+// header-suffix: "*/"
+// End:
+//

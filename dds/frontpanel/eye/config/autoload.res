@@ -1,0 +1,1 @@
+"&Eye"	"The Eye Diagram FrontPanel"	Eyeutil_load_FrontPanelMenuCB	0	Eyeutil_load_FrontPanelMenuSensCB	0

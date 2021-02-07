@@ -1,0 +1,1 @@
+"&Jitter"	"Jitter Analysis FrontPanel"	FP_JitterFrontPanelMenuCB	0	FP_JitterFrontPanelMenuSensCB	0

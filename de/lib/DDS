@@ -1,0 +1,197 @@
+# @(#) $Source: /cvs/sr/src/dds/config/DDS,v $ $Revision: 1.1 $ $Date: 2004/07/12 18:27:25 $  
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!                                                                     !
+!                       DDS X11 Resource File                         !
+!                                                                     !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+*dragInitiatorProtocolStyle: XmDRAG_NONE
+*dragReceiverProtocolStyle: XmDRAG_NONE
+! font
+!
+*fontList: helvb12
+DDS*textFontList: -adobe-helvetica-medium-r-normal-*-12-*-*-*-*-*-*-*
+DDS*FontList: -adobe-helvetica-bold-r-normal-*-12-*-*-*-*-*-*-*
+!
+! Colors
+!
+*TransientShell.allowShellResize: true
+*highlightThickness: 2
+*keyboardFocusPolicy: explicit
+*foreground: black
+*highlightColor: black
+*topShadowColor: SlateGray1
+*Layout*topShadowColor:	LavenderBlush1
+*menubar*Layout*topShadowColor: SlateGray1
+!
+*Main*background: SlateGray3
+*Schematic*background: SlateGray3
+*Data Display*background: SlateGray3
+*Layout*background: MistyRose2
+*Layer Selection Window*background: SlateGray3
+*Main*Balloon Help*background: AntiqueWhite1
+*Schematic*Balloon Help*background: AntiqueWhite1
+*Data Display*Balloon Help*background: AntiqueWhite1
+*Layout*Balloon Help*background: AntiqueWhite1
+*Schematic*WorkArea*Popup*background: SlateGray2
+*Data Display*WorkArea*Popup*background: SlateGray2
+*Layout*WorkArea*Popup*background: MistyRose1
+*ToolArea*spacing: 0
+!
+!
+! initial dialog location specification
+!
+*XmDialogShell*defaultPosition: False
+*Main*XmDialogShell.geometry:  +5+225
+*Schematic*XmDialogShell.geometry:  +5+250
+*Layout*XmDialogShell.geometry:  +5+275
+*PanelFrame*text.highlightThickness: 0
+*PanelFrame*text*shadowThickness: 0
+!
+! foreground colors
+*menubar*foreground: black
+!*WorkArea*foreground: black--not working, need to break down as below 5/8/97 SYC
+*ToolArea*foreground: black
+*ComboBox*foreground: black
+*Balloon Help*foreground: maroon
+*PaletteForm*foreground: black
+*PanelForm*foreground: black
+*WorkAreaDialog*foreground: black
+*ScrollText*foreground: black
+*ScrolledWin*foreground: black
+*DrawArea*foreground: black
+*PanelForm*Prompt*foreground: maroon
+*bottomShadowColor: SlateGray4
+!
+! font
+*PanelForm*fontList: helvb12
+*ComboBox*fontList: helvb12
+*XmTextField*fontList: helvb12
+!*Data Display*ComboBox*fontList: helvR18
+*Data Display*ComboBox*fontList: helvb12
+*Data Display*ComboBox*marginHeight: 2
+!
+! shadow, margin, spacing, highlight color
+*toolArea*spacing: 0
+*toolArea*marginHeight: 0
+*toolArea*ComboBox*marginHeight: 2
+*toolArea*marginWidth: 0
+*toolArea*shadowType: SHADOW_IN
+*toolArea*XmFrame.shadowThickness: 1
+*toolArea*highlightColor: maroon
+*PaletteForm*highlightColor: maroon
+*DrawArea*highlightColor: maroon
+*PanelFrame.shadowType: SHADOW_IN
+*PanelFrame.shadowThickness: 0
+*XmDialogShell*highlightColor: black
+*XmDialogShell*Balloon Help*foreground: black
+!
+! Tab dialog box
+!
+*XmNotebook*XmArrowButtonGadget.foreground: green
+*XmNotebook*XmArrowButtonGadget.background: black
+*XmNotebook*XmArrowButtonGadget.shadowThickness: 0
+*XmNotebook*XmArrowButtonGadget.highlightThickness: 0
+!
+!
+!uncomment for  HIGHER resolution Monitor
+!
+! Fonts
+!
+!*menuBar*fontList:  variable
+!
+! uncomment for IBM platforms
+!
+!*PfontList: courB12
+!
+!*PPanelForm*fontList: -adobe-helvetica-bold-r-normal--10-100-75-75-p-60-iso8859-1
+!*PPanelForm*fontList: variable
+!*PPaletteForm*fontList:  variable
+!*PPaletteForm*fontList:  -adobe-helvetica-medium-r-normal--10-100-75-75-p-56-iso8859-1
+!
+! Misc resource settings
+!
+*qIcon*labelType: pixmap
+*qIcon*labelPixmap: question.bmp
+!
+! Cursors
+!
+!*drawCursor: tcross
+*drawCursor: left_ptr
+*workCursor: watch
+*menuCursor: hand2
+!
+! Need to find out the dialog names in LAPI 4/25/97 SYC
+*ColorSelectionDialog*background: moccasin
+*ColorSelectionDialog*foreground: black
+*ColorSelectionDialog*topShadowColor: AntiqueWhite1
+*PatternSelectionDialog*background: LavenderBlush3
+*PatternSelectionDialog*foreground: black
+*PatternSelectionDialog*topShadowColor:	LavenderBlush2
+!
+! resources for print/plot setup dialog
+!
+*Print/Plot Setup*Setup*geometry: 300x300
+*Print/Plot Setup*Setup*background:  SlateGray3
+*DDS*PrintDialog*foreground: black
+!
+!
+*Advanced Design System Setup*background: SlateGray3
+*Advanced Design System Setup*foreground: black
+*XmContainer*ShadowThickness: 0
+*XmContainer*XmRowColumn*ShadowThickness: 1
+
+! Some basic emacs-like bindings for text fields.
+!
+! "editingTranslations" are merged into all XmText and XmTextField widgets.
+! Then, either "multiLinEditingTranslations" or "singleLinEditingTranslations"
+! are merged in, depending on whether it is an XmText or XmTextField widget.
+! These resources are merged in after "globalTranslations", so it is possible
+! for them to override the menu accelerators.
+!
+! Problems:
+!  = I don't understand why the "Ctrl<Key>g" binding does nothing.
+!  = I wish things like `C-k C-k C-k C-n C-k C-k C-y' did the right thing.
+!  = This doesn't quite do active regions right, in that C-SPC M-f doesn't
+!    leave the word highlighted (though it does leave a region set.)
+! Basically, XmText is not Emacs, and we therefore exist in a world of pain.
+!
+!  NOTE: if you're looking here because BackSpace and Delete aren't
+!        working the way you think they should, then you need to run
+!        xmodmap or xkeycaps to fix your keyboard, or mess read the man
+!        page for VirtualBindings(1).  For details, see the Netscape FAQ
+!        (available from the Help menu.)
+!
+*XmText*Translations:			#override			\n\
+	Meta ~Ctrl<Key>A:		select-all()				\n\
+	 Alt ~Ctrl<Key>A:		select-all()				\n\
+	~Meta ~Alt Ctrl<Key>a:		beginning-of-line()		\n\
+	~Meta ~Alt  Shift Ctrl<Key>a:	beginning-of-line(extend)	\n\
+	~Meta ~Alt ~Shift Ctrl<Key>b:	backward-character()		\n\
+	~Meta ~Alt  Shift Ctrl<Key>b:	backward-character(extend)	\n\
+	~Meta ~Alt        Ctrl<Key>d:	delete-next-character()		\n\
+	~Meta ~Alt ~Shift Ctrl<Key>e:	end-of-line()			\n\
+	~Meta ~Alt  Shift Ctrl<Key>e:	end-of-line(extend)		\n\
+	~Meta ~Alt ~Shift Ctrl<Key>f:	forward-character()		\n\
+	~Meta ~Alt  Shift Ctrl<Key>f:	forward-character(extend)	\n\
+	~Meta ~Alt        Ctrl<Key>g:	process-cancel()		\n\
+	~Meta ~Alt        Ctrl<Key>h:	delete-previous-character()	\n\
+	~Meta ~Alt        Ctrl<Key>space: set-anchor()			\n\
+	~Meta ~Alt        Ctrl<Key>2:	set-anchor()			\n\
+	~Meta ~Alt        Ctrl<Key>@:	set-anchor()			\n\
+									\
+	Meta ~Ctrl ~Shift<Key>b:	backward-word()			\n\
+	 Alt ~Ctrl ~Shift<Key>b:	backward-word()			\n\
+	Meta ~Ctrl  Shift<Key>b:	backward-word(extend)		\n\
+	 Alt ~Ctrl  Shift<Key>b:	backward-word(extend)		\n\
+	Meta ~Ctrl ~Shift<Key>f:	forward-word()			\n\
+	 Alt ~Ctrl ~Shift<Key>f:	forward-word()			\n\
+	Meta ~Ctrl  Shift<Key>f:	forward-word(extend)		\n\
+	 Alt ~Ctrl  Shift<Key>f:	forward-word(extend)		\n\
+	Meta ~Ctrl ~Shift<Key>osfLeft:	backward-word()			\n\
+	 Alt ~Ctrl ~Shift<Key>osfLeft:	backward-word()			\n\
+	Meta ~Ctrl  Shift<Key>osfLeft:	backward-word(extend)		\n\
+	 Alt ~Ctrl  Shift<Key>osfLeft:	backward-word(extend)		\n\
+	Meta ~Ctrl ~Shift<Key>osfRight:forward-word()			\n\
+	 Alt ~Ctrl ~Shift<Key>osfRight:forward-word()			\n\
+	Meta ~Ctrl  Shift<Key>osfRight:forward-word(extend)		\n\
+         Alt ~Ctrl  Shift<Key>osfRight:forward-word(extend)             \n

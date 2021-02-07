@@ -1,0 +1,221 @@
+// Copyright Keysight Technologies 1998 - 2015  
+/***************************************************************************/
+/* 		Parts List Configuration File
+/*
+/* This file is meant to be modified by the end user.
+/* It contains information on configuring the parts list report.
+/*
+/*   Check BOM Flag
+/*   --------------
+/*   Command:  de_parts_option_check_bom (TRUE|FALSE);
+/*
+/*     TRUE    Only include instances with attribute INST_SPECIAL set as 
+/*             ITEM_BOM_ITEM
+/*     FALSE   Do not test for ITEM_BOM_ITEM 
+/*		(default)
+/*
+/*
+/*   Exclusion List
+/*   --------------
+/*   Command:  de_parts_option_add_exclusion_items (list ("MLIN"));
+/*
+/*   Items in the list will not appear in the parts list.
+/*
+/*   This list is useful if parts have not been consistently flagged
+/*   as BOM items.  For this case, you wish to include everything
+/*   except items in the exclusion list.
+/*   
+/*   In order to include everything, do not check the BOM flag.
+/*   For example:
+/*      de_parts_option_check_bom (FALSE);
+/*      de_parts_option_add_exclusion_items (DePartsLumpedWithArtworkElements);
+/*
+/*
+/*   Inclusion List
+/*   --------------
+/*   Command:  de_parts_option_add_inclusion_items (list ("res_smt"));
+/*
+/*   Items in the list will appear in the parts list.
+/*
+/*   This list is useful if parts have not been consistently flagged
+/*   as BOM items.  For this case, specify to include only items flagged 
+/*   as BOM items, and add additional items in the inclusion list.
+/*
+/*   Inclusion items are treated as leaf-level parts and do not get flattened.
+/*   For example, if an inclusion item is a hierarchical part, its subelements
+/*   will not be included in the parts list.
+/*
+/*   For example:
+/*      de_parts_option_check_bom (TRUE);
+/*      de_parts_option_add_inclusion_items (list ("res_smt"));
+/*
+/*
+/*   Hierarchical Reporting
+/*   ----------------------
+/*   Command:  de_parts_option_set_hierarchical (TRUE|FALSE);
+/*
+/*     TRUE    Produce a parts list containing instances from all levels of
+/*             the hierarchy.
+/*		(default)
+/*     FALSE   Produces a parts list containing instances from only the top 
+/*             level of hierarchy.
+/*
+/*
+/*   Component Placement X,Y Coordinates
+/*   -----------------------------------
+/*   Command:  de_parts_option_set_center_placement (TRUE|FALSE);  
+/*
+/*     TRUE    Coordinates represent the center point of the instance 
+/*             bounding box.  The bounding box does not include the
+/*	       annotation text.
+/*		(default)
+/*     FALSE   Coordinates represent the location of pin one.
+/*
+/*
+/*   Package Offsets
+/*   ---------------
+/*   Command:  de_parts_option_set_package_offset (packageAttributeName, 
+/*						   packageName, 
+/*				                   xOffset, yOffset);
+/*
+/*	For example:  
+/*         de_parts_option_set_package_offset ("Package", "P1", 15, 0);
+/*	
+/*     	For each instance which has a user attribute named "Package",
+/*	with attribute value "P1", the placement coordinate will be the 
+/*	origin offset by xOffset, yOffset.
+/*
+/*
+/*   User Attribute Columns
+/*   ----------------------
+/*   Command:  de_parts_option_set_attribute_columns (list ("INST_SPECIAL", 
+/*						     "PART_NUM",
+/*						     "Price"));
+/*
+/*   Attributes in the list will appear as columns in the parts list.
+/*   The attributes can be user properties, user parameters, or instance 
+/*   attributes.  The following instance attributes can appear in the report:
+/*
+/*	  INST_TYPE
+/*	  INST_SPECIAL
+/*	  INST_NAME
+/*	  INST_DESIGN_NAME
+/*	  INST_SYMBOL_NAME
+/*	  INST_BBOX
+/*	  INST_PROPERTY
+/*
+/*
+/*   Delimeter Character
+/*   -------------------
+/*   Command:  de_parts_option_set_delimeter (delimeter);
+/*
+/*     where delimeter is used to separate column data (i.e. " ", ",")
+/*     default is NULL
+/*
+/*     If a NULL delimeter is specified, column widths will be
+/*     determined by the longest data field and all data will be
+/*     left justified.
+/*
+/*     For example:
+/*        /* Separate columns with commas */
+/*        de_parts_option_set_delimeter (","); 
+/*
+/*     For example:
+/*        /* Auto-format */
+/*        de_parts_option_set_delimeter (NULL); 
+/*
+/*
+/*
+/*   Include Header
+/*   --------------
+/*   Command:  de_parts_option_include_header (TRUE|FALSE);
+/*
+/*     TRUE    Output header information
+/*		(default)
+/*     FALSE   Output part data only
+/*
+/*
+/*   Sort by Component Name
+/*   ----------------------
+/*   Command:  de_parts_option_sort_by_component (TRUE|FALSE);
+/*
+/*     TRUE    Sort the parts list by the component name
+/*		(default)
+/*     FALSE   Parts are listed as they appear in the database
+/*
+/*
+/***************************************************************************/
+
+
+//-------------------------------------------------------------------------
+//                      DE_PARTS_SET_PICK_AND_PLACE_OPTIONS
+// Routine:     Configure the pick and place report
+// Methods:     This procedure is called every time a Pick and Place Report
+//		is generated.
+//-------------------------------------------------------------------------
+defun de_parts_set_pick_and_place_options()
+{
+    de_parts_option_initialize();		 /* Reset to system defaults */
+    /* Null out the exclusion and
+       inclusion lists */
+
+    de_parts_option_set_hierarchical(TRUE);     /* Hierarchical report */
+
+    de_parts_option_set_center_placement(TRUE); /* X,Y location at center */
+
+    de_parts_option_check_bom(FALSE);		 /* Do not check BOM flag */
+
+    /* Do not include system simulation models */
+    de_parts_option_add_system_exclusion_items(DePartsLumpedWithArtworkElements);
+    de_parts_option_add_system_exclusion_items(DePartsMicrostripElements);
+    de_parts_option_add_system_exclusion_items(DePartsPCBoardElements);
+    de_parts_option_add_system_exclusion_items(DePartsStriplineElements);
+    de_parts_option_add_system_exclusion_items(DePartsSuspSubElements);
+    de_parts_option_add_system_exclusion_items(DePartsCoplanarElements);
+    de_parts_option_add_system_exclusion_items(DePartsMultilayerElements);
+    de_parts_option_add_system_exclusion_items(DePartsBlockTextFontsElements);
+
+    /* Add an additional column to display the PART_NUM instance attribute */
+    de_parts_option_set_attribute_columns(list("PART_NUM"));
+
+    de_parts_option_set_delimeter(NULL);	/* Align columns */
+
+    de_parts_option_include_header(TRUE);	/* Include header */
+
+    de_parts_option_sort_by_component(TRUE);	/* Sort by component name */
+}
+
+//-------------------------------------------------------------------------
+//                      DE_PARTS_SET_PARTS_LIST_OPTIONS
+// Routine:     Configure the parts list report
+// Methods:     This procedure is called every time a Parts List Report
+//		is generated.
+//-------------------------------------------------------------------------
+defun de_parts_set_parts_list_options()
+{
+    de_parts_option_initialize();		 /* Reset to system defaults */
+    /* Null out the exclusion and
+       inclusion lists */
+
+    de_parts_option_set_hierarchical(TRUE);     /* Hierarchical report */
+
+    de_parts_option_set_center_placement(TRUE); /* X,Y location at center */
+
+    de_parts_option_check_bom(FALSE);		 /* Do not check BOM flag */
+
+    /* Do not include system simulation models */
+    de_parts_option_add_system_exclusion_items(DePartsLumpedWithArtworkElements);
+    de_parts_option_add_system_exclusion_items(DePartsMicrostripElements);
+    de_parts_option_add_system_exclusion_items(DePartsPCBoardElements);
+    de_parts_option_add_system_exclusion_items(DePartsStriplineElements);
+    de_parts_option_add_system_exclusion_items(DePartsSuspSubElements);
+    de_parts_option_add_system_exclusion_items(DePartsCoplanarElements);
+    de_parts_option_add_system_exclusion_items(DePartsMultilayerElements);
+    de_parts_option_add_system_exclusion_items(DePartsBlockTextFontsElements);
+
+    de_parts_option_set_delimeter(NULL);	/* Align columns */
+
+    de_parts_option_include_header(TRUE);	/* Include header */
+
+    de_parts_option_sort_by_component(TRUE);	/* Sort by component name */
+}

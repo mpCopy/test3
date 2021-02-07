@@ -1,0 +1,64 @@
+// Copyright Keysight Technologies 2006 - 2012  
+//////////////////////////////////////////////////////////////////////
+//  $Author: gb9 $
+//  $Date: 2011/04/11 22:15:51 $
+//  $Source: /cvs/sr/src/dds/ael/dds_time_format.ael,v $
+//  $Revision: 1.4 $
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// This AEL file contains the Time and Date formatting strings and
+// the lists that drive the preference dialog for Time and Date
+// Styles.
+//////////////////////////////////////////////////////////////////////
+
+decl ddsCurrentFullYear = format_date_time("%Y");
+decl ddsCurrentShortYear = format_date_time("%y");
+
+// This list is used to in the date pulldown....
+decl ddsDateStyleList = list(
+	strcat("01/01/", ddsCurrentFullYear, " - 12/31/", ddsCurrentFullYear),
+	strcat("01/01/", ddsCurrentShortYear, " - 12/31/", ddsCurrentShortYear),
+	strcat(ddsCurrentShortYear, "/01/01 - ", ddsCurrentShortYear, "/12/31"),
+	strcat(ddsCurrentFullYear, "-01-01 - ", ddsCurrentFullYear, "-12-31"),
+	strcat("01-Jan-", ddsCurrentShortYear, " - 31-Dec-", ddsCurrentShortYear),
+	strcat("Jan 01, ", ddsCurrentFullYear, " - Dec 31, ", ddsCurrentFullYear),
+	strcat("January 01, ", ddsCurrentFullYear, " - December 31, ", ddsCurrentFullYear),
+	strcat("01 January, ", ddsCurrentFullYear, " - 31 December, ", ddsCurrentFullYear)
+	);
+
+// This list contains the matching format strings to display the date
+// in the above list. NOTE: The index of this list must match the index
+// of the displayed formatted string above...
+decl ddsDateStyleFormatsList= list(
+	"%m/%d/%Y",  // "01/01/2006 - 12/31/2006"
+	"%m/%d/%y",  // "01/01/06 - 12/31/06"
+	"%y/%m/%d",  // "06/01/01 - 06/12/31"
+	"%Y-%m-%d",  // "2006-01-01 - 2006-12-31"
+	"%d-%b-%y",  // "01-Jan-06 - 31-Dec-06"
+	"%b %d, %Y", // "Jan 01, 2006 - Dec 31, 2006"
+	"%B %d, %Y", // "January 01, 2006 - December 31, 2006"
+	"%d %B, %Y"  // "01 January, 2006 - 31 December, 2006"
+	);
+
+// This list contains the time style strings used by the preference dialog.
+decl ddsTimeStyleList = list(
+	"01:01 AM - 11:59 PM",
+	"01:01:01 AM - 11:59:59 PM",	
+	"01:01 - 11:59",
+	"01:01:01 - 11:59:59",	
+	"01:01 - 23:59",
+	"01:01:01 - 23:59:59"
+	);
+
+// This list contains the matching format strings to display the time
+// in the above list. NOTE: The index of this list must match the index
+// of the displayed formatted string above...
+decl ddsTimeStyleFormatsList = list(
+	"%I:%M %p",    // "01:01 AM - 11:59 PM"
+	"%I:%M:%S %p", // "01:01:01 AM - 11:59:59 PM",  
+	"%I:%M",       // "01:01 - 11:59"
+	"%I:%M:%S",    // "01:01:01 - 11:59:59",
+	"%H:%M",       // "01:01 - 23:59"
+	"%H:%M:%S"     // "01:01:01 - 23:59:59
+	);

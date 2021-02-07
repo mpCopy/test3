@@ -1,0 +1,813 @@
+// Copyright 1997 - 2014 Keysight Technologies, Inc  
+// @(#) $Source: /cvs/wlv/src/hptolemyaddons/src/hptolemy/ptpde/spdef.ael,v $ $Revision: 100.117 $ $Date: 2012/11/14 17:28:12 $      -*- c++ -*-
+// To test modifications, save a copy of this file into $HOME/hpeesof/de/ael
+// and restart hpads.
+
+set_design_type (sigproc_net);
+enable_design_types( sigproc_net);
+
+decl SPComponentNetlistFmt =  ComponentNetlistFmt;
+
+decl SPComponentAnnotFmt   = ComponentAnnotFmt;
+
+decl SPAnalysisNetlistFmt =  "%d:%t %b%r%8?%29?%:%30?%p %:%k%?[%1i]%;=%p %;%;%e%e";
+
+decl SPDesignNetlistFmt = ComponentNetlistFmt;
+
+decl SPDesignAnnotFmt   = ComponentAnnotFmt;
+
+decl WTBNetlistFmt = "\n#ifndef WTB_EXISTS\n#define WTB_EXISTS\n_vKeysightEEsof_dTSDF_nWTB_lapikernel:WTB1\n#endif";
+
+decl ARFWTBNetlistFmt = strcat( ComponentNetlistFmt, WTBNetlistFmt );
+
+decl ARFSourceNetlistFmt = strcat( ComponentNetlistFmt, "\n#include \"%d_Src.net\"\n" );
+
+decl CKTComponentForSPUseFmt = "#uselib \"ckt\" , \"%d\"\n%d:%t %# %44?0%:%31?%C%:_net%c%;%;%e %r%b%8?%29?%:%30?%p %:%k%?[%1i]%;=%p %;%;%e%e";
+
+create_text_form ("StdForm", "Standard", 0, "%v", "%v"); 
+
+create_text_form ("StringAndReference", "String or Reference", 0, "%v", "%v");
+create_form_set ("StringAndReferenceSet", "StringAndReference");
+
+create_form_set ("StdFormSet", "StdForm");
+
+create_text_form("InstrumentForm", "Instrument", 0, "%v", "%v");
+create_form_set("InstrumentFormSet", "InstrumentForm");
+
+create_text_form("ReadFileForm", "Read a File", 0, "%v", "%v");
+decl SPReadFileComponentNetlistFmt =  ComponentNetlistFmt;
+
+create_text_form ("FileBasedForm", "File Based", 0, "%v", "%v");
+create_text_form ("stimForm", "Stimulous Group", 0, "stim_%n_group", "stim_%n_group");
+
+create_form_set ("GeminiForms1", "StdForm", "FileBasedForm");
+create_form_set ("GeminiForms2", "StdForm", "FileBasedForm");
+create_form_set ("GeminiForms3", "StdForm");
+
+// ***************************************************************************
+// load mode formats and forms from common_defs
+
+load_hpeesof_system("de/ael/common_defs");
+
+/***********************************************/
+/* Array state initialization using data file  */
+/***********************************************/
+
+defun prefix_path_to_array_data_file(lst, v)
+{
+  decl retList = prefix_path_to_data_file(lst, v);
+  decl fullName = nth(0, retList);
+  decl path = nth(1, retList);
+  decl name = nth(2, retList);
+  decl ext = nth(3, retList);
+  if(strlen(name)) name = evaluate(name);
+  if(strlen(fullName)) fullName = evaluate(fullName);
+  decl env = nth(0, lst);
+  decl filepath = de_find_file( env, strcat(name,".",ext));
+  if(filepath) {
+    if (leftstr(filepath, 1) == ".") {
+      path = "";
+      fullName = strcat(name,".",ext);
+    }
+  }
+  retList = list( fullName, path, name, ext );
+  return retList;
+}
+
+create_text_form ("ArrayFileForm", 
+	"Read data from file",
+	"ReadFileForm", 0, "\"<%d\"", "\"<%d\"", get_file_name_list_with_ext, NULL,
+	list("DATA_FILES", "txt"), prefix_path_to_array_data_file);
+
+create_form_set ( "ArrayFileFormSet",
+	"StringAndReference",
+	"ArrayFileForm",
+	"StdForm");
+        
+/***********************************************/
+/* migration infrastructure                    */
+/***********************************************/
+
+defun de_pre_read_epilog_dsp(design) {
+  //  fprintf(stderr, "*************in de_pre_read_epilog_dsp****\n");
+  return migrate_design(PtolemyMigrateList, design);
+}
+
+defun de_new_design_epilog_dsp(design) {
+  return migrate_tag_design(PtolemyMigrateList, design);
+}
+
+// The migration function list (PtolemyMigrateList) is a list of sublists. 
+// Each sublist is of the form: 
+//
+// list( tag, version, block, migratefunction, block, migratefunction ... )
+// 
+// Each migration sublist is iterated through when the design lacks a
+// design property matching the given tag, and also when the design
+// property's value is smaller than the given version.
+// 
+// The migration functions are then called for each matching block, or
+// for all blocks if the block is NULL.  Migration functions should
+// return TRUE if they made any modifications.
+// 
+// Finally a design property with the tag and version is added to the
+// design.
+decl PtolemyMigrateList = NULL;
+
+defun migrate_design(migratelist, design) {
+
+  decl mList, tempList;
+  decl r = DE_HOOK_MIGRATION_NOT_DONE;
+  for (mList = migratelist; mList; mList = cdr(mList)) {
+    decl mListSet = car(mList);
+    decl tagName = car(mListSet);
+    decl tagVersion = car(cdr(mListSet));
+    decl maxtagVersion = tagVersion;
+    if ( !strcmp(tagName,"pt_instruments") && !strcmp(tagVersion,"2") && !on_PC )
+       continue;
+//    fprintf( stderr, "\ntagName = %s, tagVersion = %s\n", tagName, tagVersion );
+
+// find the max tagVersion for tagName
+// the assumption is made that tagVersions for the same tagName are always
+// increasing as we traverse the migratelist from head to tail
+    for ( tempList = cdr(mList); tempList; tempList = cdr(tempList) ) {
+      decl tempListSet = car(tempList);
+      decl temptagName = car(tempListSet);
+      if ( strcmp(temptagName, tagName) )
+        continue;
+      else {
+        decl newtagVersion = car(cdr(tempListSet));
+        if ( newtagVersion <= maxtagVersion ) {
+          decl infoMsg = "Migration list not sorted properly.\n";
+          infoMsg = strcat( infoMsg, sprintf( "Migration set (\"%s\", %s)", tagName, newtagVersion ) );
+          infoMsg = strcat( infoMsg, sprintf( " follows set (\"%s\", %s).", tagName, maxtagVersion ) );
+          infoMsg = strcat( infoMsg, "\nDesign will not open or netlist." );
+          de_info( infoMsg );
+          return DE_HOOK_MIGRATION_ERROR;
+        }
+        else {
+          maxtagVersion = newtagVersion;
+        }
+      }
+    }
+
+// look in the design for the tag and version:
+//   if tag does not exist OR tag exists AND (version < tagVersion) migrate
+//   if tag exists AND (tagVersion<=version<=maxtagVersion) do nothing
+//   if tag exists AND (version>maxtagVersion) error - design is too new
+
+    decl designPropList = db_get_design_attribute(design, DESIGN_PROPERTY);
+    decl designProp;
+
+    if ( designPropList ) { 
+      designProp = db_find_property(designPropList, tagName);
+    }
+    else {
+      designProp = NULL;
+    }
+
+    if (designProp) {
+      decl designPropValue = db_get_property_attribute
+	(designProp, PROPERTY_VALUE_LONG);
+      if (designPropValue >= tagVersion)
+        if (designPropValue <= maxtagVersion)
+          continue;
+        else
+          return DE_HOOK_MIGRATION_ERROR;
+    }
+
+    // do the update, so first iterate through the instances
+    decl instance;
+    for (instance = db_first_instance(db_get_rep(design, REP_SCHEM));
+	 instance;
+	 instance = db_next_instance(instance)) {
+      decl blockName = db_get_instance_attribute(instance, INST_DESIGN_NAME);
+
+      // then call matching migrate functions
+      decl mFunctionList;
+      for (mFunctionList = nthcdr(2, mListSet);
+	   mFunctionList;
+	   mFunctionList = cdr(cdr(mFunctionList))) {
+	decl migrateBlock = car(mFunctionList);
+	decl migrateFx = car(cdr(mFunctionList));
+	if (!strcmp(migrateBlock, "NULL") || !strcmp(migrateBlock, blockName)) 
+	  if (migrateFx(design, instance)) {
+//        fprintf( stderr, "migrated %s %s\n", blockName, db_get_instance_attribute( instance, INST_NAME ) );
+	    r = DE_HOOK_MIGRATION_SUCCESSFUL;
+	  }
+      }
+    }
+
+    // finally update the design property
+    db_add_property(design, tagName, tagVersion, TRUE);
+    // my_print(design);
+  }
+  return(r);
+}
+
+defun my_print( design ) {
+   decl repP = db_get_design_attribute( design, DESIGN_REP_SCHEM );
+   decl instP = db_first_instance( repP );
+   while ( instP ) {
+      fputs(stderr,"***************");
+      print_instance_params( instP );
+      instP = db_next_instance( instP );
+   }
+}
+
+
+defun print_instance_params( instance ) {
+   decl paramP, valueCode, parmFormName, svalue, pname;
+   fputs( stderr, strcat( "inst: ", db_get_instance_attribute( instance, INST_NAME ) ) );
+   paramP = db_first_parm( instance );
+   while( paramP ) {
+      valueCode = db_get_parm_attribute( paramP, PARM_VALUE_CODE );
+      parmFormName = db_get_parm_attribute( paramP, PARM_FORM_NAME );
+      pname = db_get_parm_attribute( paramP, PARM_NAME );
+      if ( valueCode == 6 ) {
+         fputs( stderr, strcat( "   ", pname, " = ", parmFormName ) );
+      }
+      else {
+         svalue = db_get_parm_attribute( paramP, PARM_VALUE_SVALUE );
+         if ( svalue )
+            fputs( stderr, strcat( "   ", pname, " = ", svalue ) );
+         else {
+            if ( pname )
+               fputs( stderr, strcat( "   ", pname, " has empty value" ) );
+            else
+               fputs( stderr, "   empty param name" );
+         }
+      }
+      paramP = db_next_parm( paramP );
+   }
+}					
+
+
+defun migrate_tag_design(migrateList, design) {
+  decl mList;
+  for (mList = migrateList; mList; mList = cdr(mList)) {
+    decl mListSet = car(mList);
+    decl tagName = car(mListSet);
+    decl tagVersion = car(cdr(mListSet));
+    db_add_property(design, tagName, tagVersion, TRUE);
+  }
+  return TRUE;
+}
+
+
+defun migrate_add_set(migratelist, set) {
+  decl setTagName = car( set );
+  decl setTagVersion = car( cdr( set ) );
+
+// *****************************************************************************
+// Fix for Signal_Proc.3671
+// Check to see whether set is already in migratelist before adding it. 
+// For unkown reasons, when ADS is invoked from RFDE using the dynamic link 
+// the files under the directory $HPEESOF_DIR/adsptolemy/ael are loaded twice. 
+// The files migrate_XXX.ael under the above directory add content to the 
+// global list PtolemyMigrateList. When loaded twice they will add this content 
+// twice which can cause other problems. The fix could have been simplified to 
+// the following two lines of code.
+// 
+// if ( member( set, *migratelist ) )
+//   return;
+//
+// Unfortunately, since set is a list of strings, numbers, and function pointers
+// (most functions are defined in the migrate_XXX.ael files), when the 
+// migrate_XXX.ael files are reloaded the function pointers change value and so 
+// member() cannot identify that the set list is already part of migratelist.
+// *****************************************************************************
+
+  decl mList;
+
+  for ( mList = *migratelist; mList; mList = cdr( mList ) ) {
+    decl mListSet = car( mList );
+    decl tagName = car( mListSet );
+    decl tagVersion = car( cdr( mListSet ) );
+    if ( ! strcmp( tagName, setTagName ) && ( tagVersion == setTagVersion ) ) {
+//      de_warning_dialog( sprintf( "Migration set \"%s %d\" already exists.\n", tagName, tagVersion ) );
+      return;
+    }
+  }
+
+//  de_warning_dialog( sprintf( "Adding migration set \"%s %d\".\n", setTagName, setTagVersion ) );
+
+// *****************************************************************************
+// End of fix for Signal_Proc.3671
+// *****************************************************************************
+
+  if ( ( setTagVersion == 1 ) && ( !strcmp( setTagName, "pt_numeric" ) || 
+                                   !strcmp( setTagName, "pt_timed_df" ) ||
+                                   !strcmp( setTagName, "pt_fixpt-analysis" ) || 
+                                   !strcmp( setTagName, "pt_instruments" ) ||
+                                   !strcmp( setTagName, "pt_vsa89600" ) ||
+                                   !strcmp( setTagName, "pt_edge" ) ) ) {
+// All these should come before pt_ael_mangling
+    *migratelist = cons( set, *migratelist );
+  }
+  else if ( !strcmp( setTagName, "pt_timed" ) && ( setTagVersion == 1 ) ) {
+// This should come before pt_ael_mangling but after "pt_timed_df, 1"
+// The assumption is made that "pt_timed, 1" is listed after "pt_timed_df, 1"
+// in the file timed/ael/migrate_timed.ael
+    decl temp = car( *migratelist );
+    *migratelist = cdr( *migratelist );
+    *migratelist = cons( set, *migratelist );
+    *migratelist = cons( temp, *migratelist );
+  }
+  else if ( !strcmp( setTagName, "pt_timed" ) &&  ( setTagVersion == 2 ) ) {
+// This should come before pt_ael_mangling but after "pt_timed, 1"
+// The assumption is made that "pt_timed, 2" is listed after "pt_timed, 1"
+// in the file timed/ael/migrate_timed.ael
+    decl temp1 = car( *migratelist );
+    *migratelist = cdr( *migratelist );
+    decl temp2 = car( *migratelist );
+    *migratelist = cdr( *migratelist );
+    *migratelist = cons( set, *migratelist );
+    *migratelist = cons( temp2, *migratelist );
+    *migratelist = cons( temp1, *migratelist );
+  }
+  else {
+// Everything else should come after pt_ael_mangling
+    *migratelist = append( *migratelist, cons( set, NULL ) );
+  }
+}
+
+
+defun print_migration_list( migList ) {
+
+  decl mList;
+
+  for ( mList = migList; mList; mList = cdr( mList ) ) {
+    decl mListSet = car( mList );
+    decl tagName = car( mListSet );
+    decl tagVersion = car( cdr( mListSet ) );
+    de_warning_dialog( sprintf( "\nTagName = %s, TagValue = %s\n", tagName, tagVersion ) );
+    decl tmpList;
+    for ( tmpList = cdr( cdr( mListSet ) ); tmpList; tmpList = cdr( cdr( tmpList ) ) ) {
+      de_warning_dialog( sprintf( "\t%s\n", car( tmpList ) ) );
+    }
+  }
+  de_warning_dialog( "\n\n" );
+}
+
+
+defun ael_mangling(design, instance) {
+//  fputs( stderr, "Parameter values before AEL mangling" );
+//  print_instance_params( instance );
+  decl r = FALSE;
+  decl compName = db_get_instance_attribute(instance, INST_DESIGN_NAME);
+
+  //ignoring the mangling for components in timed/idf/stditem.adf file
+  if ( strcmp(compName, "Yield") && strcmp(compName, "YieldOptim") ) {  
+     decl designName = db_get_instance_attribute(instance,INST_DESIGN_NAME);
+     decl itemDefP = dm_find_item_definition_for_design_type(designName,sigproc_net);
+
+     if ( itemDefP ) {
+        decl itemParmList = dm_get_item_definition_attribute(itemDefP, ITEM_PARMS);
+        decl parmDefP = NULL;
+        if (itemParmList != NULL) {
+            parmDefP = dm_first_parm_definition (itemParmList);
+        }
+        decl parmName;
+        decl parmFormDefList;
+        decl uiFormName;
+        decl formDefP;
+        decl parm; 
+
+	    parm = db_first_parm(instance);
+
+       while ( (parmDefP != NULL) && (parm != NULL) ) {
+         decl valueCode = db_get_parm_attribute(parm, PARM_VALUE_CODE);
+         parmName = dm_get_parm_definition_attribute (parmDefP, DM_PARM_NAME);
+         decl mgCompName = pt_mangle_name(compName);
+
+         if (valueCode == 6) {
+            decl parmFormName = db_get_parm_attribute(parm, PARM_FORM_NAME);
+
+            //skip mangling if the parmFormName has been mangled already
+            decl partialName = strcat("_n",mgCompName,"_f");
+            decl partialLen = strlen(partialName);
+           
+            if (strcmp(leftstr(parmFormName,partialLen), partialName) != 0 ) {
+
+               decl mgParmFormName = pt_mangle_name(parmFormName); 
+               decl value = strcat( "_n", mgCompName, "_f", mgParmFormName );
+               db_set_parm_attribute(parm, PARM_FORM_NAME, value);
+               r = TRUE;
+            }
+         }
+         parmFormDefList = dm_get_parm_definition_forms(parmDefP);
+      
+         //mangle the fileName type  parmFormName
+         while (parmFormDefList != NULL)
+         {
+            formDefP = car(parmFormDefList);
+            uiFormName = dm_get_form_definition_attribute(formDefP,
+                                                          DM_FORM_DLGDATASTR);
+            if (uiFormName == "ReadFileForm") {
+               decl parmFormName = db_get_parm_attribute(parm, PARM_FORM_NAME);
+
+               decl partialName = strcat("_n",mgCompName,"_f");
+               decl partialLen = strlen(partialName);
+               if (strcmp(leftstr(parmFormName,partialLen), partialName) != 0 ) {
+
+                  decl mgParmFormName = pt_mangle_name(parmFormName);
+                  decl value2 = strcat( "_n", mgCompName, "_f", mgParmFormName);
+                  db_set_parm_attribute(parm, PARM_FORM_NAME, value2);
+				 
+                  r = TRUE;
+			  }
+
+            }
+            parmFormDefList = cdr(parmFormDefList);
+         }
+      
+       parmDefP = dm_next_parm_definition (parmDefP);
+       parm = db_next_parm(parm);
+
+      }
+	 }   //  if ( itemDefP ) 
+  }    // if ( strcmp(compName, "Yield")
+//  fputs( stderr, "Parameter values after AEL mangling" );
+//  print_instance_params( instance );
+  return (r);
+}
+
+//
+// mangle a text according to hptolemy mangling convention, replace "_" with "_x5f"
+defun pt_mangle_name (text) {
+ 
+  decl textList, tmp, final;
+  textList=parse(text, "", "_",TRUE);
+  final="";
+  while(textList)
+  {
+     tmp=car(textList);
+     textList=cdr(textList);
+     if(tmp == "_")
+     {
+        final=strcat(final, "_x5f");
+     }
+     else
+    {
+        final=strcat(final, tmp);
+     }
+  }
+  return(final);
+}
+
+// I don't think these functions would work well for gemini
+// components, hence the pt_prefix
+
+// return the parameter handle inside an instance
+defun pt_get_instance_parm_handle(instance, parmname) {
+  decl parm;
+  for (parm = db_first_parm(instance); parm; parm = db_next_parm(parm)) {
+    if (!strcmp(parmname, db_get_parm_attribute(parm, PARM_NAME)))
+      return parm;
+  }
+  return(NULL);
+}
+
+// return the parameter value of an instance
+// If this function returns NULL, either the parameter doesn't exist,
+// or it exists and it has an empty value.  Use
+// pt_get_instance_parm_handle() to disambiguate those two cases.
+defun pt_get_instance_parm(instance, parmname) {
+  decl parm;
+  parm = pt_get_instance_parm_handle(instance, parmname);
+  if (!parm)
+    return (NULL);
+  decl valueCode = db_get_parm_attribute(parm, PARM_VALUE_CODE);
+  if (valueCode == 6)
+    return(db_get_parm_attribute(parm, PARM_FORM_NAME));
+  return(db_get_parm_attribute(parm, PARM_VALUE_SVALUE));
+}
+
+// set the value of a parameter
+defun pt_set_instance_parm(instance, parmname, value) {
+  decl parm;
+  for (parm = db_first_parm(instance); parm; parm = db_next_parm(parm)) {
+    if (!strcmp(parmname, db_get_parm_attribute(parm, PARM_NAME))) {
+      decl valueCode = db_get_parm_attribute(parm, PARM_VALUE_CODE);
+      if (valueCode == 6)
+	return(db_set_parm_attribute(parm, PARM_FORM_NAME, value));
+      return(db_set_parm_attribute(parm, PARM_VALUE_SVALUE, value));
+    }
+  }
+  return(NULL);
+}
+
+// add a new parameter to an instance
+defun pt_add_instance_parm(instance, parmname, value) {
+  db_add_string_parm_to_instance(instance, parmname, value);
+}
+
+// helper function to migrate start, stop for numeric, timed
+defun pt_migrateStartStop(design, instance, startparm, unitparm,
+			  df_startparmvalue, df_unitparmvalue, defaultvalue) {
+  decl dfvalue = "DF_Value";
+  decl startvalue = pt_get_instance_parm(instance, startparm);
+  if (!startvalue && pt_get_instance_parm_handle(instance, startparm))
+	// when the parameter is empty, we insert the default value inside
+	// the pl file
+    if ( !strcmp(startparm, "Start") || !strcmp(startparm, "Stop") )
+	  startvalue = dfvalue;		// for Start and Stop of sinks
+    else
+	  startvalue = defaultvalue; // for everything else
+
+  if (!startvalue)
+// parameter does not exist (if it did exist and startvalue was NULL
+// the previous if statement would have set startvalue to non-NULL),
+// so there are no modifications to make and so return FALSE
+    return(FALSE);
+
+// set startvaluedf to TRUE if startvalue is the same as its default value
+  decl startvaluedf = (!strcmp(startvalue, dfvalue));
+
+  // numeric start, set it to defaultvalue
+  if (unitparm == NULL) {
+    if (!startvaluedf) // parameter has different value than its default
+      return(FALSE);   // one so leave it unchanged
+    pt_set_instance_parm(instance, startparm, defaultvalue);
+    return(TRUE);
+  }
+  
+  // timed start
+// repeat what we did for startparm at the beginning for unitparm
+  decl unitvalue = pt_get_instance_parm(instance, unitparm);
+  if (!unitvalue && pt_get_instance_parm_handle(instance, unitparm))
+    unitvalue = dfvalue;
+  if (!unitvalue)
+    return FALSE;
+  decl unitvaluedf = (!strcmp(unitvalue, dfvalue));
+
+  // if exactly one of start, unit set to default, inherit from df
+  // controller
+  if (startvaluedf && !unitvaluedf) {
+    startvalue = df_startparmvalue ? df_startparmvalue : "0";
+    startvaluedf = 0;
+  }
+  else if (!startvaluedf && unitvaluedf) {
+    unitvalue = df_unitparmvalue ? df_unitparmvalue : "sec";
+    unitvaluedf = 0;
+  }
+
+  if (!startvaluedf && !unitvaluedf) { // both set
+    decl newstartvalue;
+    if (!strcmp(unitvalue, "sec") && index(startvalue,"sec")>=0)
+      newstartvalue = startvalue;
+    else if (listlen(parse(startvalue)) > 1)
+      newstartvalue = sprintf("(%s) %s", startvalue, unitvalue);
+    else
+      newstartvalue = sprintf("%s %s", startvalue, unitvalue);
+    pt_set_instance_parm(instance, startparm, newstartvalue);
+    return(TRUE);
+  }
+  if (startvaluedf && unitvaluedf) { // both default
+    pt_set_instance_parm(instance, startparm, defaultvalue);
+    return(TRUE);
+  }
+
+  // should never get here
+  return(FALSE);
+}
+
+
+// function to turn off the subnetwork flag
+// unfortunately there is no way to change the symbol name so
+// DSN will still be part of the symbol name
+defun migrate_subnetwork(design, instance) {
+  decl r = FALSE;
+  decl attr = db_get_instance_attribute(instance, INST_SPECIAL);
+  if ( attr & INST_DESIGN ) {
+    attr &= ~INST_DESIGN;
+    db_set_instance_attribute(instance, INST_SPECIAL, attr);
+    r = TRUE;
+  }
+}
+
+
+
+defun re_mangle_parameters( instance, oldName, newName ) {
+  decl mangledOldName = pt_mangle_name( oldName );
+  decl mangledNewName = pt_mangle_name( newName );
+  decl length = strlen( mangledOldName ) + 4;
+//  fputs( stderr, strcat( "oldName = ", oldName, "\n" ) );
+//  fputs( stderr, strcat( "mangledOldName = ", mangledOldName, "\n" ) );
+//  fputs( stderr, strcat( "length = ", fmt( length ), "\n" ) );
+//  fputs( stderr, strcat( "newName = ", newName, "\n" ) );
+//  fputs( stderr, strcat( "mangledNewName = ", mangledNewName, "\n" ) );
+
+  decl parm;
+
+  for ( parm = db_first_parm( instance ); parm; parm = db_next_parm( parm ) ) {
+    decl parmName = db_get_parm_attribute( parm, PARM_NAME );
+    decl valueCode = db_get_parm_attribute( parm, PARM_VALUE_CODE );
+    if ( valueCode == 6 ) {
+       decl parmValue = db_get_parm_attribute( parm, PARM_FORM_NAME );
+       decl unmangledValue = midstr( parmValue, length, -1 );
+
+       if ( ! strcmp( unmangledValue, "WCDMA_x5f3GPP_x5f32x8_x5f2500k" ) ) {
+          unmangledValue = "IS95_x5fMod_x5f32x8_x5f2500k";
+       }
+       else if ( ! strcmp( unmangledValue, "WCDMA_x5f3GPP_x5f32x8_x5f2500k_x5fH99" ) ) {
+          unmangledValue = "IS95_x5fMod_x5fEQ_x5f32x8_x5f2500k";
+       }
+       else if ( ! strcmp( unmangledValue, "WCDMA_x5f3GPP_x5f24x5_x5f2500k" ) ) {
+          unmangledValue = "IS95_x5fMod_x5f24x5_x5f2500k";
+       }
+       else if ( ! strcmp( unmangledValue, "WCDMA_x5f3GPP_x5f24x5_x5f2500k_x5fH99" ) ) {
+          unmangledValue = "IS95_x5fMod_x5fEQ_x5f24x5_x5f2500k";
+       }
+       
+       decl newMangledValue = strcat( "_n", mangledNewName, "_f", unmangledValue );
+       db_set_parm_attribute( parm, PARM_FORM_NAME, newMangledValue );
+//       fputs( stderr, strcat( parmName, " = ", parmValue, "\n" ) );
+//       fputs( stderr, strcat( "unmangledValue = ", unmangledValue, "\n" ) );
+//       fputs( stderr, strcat( "newMangledValue = ", newMangledValue, "\n" ) );
+    }
+  }
+}
+
+
+
+defun fix_pins(design, instance) {
+  decl r = FALSE;
+  decl designName = db_get_instance_attribute(instance, INST_DESIGN_NAME);
+  if ( index( designName, "EDGE_" ) != 0 && index( designName, "WCDMA3G_" ) != 0 &&
+       index( designName, "VSA" ) != 0 && index( designName, "TICCStudioCosim" ) != 0 ) {
+    return( r );
+  }
+  if ( !de_is_reserved_name( designName ) )
+    return( r );
+  decl pinHandle = db_get_instance_attribute( instance, INST_PIN_HEAD );
+  if ( !pinHandle )
+    return( r );
+  decl pinNumber = db_get_pin_attribute( pinHandle, PIN_NUMBER );
+  if ( pinNumber == 0 ) {
+    while ( pinHandle ) {
+      pinNumber = db_get_pin_attribute( pinHandle, PIN_NUMBER );
+      db_set_pin_attribute( pinHandle, PIN_NUMBER, pinNumber+1 );
+      pinHandle = db_instance_next_pin( pinHandle );
+    }
+    r = TRUE;
+  }
+  return( r );
+}
+
+
+
+defun migrate_R_Temp_Noise(design, instance) {
+
+  decl r = FALSE;
+  decl rVal = pt_get_instance_parm( instance, "R" );
+  decl tempVal = pt_get_instance_parm( instance, "Temp" );
+  decl noiseVal = pt_get_instance_parm( instance, "Noise" );
+
+//  fprintf( stderr, "rVal = %s\n", rVal );
+//  fprintf( stderr, "tempVal = %s\n", tempVal );
+//  fprintf( stderr, "noiseVal = %s\n", noiseVal );
+
+  if ( rVal ) {
+    pt_add_instance_parm( instance, "ROut", rVal );
+    r = TRUE;
+  }
+
+  if ( tempVal && noiseVal ) {
+    decl rtempVal;
+    decl compName = db_get_instance_attribute( instance, INST_DESIGN_NAME );
+    decl mangledCompName = pt_mangle_name( compName );
+    decl mangledNO = strcat( "_n", mangledCompName, "_fNO" );
+    decl mangledYES = strcat( "_n", mangledCompName, "_fYES" );
+
+    if ( !strcmp( noiseVal, mangledNO ) ) {
+      rtempVal = "-273.15";
+    }
+    else if ( !strcmp( noiseVal, mangledYES ) ) {
+      rtempVal = tempVal;
+    }
+    else {
+      rtempVal = sprintf( "if (%s==0) then -273.15 else (%s) endif", noiseVal, tempVal );
+    }
+//    fprintf( stderr, "rtempVal = %s\n", rtempVal );
+    pt_add_instance_parm( instance, "RTemp", rtempVal );
+    r = TRUE;
+  }
+
+  return( r );
+}
+
+
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_ael_mangling", 1,
+		     "NULL", ael_mangling));
+
+migrate_add_set(&PtolemyMigrateList,
+		list("pt_fix_pins", 1,
+		     "NULL", fix_pins));
+
+/***********************************************/
+/* default parameters for DF and DSPSource controllers   */
+/***********************************************/
+
+decl DFParm_DefaultNumericStart =
+	create_parm ("DefaultNumericStart","Default sample start value",
+		PARM_INT|PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","0"));
+decl DFParm_DefaultNumericStop =
+	create_parm ("DefaultNumericStop","Default sample stop value",
+		PARM_INT|PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","100"));
+decl DFParm_DefaultTimeStart =
+	create_parm ("DefaultTimeStart","Default time start value",
+		PARM_REAL|PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","0 usec"));
+decl DFParm_DefaultTimeStop =
+	create_parm ("DefaultTimeStop","Default time stop value",
+		PARM_REAL|PARM_OPTIMIZABLE | PARM_STATISTICAL,
+		"StdFormSet",
+		TIME_UNIT,
+		prm("StdForm","100 usec"));
+decl DFParm_DefaultSeed =
+	create_parm ("DefaultSeed","Default random seed",
+		PARM_INT|PARM_OPTIMIZABLE | PARM_STATISTICAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		UNITLESS_UNIT,
+		prm("StdForm","1234567"));
+decl DFParm_DefaultRIn =
+	create_parm ("DefaultRIn","Default component input resistor value",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50"));
+decl DFParm_DefaultROut =
+	create_parm ("DefaultROut","Default component output resistor value",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","50"));
+decl DFParm_DefaultRLoad =
+	create_parm ("DefaultRLoad","Default sink load resistor value",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		RESISTANCE_UNIT,
+		prm("StdForm","1.0e18"));
+decl DFParm_DefaultRTemp =
+	create_parm ("DefaultRTemp","Default resistor physical temperature, deg C.",
+		PARM_REAL | PARM_NO_DISPLAY,
+		"StdFormSet",
+		TEMPERATURE_UNIT,
+		prm("StdForm","-273.15"));
+
+/***********************************************/
+/* define Sigproc network design definitions     */
+/***********************************************/
+
+defun hptolemyLoadAel() {
+  decl dirList = NULL;
+  decl delim=";";
+  decl numDir=0;
+  decl i=0;
+  decl dirName="";
+  decl modelPath="";
+  set_design_type(sigproc_net);
+  modelPath = getenv ("HPTOLEMY_MODEL_AEL");
+  if (modelPath != NULL) {
+    // fputs(stderr,fmt_tokens(list("HPTOLEMY_MODEL_AEL = ",modelPath)));
+    dirList = parse (modelPath, delim);
+    numDir=listlen(dirList);
+    for (i=numDir-1; i>=0; i--) {
+      dirName = strcat(nth(i,dirList),"/");
+      // fputs(stderr,fmt_tokens(list("loading ",dirName)));
+      if (is_dir(dirName)) {
+        load(dirName);
+      }
+    }
+  }
+}
+
+set_simulator_type( 1 );  // set Sigproc simulator type code for all following definitions
+if (absolute_path) {
+  load_hpeesof_system("de/ael/spdsndef");
+}
+else {
+  load("spdsndef");
+}
+
+// Load bitmap definitions
+hptolemyLoadAel();
+
+push_message_handler( print_sim_message, sigproc_simulator );
+
+library_group("Frequently Used DSP Components","Frequently Used DSP Components", "VAR", "Optim", "Goal", "ParamSweep", "SweepPlan", "Yield", "YieldSpec", "YieldOptim" );
+
+set_simulator_type(-1);  
+// set all simulator type code for all following definitions

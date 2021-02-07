@@ -1,0 +1,973 @@
+// Copyright Keysight Technologies 2000 - 2014  
+/*---------------------------------------------------------------------------
+  File:     userreport.ael
+
+  Purpose:  AEL data base query routines that produce a formatted report 
+            for a given design.
+
+  Notes:    To customize this report and add custom menus:
+
+            1.  Copy this file to $HOME/hpeesof/de/ael/userreport.ael
+            2.  Make modifications
+
+            3.  Add the following line at the beginning of 
+                $HOME/hpeesof/de/ael/usermenu.ael
+
+                  load ("userreport");
+
+            4.  Add custom menus to the function app_add_user_menus in
+                $HOME/hpeesof/de/ael/usermenu.ael
+
+                defun app_add_user_menus (winTempId)
+                {
+                   if (winTempId == SCHEMATIC_WINDOW)
+                   {
+                       add_menu ("Generate design data base report", 
+                                 "user_rpt_write_current_design_info");
+                       set_user_menu_label ("Custom Reports");
+                   }
+                   else if (winTempId == LAYOUT_WINDOW)
+                   {
+                       add_menu ("Generate design data base report", 
+                                 "user_rpt_write_current_design_info");
+                       set_user_menu_label ("Custom Reports");
+                   }
+                }
+
+ ---------------------------------------------------------------------------*/
+
+/* Global Variables */
+
+decl UserRptIncludeNetlistMode = FALSE;
+decl UserRptIncludeGraphicsMode = TRUE;
+decl UserRptIncludeBBoxMode = TRUE;
+decl UserRptSortPrimitivesByTopologyMode = TRUE;
+decl UserRptDBFactor = 1;
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_set_include_netlist_mode
+  Purpose:     Toggle whether to include netlist information
+ ---------------------------------------------------------------------------*/
+defun user_rpt_set_include_netlist_mode (mode)
+{
+    UserRptIncludeNetlistMode = mode;
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_set_include_graphics_mode
+  Purpose:     Toggle whether to include graphical information
+ ---------------------------------------------------------------------------*/
+defun user_rpt_set_include_graphics_mode (mode)
+{
+    UserRptIncludeGraphicsMode = mode;
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_set_include_bbox_mode
+  Purpose:     Toggle whether to include bbox information
+ ---------------------------------------------------------------------------*/
+defun user_rpt_set_include_bbox_mode (mode)
+{
+    UserRptIncludeBBoxMode = mode;
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_set_sort_by_topology_mode
+  Purpose:     Toggle whether to sort primitives by topology
+ ---------------------------------------------------------------------------*/
+defun user_rpt_set_sort_by_topology_mode (mode)
+{
+    UserRptSortPrimitivesByTopologyMode = mode;
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_set_db_factor
+  Purpose:     Set the current precision used for converting data base
+               coordinates to user coordinates
+ ---------------------------------------------------------------------------*/
+defun user_rpt_set_db_factor (dbFactor)
+{
+    if (dbFactor > 0)
+        UserRptDBFactor = float (dbFactor);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_db2uu
+  Purpose:     Use the current db factor to convert data base
+               coordinates to user coordinates
+ ---------------------------------------------------------------------------*/
+defun user_rpt_db2uu (value)
+{
+    decl dValue, fmtValue, sValue;
+    decl tokenList;
+    decl formatWidth = 11;
+    decl precision = 5;
+
+    if (!UserRptDBFactor || value == NULL)
+        return ("NULL");
+
+    dValue = float (value) / float (UserRptDBFactor);
+
+    fmtValue = fmt (dValue, formatWidth, precision);
+    while (!fmtValue && formatWidth < 20)
+    {
+        formatWidth++;
+        fmtValue = fmt (dValue, formatWidth, precision);
+    }
+
+    if (fmtValue)
+    {
+        tokenList = parse (fmtValue, ".");
+        if (!tokenList || 
+            (tokenList && listlen (tokenList) < 2))
+        {
+            fmtValue = strcat (identify_value (int (dValue)), ".00000");
+        }
+    }
+
+    if (!fmtValue)
+        return ("NULL");
+
+    sValue = stripstr (fmtValue);
+
+    return (sValue);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_property_data
+  Purpose:     Write property information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_property_data (owner, indent, fp)
+{
+    decl propIter = db_create_prop_iter(owner);
+    if (db_prop_iter_is_valid(propIter))
+        fputs (fp, strcat (indent, "Properties:"));
+
+    decl subIndent = strcat (indent, "  ");
+
+
+    for ( ; db_prop_iter_is_valid(propIter); propIter = db_prop_iter_get_next(propIter))
+    {
+        decl name = db_prop_iter_get_name (propIter);
+        decl value = db_prop_iter_get_value(propIter, PROPERTY_VALUE_STRING);
+
+        fputs (fp, strcat (subIndent, name, "=", value));
+    }
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_bbox_data
+  Purpose:     Write bounding box information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_bbox_data (bboxH, indent, fp)
+{
+    if (!UserRptIncludeBBoxMode)
+        return;
+
+    if (!bboxH)
+        return;
+
+    fputs (fp, strcat (indent, "Bounding Box: ",
+                  user_rpt_db2uu (db_get_bbox_x1 (bboxH)), " ",
+                  user_rpt_db2uu (db_get_bbox_y1 (bboxH)), " ",
+                  user_rpt_db2uu (db_get_bbox_x2 (bboxH)), " ",
+                  user_rpt_db2uu (db_get_bbox_y2 (bboxH))));
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_arc_dg_data
+  Purpose:     Write significant information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_arc_dg_data (dgP, indent, fp)
+{
+    decl subIndent;
+
+    if (!dgP || !fp)
+        return; 
+
+    fputs (fp, strcat (indent, "Arc"));
+    subIndent = strcat (indent, "  ");
+
+    decl startPoint, centerPoint, angle;
+    decl startX, startY, centerX, centerY;
+
+    fputs (fp, strcat (subIndent, "Arc Data"));
+    subIndent = strcat (subIndent, "  ");
+
+    startPoint = db_get_arc_start( dgP );
+    centerPoint = db_get_arc_center(dgP);
+    angle = float(db_get_arc_angle(dgP)) / 1000.0;
+
+    startX = db_get_x (startPoint);
+    startY = db_get_y (startPoint);
+
+    centerX = db_get_x (centerPoint);
+    centerY = db_get_y (centerPoint);
+
+    fputs (fp, strcat (subIndent, "startX: ", 
+                       user_rpt_db2uu (startX)));
+    fputs (fp, strcat (subIndent, "startY: ", 
+                       user_rpt_db2uu (startY)));
+    fputs (fp, strcat (subIndent, "centerX: ", 
+                       user_rpt_db2uu (centerX)));
+    fputs (fp, strcat (subIndent, "centerY: ", 
+                       user_rpt_db2uu (centerY)));
+    fputs (fp, strcat (subIndent, "angle: ", 
+                       identify_value(angle)));
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_circle_dg_data
+  Purpose:     Write significant information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_circle_dg_data (dgP, indent, fp)
+{
+    if (!dgP || !fp)
+        return; 
+
+    fputs (fp, strcat (indent, "Circle"));
+    decl subIndent = strcat (indent, "  ");
+
+    fputs (fp, strcat (subIndent, "Ellipse Data"));
+    subIndent = strcat (subIndent, "  ");
+
+    decl centerPoint = db_get_ellipse_center(dgP);
+    decl centerX = db_get_x (centerPoint);
+    decl centerY = db_get_y (centerPoint);
+
+    decl radiusX = db_get_ellipse_x_radius(dgP);
+    decl radiusY = db_get_ellipse_y_radius(dgP);
+
+    fputs (fp, strcat (subIndent, "radiusX: ", 
+                       user_rpt_db2uu (radiusX)));
+    fputs (fp, strcat (subIndent, "radiusY: ", 
+                       user_rpt_db2uu (radiusY)));
+    fputs (fp, strcat (subIndent, "centerX: ", 
+                       user_rpt_db2uu (centerX)));
+    fputs (fp, strcat (subIndent, "centerY: ", 
+                       user_rpt_db2uu (centerY)));
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_construction_line_dg_data
+  Purpose:     Write significant information to file
+  TODO: This isn't used, must implement an app object iterator for the report.
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_construction_line_dg_data (dgP, indent, fp)
+{
+    if (!dgP || !fp)
+        return; 
+
+    fputs (fp, strcat (indent, "Construction Line"));
+    decl subIndent = strcat (indent, "  ");
+
+    decl bbox = db_get_const_line_points(dgP);  
+    decl startX = db_get_bbox_x1 (bbox);
+    decl startY = db_get_bbox_y1 (bbox);
+    decl endX = db_get_bbox_x2 (bbox);
+    decl endY = db_get_bbox_y2 (bbox);
+
+    fputs (fp, strcat (subIndent, "startX: ", user_rpt_db2uu (startX)));
+    fputs (fp, strcat (subIndent, "startY: ", user_rpt_db2uu (startY)));
+    fputs (fp, strcat (subIndent, "  endX: ", user_rpt_db2uu (endX)));
+    fputs (fp, strcat (subIndent, "  endY: ", user_rpt_db2uu (endY)));
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_primitive_polygon_data
+  Purpose:     go thru a segList and write out its data
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_primitive_polygon_data ( polygon, indent, fp )
+{
+    decl numPoints = db_get_primitive_polygon_num_points(polygon);
+    decl i;
+    for (i = 0;i<numPoints;++i)
+    {
+        decl coord = db_get_primitive_polygon_point(polygon, i);
+
+        decl x = db_get_x (coord);
+        decl y = db_get_y (coord);
+        fputs (fp, strcat (indent, "x", identify_value (i), ": ", 
+                           user_rpt_db2uu (x)));
+        fputs (fp, strcat (indent, "y", identify_value (i), ": ", 
+                           user_rpt_db2uu (y)));
+
+        if (db_get_primitive_polygon_edge_is_arc(polygon, i))
+        {
+            decl startPoint, centerPoint, angle;
+            decl centerX, centerY;
+
+            fputs (fp, strcat (indent, "Arc Segment"));
+            decl subSubIndent = strcat (indent, "  ");
+
+            centerPoint = db_get_edge_arc_center(polygon, i);
+            angle = float(db_get_edge_arc_angle(polygon, i)) / 1000.0;
+
+            centerX = db_get_x (centerPoint);
+            centerY = db_get_y (centerPoint);
+
+            fputs (fp, strcat (subSubIndent, "centerX: ", 
+                               user_rpt_db2uu (centerX)));
+            fputs (fp, strcat (subSubIndent, "centerY: ", 
+                               user_rpt_db2uu (centerY)));
+            fputs (fp, strcat (subSubIndent, "angle: ", 
+                               identify_value(angle)));
+        }
+    }
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_polyline_line_dg_data
+  Purpose:     Write significant information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_polyline_dg_data (dgP, indent, fp)
+{
+    if (!dgP || !fp)
+        return; 
+
+    fputs (fp, strcat (indent, "Polyline"));
+    decl subIndent = strcat (indent, "  ");
+
+    decl primitivePolygon = db_get_shape_primitive_polygon(dgP);
+
+    user_rpt_write_primitive_polygon_data( primitivePolygon, subIndent, fp );
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_polygon_line_dg_data
+  Purpose:     Write significant information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_polygon_dg_data (dgP, indent, fp)
+{
+    if (!dgP || !fp)
+        return; 
+
+    fputs (fp, strcat (indent, "Polygon"));
+    decl subIndent = strcat (indent, "  ");
+
+    decl primitivePolygon = db_get_shape_primitive_polygon(dgP);
+
+    user_rpt_write_primitive_polygon_data( primitivePolygon, subIndent, fp );
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_rectangle_dg_data
+  Purpose:     Write significant information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_rectangle_dg_data (dgP, indent, fp)
+{
+    decl subIndent;
+
+    fputs (fp, strcat (indent, "Rectangle"));
+    subIndent = strcat (indent, "  ");
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_text_dg_data
+  Purpose:     Write significant information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_text_dg_data (dgP, indent, fp)
+{
+    decl subIndent, textString, locH;
+    decl x, y;
+
+    fputs (fp, strcat (indent, "Text"));
+    subIndent = strcat (indent, "  ");
+
+    textString = db_get_shape_text_string(dgP);
+    fputs (fp, strcat (subIndent, "textString: ", 
+                                 identify_value (textString)));
+
+    locH = db_get_text_origin(dgP);
+    if (locH != NULL)
+    {
+        x = db_get_x (locH);
+        y = db_get_y (locH);
+        fputs (fp, strcat (subIndent, "x: ", user_rpt_db2uu (x)));
+        fputs (fp, strcat (subIndent, "y: ", user_rpt_db2uu (y)));
+    }
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_bend_type_info
+  Purpose:     Write bend type information
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_bend_type_info (fp, subIndent, width, bendType, miterRadius)
+{
+    decl bendTypeStr;
+
+    if (bendType == DB_MITERED_CORNER)
+        bendTypeStr = "chamfer";
+    else if (bendType == DB_SQUARE_CORNER)
+        bendTypeStr = "square";
+    else if (bendType == DB_CURVED_CORNER)
+        bendTypeStr = "curved";
+    else if (bendType == DB_ROUNDED_CORNER)
+        bendTypeStr = "rounded";
+    else if (bendType == DB_ADAPTIVE_MITER_CORNER)
+        bendTypeStr = "adaptive chamfer";
+    else
+        bendTypeStr = "unknown";
+
+    fputs (fp, strcat (subIndent, "width: ", user_rpt_db2uu (width)));
+    fputs (fp, strcat (subIndent, "bendType: ", bendTypeStr));
+    fputs (fp, strcat (subIndent, "radius: ", user_rpt_db2uu (miterRadius)));
+
+    return (bendTypeStr);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_path_dg_data
+  Purpose:     Write significant information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_path_dg_data (dgP, indent, fp)
+{
+    decl polygon, subIndent;
+    decl width, bendType, bendTypeStr, miterRadius, polygon;
+
+    fputs (fp, strcat (indent, "Path"));
+    subIndent = strcat (indent, "  ");
+
+    width = db_get_path_trace_width(dgP);
+    bendType = db_get_path_trace_bend_type(dgP);
+    miterRadius = db_get_path_trace_miter_radius(dgP);
+    polygon = db_get_shape_control_polygon(dgP);
+
+    user_rpt_write_bend_type_info (fp, subIndent, width, bendType, miterRadius);
+
+    user_rpt_write_primitive_polygon_data(polygon, subIndent, fp);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_wire_dg_data
+  Purpose:     Write significant information to file
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_wire_dg_data (dgP, indent, fp)
+{
+    decl subIndent, wireP, pinP, nodeP;
+    decl polygon;
+    decl nodeName1, nodeName2;
+    decl instName1, instName2;
+    decl x1, y1;
+    decl x2, y2;
+    decl tempX, tempY, tempInstName;
+    decl wireLabelP;
+    decl width, bendType, miterRadius;
+
+    fputs (fp, strcat (indent, "Wire"));
+    subIndent = strcat (indent, "  ");
+
+    polygon = db_get_shape_control_polygon(dgP);
+    user_rpt_write_primitive_polygon_data (polygon, subIndent, fp);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_compare_dgs
+  Purpose:     compare function of dgs by type and then by location
+ ---------------------------------------------------------------------------*/
+defun user_rpt_compare_dgs (dg1, dg2)
+{
+    decl dgType1, dgType2;
+    decl bbox1, bbox2;
+    decl Ax1, Ay1, Ax2, Ay2;
+    decl Bx1, By1, Bx2, By2;
+    decl status = 0;
+
+    if (!dg1 || !dg2)
+        return (1);
+
+    dgType1 = db_get_shape_type_description(dg1);
+    dgType2 = db_get_shape_type_description(dg2);
+
+    if (dgType1 < dgType2)
+        status = -1;
+    else if (dgType1 > dgType2)
+        status = 1;
+    else if (UserRptSortPrimitivesByTopologyMode)
+    {
+        /* Types are equal, sort by bounding box */
+        bbox1 = db_get_shape_bbox(dg1);
+        bbox2 = db_get_shape_bbox(dg2);
+
+        Ax1 = db_get_bbox_x1 (bbox1);
+        Ay1 = db_get_bbox_y1 (bbox1);
+        Ax2 = db_get_bbox_x2 (bbox1);
+        Ay2 = db_get_bbox_y2 (bbox1);
+
+        Bx1 = db_get_bbox_x1 (bbox2);
+        By1 = db_get_bbox_y1 (bbox2);
+        Bx2 = db_get_bbox_x2 (bbox2);
+        By2 = db_get_bbox_y2 (bbox2);
+
+        if (Ax1 < Bx1)
+            status = -1;
+        else if (Ax1 > Bx1)
+            status = 1;
+        else if (Ay1 < By1)
+            status = -1;
+        else if (Ay1 > By1)
+            status = 1;
+        else if (Ax2 < Bx2)
+            status = -1;
+        else if (Ax2 > Bx2)
+            status = 1;
+        else if (Ay2 < By2)
+            status = -1;
+        else if (Ay2 > By2)
+            status = 1;
+    }
+
+    return (status);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_traverse_dgs
+  Purpose:     Iterate on all dgs and write significant information
+ ---------------------------------------------------------------------------*/
+defun user_rpt_traverse_dgs (context, indent, fp)
+{
+    decl subIndent, subIndent2, bboxH, i;
+    decl sortList, tmpList, dgPP, dgP;
+
+    fputs (fp, strcat (indent, "Datagroups"));
+    subIndent = strcat (indent, "  ");
+
+    subIndent2 = "        ";
+
+    /* Create list of pointers to dgs */
+    sortList = NULL;
+    decl shapeIter = db_create_shape_iter(context);
+    for (; db_shape_iter_is_valid(shapeIter); shapeIter = db_shape_iter_get_next(shapeIter))
+    {
+        sortList = append (sortList, list (db_shape_iter_get_shape(shapeIter)));
+    }
+
+
+    /* Sort data by DataGroup type and by topological order */
+    sortList = sort_list (sortList, user_rpt_compare_dgs);
+    while (sortList)
+    {
+        dgP = car (sortList);
+
+        /* Mask number */
+        decl number = db_get_shape_layer(dgP);
+        fputs (fp, strcat (subIndent, "Number: ", identify_value (number)));
+
+        if (db_shape_is_arc(dgP))
+            user_rpt_write_arc_dg_data (dgP, subIndent, fp);
+        else if (db_shape_is_circle(dgP))
+            user_rpt_write_circle_dg_data (dgP, subIndent, fp);
+//        else if (dgType == CONSTRUCTION_LINE_DG_TYPE)
+//            user_rpt_write_construction_line_dg_data (dgP, subIndent, fp);
+        else if (db_shape_is_path(dgP))
+            user_rpt_write_path_dg_data (dgP, subIndent, fp);
+        else if (db_shape_is_polygon(dgP))
+            user_rpt_write_polygon_dg_data (dgP, subIndent, fp);
+        else if (db_shape_is_polyline(dgP))
+            user_rpt_write_polyline_dg_data (dgP, subIndent, fp);
+        else if (db_shape_is_rectangle(dgP))
+            user_rpt_write_rectangle_dg_data (dgP, subIndent, fp);
+        else if (db_shape_is_text_or_text_display(dgP))
+            user_rpt_write_text_dg_data (dgP, subIndent, fp);
+        else if (db_shape_is_wire_or_trace(dgP))
+            user_rpt_write_wire_dg_data (dgP, subIndent, fp);
+
+        bboxH = db_get_shape_bbox(dgP);
+        user_rpt_write_bbox_data (bboxH, subIndent2, fp);
+
+        user_rpt_write_property_data (dgP, subIndent2, fp);
+
+        sortList = cdr (sortList);
+    }
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_traverse_shapes
+  Purpose:     Iterate on all masks and write significant information
+ ---------------------------------------------------------------------------*/
+defun user_rpt_traverse_shapes(context, indent, fp)
+{
+    decl number, layerName, dgList, subIndent;
+
+    fputs (fp, strcat (indent, "Shape Data"));
+    subIndent = strcat (indent, "  ");
+
+    user_rpt_traverse_dgs (context, subIndent, fp);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_inst_parameters
+  Purpose:     Write out all instance parameter information to a file
+  Methods:     Iterate on all instance parameters generating an info
+               string which represents the complete structure of the
+               parameter.
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_inst_parameters (instP, indent, fp)
+{
+    decl paramP, instDesignName, instName, name, value;
+    decl mirrorStatus;
+    decl info;
+    decl instSpecial, instTransform;
+    decl instBBox;
+    decl x1, y1;
+    decl subIndent, subSubIndent;
+    decl mirrorX = FALSE; 
+    decl mirrorY = FALSE;
+    decl angle = 0;
+ 
+    if (!instP || !fp)
+        return (FALSE);
+ 
+    subIndent = strcat (indent, "  ");
+    subSubIndent = strcat (subIndent, "  ");
+
+    instDesignName = db_get_instance_component_name(instP);
+    instName = db_get_instance_name(instP);
+ 
+    /* Instance attributes */
+    instSpecial = db_get_instance_special(instP);
+    instTransform = db_get_instance_placement_transform(instP);
+    instBBox = db_get_instance_bbox(instP, INST_SYMBOL_AND_ANNOT_BBOX);
+ 
+    fputs (fp, strcat (indent, "Instance: ", instDesignName, " ", instName));
+
+    if (instTransform)
+    {
+        mirrorX = db_get_transform_mirror_x (instTransform);
+        mirrorY = db_get_transform_mirror_y (instTransform);
+    }
+ 
+    if (mirrorX)
+        mirrorStatus = "mirrored in x";
+    else if (mirrorY)
+        mirrorStatus = "mirrored in y";
+    else
+        mirrorStatus = "not mirrored";
+ 
+    /* Placed at: 0.0000 -6.5000, not mirrored,  angle =  0.0000 deg, fixed */
+    if (instTransform)
+    {
+        angle = float (db_get_transform_angle (instTransform)) / 1000.0;
+        x1 = db_get_transform_x (instTransform);
+        y1 = db_get_transform_y (instTransform);
+
+        fputs (fp, strcat (subIndent, "Placed at: ",
+          user_rpt_db2uu (x1), " ",
+          user_rpt_db2uu (y1), ", ",
+          mirrorStatus, ", ", identify_value (angle)));
+    }
+ 
+    /* Instance bounding box */
+    user_rpt_write_bbox_data (instBBox, subIndent, fp);
+ 
+    /* Instance Properties */
+    user_rpt_write_property_data (instP, subIndent, fp);
+ 
+    return (TRUE);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_instance_data
+  Purpose:     Write out instance information
+  Methods:     Find the instance using the instance name
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_instance_data (context, instName, indent, fp)
+{
+    decl tmpInstName, instP, pinP;
+
+    /* Find the instance pointer */
+
+    decl instIter = db_create_inst_iter(context);
+    instIter = db_inst_iter_exclude_composite_children(instIter);
+
+    for ( ; db_inst_iter_is_valid(instIter); instIter = db_inst_iter_get_next(instIter))
+    {
+        tmpInstName = db_get_instance_name(instIter);
+        if (strcmp (instName, tmpInstName) == 0)
+        {
+            user_rpt_write_inst_parameters (db_inst_iter_get_instance(instIter), indent, fp);
+            return (TRUE);
+        }
+    }
+
+    return (FALSE);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_compare_instance_names
+  Purpose:     Sort function for instance names
+  Methods:     Use strcmp to establish alphabetical order
+ ---------------------------------------------------------------------------*/
+defun user_rpt_compare_instance_names (name1, name2)
+{
+    decl status;
+
+    status = strcmp (name1, name2);
+
+    return (status);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_instance_info
+  Purpose:     Write out instance information for the given representation
+  Methods:     Traverse all the instances writing out their parameters
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_instance_info (context, indent, fp)
+{
+    decl instP,  instName, subList, sortList;
+    decl instanceCount = 0;
+    decl subIndent;
+    decl cmpList = NULL;
+
+    if (!fp)
+        return (instanceCount);
+
+    subIndent = strcat (indent, "  ");
+
+    /* Get sorted list of component instance ids */
+    decl instIter = db_create_inst_iter(context);
+    instIter = db_inst_iter_exclude_composite_children(instIter);
+
+    for ( ; db_inst_iter_is_valid(instIter); instIter = db_inst_iter_get_next(instIter))
+    {
+        instName = db_get_instance_name(instIter);
+        cmpList = append (cmpList, list (instName));
+    }
+ 
+    sortList = sort_list (cmpList, user_rpt_compare_instance_names);
+
+    instanceCount = listlen (sortList);
+    if (instanceCount)
+    {
+        fputs (fp, strcat (indent, "Instance Data"));
+        while (sortList)
+        {
+            instName = car (sortList);
+            user_rpt_write_instance_data (context, instName, subIndent, fp);
+            sortList = cdr (sortList);
+        }
+    }
+
+    return (instanceCount);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_context_data
+  Purpose:     Write out data base information for the given representation
+  Methods:     Generate report data for masks, instances and symbol graphics
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_context_data (designName, context, fp)
+{
+    decl repName, bbox, unitName, dbFactor;
+    decl symbol;
+    decl instanceCount;
+    decl indent = "  ";
+
+    if (!fp)
+        return (FALSE);
+
+    if (!UserRptIncludeGraphicsMode)
+        return (FALSE);
+
+    if (de_is_schematic_context(context))
+        repName = "Schematic";
+    else
+        repName = "Layout";
+
+    unitName = db_get_context_unit_name(context);
+    dbFactor = db_get_context_db_factor(context);
+
+    user_rpt_set_db_factor (dbFactor);
+
+    fputs (fp, strcat (indent, repName, " Unit: ", unitName,
+                             "  DB unit to ", repName, " unit: ",
+                             identify_value (dbFactor)));
+
+    // Insert any stored errors into the info file
+    decl captured_errors = de_regress_get_warnings();
+    de_regress_reset_warnings();
+    if (captured_errors != "")
+    {
+        fputs(fp, strcat(indent, "Captured Errors:"));
+        fputs(fp, captured_errors);
+    }
+    bbox = db_get_context_bbox(context);
+    user_rpt_write_bbox_data (bbox, indent, fp);
+
+    user_rpt_write_property_data (context, indent, fp);
+    user_rpt_traverse_shapes (context, indent, fp);
+    instanceCount = user_rpt_write_instance_info (context, indent, fp);
+
+    if (de_is_schematic_context(context) && instanceCount)
+    {
+            /* Only generate netlist if instances exist */
+            user_rpt_generate_netlist (context, fp);
+    }
+
+    return (TRUE);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_rep_info
+  Purpose:     Write out data base information for the design and rep type
+  Methods:     Use the file pointer passed in to allow concatenation of reports
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_design_context_info (context, fp)
+{
+    if (!fp)
+        return (FALSE);
+       
+    decl designName = db_get_design_name(context);
+
+    fputs (fp, strcat ("Information for Design: ", designName));
+ 
+    user_rpt_write_context_data (designName, context, fp);
+
+    fputs (fp, " ");
+
+    return (TRUE);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_netlist_error_handler
+  Purpose:     Trap errors occuring during netlist generation
+  Methods:     
+ ---------------------------------------------------------------------------*/
+defun user_rpt_netlist_error_handler ()
+{
+    /* No circuit */
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_generate_netlist
+  Purpose:     Write out netlist information for the given design
+  Methods:     
+ ---------------------------------------------------------------------------*/
+defun user_rpt_generate_netlist (context, fp)
+{
+    decl buffer;
+    decl fileH;
+    decl prevErrorHandler;
+    decl mode = 0;
+    decl netlistFileName = "netlist.out";
+    decl defaultsDesignName = "";
+
+    if (!UserRptIncludeNetlistMode)
+        return (FALSE);
+
+    remove (netlistFileName);
+
+    /* Redirect AEL execution errors to local error handler function */
+    prevErrorHandler = on_error (user_rpt_netlist_error_handler);
+
+    de_create_netlist( context, mode );
+    de_save_netlist (netlistFileName);
+
+    /* Direct AEL execution errors to system error handler function */
+    on_error (prevErrorHandler);
+
+    /* Concatenate netlist information to current output file */
+
+    fileH = fopen (netlistFileName, "R");
+
+    if (!fileH)
+        return (FALSE);
+
+    fputs (fp, strcat ("Netlist for Design: ", designName));
+
+    buffer = fgets (fileH);
+    while (buffer != NULL)
+    {
+        fputs (fp, buffer);
+        buffer = fgets (fileH);
+    }
+    fputs (fp, "\n");
+
+    fclose (fileH);
+ 
+    remove (netlistFileName);
+
+    return (TRUE);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_design_info
+  Purpose:     Write out information for the given design
+  Methods:     Get the design pointer using the design name
+               Access information on both schematic and layout reps
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_context_info (context, fp)
+{
+    decl designP;
+    decl overwrite = TRUE;
+    decl mode = 0;
+    decl defaultsDesignName = "";
+
+    if (!fp)
+        return (FALSE);
+ 
+    user_rpt_write_design_context_info (context, fp);
+ 
+    return (TRUE);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_current_design_info
+  Purpose:     Report information for the current design to the given file
+  Methods:     Get the design pointer from the current window
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_current_context_info (fileName)
+{
+    /* Get current window */
+    if (!de_current_context_is_valid())
+       return FALSE;
+
+    decl context = de_get_current_design_context();
+
+    decl designName = db_get_cell_name(context);
+
+    decl fp = fopen (fileName?fileName:strcat (designName, ".rpt"), "w");
+    if (!fp)
+    {
+        return (FALSE);
+    }
+
+    user_rpt_write_design_context_info (context, fp);
+
+    fclose (fp);
+ 
+    return (TRUE);
+}
+
+/*---------------------------------------------------------------------------
+  Function:    user_rpt_write_design_info
+  Purpose:     Write out information for the given design
+  Methods:     Get the design pointer using the design name
+               Access information on both schematic and layout reps
+ ---------------------------------------------------------------------------*/
+defun user_rpt_write_design_info_to_file (context, filePath)
+{
+    decl designP;
+    decl fp;
+    decl overwrite = TRUE;
+    decl oldBBoxMode = UserRptIncludeBBoxMode;
+    
+    UserRptIncludeBBoxMode = FALSE;
+
+    //fputs (stderr, strcat ("Generating report for design ", designName));
+
+    if (!designName || !filePath)
+        return (FALSE);
+ 
+    fp = fopen (filePath, "w");
+    if (!fp)
+        return;
+
+    user_rpt_write_design_context_info (context, fp);
+
+    fclose (fp);
+ 
+    UserRptIncludeBBoxMode = oldBBoxMode;
+
+    return (TRUE);
+}

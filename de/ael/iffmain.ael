@@ -1,0 +1,263 @@
+// Copyright Keysight Technologies 2000 - 2011  
+/*-------------------------------------------------------------------------+/
+/+ Module:   iffmain
+/+ Function: Main AEL module containing entry points for IFF
+/+           Module is responsible for dynamically loading the IFF AEL 
+/+           utility modules.
+/+-------------------------------------------------------------------------*/
+
+
+/////////////////////////////////////////////////////////////////////////////
+// THIS FILE CONTAINS THE DUPLICATE FUNCTIONS WHICH ARE DEFINED AND USED FROM FILE detransdlg.ael
+//  REMOVE THIS FILE 
+/////////////////////////////////////////////////////////////////////////////
+
+decl IffAdsVersion;
+decl IffImportFootprintList;
+
+/* The following global variables are appearing as undeclared in the
+   check_voc() report.  They are declared here to prevent any chance
+   of an AEL execution error.  They appear in so many places
+   that we cannot identify the specific case that is in error.  
+   These declarations will be removed at the beginning of ADS 1.7,
+   because the check_voc() report will be enhanced to provide information
+   about where the undeclared variable is used. */
+
+decl dsnH, repType;
+decl x, y;
+decl len, paramVal, parmName;
+decl winInst, winInstP;
+decl dlgH, errMsgP;
+decl cancelH, okH;
+
+/* The following variables were declared in the IFF AEL utility
+   modules which are no longer being loaded during startup */
+
+decl OutputList;
+decl ParseString;
+decl ShadeRule;
+decl TransferTypeName;
+decl currentFill;
+
+/*-------------------------------------------------------------------------+/
+/+ Procedure: iff_bound
+/+ Function : Return true if AEL function is defined
+/+-------------------------------------------------------------------------*/
+defun iff_bound(var)
+{
+    on_error(NULL);
+    decl check=evaluate(var);
+    on_error(NULL);
+    return(check);
+}
+
+/*-------------------------------------------------------------------------+/
+/+ Procedure: iff_init_globals
+/+ Function : Init any global variables that need it. These are app dependent
+/+-------------------------------------------------------------------------*/
+defun iff_init_globals()
+{
+    IffImportFootprintList=NULL;
+}
+
+/*-------------------------------------------------------------------------+/
+/+ Procedure: ifftolib_getAdsVersion
+/+ Function : Return information string on current ADS version
+/+-------------------------------------------------------------------------*/
+defun ifftolib_getAdsVersion()
+{
+    decl versionString=de_retrieve_version_info();
+    decl versionList=parse(versionString, " ", "");
+    
+    versionString=nth(3, versionList);
+    if(!versionString)
+    {
+        versionString=110.400;
+    }
+
+    if(is_string(versionString))
+    {
+        if(rightstr(versionString, 4) == ".day")
+	{
+	    versionString=strcat(leftstr(versionString, strlen(versionString)-4), ".5");
+	    versionString=evaluate(versionString);
+	}
+	else
+	{
+	    versionString=110.400;
+	}
+    }
+
+    return(versionString);
+}
+
+/*-------------------------------------------------------------------------+/
+/+ Procedure: iff_load_a_ael_files
+/+ Function : Load an AEL utility module with support for redirection of
+/+            installation location
+/+-------------------------------------------------------------------------*/
+defun iff_load_a_ael_file(aelFileName)
+{
+    decl iffFileDir=getenv("IFF_FILE_DIRECTORY");
+    decl localAelFileName;
+
+    if(iffFileDir)
+    {
+        localAelFileName=strcat(expandenv(iffFileDir), api_get_directory_delimiter(), aelFileName);
+	if(filestat(localAelFileName))
+	{
+	    load(localAelFileName, "CmdOp");
+	}
+	else
+	{
+	    fprintf(stderr, "WARNING!  %s was not found, loading from AEL path.\n", localAelFileName);
+	    load(aelFileName, "CmdOp");
+	}
+    }
+    else
+    {
+        // IFF_FILE_DIRECTORY is not defined.  Fall back to to loading 
+	// based on the AEL path.
+
+	load(aelFileName, "CmdOp");      
+    }
+
+}
+
+
+/*-------------------------------------------------------------------------+/
+/+ Procedure: iff_load_ael_files
+/+ Function : Load all AEL utility modules associated with IFF
+/+-------------------------------------------------------------------------*/
+// TODO: REMOVE THIS FUNCTION
+defun iff_load_ael_files()
+{
+    decl loadList;
+
+    loadList = list("iffboot.ael",
+		    "iffads.ael",
+		    "iffmap.ael", 
+		    "iffimport.ael",
+		    "iffexport.ael",
+		    "iffuser.ael");
+
+    while( loadList != NULL )
+    {
+	iff_load_a_ael_file(car(loadList));
+	loadList = cdr(loadList);
+    }
+        
+}
+
+/*-------------------------------------------------------------------------+/
+/+ Procedure: iff_import_initialize
+/+ Function : Prepare for an IFF import by loading AEL utility functions
+/+            and invoking the main initialization function
+/+-------------------------------------------------------------------------*/
+// TODO: REMOVE THIS FUNCTION
+defun iff_import_initialize (iffFile)
+{
+    IffAdsVersion=ifftolib_getAdsVersion();
+    iff_init_globals();
+
+    // Always reload the IFF AEL files.  This is because multiple versions 
+    // of IFF will exist eventually, and many definitions will need to be 
+    // updated each time an import is run.
+
+    iff_load_ael_files ();
+
+    if (!iff_bound ("iff_main_import_initialize"))
+    {
+	de_error_dialog ("Unable to initialize IFF utility modules",
+                         NULL,                 /* errorHelp */
+			 TRUE);                /* errBell */
+	return (FALSE);
+    }
+
+    /* This function will appear as undefined if you perform */
+    /* check_voc("CmdOp");, because it is defined when       */
+    /* the AEL utility modules are loaded                    */
+
+    iff_main_import_initialize (iffFile);
+
+    return (TRUE);
+}
+
+/*-------------------------------------------------------------------------+/
+/+ Procedure: iff_export_initialize
+/+ Function : Prepare for an IFF export by loading AEL utility functions
+/+            and invoking the main initialization function
+/+-------------------------------------------------------------------------*/
+// THIS IS A DUPLICATE FUNCTION! - Function defined in detransdlg.ael is getting used.
+// TODO: REMOVE THIS FUNCTION
+defun iff_export_initialize ()
+{
+    IffAdsVersion=ifftolib_getAdsVersion();
+    iff_init_globals();
+
+    // Always reload the IFF AEL files.  This is because multiple versions 
+    // of IFF will exist eventually, and many definitions will need to be 
+    // updated each time an import is run.
+
+    iff_load_ael_files ();
+
+    if (!iff_bound ("iff_main_export_initialize"))
+    {
+	de_error_dialog ("Unable to initialize IFF utility modules", 
+                         NULL,                 /* errorHelp */
+			 TRUE);                /* errBell */
+	return (FALSE);
+    }
+
+    /* This function will appear as undefined if you perform */
+    /* check_voc("CmdOp");, because it is defined when       */
+    /* the AEL utility modules are loaded                    */
+
+    iff_main_export_initialize ();
+
+    return (TRUE);
+}
+
+/*-------------------------------------------------------------------------+/
+/+ Procedure: write_mgc_iff
+/+ Function : Main for MGC/PCB export
+/+-------------------------------------------------------------------------*/
+// TODO: REMOVE THIS FUNCTION
+defun write_mgc_iff ()
+{
+    if (!iff_export_initialize ())
+    {
+	return;
+    }
+
+    if (!iff_bound ("iff_write_mgc"))
+    {
+	return;
+    }
+
+    /* This function will appear as undefined if you perform */
+    /* check_voc("CmdOp");, because it is defined when       */
+    /* the AEL utility modules are loaded                    */
+
+    iff_write_mgc ();
+}
+
+/*-------------------------------------------------------------------------+/
+/+ Procedure: write_iff
+/+ Function : Main entry point for IFF export
+/+-------------------------------------------------------------------------*/
+// TODO: REMOVE THIS FUNCTION
+defun write_iff (fileName, winInst, skipDefaults, interactive)
+{
+    if (!iff_export_initialize ())
+	return;
+
+    if (!iff_bound ("iff_main_write"))
+	return;
+
+    /* This function will appear as undefined if you perform */
+    /* check_voc("CmdOp");, because it is defined when       */
+    /* the AEL utility modules are loaded                    */
+
+    iff_main_write (fileName, winInst, skipDefaults, interactive);
+}

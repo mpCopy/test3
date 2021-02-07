@@ -1,0 +1,5230 @@
+// Copyright Keysight Technologies 1997 - 2011  
+// @(#) $Source: /cvs/wlv/src/iff/ael/iffimport.ael,v $ $Revision: 100.163 $ $Date: 2011/08/28 20:26:38 $  
+
+//
+/***********************************************/
+/* convert iff file to libra design            */
+/***********************************************/
+
+decl iff_current_default_data     = NULL;
+
+decl ifftolibCurrentSymbolName    = NULL;
+decl ifftolibCurrentDesignName    = NULL;
+decl ifftolibCurrentSymbolPath    = NULL;
+decl ifftolibLastSymbolPath       = NULL;
+decl ifftolibCurrentDesignPath    = NULL;
+decl ifftolibLastDesignPath       = NULL;
+decl ifftolibCurrentObjectPath    = NULL;
+decl IffCurrentWindowType         = -1;
+decl IffLastWindowType            = -1;
+decl IffCurrentDesignHandle       = NULL;
+
+decl IFF_SCHEMATIC                = 1;
+decl IFF_LAYOUT                   = 2;
+decl IFF_SYMBOL                   = 3;
+
+decl ifftolibSymbolList           = NULL;
+decl IfftolibObjectToSymbolList   = NULL;
+decl IfftolibObjectToInstanceList = NULL;
+
+decl ifftolibSchematicWindowOpen  = FALSE;
+decl ifftolibDefaultsWindowOpen   = FALSE;
+decl ifftolibLayoutWindowOpen     = FALSE;
+
+decl ifftolibLineWidth            = 1;
+
+decl IffSearchPathName            = "IFF_PATH";
+
+decl IfftolibParameterStack       = NULL;
+decl IffImportDesignType          = 0;
+
+decl IffCurrentAdsLayerNames      = NULL;
+decl IffLayerData                 = NULL;
+decl IffLastLayerNumber           = 0;
+decl IffLayerWarningList          = NULL;
+decl IffLayerMapping              = NULL;
+decl IffNoneLayerName             = "none";
+decl IffDefaultLayerName          = "default";
+
+decl IffImportLibrary             = NULL;
+
+decl IffSavedBackupCount          = 20;
+
+decl IffEquationList              = NULL;
+
+decl IffZigWireList               = NULL;
+
+decl IffRemoveIffFile             = FALSE;
+
+decl IffUseLayoutParts            = FALSE;
+
+decl IffOptionsFileName           = "iff.opt";
+decl IffLayerMappingFileName      = "iff.map";
+
+decl IffLayoutSaveMap;
+decl IffLayoutScaleFactor;
+
+decl IffDrawPageUnits;
+decl IffDrawPageIncr;
+decl IffDrawPageGridMajor;
+decl IffDrawPageGridMinor;
+decl IffDrawPageGridSnap;
+decl IffDrawPageTopObjectPath;
+decl IffDrawPageTopDesignName;
+decl IffDrawPageTopDesignCurInst;
+
+decl IffDesignPtrList;
+decl IffDesignParentName;
+
+decl IffPsnLayouts          = NULL;
+
+decl IffImportRepType       = NULL;
+
+decl IffLayoutImportInitialized   = FALSE;
+
+decl ifftolibPlaceInstance = FALSE;
+
+/* TRUE means new component placement via C */
+
+decl IffMultiPageMode = TRUE;
+decl IffImportPlacementMode = TRUE;
+
+/* TRUE means pin snap mode in layout.  Corrects for precision loss
+   in pin locations computed in AEL artwork macros (i.e. MCURVE2).
+   Only available with new component placement via C */
+decl IffImportPinSnapMode = TRUE;
+
+/* TRUE means repair units (i.e.  megHz to mHz).
+   This flag only controls unit check mode for new component placement */
+decl IffImportUnitCheckMode = TRUE;
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Forward declarations...
+/////////////////////////////////////////////////////////////////////////////
+defun iff_layout_setup_layers();
+
+/////////////////////////////////////////////////////////////////////////////
+// Purpose:  Set the multi page insertion mode on/off
+// Method:   Toggle mode for new IFF in ADS 1.5
+/////////////////////////////////////////////////////////////////////////////
+defun iff_set_multipage_mode (mode)
+{
+   IffMultiPageMode = mode;
+   if (mode)
+       IffImportPlacementMode = TRUE;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_set_import_placement_mode (mode)
+{
+  IffImportPlacementMode = mode;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_set_import_pin_snap_mode (mode)
+{
+  IffImportPinSnapMode = mode;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_set_import_unit_check_mode (mode)
+{
+  IffImportUnitCheckMode = mode;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_set_import_rep_type(repType)
+{
+  IffImportRepType = repType;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_get_import_rep_type()
+{
+  return(IffImportRepType);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_finish_placement ()
+{
+    iff_import_non_macro_placement (TRUE);		// Final import
+
+    return (TRUE);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Initialize a list of the current default units that are being used for the
+// IFF import. 
+//
+// The list items are:
+//
+//        0 --> Default Property Name
+//        1 --> Unit
+//        2 --> Scalar
+//        3 --> MKS Conversion Factor
+//        4 --> SeriesIV Unitcode
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_initialize_current_de_defaults()
+{
+  iff_current_default_data = list(list("FREQ",  "hz", "", 1,         0),
+				  list("RES",   "oh", "", 1,         1),
+				  list("COND",   "s", "", 1,         2),
+				  list("IND",    "h", "", 1,         3),
+				  list("CAP",    "f", "", 1,         4),
+				  list("LNG",    "m", "", 1,         5),
+				  list("TIME", "sec", "", 1,         6),
+				  list("ANG",  "deg", "", 0.0174533, 7),
+				  list("POWER","dbm", "", 1,         8),
+				  list("VOLT",   "v", "", 1,         9),
+				  list("CUR",    "a", "", 1,        10),
+				  list("DIST",  "mi", "", 1609.34,  11));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Display a error dialog with using the included message....
+/////////////////////////////////////////////////////////////////////////////
+defun iff_error(str)
+{
+
+  if( IffInteractive == TRUE )
+    {
+      decl errStr = strcat("\n", str, "\n\nIFF transfer aborted.");
+      error("iff", 0, errStr, "ERROR");
+    }
+  else
+    {
+      print_value(strcat("ERROR: ", str));
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Check to see if you can open a file. If not display a error dialog 
+// (which never returns). 
+/////////////////////////////////////////////////////////////////////////////
+defun iff_check_file_access_permission(fileName, removeIt)
+{
+    decl fileHandle = fopen(fileName, "A");
+    if( fileHandle == NULL )
+      iff_error(strcat("Failed to open the file \"", 
+		       fileName, "\". Check your access ",
+		       "permissions on the file and directory."));
+    fclose(fileHandle);
+
+    if( removeIt == TRUE )
+      remove(fileName);
+
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Check some know files for access permission. If we do not have permission
+// then exit with a error dialog aborting the transfer.
+/////////////////////////////////////////////////////////////////////////////
+defun iff_check_permissions()
+{
+    decl fileName;
+    decl fileHandle;
+
+    if( IffExportType == "export" )
+    {
+        iff_check_file_access_permission(IffExportLogFile, TRUE);
+	iff_check_file_access_permission("./iff.ael", TRUE);
+    }
+    else // Importing....
+    {
+        iff_check_file_access_permission(IffImportLogFile, FALSE);
+	iff_check_file_access_permission("./iff.ael", FALSE);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Log a message to the IFF log file....
+/////////////////////////////////////////////////////////////////////////////
+defun iff_log_message(messageList)
+{
+  decl fileHandle;
+
+  if( IffExportType == "export" )
+    fileHandle = fopen(IffExportLogFile, "A");
+  else
+    fileHandle = fopen(IffImportLogFile, "A");
+
+  if(!fileHandle)
+    return;
+
+  fputs(fileHandle, fmt_tokens(messageList));
+
+  fclose(fileHandle);
+
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_save_backup_count()
+{
+  // Save the backup count to restore once we are finished.
+  IffSavedBackupCount = iff_get_preference(BACKUP_COUNT_P);
+  if( IffSavedBackupCount == NULL )
+    IffSavedBackupCount = 20;
+  set_backup_count(0);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_restore_backup_count()
+{
+  set_backup_count(IffSavedBackupCount);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Add a new symbol to the symbol list
+//////////////////////////////////////////////////////////////////////
+
+defun ifftolib_add_to_symbol_list(symbolName)
+{
+
+  if( ifftolibSymbolList != NULL )
+    ifftolibSymbolList = append(ifftolibSymbolList, list(symbolName));
+  else
+    ifftolibSymbolList = list(symbolName);
+
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+// 
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_current_design_name(designName)
+{
+  decl dirSep;
+  decl designPath;
+  
+  dirSep = iff_get_directory_delimiter();
+  
+  designPath = strcat(strcat(strcat(getcwd(), dirSep), "networks"), dirSep);
+  designPath = strcat(designPath, designName);
+
+  return(designPath);
+}
+
+//////////////////////////////////////////////////////////////////////
+// 
+//////////////////////////////////////////////////////////////////////
+defun iff_clear_iff_path()
+{
+  setenv (IffSearchPathName, "", iff_get_env(), 0);
+}
+
+//////////////////////////////////////////////////////////////////////
+// 
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_setup_iff_path()
+{
+  decl prjList  = de_get_search_path_list(FALSE, TRUE, FALSE);
+  decl libPath  = iff_get_library_path();
+  decl iffPath  = NULL;
+  decl dirSep   = iff_get_directory_delimiter();
+
+  while( prjList != NULL )
+    {
+      if( iffPath == NULL )
+	iffPath = strcat(car(prjList), dirSep, "networks");
+      else
+	iffPath = strcat(iffPath, ":", car(prjList), dirSep, "networks");
+
+      prjList = cdr(prjList);
+    }
+
+  if( iffPath != NULL )
+    iffPath = strcat(iffPath, ":", libPath);
+  else
+    iffPath = libPath;
+
+  setenv (IffSearchPathName, iffPath, iff_get_env(), 0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////////////
+defun iff_find_searchpath_file(searchPathName, optionFile)
+{
+  decl fp, fileName, t, s;
+  decl searchPath;
+  decl dirSep = iff_get_directory_delimiter();
+
+  searchPath = getenv(searchPathName);
+  if( searchPath == NULL )
+    {
+      searchPath = ".";
+      t = iff_get_user_config_dir();
+      if( t != NULL )
+	searchPath = strcat(searchPath, ":", t);
+      t = iff_get_system_config_dir();
+      if( t != NULL )
+	searchPath = strcat(searchPath, ":", t);
+  }
+
+  searchPath = iffParseString(searchPath, ":");
+
+  fp = NULL;
+
+  while(( fp == NULL ) && ( searchPath != NULL ))
+    {
+      t = car(searchPath);
+      if( rightstr(t,1) == dirSep )
+	t = leftstr(t, strlen(t)-1);
+      searchPath = cdr(searchPath);
+      fileName = strcat(t, dirSep, optionFile);
+      fp = fopen(fileName, "R");
+      if(( fp == NULL ) && 
+	 ( dirSep == "\\" ) && ( strlen(t) == 1 ) && ( searchPath != NULL ))
+	{
+	  s = car(searchPath);
+	  if( rightstr(s,1) == dirSep )
+	    s = leftstr(s, strlen(t)-1);
+	  fileName = strcat(t, ":", s, dirSep, optionFile);
+	  fp = fopen(fileName, "R");
+	}
+    }
+
+  if( fp != NULL )
+    fclose(fp);
+  else
+    fileName = NULL;
+
+  return( fileName );
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////////////
+defun iff_read_import_options(removeIffFile)
+{
+    decl fp, buffer, fileName, value;
+
+    fileName = iff_find_searchpath_file("IFF_OPTION_FILE", IffOptionsFileName);
+    if( fileName != NULL )
+        fp = fopen(fileName, "R");
+    else
+        fp = NULL;
+
+    if(! fp)
+    {
+        iff_log_message(list("No import options defined - using default values.\n"));
+        *removeIffFile = FALSE;
+    }
+    else
+    {
+        iff_log_message(list("Reading options file", fileName, "\n"));
+        
+        buffer = fgets(fp);
+        while(! (buffer==NULL))
+        {
+            if(strlen(buffer) > 0 && ! iff_comment_char(leftstr(buffer,1)))
+            {
+                // search for expected option names
+                if(leftstr(buffer, 15) == "ImportRemoveIFF")
+                {
+                    value = parse_option_value(buffer);
+                    if(( value ) && ( strcasecmp(value, "TRUE") == 0 ))
+                        *removeIffFile = TRUE;
+                    else
+                        *removeIffFile = FALSE;
+                }
+                else if( leftstr(buffer, 17) == "ImportInterActive" )
+                {
+                    value = parse_option_value(buffer);
+                    if(( value ) && ( strcasecmp(value, "FALSE") == 0 ))
+                        IffInteractive = FALSE;
+                }
+                else if( leftstr(buffer, 28) == "ImportLayoutLibraryInstances" )
+                {
+                    value = parse_option_value(buffer);
+                    if(( value ) && ( strcasecmp(value, "TRUE") == 0 ))
+                        IffUseLayoutParts = TRUE;
+                    else
+                        IffUseLayoutParts = FALSE;
+                }
+                else if( leftstr(buffer, strlen("ImportSynchronizeConnectorByNodeName")) == "ImportSynchronizeConnectorByNodeName" )
+                {
+                    value = parse_option_value(buffer);
+                    if(( value ) && ( strcasecmp(value, "TRUE") == 0 ))
+                    {
+                        ImportSynchronizeConnectorByNodeName = TRUE;
+                    }
+                    else
+                    {
+                        ImportSynchronizeConnectorByNodeName = FALSE;            
+                    }
+
+                }
+                else if (leftstr (buffer, 13) == "ImportVersion")
+                {
+                    value = parse_option_value (buffer);
+                    if (value)
+		    {
+			if (strcasecmp (value, "1") == 0)
+                            iff_set_multipage_mode (FALSE);
+		    }
+                }
+            }
+            buffer = fgets(fp);
+        }
+        fclose(fp);
+    }
+
+    iff_log_message(list("Import Options: \n"));
+
+    if( *removeIffFile == TRUE )
+        iff_log_message(list("   The IFF file will be removed after import."));
+    else
+        iff_log_message(list("   The IFF file is not removed after import."));
+    
+    if( iff_get_import_rep_type() != REP_SCHEM )
+    {
+        if( IffUseLayoutParts == TRUE )
+            iff_log_message(list("   Using layouts from libraries, if they exist,",
+                                 "instead of\n",
+                                 "  creating new layouts in project."));
+        else
+            iff_log_message(list("   All layouts will come from IFF file during",
+                                 "layout imports\n",
+                                 "  including layouts that may already exist in",
+                                 "system libraries."));
+    }
+
+    iff_log_message(list("\n"));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_import_initialize()
+{
+    decl optionsFileName;
+
+    if (IffImportPlacementMode)
+    {
+        if(IffAdsVersion >= 130.400)
+	{
+	    api_set_working_cursor ();
+            optionsFileName = iff_find_searchpath_file ("IFF_OPTION_FILE", 
+						 IffOptionsFileName);
+	    if (!optionsFileName)
+		optionsFileName = "iff.opt";
+	    de_iff_initialize_import (IffImportLogFile, optionsFileName);
+	}
+	else
+	{
+            IffMultiPageMode = FALSE;
+	    IffImportPlacementMode=FALSE;
+	}
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// Function: iff_import_process_data
+// Purpose:  Kick off processing of data for the current rep
+//           This is the point where the actual ADS design data
+//           is created.
+//////////////////////////////////////////////////////////////////////
+defun iff_import_process_data()
+{
+    if (IffImportPlacementMode)
+    {
+	api_set_working_cursor ();
+	de_iff_process_rep ();
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// Initialize the ifftolib world to a known state...
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_initialize()
+{
+  ifftolibSchematicWindowOpen  = FALSE;
+  ifftolibDefaultsWindowOpen   = FALSE;
+  ifftolibLayoutWindowOpen     = FALSE;
+
+  iff_current_default_data     = NULL;
+  ifftolibCurrentSymbolName    = NULL;
+  ifftolibCurrentDesignName    = NULL;
+  ifftolibCurrentSymbolPath    = NULL;
+  ifftolibLastSymbolPath       = NULL;
+  ifftolibCurrentDesignPath    = NULL;
+  ifftolibLastDesignPath       = NULL;
+  ifftolibCurrentObjectPath    = NULL;
+  ifftolibSymbolList           = NULL;
+  IfftolibObjectToSymbolList   = NULL;
+  IfftolibObjectToInstanceList = NULL;
+  IffCurrentWindowType         = -1;
+  IffLastWindowType            = -1;
+  IffCurrentAdsLayerNames      = NULL;
+  IffLayerData                 = NULL;
+  IffLayerWarningList          = NULL;
+  IffLastLayerNumber           = 0;
+
+  IffImportDesignType          = 0;
+
+  IffImportLibrary             = NULL;
+
+  // Clear the parameter stack
+  IfftolibParameterStack       = NULL;
+
+  IffEquationList              = NULL;
+  IffZigWireList               = NULL;
+
+  // Initialize the IFF_PATH to allow searches that include
+  // the current project list.
+  if (!is_pdeoa_mode())
+  {
+      ifftolib_setup_iff_path();
+
+      // Now read the options files....
+      if( IffExportType == "import" )
+      {
+          IffRemoveIffFile = FALSE;
+          IffMultiPageMode = TRUE;
+          IffImportPlacementMode = TRUE;
+          iff_read_import_options(&IffRemoveIffFile);
+      }
+
+      IffLayoutScaleFactor = 1.0;
+      IffPsnLayouts = NULL;
+
+      ifftolib_import_initialize ();
+  }
+
+  return;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_layout_import_initialize()
+{
+    if (!ifftolibLayoutWindowOpen)
+    {
+        // Open a window so that the layout preferences file will be read.
+        open_window(LAYOUT_WIN);
+        set_window(LAYOUT_WIN);
+        ifftolibLayoutWindowOpen=TRUE;
+    }
+
+    if(!IffLayoutImportInitialized)
+    {
+        
+        iff_layout_load_layer_mapping();
+        IffLayoutSaveMap = db_get_map();
+        IffLayoutScaleFactor = 1.0;
+        IffLayoutImportInitialized = TRUE;
+  
+        decl i = iff_get_preference(LAYOUT_PREC_P);
+
+        if (!i)
+            IffLayoutScaleFactor=1000;
+
+        while( i < 0 )
+        {
+            i = i + 1;
+            IffLayoutScaleFactor = IffLayoutScaleFactor * 10.0;
+        }
+
+    }
+
+    /*
+      if (!ifftolibLayoutWindowOpen)
+      {
+          // Close the extra layout window that was opened to get preferences.
+          close_window();
+      }
+    */
+
+    decl curwin = iff_get_current_window();
+    set_window(curwin);
+
+    // Check to see if a design is currently open.  If one is, close the design.
+
+    de_close_design();
+    
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+//Change this function to open the file open dialog? MTB
+defun iff_open_last_object()
+{
+    decl designToOpen;
+    decl openSymbol;
+    decl designHandle;
+    decl winToOpen = IffCurrentWindowType;
+    decl winList;
+
+    if(( winToOpen == -1 ) && ( IffLastWindowType != -1 ))
+    {
+        winToOpen    = IffLastWindowType;
+	if( winToOpen == IFF_SYMBOL )
+	    designToOpen = ifftolibLastSymbolPath;
+	else
+	    designToOpen = ifftolibLastDesignPath;
+    }
+    else if( ifftolibCurrentDesignPath !=  NULL )
+    {
+        designToOpen = ifftolibCurrentDesignPath;
+    }
+    else if( ifftolibCurrentSymbolPath != NULL )
+    {
+        designToOpen = ifftolibCurrentSymbolPath;
+    }
+
+    if(( winToOpen == IFF_SCHEMATIC ) || ( winToOpen == IFF_SYMBOL ))
+    {
+        winList=api_get_windows_by_id(SCHEM_WIN);
+	if (!winList)
+	{
+	    // Apparently, a window was not open.  Open one now.
+	    api_set_current_window(api_get_current_window());
+	    close_window();
+	    open_window(SCHEM_WIN);          
+	    winList=api_get_windows_by_id(SCHEM_WIN);      
+	    api_show_palettebar (car(winList), 2);
+	}
+	else
+	{
+	    api_show_palettebar (car(winList), 2);
+	}
+	set_window(SCHEM_WIN);
+	de_open_design(designToOpen, TRUE);
+	if( winToOpen == IFF_SYMBOL )
+	    iff_switch_view(IFF_SYMBOL_VIEW);
+	/*
+	designHandle = db_get_design(designToOpen);
+	if( designHandle != NULL )
+	{
+	    iff_show_design_in_window(designHandle, SCHEM_WIN);
+	    if( winToOpen == IFF_SYMBOL )
+	        iff_switch_view(IFF_SYMBOL_VIEW);
+	}
+	*/
+    }
+    else if( winToOpen == IFF_LAYOUT )
+    {
+        winList=api_get_windows_by_id(LAYOUT_WIN);
+	if (!winList)
+	{
+	    // Apparently, a window was not open.  Open one now.
+	    api_set_current_window(api_get_current_window());
+	    close_window();
+	    open_window(LAYOUT_WIN);          
+	    winList=api_get_windows_by_id(LAYOUT_WIN);      
+	    api_show_palettebar (car(winList), 1);
+	}
+	else
+	{
+	    api_show_palettebar (car(winList), 1);
+	}
+	set_window(LAYOUT_WIN);
+	de_open_design(designToOpen, TRUE);
+
+        winList=api_get_windows_by_id(SCHEM_WIN);
+	while (winList)
+	{
+	    // Apparently, a window was not open.  Open one now.
+	    api_set_current_window(car(winList));
+	    winList=cdr(winList);
+	    close_window();
+	}
+
+	/*
+	designHandle = db_get_design(designToOpen);
+	iff_show_design_in_window(designHandle, LAYOUT_WIN);
+	*/
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// copied from adbnames.c/adb_valid_name()
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_valid_name( propName )
+{
+    decl len, ch;
+    decl validName=TRUE;
+    decl legalList;
+
+    if(IffAdsVersion < 130.403)
+    {
+        legalList=list( "-", "_" );
+    }
+    else
+    {
+        legalList=list( "+", "-", "_", "`", "!", "@", "#", "$", 
+			"%", "^", "&", "=", "|", ",", ";", "'");
+    }
+
+    if (!propName)
+        return(FALSE); /* nullpointer is not valid */
+
+    len = strlen(propName);
+    if(len == 0)
+        return(FALSE); /* empty strings are not valid either */
+
+    // work backwards through name checking for first illegal char
+
+    while( validName && len>0 )
+    {
+	ch = midstr(propName,len-1,len-1);
+        if( !(ifftolib_isalnum(ch)) && !(member(ch, legalList)) )
+            validName = FALSE;
+
+        len--;
+    }
+
+    return( validName );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Given a design/property name with invalid characters in it. Take
+// that name and replace the invalid characters with a "_".
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_fix_name( name )
+{
+    decl len, ch;
+    decl newName   = NULL;
+    decl i;
+    decl legalList;
+
+    if(IffAdsVersion < 130.403)
+    {
+        legalList=list( "-", "_" );
+    }
+    else
+    {
+        legalList=list( "+", "-", "_", "`", "!", "@", "#", "$", 
+			"%", "^", "&", "=", "|", ",", ";", "'");
+    }
+
+    if(!name)
+        return(FALSE); /* nullpointer is not valid */
+
+    len = strlen(name);
+    if(len == 0)
+        return(FALSE); /* empty strings are not valid either */
+
+    while( len > 0 )
+    {
+        ch = leftstr(name, 1);  
+
+        if( !(ifftolib_isalnum(ch)) && !(member(ch, legalList)))
+	    ch = "_";
+
+	if( newName == NULL )
+	    newName = ch;
+	else 
+	    newName = strcat(newName, ch);
+	
+	len--;
+	
+	name = rightstr(name, len);
+    }
+
+    return( newName );
+}
+
+//////////////////////////////////////////////////////////////////////
+// 
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_get_path_name(designName)
+{
+    if(!is_pdeoa_mode())
+    {
+        return( iff_get_path_name(IffSearchPathName, strcat(designName, ".dsn")) );
+    }
+    else
+    {
+        //de_info("Not ported: ifftolib_get_path_name(designName)");
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// Given a objectPath create the long and short name forms for it.
+// The ObjectPath is converted in to a long name by using the
+// following rules: 
+//
+//   -) Remove the leading "/".
+//  
+//   -) Remove the ":" and types.
+//
+//   -) Convert remaining "/" characters into "_".
+
+//////////////////////////////////////////////////////////////////////
+
+// THIS FUNCTION IS MADE OBSOLETE IN ADS2010
+defun ifftolib_build_names_from_objectpath(objectPath, longName, shortName)
+{
+  decl objList;
+  decl objData, objTmp;
+  decl newObjectPath;   // Fix problems that could occur because of a / character
+  decl i;
+  
+  *longName  = NULL;
+  *shortName = NULL;
+
+  if( objectPath == NULL )
+    return;
+
+  // objList = parse(objectPath, "", "/:");
+
+  objList = iffParseString(objectPath, "", "/:");  
+
+  /* Handle case where objectPath is already a short name */
+  if (member (":", objList) == NULL)
+  {
+     *longName = objectPath;
+     *shortName = objectPath;
+     return;
+  }
+
+  newObjectPath="";
+  
+  for (i=0;i<listlen(objList);i++)
+  {
+      
+      if (nth(i, objList) == "/")
+      {
+          if (nth(i+2, objList) != ":")
+          {
+              if (nth(i+1, objList) != ":")
+              {
+                  if(nth(i+2, objList))
+                  {
+                      // There was a forward slash in the object path.  Change it to an underscore
+                      newObjectPath=strcat(newObjectPath,"/",nth(i+1, objList),"_");
+                      i=i+2;
+                  }
+                  else
+                  {
+                      // This is the end of the object path.  Stick on the final stuff.
+                      newObjectPath=strcat(newObjectPath,"/",nth(i+1, objList));
+                      i=i+1;
+                  }
+                  
+              }
+              else 
+              {
+                  // There was an empty name field.  Leave it that way.
+                  newObjectPath=strcat(newObjectPath,"/:");
+                  i=i+1;
+              }
+          }
+          else
+          {
+              // This was a normal /: setup.  Put it together.
+              newObjectPath=strcat(newObjectPath,"/",nth(i+1, objList));
+              i=i+1;
+          }
+      }
+      else if (nth(i, objList) == ":")
+      {
+          if (nth(i+2, objList) != "/")
+          {
+              if (nth(i+1, objList) != "/")
+              {
+                  if(nth(i+2, objList))
+                  {
+                      // There was a colon in the object path.  Change it to an underscore
+                      newObjectPath=strcat(newObjectPath,":",nth(i+1, objList),"_");
+                      i=i+2;
+                  }
+                  else
+                  {
+                      // This is the end of the object path.  Stick on the final stuff.
+                      newObjectPath=strcat(newObjectPath,":",nth(i+1, objList));
+                      i=i+1;
+                  }
+              }
+              else
+              {
+                  // There was an empty design field.  This is invalid.  Change it to partition.
+                  newObjectPath=strcat(newObjectPath,":partition/");
+                  i=i+1;
+              }
+          }
+          else
+          {
+              // This was a normal /: setup.  Put it together.
+              newObjectPath=strcat(newObjectPath,":",nth(i+1, objList));
+              i=i+1;              
+          }
+
+      }
+      else
+      {
+          newObjectPath=strcat(newObjectPath, nth(i, objList));
+      }
+  }
+  
+  objList=iffParseString(newObjectPath, "/", "");
+  
+  while( objList != NULL )      
+    {
+      objData = iffParseString(car(objList), ":", "");
+      if (!nth(1,objData))
+      {
+          // This was probably an empty name in front of the colon.
+          // Make an objData that has the current objData as nth(1)
+          objTmp=list("");
+          objData=append(objTmp, objData); 
+      }
+      if( strcasecmp(nth(1, objData), "index") == 0 || strcasecmp(nth(1, objData), "symbol") == 0)
+      {
+          if( *shortName == NULL )
+              *shortName = ifftolib_fix_name(car(objData));
+          else
+              *shortName  = strcat(*shortName, "_", ifftolib_fix_name(car(objData)));
+      }
+      else
+      {
+          *shortName = ifftolib_fix_name(car(objData));
+      }
+
+
+      if( *longName == NULL )
+          *longName = ifftolib_fix_name(car(objData));
+      else
+          *longName  = strcat(*longName, "_", ifftolib_fix_name(car(objData)));          
+
+      objList = cdr(objList);
+    }
+
+}
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iffimport_get_property_from_list(propHandle, pName, pType)
+{
+  decl propName;
+  decl propValue;
+  decl propType;
+  decl localDebugMessageLevel = IffDebugMessageLevel;
+
+  while( propHandle != NULL )
+    {
+      propName = db_get_property_attribute(propHandle, PROPERTY_NAME);
+      if( localDebugMessageLevel > 15 )
+	print_value(strcat("checking property ", propName));
+
+      if(( propName != NULL )  && ( propName == pName ))
+	{
+	  propType = db_get_property_attribute(propHandle, PROPERTY_TYPE);
+	  if( localDebugMessageLevel > 15 )
+	    print_value(strcat("correct name, check type ", identify_value(propType)));
+	  if( propType == pType )
+	    {
+	      propValue = db_get_property_attribute(propHandle, 
+						    PROPERTY_VALUE_STRING);
+	      return( propValue );
+	    }
+	  return( NULL );
+	}
+      propHandle = db_next_property(propHandle);
+    }
+  return( NULL );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Check the objectpath. This property can have two equivalent
+// object types ("design" or "art"). We need to look and see if
+// the other type is defined during the check..
+//////////////////////////////////////////////////////////////////////
+defun check_objectpath(propValue, objectPath, designType )
+{
+  decl objType;
+  decl otherObjType;
+  decl i;
+  decl newObjPath;
+
+  if( propValue == NULL )
+    return(FALSE);
+
+  // First just check the object path directly.
+  if( strcasecmp(objectPath, propValue) == 0  )
+    return(TRUE); 
+
+  // Well that didn't match now check the other type.
+  if( designType ==  REP_SCHEM )
+    {
+      objType      = "art";
+      otherObjType = "design";
+    }
+  else
+    {
+      objType      = "design";
+      otherObjType = "art";
+    }
+  i = strlen(otherObjType);
+  if( strcasecmp(otherObjType, rightstr(propValue,i)) != 0 )
+    return(FALSE); // Wrong type....
+  
+  newObjPath = strcat(leftstr(propValue, strlen(propValue)-i), objType);
+  if( strcasecmp(newObjPath, objectPath) != 0 )
+    return(FALSE); // Still the wrong path...
+
+  return(TRUE);
+  
+}
+
+//////////////////////////////////////////////////////////////////////
+// Check the design pointed to by desName and check to see if the
+// objectPath exists on that design. If it does the check it against
+// the objectpath passed in. If the objectPath is the same then
+// return true else return false.
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_check_objectpath_on_design(objectPath, desName, foundObjectPath)
+{
+  decl desHandle;
+  decl repHandle;
+  decl symHandle;
+  decl propHandle;
+  decl propName;
+  decl propType;
+  decl propValue;
+  decl localDebugMessageLevel = IffDebugMessageLevel;
+
+  if( localDebugMessageLevel > 15 )
+    print_value("Begin: ifftolib_check_objectpath_on_design()");
+
+  desHandle = db_get_design(desName);
+  if( desHandle == NULL )
+    {
+      if( localDebugMessageLevel > 15 )
+	{
+	  print_value(strcat("failed to get design handle for ", desName));
+	  print_value("End:   ifftolib_check_objectpath_on_design()");
+	}
+      return(FALSE); // Unable to open design so return false
+    }
+
+  repHandle = db_get_rep(desHandle, REP_LAY);
+  if( repHandle != NULL )
+    {
+      if( localDebugMessageLevel > 15 )
+	print_value("check layout rep");
+      propHandle = db_get_rep_attribute(repHandle, REP_PROPERTY);
+      propValue = iffimport_get_property_from_list(propHandle,
+						   "HPEESOF_FULL_PATH", 3);
+      if( propValue != NULL )
+	*foundObjectPath = TRUE;
+
+      if( check_objectpath(propValue,objectPath, REP_LAY) == TRUE )
+	{
+	  if( localDebugMessageLevel > 15 )
+	    {
+	      print_value(strcat("Found object path layout rep for ",desName));
+	      print_value("End:   ifftolib_check_objectpath_on_design()");
+	    }
+	  return(TRUE);
+	}
+    }
+  
+  if( localDebugMessageLevel > 15 )
+    print_value("check schematic rep");
+  repHandle = db_get_rep(desHandle, REP_SCHEM);
+  if( repHandle == NULL )
+    {
+      if( localDebugMessageLevel > 15 )
+	{
+	  print_value(strcat("failed to get rep handle for ", desName));
+	  print_value("End:   ifftolib_check_objectpath_on_design()");
+	}
+      return(FALSE); // Unable to open rep so return false
+    }
+
+  propHandle = db_get_rep_attribute(repHandle, REP_PROPERTY);
+  propValue = iffimport_get_property_from_list(propHandle,
+					       "HPEESOF_FULL_PATH", 3);
+  if( propValue != NULL )
+    *foundObjectPath = TRUE;
+
+  if( check_objectpath(propValue,objectPath, REP_SCHEM) == TRUE )
+    {
+      if( localDebugMessageLevel > 15 )
+	{
+	  print_value(strcat("Found object path schematic rep for ", desName));
+	  print_value("End:   ifftolib_check_objectpath_on_design()");
+	}
+      return(TRUE);
+    }
+
+  symHandle = db_get_rep_attribute(repHandle, REP_SYMBOL);
+  if( symHandle == NULL )
+    {
+      if( localDebugMessageLevel > 15 )
+	{
+	  print_value(strcat("failed to get symbol handle for ", desName));
+	  print_value("End:   ifftolib_check_objectpath_on_design()");
+	}
+      return(FALSE); // Unable to get symbol so return false
+    }
+
+  propHandle = db_get_symbol_attribute(symHandle, SYMB_PROPERTY);
+  if( propHandle == NULL )
+    {
+      if( localDebugMessageLevel > 15 )
+	{
+	  print_value(strcat("failed to get property handle for ", desName));
+	  print_value("End:   ifftolib_check_objectpath_on_design()");
+	}
+      return(FALSE); // No properties so return false
+    }
+
+  propValue=iffimport_get_property_from_list(propHandle,"HPEESOF_FULL_PATH",3);
+
+  if( propValue != NULL )
+    *foundObjectPath = TRUE;
+
+  if( check_objectpath(propValue, objectPath, REP_SCHEM) == TRUE )
+    {
+      if( localDebugMessageLevel > 15 )
+	{
+	  print_value("found it object path...... return TRUE");
+	  print_value("End:   ifftolib_check_objectpath_on_design()");
+	}
+      return(TRUE);
+    }
+
+  if( localDebugMessageLevel > 15 )
+    {
+      print_value("did not find it object path...... return FALSE");
+      print_value("End:   ifftolib_check_objectpath_on_design()");	
+    }
+
+  return(FALSE);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Examine the path passed in and check to see if it is in the
+// HPEESOF_DIR directory tree. If it is then return TRUE else FALSE.
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_check_for_system_design(desName)
+{
+    decl len;
+    decl desLen;
+    decl localDebugMessageLevel = IffDebugMessageLevel;  
+    decl systemPath;
+    decl systemList;
+    decl checkDir;
+    decl networkDir;
+    decl dirSep = iff_get_directory_delimiter();
+    decl desList=iffParseString(desName, "", dirSep);
+    decl desPath, i;
+    desLen = strlen(desName);
+    networkDir = getenv("NETWORKS");
+
+    systemPath = iff_get_library_path();
+    systemList = iffParseString(systemPath, ":;", "");
+    while( systemList != NULL )
+    {
+        checkDir = car(systemList);
+	systemList = cdr(systemList);
+
+	len = strlen(checkDir);
+	if(( dirSep == "\\" ) && ( len == 1 ))
+	{
+	    checkDir = strcat(checkDir, ":", car(systemList));
+	    systemList = cdr(systemList);
+	    len = strlen(checkDir);
+	}
+
+	if(( checkDir != networkDir ) && 
+	   ( desLen > len ) && ( leftstr(desName, len) == checkDir ))
+	{
+	    return( TRUE );
+	}
+    }
+
+    // If the design was not found in the search path, check to see if it is a full path, 
+    // and if the full path is the current directory with networks.  If it is not, 
+    // return TRUE.
+
+    networkDir=strcat(getcwd(), dirSep, "networks");
+    desPath="";
+
+    for(i=0; i<listlen(desList)-2; i++)
+    {
+        desPath=strcat(desPath, nth(i, desList));
+    }
+
+    if(networkDir != desPath)
+    {
+        return( TRUE );
+    }
+
+    return( FALSE );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_check_name(designName, objectPath, dontCheckObjectPath)
+{
+    decl origName;
+    decl desName;
+    decl returnName;
+    decl validName;
+    decl msg;
+    decl foundObjectPath = FALSE;
+    decl itemDef;
+
+    returnName = NULL;
+
+    // Make sure that they are valid names....
+
+    validName = iff_valid_design_name( designName );
+    origName = designName;
+    if( validName == FALSE )
+        designName = iff_fix_design_name( designName );
+
+    // desName = iff_get_path_name(IffSearchPathName, strcat(designName, ".dsn"));
+
+    if (itemDef=dm_find_item_definition(dm_get_adm_name(designName),1))
+    {
+        desName=dm_get_item_definition_attribute(itemDef, ITEM_SCHEM_NAME);
+    }
+
+    if(( desName != NULL ) && ( desName != "" ))
+    {
+        if(( dontCheckObjectPath == TRUE ) || 
+	   ( ifftolib_check_objectpath_on_design(objectPath,desName,
+						 &foundObjectPath) == TRUE ))
+	{
+	    if( validName == FALSE )
+	    {
+	        msg = strcat("WARNING: Invalid characters found in name.\n",
+			     "           Original Name = ", origName,"\n");
+		msg = strcat(msg, 
+			     "           Using Name    = ", designName,"\n");
+		iff_log_message(list(msg));
+	    }
+
+	    returnName = designName;
+
+	}
+
+        //
+        // If we did not find an ObjectPath on the design and that objectpath
+        // did not match the current ObjectPath then test the ObjectPath that
+        // would be assigned to this define if it were exported. If the test
+        // ObjectPath matches then assume that this design is the same one in
+        // the IFF and return it as the design name.
+        //
+        if(( returnName == NULL ) && ( foundObjectPath == FALSE ))
+	{
+	    decl a = strcat("/", iff_get_project_name_from_path(getcwd()), 
+			    ":file/", designName, ":design");
+
+	    if( check_objectpath(a ,objectPath, REP_SCHEM) == TRUE )
+	    {
+	        returnName = designName;
+
+		if( validName == FALSE )
+		{
+		    msg = strcat("WARNING: Invalid characters found in name.\n",
+				 "           Original Name = ", origName,"\n");
+		    msg = strcat(msg, 
+				 "           Using Name    = ", designName,"\n");
+		    iff_log_message(list(msg));
+		}
+	    }
+	}
+    }
+
+    return( returnName );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_check_for_reserved_name(returnName, longName)
+{
+    decl resName    = "untitled";
+    decl resNameFix = "UnNamed";
+    decl resNameLen = strlen(resName);
+    decl msg;
+
+    if(( strlen(returnName) >= resNameLen ) &&
+       ( leftstr(returnName, resNameLen) == resName ))
+    {
+        msg = strcat("Invalid design name \"", returnName, "\"");
+        returnName = strcat(resNameFix, 
+                            rightstr(returnName, strlen(returnName)-resNameLen));
+        msg = strcat(msg, " using design name \"", returnName, "\".\n");
+        msg = strcat(msg, 
+                     "Any design beginning with \"untitled\" is reserved in ADS.\n");
+        iff_log_message(list(msg));
+    }
+
+    /*
+    else if( iff_is_reserved_name(returnName) == TRUE )
+    {
+        msg = strcat("Invalid design name \"", returnName, "\"");
+	if(iffImportPrefixLibrary)
+	{
+	    if( returnName == longName )
+                longName = strcat("Iff_", longName);
+	    returnName = longName;
+	    msg = strcat(msg, " using long design name \"", returnName, "\".\n");
+	    iff_log_message(list(msg));
+	}
+    }
+    */
+
+    return( returnName );
+
+}
+
+/*
+// 
+// In ADS the long name concept will still be used. However, in ADS
+// the long name will only be used when required to avoid
+// conflicts. If a conflict with another design does not exist then
+// just the design name will be used. This will avoid having to attach
+// a property to the design/instance that defines the name. It also
+// allows the users design names to be used whenever possible.
+//
+// The following rules will be used to determine if the design name or 
+// long name should be used.
+//
+//   -) If no conflict occur the use the design name.
+// 
+//   -) If a conflict occurs with some other design name and that
+//      conflicting design has the same object path as the one being 
+//      imported then the design name will be used. This will in
+//      effect cause the local design to take precedence over the
+//      conflicting design. 
+//
+//   -) If a conflict occurs with some other design name and the 
+//      conflicting design has a different object path then the long
+//      name will be used. 
+//
+//   -) If a conflict occurs with some other design name and the  
+//      conflicting design has never had a object path assigned to it 
+//      then the long name will be used. 
+//
+*/
+defun ifftolib_get_name(objectPath)
+{
+    decl longName;
+    decl shortName;
+    decl origName;
+    decl desName;
+    decl returnName;
+    decl validName;
+    decl msg;
+    decl oldList;
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+
+    if( localDebugMessageLevel > 15 )
+	print_value("Begin: ifftolib_get_name()");
+
+    oldList = member(objectPath, IfftolibObjectToSymbolList);
+    if( oldList != NULL )
+    {
+	desName = car(cdr(oldList));
+	if( localDebugMessageLevel > 15 )
+	{
+	    print_value(strcat("ObjectPath previously checked... using design ", 
+			       desName, " for objectpath of ", objectPath));
+	    print_value("End:   ifftolib_get_name()");
+	}
+
+	return( desName );
+    }
+
+    ifftolib_build_names_from_objectpath(objectPath, &longName, &shortName);
+
+    if( localDebugMessageLevel > 15 )
+    {
+	msg = strcat("Creating long and short names from object path\n",
+		     "              ObjectPath = ", objectPath, "\n",
+		     "              Long Name  = ", longName, "\n",
+		     "              Short Name = ", shortName, "\n");
+	iff_log_message(list(msg));
+    }
+
+    returnName = iff_import_check_name(shortName, objectPath, FALSE);
+    if( returnName != NULL )
+    {
+	// The objectPath was found on the design so use short name.
+	if( iff_valid_design_name( shortName ) == FALSE )
+	    shortName = iff_fix_design_name( shortName );
+
+	if( localDebugMessageLevel > 15 )
+	    print_value(strcat("Using short name ", shortName));
+
+	returnName = shortName;
+    }
+    else
+    {
+	returnName = iff_import_check_name(longName, objectPath, FALSE);
+	if( returnName != NULL )
+	{
+	    // The objectPath was found on the design so use long name.
+	    if( iff_valid_design_name( longName ) == FALSE )
+		longName = iff_fix_design_name( longName );
+
+	    if( localDebugMessageLevel > 15 )
+		print_value(strcat("Using long name ", longName));
+
+	    returnName = longName;
+	}
+    }
+
+    if( returnName == NULL )
+    {
+	returnName = iff_import_check_name(shortName, objectPath, TRUE);
+	if (localDebugMessageLevel > 15)
+	    print_value(strcat("iff_import_check_name returned ", identify_value(returnName)));
+	// A design in the project is using the shortName already.  That is fine, we want 
+        // to tack this design view onto that design.
+      
+        if( iff_valid_design_name( shortName ) == FALSE )
+	    shortName = iff_fix_design_name( shortName );
+
+	if( localDebugMessageLevel > 15 )
+	    print_value(strcat("Using short name ", shortName));
+
+	returnName = shortName;
+
+	/*  
+	if( returnName != NULL )
+	{
+	    // The design is already in use so use long name 
+	    if( iff_valid_design_name( longName ) == FALSE )
+		longName = iff_fix_design_name( longName );
+
+	    if( localDebugMessageLevel > 15 )
+		print_value(strcat("Using long name ", longName, ", check name = TRUE."));
+
+	    returnName = longName;
+        }
+	else
+	{
+	    // No one is using the shortname so use it..
+	    if( iff_valid_design_name( shortName ) == FALSE )
+	        shortName = iff_fix_design_name( shortName );
+
+	    if( localDebugMessageLevel > 15 )
+	        print_value(strcat("Using short name ", shortName));
+
+	    returnName = shortName;
+	}
+	*/
+    }
+
+    // If the user has designated that short names should always be used, return the short name
+
+    if(!iffImportPrefixLibrary)
+    {
+        returnName=shortName;
+    }
+
+    // Check to see if the name is reserved by the PDE...
+    if(delibsvr_query_item_definition(1, returnName))
+    {
+        if(returnName == longName)
+	{
+	    // We are in trouble.  The short name and long name were apparently 
+            // already in use.  Prefix with "IFF_"...
+	    returnName=strcat("IFF_", longName);
+	}
+	else
+	{
+	    returnName=longName;
+	}
+    }
+
+    //
+    // Check for design names that begin with "untitled". These
+    // are reserved design names in ADS so we can not use them. If
+    // it is a reserved name then change the "untitled" part to "Untitled".
+    //
+    returnName = iff_check_for_reserved_name(returnName,longName);
+
+    if( IfftolibObjectToSymbolList == NULL )
+      IfftolibObjectToSymbolList = list(objectPath, returnName);
+    else
+      IfftolibObjectToSymbolList = append(IfftolibObjectToSymbolList,
+					list(objectPath, returnName));
+
+    if( localDebugMessageLevel > 15 )
+      print_value("End:   ifftolib_get_name()");
+
+    return( returnName );
+}
+
+//
+// 
+// In ADS the long name concept will still be used. However, in ADS
+// the long name will only be used when required to avoid
+// conflicts. If a conflict with another design does not exist then
+// just the design name will be used. This will avoid having to attach
+// a property to the design/instance that defines the name. It also
+// allows the users design names to be used whenever possible.
+//
+// For instances the problem becomes a little more complex. We want
+// to still make the same searches but only and check for the object
+// path on each design checked. If neither the long or short names
+// have a object path then we want to use the short name design
+// first and then finally the long name design.
+//
+// The following rules will be used to determine if the instance name
+// to use:
+//
+//   - If long name exists and has the same object path.
+//
+//   - If short name exists and has the same object path.
+//
+//   - If long name exists.
+//
+//   - If short name exists.
+//
+//   - Error if no design exists for instance.
+//
+//
+defun ifftolib_get_instance_name(objectPath, updateList)
+{
+    decl longName;
+    decl shortName;
+    decl origName;
+    decl shortDesName;
+    decl longDesName;
+    decl returnName;
+    decl validName;
+    decl msg;
+    decl oldList;
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+
+    oldList = member(objectPath, IfftolibObjectToInstanceList);
+    if( oldList != NULL )
+    {
+        returnName = car(cdr(oldList));
+	return( returnName );
+    }
+
+    ifftolib_build_names_from_objectpath(objectPath, &longName, &shortName);
+
+    // First check designs for matching object paths.;
+    returnName = iff_import_check_name(longName, objectPath, FALSE);
+
+    if( returnName == NULL )
+    {
+        // Now check to see if short name has matching object path...;
+	returnName = iff_import_check_name(shortName, objectPath, FALSE);
+	if( returnName == NULL )
+	{
+	    // Now check to see if short name design exists;
+	    returnName = iff_import_check_name(longName, objectPath, TRUE);
+	    if( returnName == NULL )
+	    {
+	        // Finally, check to see if long name exists...;
+		returnName = iff_import_check_name(shortName, objectPath, TRUE);
+		if( returnName == NULL )
+		{
+		    // No design path (may be system symbol) so return shortName;
+		    validName = iff_valid_design_name( shortName );
+		    if( validName == FALSE )
+		    {
+		        shortName = iff_fix_design_name( shortName );
+		    }
+		    returnName = strcat(shortName, ".dsn");
+		}
+	    }
+	}
+	else
+	{
+	    updateList = TRUE;
+	}
+    }
+    else
+    {
+        updateList = TRUE;
+    }
+    
+    //
+    // Check for design names that begin with "untitled". These
+    // are reserved design names in ADS so we can not use them. If
+    // it is a reserved name then change the "untitled" part to "Untitled".
+    //
+
+    returnName = iff_check_for_reserved_name(returnName,longName);
+
+    if( updateList == TRUE )
+    {
+        if( IfftolibObjectToInstanceList == NULL )
+	    IfftolibObjectToInstanceList = list(objectPath, returnName);
+	else
+	    IfftolibObjectToInstanceList = append(IfftolibObjectToInstanceList,
+						  list(objectPath, returnName));
+    }
+
+    return( returnName );
+
+}
+
+//////////////////////////////////////////////////////////////////////
+// Sets the current OS path to the symbol
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_set_symbolpath(newSymbolPath)
+{
+  if(( newSymbolPath == NULL ) || ( newSymbolPath == "" ))
+    return;
+
+  ifftolibLastSymbolPath    = ifftolibCurrentSymbolPath;
+  ifftolibCurrentSymbolPath = newSymbolPath;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Return the current OS path to the symbol
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_get_symbolpath()
+{
+  if( ifftolibCurrentSymbolPath == NULL )
+    {
+      print_value("ERROR: Attempt to return NULL symbol path");
+      return("");   
+    }
+  else
+    {
+      // print_value(ifftolibCurrentSymbolPath);
+      return(ifftolibCurrentSymbolPath);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// Sets the current symbol name
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_set_symbolname(newSymbolName)
+{
+  if(( newSymbolName == NULL ) || ( newSymbolName == "" ))
+    return;
+
+  ifftolibCurrentSymbolName = newSymbolName;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Return the current symbol name
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_get_symbolname()
+{
+  if( ifftolibCurrentSymbolName == NULL )
+    {
+      print_value("ERROR: Attempt to return NULL symbol name");
+      return("");   
+    }
+  else
+    {
+      // print_value(ifftolibCurrentSymbolName);
+      return(ifftolibCurrentSymbolName);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// Sets the current design name
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_set_designname(newDesignName)
+{
+  if(( newDesignName == NULL ) || ( newDesignName == "" ))
+    return;
+
+  ifftolibCurrentDesignName = newDesignName;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Return the current design name
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_get_designname()
+{
+  if( ifftolibCurrentDesignName == NULL )
+    {
+      print_value("ERROR: Attempt to return NULL design name");
+      return("");   
+    }
+  else
+    {
+      // print_value(ifftolibCurrentDesignName);
+      return(ifftolibCurrentDesignName);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// Sets the current design name
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_set_designpath(newDesignPath)
+{
+  if(( newDesignPath == NULL ) || ( newDesignPath == "" ))
+    return;
+  ifftolibLastDesignPath = ifftolibCurrentDesignPath;
+  ifftolibCurrentDesignPath = newDesignPath;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Return the current design name
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_get_designpath()
+{
+  if( ifftolibCurrentDesignPath == NULL )
+    {
+      print_value("ERROR: Attempt to return NULL design path");
+      return("");   
+    }
+  else
+    {
+      // print_value(ifftolibCurrentDesignPath);
+      return(ifftolibCurrentDesignPath);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// Sets the current object path
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_set_objectpath(newObjectPath)
+{
+    if(( newObjectPath == NULL ) || ( newObjectPath == "" ))
+        return;
+
+    ifftolibCurrentObjectPath = newObjectPath;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Return the current objectpath
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_get_objectpath()
+{
+    if( ifftolibCurrentObjectPath == NULL )
+    {
+        print_value("ERROR: Attempt to return NULL object path");
+        return("");   
+    }
+    else
+    {
+        // print_value(ifftolibCurrentObjectPath);
+        return(ifftolibCurrentObjectPath);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Open a new design and return the handle to it....
+/////////////////////////////////////////////////////////////////////////////
+defun iff_new_design(designPath, designCode, skipCheck, skipLookup)
+{
+    decl designHandle;
+
+    new_design(designPath, designCode, skipCheck, skipLookup);
+    designHandle = iff_db_find_design(designPath);
+
+    return( designHandle );
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Create a new design, switch to it and initialize the defaults for the
+// design.
+/////////////////////////////////////////////////////////////////////////////
+defun ifftolib_new_symbol(desObjPath, 
+			  symObjPath, designCode, extraStuff, useSymbol)
+{
+    decl windowCode;
+    decl designHandle;
+    decl designName;
+    decl designPath;
+    decl symbolName;
+    decl symbolPath;
+    decl msg;
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+    decl winList;
+  
+    windowCode = 1;
+
+    IffImportDesignType = windowCode;
+
+    symbolName = ifftolib_get_name(symObjPath);
+    symbolPath = ifftolib_current_design_name(symbolName);
+    
+    designName = ifftolib_get_name(desObjPath);
+    designPath = ifftolib_current_design_name(designName);
+
+    msg = list(symObjPath, strcat(symbolPath, ".dsn"));
+    if( IfftolibObjectToInstanceList == NULL )
+        IfftolibObjectToInstanceList = msg;
+    else
+        IfftolibObjectToInstanceList = append(IfftolibObjectToInstanceList, msg);
+
+    if( symObjPath != desObjPath ) 
+    {
+        msg = list(desObjPath, strcat(designPath, ".dsn"));
+        if( IfftolibObjectToInstanceList == NULL )
+            IfftolibObjectToInstanceList =msg;
+        else
+            IfftolibObjectToInstanceList =append(IfftolibObjectToInstanceList,msg);
+    }
+
+    ifftolib_set_objectpath( symObjPath );
+    ifftolib_set_symbolname( symbolName );
+    ifftolib_set_symbolpath( symbolPath );
+    ifftolib_set_designname( designName );
+    ifftolib_set_designpath( designPath );
+    
+    IffLastWindowType    = IffCurrentWindowType;
+    IffCurrentWindowType = IFF_SYMBOL;
+
+    // Are we creating the design object for the symbol of the symbol
+    // itself?
+    if( useSymbol == FALSE )
+    {
+        ifftolib_set_objectpath( desObjPath );
+        symbolName = designName;
+        symbolPath = designPath;        
+    }
+
+    iff_log_message(list("Build symbol for", symbolName));
+
+    // Output any warning message after we tell the user what design...
+
+    if( designCode == -1 )
+    {
+        designCode = 1;
+    }
+							     
+    if( ifftolibSchematicWindowOpen == FALSE )
+    {
+        open_window(windowCode);     
+        ifftolibSchematicWindowOpen = TRUE;
+    }
+
+    designHandle = iff_db_find_design(symbolPath);
+    
+    if( designHandle != NULL )
+    {
+        iff_show_design_in_window(designHandle, windowCode);
+
+	// Turn off backup
+	set_backup_count(0);
+
+        if( localDebugMessageLevel > 15 )
+            print_value("Clearing design");
+        iff_switch_view(IFF_SYMBOL_VIEW);
+        iff_clear_symbol(); // Clear the current symbol
+                                   // Need to remove properties.
+        remove_symbol_properties();
+    }
+    else
+    {
+        // New design will set the new design in the window.
+        designHandle = iff_new_design(symbolPath, designCode, FALSE, TRUE);
+        iff_show_design_in_window(designHandle, windowCode);
+	// Turn off backup
+	set_backup_count(0);
+    }
+
+    iff_initialize_current_de_defaults();
+
+    ifftolib_add_to_symbol_list(symbolName);
+
+    iff_disable_window_attributes();
+
+    iff_switch_view(IFF_SYMBOL_VIEW);
+
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun print_value(value)
+{
+    if (IffDebugMessageLevel > 10)
+    {
+        fputs(stderr,identify_value(value));
+    }   
+}
+
+// form feed function 
+defun ff(num)
+{
+    while(num-- > 0)
+        fputs(stderr,"");
+}
+
+defun ifftolib_new_rot(rot)
+{
+    if(rot == 1)
+        return("DOWN");
+    else if(rot == 2)
+        return("RIGHT");
+    else if(rot == 3)
+        return("UP");
+    else return("LEFT");
+}
+
+defun ifftolib_set_grid_preferences(gridDisplay, gridSnap, 
+				    gridMinor, gridMajor, designName)
+{
+    decl oldSnap, oldMinor, oldMajor, oldDisplay;
+    decl savePref = FALSE;
+    decl prefName;
+
+    prefName = strcat(designName, ".prf");
+
+    if( IffDebugMessageLevel > 15 )
+      print_value("setup preferences");
+
+    oldDisplay = iff_get_preference(GRID_DISPLAY_P);
+    oldSnap    = iff_get_preference(GRID_SNAP_X_P);
+    oldMinor   = iff_get_preference(GRID_DISPLAY_X_P);
+    oldMajor   = iff_get_preference(MAJOR_GRID_DISPLAY_X_P);
+
+    if( IffDebugMessageLevel > 15 )
+      print_value(iff_get_preference(PIN_SIZE_P));
+    
+    /*
+    set_grid_snap(gridSnap, gridSnap, 1);
+    if(gridDisplay != oldDisplay || gridMinor != oldMinor)
+    {
+        set_minor_grid_display(gridMinor, gridMinor, gridDisplay);
+	savePref=TRUE;
+    }
+
+    if(gridDisplay != oldDisplay || gridMajor != oldMajor)
+    {
+        set_major_grid_display(gridMajor, gridMajor, gridDisplay);
+	savePref=TRUE;
+    }
+    */
+
+    if(gridSnap != oldSnap)
+	savePref=TRUE;
+    
+    // set annotation text small so named nets are not obtrusive
+    // named net sizes are not saved anywhere like annot size on an inst
+    // so on every redraw it takes the current value
+
+    // Do not change the annotation height, use the default setting.
+
+    // set_annotation_height(.06);
+
+    iff_import_restore_backup_count();
+    if(savePref)
+    {
+        if( IffDebugMessageLevel > 15 )
+	    print_value("Saving preferences");
+	write_preference("schematic.prf");
+	//currently also have to reread the file to make it stick
+	read_preference("schematic.prf");
+    }
+    /*
+    else 
+    {
+        write_preference("schematic.prf");
+    }
+    */
+
+    iff_import_save_backup_count();
+
+}
+
+defun ifftolib_isdigit(ch)
+{
+    return((ch >= "0" && ch <= "9"));
+}
+
+defun ifftolib_isalnum(ch)
+{
+    return((ch >= "A" && ch <= "z") ||
+        (ch >= "0" && ch <= "9"));
+}
+
+// check for a number-string pair that may have been separated such as 42mil
+defun is_delimiter(strg)
+{
+    if(strlen(strg) > 1)
+	return(FALSE);
+
+/*    if(strg == "+" || strg == "-" || strg == "*" || strg == "/" ||
+	    strg == "=" || strg == "," || strg == "~" || 
+	    strg == "&" || strg == "^" ||
+	    strg == "<" || strg == ">" || 
+	    strg == "(" || strg == ")" || 
+	    strg == "{" || strg == "}" || 
+	    strg == "[" || strg == "]" || 
+	    strg == " " || strg == "\t" )*/
+
+    if(strg == "," || strg == "(" || strg == ")" )
+	return(TRUE);
+
+    return(FALSE);
+}
+
+// if this valueList has 2 or more nonDelims in a row, need to cat them
+// only consider ,() as the real delimiters
+defun post_parse(valueList)
+{
+    decl newList, prevStrg, value;
+
+    //print_value(valueList);//ff(2);
+    while(valueList)
+    {
+       value = car(valueList);
+       if(is_delimiter(value))
+       {
+	   // this was failing for a zero length string or int value = 0
+	   if(prevStrg || prevStrg == "" || prevStrg == 0)
+               newList = append(newList,list(prevStrg));
+           newList = append(newList,list(value));
+	   prevStrg = NULL;
+       }
+       else
+       {
+	   if(prevStrg)
+               prevStrg = strcat(prevStrg,value);
+           else prevStrg = value;
+       }
+
+       valueList = cdr(valueList);
+    }
+
+    // pick up any last bits still in strg
+    if(prevStrg || prevStrg == "" || prevStrg == 0)
+       newList = append(newList,list(prevStrg));
+    //print_value(newList);ff(2);
+    return(newList);
+}
+
+// parse w/out delims and markers (operators) returns "10mil" as list("10","mil")
+//                                     also splits    "-0.55"  into "-" and 0.55
+// added post_parse() to put them back together
+defun ifftolib_parse(value)
+{
+    decl valueList;
+    valueList = parse(value);
+    valueList = post_parse(valueList);
+    return(valueList);
+}
+
+
+// given a list with the first word being "(" 
+// return the list of everything // between matching ()s
+// listP should point to ")" on return
+defun list_to_sublist(listP)
+{
+    decl subList, item, ctr;
+
+    // move past the "(" to start searching for ")"
+    *listP = cdr(*listP);
+    ctr=1;
+    subList = NULL;
+
+    while(*listP)
+    {
+        item = car(*listP);
+        if(item == ")")
+	{
+	    ctr--;
+            if(ctr == 0)
+		return(subList);
+	    else subList = append(subList, list(item));
+        }
+	else
+	{
+            if(item == "(")
+                ctr++;
+            subList = append(subList, list(item));
+        }
+
+        *listP = cdr(*listP);
+    }
+
+}
+
+// given a parsed string, convert to argument list */
+// returns a list value
+defun strg_to_args(strgList, paramType)
+{
+    decl strg, newArg, argList, subList;
+
+    // ff(1);print_value(list("HERE 0->",strgList, what_line()));
+
+    argList = NULL;
+    while(strgList)
+    {
+        strg = car(strgList);
+        if( strg == "prm" || strg == "list" )
+        {
+	    strgList = cdr(strgList);
+	    //print_value(list("HERE 1->",fmt_tokens(strgList)));
+	    subList = list_to_sublist(&strgList);
+	    newArg = strg_to_args(subList);
+            if( strg == "prm" )
+	        newArg = call(prm, newArg);
+            else newArg = call(list, newArg);
+	}
+	else 
+        {
+            //print_value(list("HERE 3->", paramType, strg));
+
+            newArg = val(strg);  // see if it is a number
+
+	    if( ! newArg )
+	        newArg = strg;   // must be a plain old string
+	    else if( paramType == "string" )      // need to force to strg
+		newArg = fmt_tokens(list(strg));
+	}
+
+        argList = append(argList, list(newArg));
+
+        strgList = cdr(strgList);
+	if(strgList && car(strgList) == "," )
+            strgList = cdr(strgList);
+    }
+    return(argList);
+}
+
+defun strg_to_single_arg(strg,paramType)
+{
+    decl retVal;
+    decl tmp;
+
+    return(strg);
+
+    if(strg == "")
+      {
+	retVal = car(strg_to_args(list("")));
+      }
+    else 
+      {
+	tmp = ifftolib_parse(strg);
+	retVal = car(strg_to_args(tmp, paramType));
+      }
+
+    // retVal = iff_scale_property_value_by_defaults(retVal);
+
+    return(retVal);
+}
+
+//////////////////////////////////////////////////////////////////////
+// delete the ith item in the list 
+//////////////////////////////////////////////////////////////////////
+defun delete_list_item( list1, i )
+{
+  decl list2, ctr;
+
+  /* if null list passed in or i past end of list, return list */
+  if( ! list1 || listlen(list1) <= i )
+    return(list1);
+
+  ctr = 0;
+  while( list1 )
+  {
+    if( !(ctr == i) )
+    {
+      if( ! is_list( list2 ) )        /* first item? */
+        list2 = list(car(list1));
+      else 
+        list2 = append( list2, list(car(list1)) );
+    }
+    ctr = ctr + 1;
+    list1 = cdr(list1);
+  }
+
+  return( list2 );
+}
+
+
+// search newPropList for the given propName
+// if found, return the new value and delete the property from the list
+// if not found, return NULL and reset newPropList to previous state
+defun new_property_value(propName, newPropList)
+{
+    decl tmpPropList, ctr, propValue;
+
+    tmpPropList = *newPropList;
+    ctr = 0;
+
+    while(tmpPropList)
+    {
+        if(strcasecmp(propName, car(tmpPropList))==0)
+	{
+	     propValue = car(cdr(tmpPropList));
+
+	     // delete_list_item() is currently in libtospc.ael
+	     // delete the name
+             *newPropList = delete_list_item(*newPropList, ctr);
+	     // delete the value
+             *newPropList = delete_list_item(*newPropList, ctr);
+
+             return(propValue);
+	}
+
+
+        tmpPropList = cdr(cdr(tmpPropList));
+	ctr+=2;
+    }
+
+    return(NULL);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun update_old_properties(oldPropList, newPropList)
+{
+    decl tmpPropList, propValue, propName, newValue, ctr;
+
+    if( IffDebugMessageLevel > 15 )
+      print_value("Begin: update_old_properties()");
+
+    ctr=0;
+    tmpPropList=NULL;
+
+    while(oldPropList)
+    {
+	propName = car(oldPropList);
+	newValue = new_property_value(propName, newPropList);
+
+	if(newValue)
+	{
+            if(! tmpPropList)
+	        tmpPropList = list(propName, newValue);
+	    else
+	        tmpPropList = append(tmpPropList,list(propName, newValue));
+	}
+	else
+	{
+            if(! tmpPropList)
+	        tmpPropList = list(propName, car(cdr(oldPropList)));
+	    else
+	        tmpPropList = append(tmpPropList,
+				list(propName, car(cdr(oldPropList))));
+	}
+        oldPropList = cdr(cdr(oldPropList));
+    }
+
+    if( IffDebugMessageLevel > 15 )
+      print_value("End:   update_old_properties()");
+
+    return tmpPropList;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iffimport_check_postfix(value, postfix)
+{
+  return( strcasecmp(rightstr(value,strlen(postfix)),postfix) == 0 );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iffimport_is_reserved_attr(propName)
+{
+  decl retStat = FALSE;
+  decl postLst = IffResParmPostLst;
+
+  if( IffDebugMessageLevel > 15 )
+    print_value("Begin: iffimport_is_reserved_attr()");
+
+  while(( postLst != NULL ) && ( retStat == FALSE ))
+    {
+      retStat = iffimport_check_postfix(propName, car(postLst));
+      postLst = cdr(postLst);
+    }
+
+  if( retStat == FALSE )
+    retStat = (( strcmp(propName, "ADS_ITEM_NAME") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_LABEL") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_ATTR") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_ATTR_EX") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_PRIORITY") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_PREFIX") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_DIALOG_CODE") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_DIALOG_NAME") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_DIALOG_DATA") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_NET_FORMAT") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_NET_DATA") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_SCHEM_FORMAT") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_SCHEM_NAME") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_ART_DATA") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_ART_TYPE") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_ICON") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_FILE") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_MODIFIED") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_OLD_ITEM") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_LOADED") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_DATE") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_PARMS") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_NETLIST_CB") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_PLACEMENT_CB") == 0 ) ||
+	       ( strcmp(propName, "ADS_ITEM_SIMTYPE") == 0 ));
+
+  if( IffDebugMessageLevel > 15 )
+    print_value("End:   iffimport_is_reserved_attr()");
+
+  return( retStat );
+}
+
+//////////////////////////////////////////////////////////////////////
+// go through newPropList and pull off all properties ending in 
+// _HPEESOF_PROP_TYPE return list of propTypes also throw out all 
+// properties ending in:
+//         _PARM_LABEL
+//         _PARM_ATTR
+//         _PARM_FORMSET
+//         _PARM_UNIT
+//         _PARM_INDEX
+//////////////////////////////////////////////////////////////////////
+defun extract_proptypes(newPropList, propTypeList)
+{
+    decl tmpPropList, propName;
+
+    if( IffDebugMessageLevel > 15 )
+      print_value("Begin: extract_proptypes()");
+
+    tmpPropList = NULL;
+
+    while(newPropList)
+    {
+	propName = car(newPropList);
+	newPropList = cdr(newPropList);
+
+	if( iffimport_check_postfix(propName, "_HPEESOF_PROP_TYPE") )
+	{
+            propName = leftstr(propName,(strlen(propName)-14));
+	    if(! *propTypeList)
+		*propTypeList = list(propName, car(newPropList));
+	    else
+		*propTypeList = append(*propTypeList,
+				list(propName, car(newPropList)));
+	}
+        else if( strcasecmp(propName, "HPEESOF_DEACTIVATE") != 0 &&
+                ! iffimport_is_reserved_attr(propName))
+	{
+	    if(! tmpPropList)
+		tmpPropList = list(propName, car(newPropList));
+	    else
+		tmpPropList = append(tmpPropList,
+				list(propName, car(newPropList)));
+	}
+
+        newPropList = cdr(newPropList);
+    }
+
+    if( IffDebugMessageLevel > 15 )
+      print_value("End:   extract_proptypes()");
+
+    return(tmpPropList);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun property_type(propName, propTypeList)
+{
+    while(propTypeList)
+    {
+        if(strcasecmp(car(propTypeList), propName) == 0) 
+            return(car(cdr(propTypeList)));
+
+        propTypeList = cdr(cdr(propTypeList));
+    }
+    return("string");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun report_invalid_prop_name(propName, instName)
+{
+
+  iff_log_message(list("Warning: Invalid property name", propName, 
+		       "on component", instName,
+		       "in design", current_design_name()));
+  return;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_import_fix_escaping(paramValue)
+{
+    decl tmpValue="", char, i;
+    decl quoted=FALSE;
+    
+    // Remove unnecessary escaping from the value
+    
+    for (i=0; i<strlen(paramValue); i++)
+    {
+        char=midstr(paramValue, i, i);
+        if (char=="\\")
+        {
+            i++;
+            char=midstr(paramValue, i, i);            
+            if ((char=="\"") && quoted && 
+                (i != strlen(paramValue)-1))
+            {
+                char="\\\"";
+            }
+            else
+            {
+                if (i==0)
+                {
+                    quoted=TRUE;
+                }
+            }
+        }
+        tmpValue=strcat(tmpValue, char);
+    }
+    
+    return(tmpValue);
+    
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_set_instance_properties(instHandle, instName, x, y, newPropList)
+{
+    decl propHandle,oldPropList, propName, propType, propValue;
+    decl propTypeList, propCtr=0, tmpPropName;
+
+    decl localDebugMessageLevel=IffDebugMessageLevel;	
+
+    if( localDebugMessageLevel > 15 )
+      print_value("Begin: ifftolib_set_instance_properties()");
+
+    // first get all the existing ones off, if any
+    oldPropList = NULL;
+    propHandle = db_get_instance_attribute(instHandle, INST_PROPERTY);
+    while(propHandle)
+    {
+        propName = db_get_property_attribute(propHandle,PROPERTY_NAME);
+        propType = db_get_property_attribute(propHandle,PROPERTY_TYPE);
+        propValue = db_get_property_attribute(propHandle,propType);
+
+        if(! oldPropList)
+	  oldPropList = list(propName,propValue);
+	else 
+	  oldPropList = append(oldPropList,list(propName,propValue));
+
+        propHandle = db_next_property(propHandle);
+    }
+
+    // now clear all old properties that were on the inst
+    decl work_on_selected = TRUE;
+
+    if( work_on_selected == TRUE )
+      select_by_name(instName,1);
+    else
+      set_edit_property(x,y);
+
+    if(oldPropList)
+    {
+        remove_properties(work_on_selected);
+
+        // traverse old property list first and see if there are any new values
+        oldPropList = update_old_properties(oldPropList, &newPropList);
+    }
+
+    // put old properties with new values back on
+    while(oldPropList)
+      {
+        propName = car(oldPropList);
+        propValue = car(cdr(oldPropList));
+        oldPropList = cdr(cdr(oldPropList));
+	add_property(propName,propValue,work_on_selected);
+    }
+
+    if( localDebugMessageLevel > 15 )
+      print_value("ifftolib_set_instance_properties: Adding new properties");
+
+    // go through newPropList and pull off all properties ending in _HPEESOF_PROP_TYPE
+    propTypeList = NULL;
+    newPropList = extract_proptypes(newPropList, &propTypeList);
+    //print_value(propTypeList);
+
+    // if there is anything left in newPropList, make new properties
+    while(newPropList)
+    {
+        propName = car(newPropList);
+        propValue = car(cdr(newPropList));
+	propType = property_type(propName, propTypeList);
+        //print_value(list(propName, propType, propValue));
+        //print_value(propValue);
+
+	if(propType == "integer") 
+	    propValue = car(parse(propValue));
+	else if(propType != "string")
+	    propValue = val(propValue);
+
+        if (is_string(propValue))
+        {
+            propValue=iff_import_fix_escaping(propValue);
+        }
+
+        // make sure property name is valid for this environment
+        if(ifftolib_valid_name(propName))
+	  {
+	    add_property(propName,propValue,work_on_selected);
+	  }
+	else
+	  {
+            tmpPropName = strcat("HPEESOF_PROP_NAME_",propCtr);
+	    add_property(tmpPropName,propName,work_on_selected);
+            tmpPropName = strcat("HPEESOF_PROP_VALUE_",propCtr);
+	    add_property(tmpPropName,propValue,work_on_selected);
+	    report_invalid_prop_name(propName, instName);
+            propCtr++;
+	  }
+
+        newPropList = cdr(cdr(newPropList));
+    }
+
+    if( work_on_selected == TRUE )
+      iff_deselect_by_name(instName,1);
+
+    if( localDebugMessageLevel > 15 )
+      print_value("End:   ifftolib_set_instance_properties()");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_finish_connector(type,netName,xLoc,yLoc,rot,portNo,propList)
+{
+    decl connID, designHandle;
+    decl connName;
+    decl alignName;
+    
+    designHandle = db_get_design(current_design_name());
+
+    if(type == 1)
+    {
+        connName = IffGroundName;
+        connID = query_unique_instance_name(designHandle, connName, REP_SCHEM);
+    }
+    else if(type == 2)
+    {
+        connName = IffConnName;
+        connID = netName;
+    }
+    else 
+        return(FALSE);
+
+    set_instance(connName);
+
+    set_instance_id(connID);
+    rotate_image(ifftolib_new_rot(rot));
+    place_instance(xLoc,yLoc);
+
+    if (type == 2)
+    {
+        if (IffAlignConnectorByNodeName)
+        {
+            alignName=netName;
+        }
+        else
+        {
+            alignName=connID;            
+        }
+        
+        portNo=syncPinWithPortByName(connID, portNo);
+
+        repla(propList, strcat("Num=",identify_value(portNo)), 0);
+
+    }
+
+    ifftolib_set_instance_parameters(strcat("/", connName, ":design"),
+				   REP_SCHEM, connID, xLoc, yLoc, propList);
+
+    set_named_connection(netName);
+    named_connection(xLoc,yLoc);
+
+    end_command();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+
+defun syncPinWithPortByName(connectorName, connectorNumber)
+{
+    decl newNumber=connectorNumber;
+    decl designHandle = db_get_design(current_design_name());
+    decl repHandle=db_get_rep(designHandle, REP_SCHEM);
+    decl symbolHandle=db_get_rep_attribute(repHandle, REP_SYMBOL);
+    decl pinHandle=db_get_symbol_attribute(symbolHandle, SYMB_PORT_HEAD);
+    decl pinName;
+    decl maxPinCount=1, pinFound;
+    
+    while (pinHandle)
+    {
+        pinName=db_get_pin_attribute(pinHandle, PIN_NAME);
+        if (connectorName==pinName)
+        {
+            newNumber=db_get_pin_attribute(pinHandle, PIN_NUMBER);
+            pinFound=TRUE;
+        }
+        maxPinCount++;
+        pinHandle=db_next_port(pinHandle);
+    }
+
+    // Check to see if the port was found in the pin list.  If not, 
+    // it is probably a virtual pin, and needs to be moved to after the 
+    // symbol pin list.  By making the port number of pins+1, the next 
+    // available port number will be used.
+    
+    if (!pinFound)
+    {
+        newNumber=connectorNumber;        // Return the original connector number.
+        // newNumber=maxPinCount;
+    }
+    
+    return(newNumber);
+    
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+
+defun report_zero_length_wire(wireName, wireList)
+{
+  decl tmp;
+
+  tmp = "Unable to complete the following zero-length wire in design \"";
+  tmp = strcat(tmp, current_design_name());
+  tmp = strcat(tmp, "\":");
+  iff_log_message(list(tmp));
+
+  if(wireList)
+    iff_log_message(wireList);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Check to see if there is something already at the requested point
+//////////////////////////////////////////////////////////////////////
+defun iff_wire_good_point(x,y)
+{
+  iff_select_item(x,y);
+  if( de_selected() > 0 )
+    {
+      // print_value(list("Bad point",x,y));
+      iff_deselect_all();
+      return(FALSE);
+    }
+  return(TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_add_orthogonal_wire(x1,y1,x2,y2,orthoEntry)
+{
+  decl x3,y3;
+  decl x4,y4;
+  decl dx,dy;
+
+  //
+  // If orthoEntry is true then attempt to make a single
+  // segment between entry points. If it is false then
+  // create a zig entry between the points.
+  //
+  //          \        |           ---
+  //           \       ---    OR     |
+  //            \        |           ---
+  //
+  if( orthoEntry == TRUE )
+  {
+      //
+      // Check to make sure there is not anything at the mid point since we
+      // will be moving it later.
+      //
+      x3 = x1;
+      y3 = y2;
+      if( iff_wire_good_point(x3,y3) == FALSE )
+      {
+	  //
+	  // Ok, try the other side
+	  //
+	  x3 = x2;
+	  y3 = y1;
+	  if( iff_wire_good_point(x3,y3) == FALSE )
+	    return(FALSE);
+      }
+      ifftolib_set_layer(4, 1);
+      add_wire(x1,y1);
+      add_wire(x3,y3);
+      add_wire(x2,y2);
+      end();
+
+      dx = (x1+x2)/2 - x3;
+      dy = (y1+y2)/2 - y3;
+      select_point(x3,y3);
+      move(dx, dy);
+      deselect_all();
+
+  }
+  else
+  {
+      //
+      // Test the zig to see if it can be placed. If not then
+      // flip it and test again. If this fails return FALSE.
+      //
+      x3 = x1;
+      x4 = x2;
+      y3 = (y1+y2)/2;
+      y4 = y3;
+      if(( iff_wire_good_point(x3,y3) == FALSE ) || 
+	 ( iff_wire_good_point(x4,y4) == FALSE ))
+      {
+	  x3 = (x1+x2)/2;
+	  x4 = x3;
+	  y3 = y1;
+	  y4 = y2;
+	  if(( iff_wire_good_point(x3,y3) == FALSE ) || 
+	     ( iff_wire_good_point(x4,y4) == FALSE ))
+	    return(FALSE);
+      }
+      ifftolib_set_layer(4, 1);
+      add_wire(x1,y1);
+      add_wire(x3,y3);
+      add_wire(x4,y4);
+      add_wire(x2,y2);
+      end();
+  }
+  return(TRUE);
+}
+
+/**********************************************************************
+ * wireList is a list of wires representing a node           
+ * a wire is defined in a list of (x1,y1,x2,y2)              
+ * if wireName is not NULL, there was a wire label or sheet  
+ * connector that we need to put a named connection down for 
+ **********************************************************************/
+defun iff_import_finish_wires_ads(wireList, wireName, addZig)
+{
+    decl wire;
+    decl x1,y1,x2,y2;
+    decl lastX, lastY;
+    decl goodWire;
+    decl tmpWireList;
+    decl tmpZigWireList;
+    decl addZigWires;
+    decl msg;
+    decl wireUserAttributes, wireProperty, i;
+    decl addWireCommand, firstPoint;
+
+    if( addZig == NULL )
+      addZigWires = FALSE;
+    else
+      addZigWires = addZig;
+
+    end_command();
+
+    /* make sure there are wires to write */
+    if(listlen(wireList) <= 0)
+	return;
+
+    goodWire = FALSE;
+    tmpWireList = NULL;
+    tmpZigWireList = NULL;
+
+    /* start the wire command */
+    de_connect();
+
+    while(wireList)
+    {
+        wire = car(wireList);
+
+	x1 = car(wire);
+	y1 = car(cdr(wire));
+	x2 = car(cdr(cdr(wire)));
+	y2 = car(cdr(cdr(cdr(wire))));
+
+	// check for zero-length wire and skip if found
+        if(x1==x2 && y1==y2)
+	{
+	    // print_value(list("CURRENT WIRE:",x1,y1,x2,y2));
+	    report_zero_length_wire(wireName, list(x1,y1,x2,y2));
+	}
+	else if(( x1 != x2 ) && ( y1 != y2 ))
+	{
+	    // print_value(list("CURRENT WIRE:",x1,y1,x2,y2));
+	    // print_value("Non-orthogonal wire found!!!!!");
+	    if( iff_add_orthogonal_wire(x1,y1,x2,y2,TRUE) == FALSE )
+	    {
+		// print_value("Unable to route non-orthogonal wire directly");
+		// print_value(list(x1,y1,x2,y2));
+		if( tmpZigWireList == NULL )
+		  tmpZigWireList = list(list(x1,y1,x2,y2));
+		else
+		  tmpZigWireList = append(tmpZigWireList, 
+					  list(list(x1,y1,x2,y2)));
+	    }
+	    else
+	    {
+	        goodWire = TRUE;
+		lastX = x2;
+		lastY = y2;
+	    }
+	}
+	else
+	{
+	    if( tmpWireList == NULL )
+	      tmpWireList = list(list(x1,y1,x2,y2));
+	    else
+	      tmpWireList = append(tmpWireList, list(list(x1,y1,x2,y2)));
+	}
+	wireList = cdr(wireList);
+    }
+    firstPoint=TRUE;
+    wireList = tmpWireList;
+
+    while(wireList)
+    {
+	wire = car(wireList);
+
+	x1 = car(wire);
+	y1 = car(cdr(wire));
+	x2 = car(cdr(cdr(wire)));
+	y2 = car(cdr(cdr(cdr(wire))));
+	// print_value(list("CURRENT WIRE:",x1,y1,x2,y2));
+	ifftolib_set_layer(4, 1);
+
+	add_wire(x1,y1);
+	add_wire(x2,y2);
+	goodWire = TRUE;
+	lastX = x2;
+	lastY = y2;
+	de_end();
+
+	/*
+	if(firstPoint)
+	{
+	    addWireCommand=strcat("de_add_wire(", identify_value(x1), ",", identify_value(y1));
+	    addWireCommand=strcat(addWireCommand, ",", identify_value(x2), ",", identify_value(y2));
+	    firstPoint=FALSE;
+	}
+	else
+	{
+	    addWireCommand=strcat(addWireCommand, ",", identify_value(x1), ",", identify_value(y1));
+	}
+	*/
+
+	wireList = cdr(wireList);
+    }
+
+    /*
+    addWireCommand=strcat(addWireCommand, ");");
+    execute(addWireCommand, "CmdOp");
+    end();
+    */
+
+    if( addZigWires == FALSE )
+    {
+        if( tmpZigWireList != NULL )
+	{
+	    if( IffZigWireList == NULL )
+	      IffZigWireList = list(wireName, tmpZigWireList);
+	    else
+	      IffZigWireList = append(IffZigWireList, 
+				      list(wireName, tmpZigWireList));
+	}
+    }
+    else
+    {
+        wireList = tmpZigWireList;
+	while(wireList)
+	{
+	    wire = car(wireList);
+
+	    x1 = car(wire);
+	    y1 = car(cdr(wire));
+	    x2 = car(cdr(cdr(wire)));
+	    y2 = car(cdr(cdr(cdr(wire))));
+	    // print_value(list("CURRENT WIRE:",x1,y1,x2,y2));
+	    // print_value("Non-orthogonal wire found --> add as zig!!!!!");
+	    if( iff_add_orthogonal_wire(x1,y1,x2,y2,FALSE) == FALSE )
+	    {
+		msg = "WARNING: Unable to route non-orthogonal wire ";
+		msg = strcat(msg, "located at:");
+		msg = append(list(msg), list(x1,y1,x2,y2));
+		msg = append(msg, list("\n", "        Wire discarded!!!"));
+		iff_log_message(msg);
+	    }
+	    else
+	    {
+		goodWire = TRUE;
+		lastX = x2;
+		lastY = y2;
+	    }
+
+	    wireList = cdr(wireList);
+	}
+    }
+
+    /* finish the wire command */
+    end_command();
+
+    /* Add valid user attributes.  */
+
+    if (bound("wire_attribute_list"))
+    {
+        if (wireUserAttributes=nth(1, member(wireName, wire_attribute_list)))
+        {
+            // Add the user attributes to the newly created wire.
+            for (i=0;i<listlen(wireUserAttributes);i++)
+            {
+                wireProperty=nth(i, wireUserAttributes);
+                if (is_string(wireProperty))
+                {
+                    wireProperty=parse(wireProperty, "=", "");
+                    if (listlen(wireProperty) == 2)
+                    {
+                        // Add the property to the wire.
+                        iff_add_wire_property(nth(0, wireProperty),
+                                              nth(1, wireProperty), 
+                                              lastX, lastY);
+                    }
+                }
+            }
+        }
+    }
+
+    return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_finish_zig_wires()
+{
+  decl wireName;
+  decl wireList;
+  while( IffZigWireList != NULL )
+    {
+      wireName = car(IffZigWireList);  IffZigWireList = cdr(IffZigWireList);
+      wireList = car(IffZigWireList);  IffZigWireList = cdr(IffZigWireList);
+
+      iff_import_finish_wires(wireList, wireName, TRUE);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_finish_wires(wireList, wireName, addZig)
+{
+    iff_import_finish_wires_ads(wireList, wireName, addZig);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_clear_design(designName)
+{
+    decl designHandle;
+
+    /* see if there is an active design with this name */
+    designHandle = db_get_design(designName,0);
+
+    if (designHandle)
+    {
+        open_design (designName,0);
+        clear_design ();
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_is_psn(desName)
+{
+    // print_value(list(strcat("Checking for PSN ", desName), IffPsnLayouts));
+    if( member(desName, IffPsnLayouts) == NULL )
+        return(FALSE);
+    else
+        return(TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_check_for_psn(repHandle)
+{
+  decl instHandle;
+  decl instType;
+  decl desName;
+
+  instHandle = db_first_instance(repHandle);
+  while( instHandle != NULL ) 
+    {
+      instType = db_get_instance_attribute(instHandle, INST_TYPE);
+      if( instType == INST_PSN_TYPE )
+	{
+	  desName = db_get_instance_attribute(instHandle, INST_DESIGN_NAME);
+	  if( member(desName, IffPsnLayouts) == NULL )
+	    IffPsnLayouts = append(list(desName), IffPsnLayouts);
+	}
+      instHandle = db_next_instance(instHandle);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_sync_layout(uid)
+{
+  decl repHandle;
+  decl instHandle;
+  decl flag;
+  decl id;
+  decl layWinInst;
+  decl desHdl;
+  decl x;
+  decl y;
+  decl bbox;
+  decl userUnits;
+
+  desHdl = iff_db_find_design(ifftolib_get_designpath());
+  if( desHdl == NULL )
+    return;
+
+  layWinInst = iff_get_current_window();
+
+  if( ifftolibSchematicWindowOpen == FALSE )
+  {
+      ifftolibSchematicWindowOpen = TRUE;
+      open_window(SCHEM_WIN);
+  }
+  set_window(SCHEM_WIN);
+  iff_show_design_in_window(desHdl,SCHEM_WIN);
+
+  repHandle = db_get_rep(desHdl, REP_SCHEM);
+  if( repHandle == NULL )
+    {
+      set_window(LAYOUT_WIN);
+      return;
+    }
+
+  id = NULL;
+  instHandle = db_first_instance(repHandle);
+  while( instHandle != NULL ) 
+  {
+      flag = db_get_instance_attribute(instHandle, INST_SPECIAL);
+      if( ( flag & INST_PORT ) == INST_PORT )
+      {
+	  id = db_get_instance_attribute(instHandle, INST_NAME);
+	  break;
+      }
+      instHandle = db_next_instance(instHandle);
+  }
+  
+  if( id == NULL )
+  {
+      instHandle = db_first_instance(repHandle);
+      while(( instHandle != NULL ) && ( id == NULL ))
+      {
+	  flag = db_get_instance_attribute(instHandle, INST_SPECIAL);
+	  if( ( flag & INST_NORMAL ) == INST_NORMAL )
+          {
+	      id = db_get_instance_attribute(instHandle, INST_NAME);
+	      break;
+          }
+	  instHandle = db_next_instance(instHandle);
+      }
+  }
+
+  if( id == NULL ) 
+  {
+      set_window(LAYOUT_WIN);
+      return;
+  }
+
+  // print_value(list("syncing", id, layWinInst));
+  iff_dse_s2l(id, 0.0, 0.0, 0.0, 0.0, 0.0, layWinInst);
+
+  set_window(LAYOUT_WIN);
+  view_all();
+
+  repHandle = db_get_rep(desHdl, REP_LAY);
+  iff_check_for_psn(repHandle);
+
+  bbox = db_get_rep_attribute(repHandle, REP_BBOX);
+  if( bbox != NULL )
+  {
+      userUnits = db_get_rep_db_factor(repHandle);
+
+      x = db_get_bbox_x2(bbox)/userUnits;
+      y = db_get_bbox_y2(bbox)/userUnits;
+
+      iff_select_all();
+      move(x,y);
+      iff_deselect_all();
+  }
+
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Set the insert layer to match the color and line style/width 
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_set_layer(shaderule, linerule)
+{
+  if( linerule < 0 )
+    ifftolibLineWidth = 1;
+  else if( linerule < 5 )
+    ifftolibLineWidth = linerule;
+  else
+    ifftolibLineWidth = 1;
+
+ if( shaderule && shaderule > 0 )
+    iff_set_layer(shaderule);
+
+ return;
+}
+
+//////////////////////////////////////////////////////////////////////
+// This routine adds properties to the currently open design object.
+//////////////////////////////////////////////////////////////////////
+defun iff_add_design_property(name, value)
+{
+  if( IffCurrentDesignHandle == NULL )
+    return;
+
+  iff_db_add_property(IffCurrentDesignHandle, name, value, TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////
+// if design is in symbol list, we have just written it so open and add to
+// else call new_design()
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_open_design(desObjPath,
+			   designCode,
+			   winCode,
+			   sheetNum)
+{
+    decl designHandle;
+    decl designPath;
+    decl designName;
+    decl msg;
+    
+    designName = ifftolib_get_name(desObjPath);
+
+    IffLastWindowType = IffCurrentWindowType;
+    if( winCode == SCHEM_WIN )
+    {
+        IffCurrentWindowType = IFF_SCHEMATIC;
+        iff_log_message(list("Build schematic for", designName));
+    }
+    else if( winCode == IFF_DEFS_WIN )
+    {
+        designName = strcat(designName, "_defaults");
+        winCode = SCHEM_WIN;
+        IffCurrentWindowType = -1; // IFF_SCHEMATIC;
+        iff_log_message(list("Build defaults design for", designName));
+    }
+    else
+    {
+        IffCurrentWindowType = IFF_LAYOUT;
+        iff_log_message(list("Build layout for", designName));
+    }
+
+    designPath = ifftolib_current_design_name(designName);
+
+    IffImportDesignType = winCode;
+
+    ifftolib_set_objectpath(desObjPath);
+    ifftolib_set_designname(designName);
+    ifftolib_set_designpath(designPath);
+
+    if((( ifftolibLayoutWindowOpen == FALSE ) && ( winCode == LAYOUT_WIN )) ||
+       (( ifftolibDefaultsWindowOpen==FALSE ) && ( winCode== IFF_DEFS_WIN )) ||
+       (( ifftolibSchematicWindowOpen == FALSE ) && ( winCode == SCHEM_WIN )))
+    {
+        open_window(winCode);
+        if( winCode == SCHEM_WIN )
+            ifftolibSchematicWindowOpen = TRUE;
+        else if( winCode == IFF_DEFS_WIN )
+            ifftolibDefaultsWindowOpen = FALSE; 
+        else
+            ifftolibLayoutWindowOpen = TRUE;
+    }
+
+    set_window(winCode);
+
+    /* Output any warning message after we tell the user what design... */
+    if( designCode == -1 )
+    {
+        /*
+        msg = "WARNING: DesignCode -1 detected... Switched to 1";
+        iff_log_message(list(msg));
+        */
+        designCode = 1;
+    }
+
+    if( winCode == LAYOUT_WIN )
+    {
+        designHandle = iff_db_find_design(designPath);
+        if( designHandle == NULL )
+        {
+            designHandle = iff_new_design(designPath, designCode, FALSE, TRUE);
+        }
+        else
+        {
+            designHandle=iff_load_design(designPath, 1);
+        }
+    }   
+    else
+    {
+        designHandle = iff_get_design_handle(designName,designPath,designCode);
+    }
+
+    if( designHandle )
+    {
+        iff_show_design_in_window(designHandle, winCode);
+    }
+    else
+    {
+        print_value("ERROR: No design handle....");
+    }
+    IffCurrentDesignHandle = designHandle;
+    clear_rep();
+    remove_rep_properties();
+    iff_initialize_current_de_defaults();
+
+    // Turn off backup
+    set_backup_count(0);
+    
+    if( winCode == LAYOUT_WIN )
+    {
+        iff_layout_setup_layers();
+    }
+    else if( winCode == SCHEM_WIN )
+    {
+        /* Set the input layer to wire. */
+        ifftolib_set_layer(4, 1);
+    }                               
+
+    fputs (stderr, "ifftolib_open_design");
+    fputs (stderr, fmt_tokens (list (desObjPath, designName)));
+
+    if (IffImportPlacementMode)
+	de_iff_add_icon (desObjPath, 0, designName);
+}
+
+//////////////////////////////////////////////////////////////////////
+// 
+//////////////////////////////////////////////////////////////////////
+defun iff_open_layout(desObjPath, designCode, winCode, sheetNum)
+{
+  decl designName = ifftolib_get_name(desObjPath);
+
+  if( IffUseLayoutParts == TRUE )
+  {
+      decl itemDef;
+      
+      /*  
+      decl oldErrorHandler = on_error(iff_is_defined_error_handler);
+
+      IffIsDefinedErrorCode = -1;
+      set_instance(designName);
+
+      on_error(oldErrorHandler);
+      */
+
+      itemDef=dm_find_item_definition(dm_get_adm_name(designName), 1);
+
+      if( itemDef != NULL )
+      {
+	  // Found an instance
+	  decl desHdl = iff_db_find_design(designName);
+	  decl msg;
+
+	  if( desHdl != NULL )
+          {
+	      // Found a design
+	      decl designPath = db_get_design_attribute(desHdl, DESIGN_NAME);
+
+	      if( ifftolib_check_for_system_design(designPath) == TRUE )
+              {
+		  /*
+		  msg = strcat("NOTE: Using existing layout from system ",
+			       "library.\n\n",
+			       "      Design Name = ", designName, "\n",
+			       "      Design Path = ", designPath, "\n");
+		  iff_log_message(list(msg));
+		  */
+		  return( FALSE );
+              }
+          }
+	  else
+          {
+	      /*
+	      msg = strcat("NOTE: Using existing layout from system ",
+			   "library.\n\n",
+			   "      Design Name = ", designName, "\n");
+	      iff_log_message(list(msg));
+	      */
+	      return( FALSE );
+          }
+      }
+  }
+
+  if (designCode==-1)
+      designCode=1;
+  
+  if(!member(designName, IffImportFootprintList))
+  {
+      IffImportFootprintList=append(IffImportFootprintList, list(designName));
+      ifftolib_open_design(desObjPath, designCode, winCode, sheetNum);
+  }
+  else
+  {
+      return( FALSE );
+  }
+
+  return( TRUE );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Open the last design that was created...
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_open_last_design()
+{
+  decl designPath = ifftolib_get_designpath();
+
+  if( designPath != NULL )
+    open_design(designPath, 1);
+
+  return;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// Wrapper for de_change_units() to undo what DE does to other stuff.
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_change_units(units, prec, incr)
+{
+  decl pin_size = iff_get_preference(PIN_SIZE_P);
+  decl tee_size = iff_get_preference(TEE_SIZE_P);
+
+  change_units(units, prec, incr);
+
+  set_pin_size(pin_size);
+  iff_set_tee_size(tee_size);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Add data to the end of the parameter stack for later extraction
+// in the order in which it was added to the stack
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_append_parameter_stack(keyValue, keyList)
+{
+  if( IfftolibParameterStack == NULL )
+    IfftolibParameterStack = list(keyValue, keyList);
+  else
+    IfftolibParameterStack = append(IfftolibParameterStack,
+				    list(keyValue, keyList));
+}
+
+//////////////////////////////////////////////////////////////////////
+// Pop data off the parameter stack (Removing null entries found)
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_pop_parameter_stack()
+{
+  decl keyData;
+  decl keyValue;
+  decl returnData;
+
+  if( IfftolibParameterStack == NULL )
+    return( NULL );
+
+  keyValue = car(IfftolibParameterStack);
+  keyData  = car(cdr(IfftolibParameterStack));
+
+  while(( keyValue == NULL ) && ( IfftolibParameterStack != NULL ))
+    {
+      IfftolibParameterStack = cdr(cdr(IfftolibParameterStack));
+      keyValue = car(IfftolibParameterStack);
+      keyData  = car(cdr(IfftolibParameterStack));
+    }
+
+  // Remove the keyData 
+  IfftolibParameterStack = cdr(cdr(IfftolibParameterStack));
+
+  return( keyData );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Remove from the parameter stack the specified entry that matches
+// the passed in data.
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_search_parameter_stack(keyValue)
+{
+    decl keyData;
+    decl returnData;
+
+    if( IffDebugMessageLevel > 15 )
+        print_value(strcat("Looking for key of ", keyValue));
+
+    keyData = member(keyValue, IfftolibParameterStack);
+    if( keyData != NULL )
+    {
+        returnData = car(cdr(keyData));
+	repla(keyData, NULL, 0);
+	repla(keyData, NULL, 1);
+    }
+    else
+    {
+        returnData = NULL;
+    }
+
+    return( returnData );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Clear the existing parameter stack (probably should issue a warning
+// if its not empty when called (means someone is missing a paramter))
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_clear_parameter_stack()
+{
+  decl msg;
+
+  if( ifftolib_pop_parameter_stack() != NULL ) 
+    {
+      msg = strcat("WARNING: Parameter stack not empty. This means that not\n",
+		   "         all parameters for the design ",
+		   ifftolib_get_symbolpath(), "\n",
+		   "         have been attached.\n");
+      iff_log_message(list(msg));
+    }
+
+  // Cast any remaining data to the wind....
+  IfftolibParameterStack = NULL;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_execute_os_command(unixCommand, windowsCommand)
+{
+  decl dirSep = iff_get_directory_delimiter();
+  if( dirSep == "/" )
+    {
+      if( IffDebugMessageLevel > 15 )	
+	print_value(strcat("Running Unix command '", unixCommand, "'"));
+      if( unixCommand != NULL )
+	system(unixCommand, FALSE, getcwd());
+    }
+  else
+    {
+      if( IffDebugMessageLevel > 15 )	
+	print_value(strcat("Running Windows command '", windowsCommand, "'"));
+      if( windowsCommand != NULL )
+	system(windowsCommand, FALSE, getcwd());
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_add_graphics_item_props_list(x,y,propList)
+{
+  decl dgHandle;
+  decl propName;
+  decl propValue;
+  decl itemData;
+
+  dgHandle = end();
+  end_command();
+
+  iff_set_thickness(dgHandle);
+
+  if( propList == NULL )
+    return;
+
+  while( propList != NULL )
+    {
+      propName  = car(propList);
+      propList  = cdr(propList);
+      propValue = car(propList);
+      propList  = cdr(propList);
+      iff_db_add_property(dgHandle, 
+			  propName, propValue, TRUE, NULL, list(x,y));
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// This routine will handle a number of graphics items that return
+// a datagroup as a return value. Then any properties are added.
+//////////////////////////////////////////////////////////////////////
+defun iff_add_graphics_item(propList, proc, procName, arg1)
+{
+  decl dgHandle;
+  decl propName;
+  decl propValue;
+  decl itemData;
+  decl argList;
+
+  argList = arg_list();
+  argList = cdr(cdr(cdr(argList)));
+  dgHandle = call(proc, argList);
+
+  iff_set_thickness(dgHandle);
+
+  if( propList == NULL )
+    return;
+
+  while( propList != NULL )
+    {
+      propName  = car(propList);
+      propList  = cdr(propList);
+      propValue = car(propList);
+      propList  = cdr(propList);
+      iff_db_add_property(dgHandle, 
+			  propName, propValue, TRUE, procName, argList);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_layout_load_layer_mapping_file(fileName, layerMapping)
+{
+  decl fp;
+  decl buffer;
+  decl mapList;
+  decl iffLayer;
+  decl toolLayer;
+  decl layerList;
+
+  fp = fopen(fileName, "R");
+  if( fp == NULL )
+    return(layerMapping);
+
+  buffer = fgets(fp);
+  while( buffer != NULL )
+    {
+      if(( strlen(buffer) > 0 ) && 
+	 ( iff_comment_char(leftstr(buffer,1)) == FALSE ))
+	{
+	  mapList = parse(buffer, "!;*");
+	  if( listlen(mapList) > 1 )
+	    {
+	      iffLayer  = stripstr(car(mapList));
+	      toolLayer = list(stripstr(nth(1,mapList)));
+	      layerList = member(iffLayer, layerMapping);
+	      mapList   = list(iffLayer, toolLayer);
+
+	      if( layerMapping == NULL )
+		layerMapping = mapList;         // New List
+	      else if( layerList != NULL )
+		repla(layerList, toolLayer, 1); // Replace existing entry
+	      else
+		layerMapping = append(layerMapping, mapList);
+
+	    }
+	}
+      buffer = fgets(fp);
+    }
+  fclose(fp);
+
+  return(layerMapping);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_user_config_dir()
+{
+  decl homeDir;
+  decl dirSep = iff_get_directory_delimiter();
+
+  homeDir = expandenv("$HOME");
+  if( homeDir == NULL )
+    return( NULL );
+  else
+    return(strcat(homeDir, dirSep, "hpeesof", dirSep, "config"));
+  
+}
+
+//////////////////////////////////////////////////////////////////////
+// Read the IFF Layer Mapping file and create a list of layers that
+// are mapped. Each field in the map file is seperated by a seperator
+// characer "!", ";" or "*". Leading and trailing white space is removed.
+// The form of the file is:
+//  
+//
+//               IffLayerName ! ToolLayerName ! Comments
+//
+// And the list is in the form:
+//
+//        [IffLayer, [ToolLayer], IffLayer, [ToolLayer],...]
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_layout_load_layer_mapping()
+{
+  decl fp;
+  decl fileName;
+  decl buffer;
+  decl mapList;
+  decl iffLayer;
+  decl toolLayer;
+  decl msg;
+  decl dirSep = iff_get_directory_delimiter();
+
+  IffLayerMapping = NULL;
+
+  // Check system level
+  fileName = iff_get_system_config_dir();
+  if( fileName != NULL )
+    {
+      fileName = strcat(fileName, dirSep, IffLayerMappingFileName);
+      IffLayerMapping = iff_layout_load_layer_mapping_file(fileName, 
+							   IffLayerMapping);
+    }
+
+  // Now check user level
+  fileName = iff_get_user_config_dir();
+  if( fileName != NULL )
+    {
+      fileName = strcat(fileName, dirSep, IffLayerMappingFileName);
+      IffLayerMapping = iff_layout_load_layer_mapping_file(fileName, 
+							   IffLayerMapping);
+    }
+
+  // And finally check project level
+  fileName = strcat(".", dirSep, IffLayerMappingFileName);
+  IffLayerMapping = iff_layout_load_layer_mapping_file(fileName, 
+						       IffLayerMapping);
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Map the IFF layer name to the tools layer name.
+//////////////////////////////////////////////////////////////////////
+defun iff_layout_map_to_tool_layer(iffLayerName)
+{
+  decl mapList;
+
+  if( IffLayerMapping == NULL )
+    return( iffLayerName );
+
+  mapList = member(iffLayerName, IffLayerMapping);
+  if( mapList == NULL )
+    return( iffLayerName );
+
+  return( car(nth(1, mapList)) );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Map the IFF layer name to the tools layer name.
+//////////////////////////////////////////////////////////////////////
+defun iff_layout_map_layer(layerName)
+{
+  decl msg;
+  decl origLayerName;
+  decl passedBlank=FALSE;
+  
+  if (layerName=="")
+  {
+      passedBlank=TRUE;
+  }
+
+  origLayerName = layerName;
+
+  layerName = iff_layout_map_to_tool_layer(layerName);
+
+  if( ifftolib_valid_name( layerName ) == FALSE )
+    {
+      layerName = ifftolib_fix_name( layerName );
+      if( layerName == FALSE )
+      {
+          if (!passedBlank)
+          {
+              msg = strcat("WARNING: Layer name is empty. Placing data onto ",
+                           IffDefaultLayerName, " layer.");
+              iff_log_message(list(msg));
+          }
+
+	  layerName = IffDefaultLayerName;
+	}
+      else if( member(layerName, IffLayerWarningList) == NULL )
+	{
+	  if( IffLayerWarningList == NULL )
+	    IffLayerWarningList = list(layerName);
+	  else
+	    IffLayerWarningList = append(IffLayerWarningList, list(layerName));
+
+	  msg = strcat("WARNING: Layer name \"", origLayerName, "\" is not",
+		       " valid name.\n         Using the layer name \"", 
+		       layerName, "\".");
+	  iff_log_message(list(msg));
+	}
+    }
+  return(layerName);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Setup the edit layer. Use "default" if layer does not map...
+//////////////////////////////////////////////////////////////////////
+defun iff_set_edit_layer(layerName)
+{
+  decl adsLayer    = iff_layout_map_layer(layerName);
+  decl adsLayerNum = ly_find_layer_by_name(adsLayer);
+  decl msg;
+
+  if( adsLayer == IffNoneLayerName )
+    return(FALSE);
+
+  if( adsLayerNum == -1 )
+    {
+      // No layer exists issue error and set to default layer...
+      msg = strcat("WARNING: Layer name \"", adsLayer, "\" is not\n",
+		   "         defined. Using the \"default\" layer.\n");
+      iff_log_message(list(msg));
+      adsLayer = "default";
+      adsLayerNum = ly_find_layer_by_name(adsLayer);
+      if( adsLayerNum == -1 )
+	{
+	  msg = strcat("ERROR: Didn't find the data for the default layer.\n",
+		       "       Will attempt to use current layer.\n");
+	  iff_log_message(list(msg));
+	  return;
+	}
+    }
+
+  set_layer(adsLayerNum);
+
+  db_clear_map();
+  db_setup_map(IffLayoutSaveMap);
+
+  return(TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Add layer data to global list. This list is used after the layout
+// is opened to setup layer information.
+//////////////////////////////////////////////////////////////////////
+defun iff_layout_set_layer_attributes(layerName,    // Layer Name
+				      iff_pattern,  // IFF Pattern name
+				      iff_color,    // IFF Color
+				      ads_pattern,  // ADS Pattern num or NULL
+				      ads_color,    // ADS Color num of NULL
+				      Binding,      // Layer binding
+				      stream,       // ADS Stream num or NULL
+				      iges,         // ADS iges num or NULL
+				      line,         // ADS line type or NULL
+				      type,         // ADS type or NULL
+				      plotmode,     // ADS plot mode or NULL
+				      protected,    // ADS protected or NULL
+				      visible)      // ADS visible or NULL
+{
+  decl call_args = list(arg_list());
+  if( IffLayerData == NULL )
+    IffLayerData = call_args;
+  else
+    IffLayerData = append(IffLayerData, call_args);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_layout_setup_layer(layerName,    // Layer Name
+			     iff_pattern,  // IFF Pattern name
+			     iff_color,    // IFF Color
+			     ads_pattern,  // ADS Pattern num or NULL
+			     ads_color,    // ADS Color num of NULL
+			     Binding,      // Layer binding
+			     stream,       // ADS Stream num or NULL
+			     iges,         // ADS iges num or NULL
+			     line,         // ADS line type or NULL
+			     type,         // ADS type or NULL
+			     plotmode,     // ADS plot mode or NULL
+			     protected,    // ADS protected or NULL
+			     visible)      // ADS visible or NULL
+{
+  decl adsLayer    = iff_layout_map_layer(layerName);
+  decl adsLayerNum = ly_find_layer_by_name(adsLayer);
+  decl needNewLayer;
+  decl msg;
+
+  if( adsLayer == IffNoneLayerName )
+    return(FALSE);
+
+  if( adsLayerNum == -1 )
+    {
+      adsLayerNum = iff_layer_get_next_layer_number();
+      needNewLayer = TRUE;
+    }
+  else
+    {
+      needNewLayer = FALSE;
+    }
+
+  if( ads_pattern == NULL )
+    ads_pattern = iff_unMapPattern(iff_pattern);
+
+  if( ads_color == NULL )
+    ads_color = iff_unMapColor(iff_color);
+
+  if( needNewLayer == TRUE )
+    {
+      /*
+      msg = strcat("NOTE: Creating new layer called \"", adsLayer, "\".");
+      iff_log_message(list(msg));
+      */
+
+      // Setup GDSII
+      if( stream == NULL )
+	{
+	  if( adsLayerNum < 65 )
+	    stream = adsLayerNum + 1;
+	  else
+	    stream = 1;
+	}
+
+      // Setup IGES
+      if( iges == NULL )
+	{
+	  if( adsLayerNum < 258 )
+	    iges = adsLayerNum + 1;
+	  else
+	    iges = 1;
+	}
+
+      // Setup other ADS defaults
+      if( line == NULL )
+	line = 0;
+
+      if( type == NULL )
+	type = 1;      // Physical layer....
+
+      if( plotmode == NULL )
+	plotmode = 1;  // Filled
+
+      if( protected == NULL )
+	protected = 0; // Not protected
+
+      if( visible == NULL )
+	visible = 1;   // Visible
+
+      de_add_layer(adsLayer, adsLayerNum, stream, iges, 
+		    ads_color, ads_pattern, line, plotmode, 
+		    protected,  visible, "*", type);
+
+    }
+  /*  
+  else
+    {
+      msg = strcat("NOTE: Using existing layer called \"", adsLayer, "\".");
+      iff_log_message(list(msg));
+    }
+    */
+
+  return( needNewLayer );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_layout_setup_layers()
+{
+  decl save_layer_file = FALSE;
+
+  while( IffLayerData != NULL )
+    {
+      if( call( iff_layout_setup_layer, car(IffLayerData) ) == TRUE )
+	save_layer_file = TRUE;
+
+      IffLayerData = cdr(IffLayerData);
+    }
+
+  // Save the modified layer definition...
+  if( save_layer_file == TRUE )
+    write_layer("layout.lay");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_set_library(library)
+{
+  if( iff_get_project_name_from_path(getcwd()) == library )
+    IffImportLibrary = "*";
+  else
+    IffImportLibrary = library;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_get_library()
+{
+  if( IffImportLibrary == NULL )
+     IffImportLibrary = "*";
+
+  return( IffImportLibrary );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_new_param(objectPath, paramList)
+{
+  decl prmList;
+  decl newValue;
+  decl newParam;
+
+  prmList = iff_check_prm_scale(nthcdr(6, paramList),nth(4, paramList));
+
+  newValue = car(cdr(prmList));
+  if(( newValue != NULL ) && ( newValue != "" ))
+    {
+      newValue = car(strg_to_args(ifftolib_parse(newValue), car(prmList)));
+      if( newValue == NULL )
+	newValue = "";
+    }
+
+  newParam = iff_in_map_create_parm(objectPath,
+				    nth(0, paramList),  // Name
+				    nth(1, paramList),  // Label
+				    nth(2, paramList),  // Attribute
+				    nth(3, paramList),  // FormSet
+				    nth(4, paramList),  // Unitcode
+				    nth(5, paramList),
+				    newValue
+				    );
+  return( newParam );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_update_item(name,        // 0 Name of design
+			   label,       // 1 Description of design
+			   prefix,      // 2 Prefix for instance names
+			   attr,        // 3 Item Attribute
+			   dialogData,  // 4 Display Text ???
+			   schemName,   // 5 Symbol name for design
+			   art,         // 6 Art Type Code ???
+			   artData,     // 7 Art Name ???
+			   netFormat,   // 8 Netlist format string
+			   netName,     // 9 Netlist Extract name
+			   library,     // 10 Library name that owns design
+			   extraAttr,   // 11 Extra Attribute
+			   magicData1,  // 12 The new magic data that is 
+                                        //    required but is unknown what 
+                                        //    it does.....
+		           magicData2)
+{
+  decl call_args;
+  decl paramList;
+  decl newParam;
+  decl propMapList;
+  decl plist;
+  decl propMap;
+  decl count;
+  decl foundIt;
+  decl msg;
+  decl objectPath;
+
+  call_args = call( iff_get_update_item_args, arg_list() );
+
+  objectPath = ifftolib_get_objectpath();
+
+  propMapList = iff_in_map_has_order_mapping(objectPath);
+  //
+  // If property order mapping exists then handle the ordered properties
+  // first.
+  //
+  if( propMapList != NULL )
+    {
+      count = 0;
+      while( count < listlen(propMapList) )
+	{
+	  foundIt = FALSE;
+	  count++;
+	  plist = propMapList;
+	  while( plist != NULL )
+	    {
+	      propMap = car(plist);
+	      plist = cdr(plist);
+	      if(( listlen(propMap) > 2 ) && ( nth(2, propMap) == count ))
+		{
+		  paramList = ifftolib_search_parameter_stack(car(cdr(propMap)));
+		  if( paramList != NULL )
+		    {
+		      foundIt = TRUE;
+		      newParam = iff_get_new_param(objectPath, paramList);
+		      call_args = append(call_args, list(newParam));
+		      plist = NULL;
+		    }
+		}
+	    }
+
+	  if( foundIt == FALSE )
+	    {
+	      msg = strcat("WARNING: Failed to find property mapping order ",
+			   "for index ", identify_value(count), ".\n",
+			   "         This may create an invalid set ",
+			   "of parameters for the\n", 
+			   "         design ", ifftolib_get_symbolname(), ".\n");
+
+	      iff_log_message(list(msg));
+	    }
+
+	}
+    }
+
+  //
+  // Handle all other properties in the order they existed in the IFF
+  //
+  paramList = ifftolib_pop_parameter_stack();
+  while( paramList != NULL )
+    {
+      newParam = iff_get_new_param(objectPath, paramList);
+      call_args = append(call_args, list(newParam));
+      paramList = ifftolib_pop_parameter_stack();
+    }
+  call(update_item, call_args);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_create_item(name,        // 0 Name of design
+			     label,       // 1 Description of design
+			     prefix,      // 2 Prefix for instance names
+			     attr,        // 3 Item Attribute
+			     priority,    // 4 Priority
+			     iconName,    // 5 iconName
+			     dialogName,  // 6 dialogName
+			     dialogData,  // 7 Display Data
+			     netFormat,   // 8 Netlist format string
+			     netName,     // 9 Netlist Extract name
+			     displayFmt,  // 10 DisplayFormant
+			     schemName,   // 11 Symbol name for design
+			     art,         // 12 Art Type Code ???
+			     artData,     // 13 Art Name ???
+			     extraAttr,   // 14 Extra Attribute
+			     magicData,   // 15 Netllist Callback
+	                     magicData2)  // 16 Netllist Callback Arguments
+{
+    decl call_args = arg_list();
+    decl paramList;
+    decl newParam;
+    decl propMapList;
+    decl plist;
+    decl propMap;
+    decl count;
+    decl foundIt;
+    decl msg;
+    decl objectPath;
+    decl fileHandle;
+    decl libname;
+    decl shortName;
+    decl magicDataString;
+    decl iffDisplayFmt;
+    decl qCh="";
+    decl paramGeneratedList;
+
+    shortName  = ifftolib_get_designname();
+    objectPath = ifftolib_get_objectpath();
+
+    fileHandle = fopen(strcat(name, ".ael"), "W");
+    if( fileHandle == NULL )
+    {
+        iff_log_message(list("ERROR: Unable to open AEL file for", name));
+        return;
+    }
+
+    if (attr == ITEM_DESIGN_DATA)
+    {
+        netName=strcat("dm_get_adm_name(\"", netName,"\")");
+    }
+    else
+    {
+        netName=strcat("\"", netName, "\"");
+    }
+    iffDisplayFmt="ComponentAnnotFmt";
+
+    decl spaces = "            ";
+    fputs(fileHandle, "set_simulator_type(1);");
+
+    // NOTE: dm_get_adm_name will prepend a full path to the design name.
+    // Using the function allows the item definition to be reloaded at 
+    // various times, without worrying about whether the load is in 
+    // project attach mode or not.
+
+    if(!netFormat)
+    {
+        netFormat="";
+        qCh="\"";
+    }
+    else if(netFormat == "\"\"")
+    {
+        qCh="";
+    }
+    else
+    {
+        if(leftstr(netFormat, 1) == "%" || leftstr(netFormat, 1) == "#")
+        {
+            // Older style of import was used.  Put quotes around the 
+            // net format to avoid an AEL error.
+            qCh="\"";
+        }
+    }
+
+    fputs(fileHandle, strcat("create_item(", 
+        "dm_get_adm_name(\"", shortName, "\"),\n", spaces, "\"",
+        label,                    "\",\n", spaces, "\"",
+        prefix,                   "\",\n", spaces, 
+        identify_value(attr),     ",\n",   spaces,
+        identify_value(priority), ",\n",   spaces, "\"",
+        iconName,                 "\",\n", spaces, "\"",
+        dialogName,               "\",\n", spaces, "\"",
+        dialogData,               "\",\n", spaces, qCh,
+        netFormat,                qCh, ",\n", spaces, 
+        netName,                  ",\n",   spaces, 
+        iffDisplayFmt,            ",\n", spaces, "\"",
+        schemName,                "\",\n", spaces, 
+        identify_value(art),      ",\n", spaces, "\"",
+        artData,                  "\",\n", spaces, 
+        identify_value(extraAttr))); 
+
+    if( magicData != NULL )
+    {
+        magicDataString=strcat(",list(dm_create_cb(ITEM_NETLIST_CB, \"", magicData, "\", ");
+        if(magicData2 != NULL)
+            magicDataString=strcat(magicDataString, identify_value(magicData2));
+        else
+            magicDataString=strcat(magicDataString, "NULL");
+
+        magicDataString=strcat(magicDataString, ", TRUE))");
+        fputs(fileHandle, magicDataString);
+
+    }
+
+    propMapList = iff_in_map_has_order_mapping(objectPath);
+
+    //
+    // If property order mapping exists then handle the ordered properties
+    // first.
+    //
+    paramGeneratedList=NULL;
+
+    if( propMapList != NULL )
+    {
+        count = 0;
+        while( count < listlen(propMapList) )
+        {
+            foundIt = FALSE;
+            count++;
+            plist = propMapList;
+            while( plist != NULL )
+            {
+                propMap = car(plist);
+                plist = cdr(plist);
+                if(( listlen(propMap) > 2 ) && ( nth(2, propMap) == count ))
+                {
+                    paramList = ifftolib_search_parameter_stack(car(cdr(propMap)));
+                    if( paramList != NULL )
+                    {
+                        foundIt = TRUE;
+                        if(!member(nth(0, paramList), paramGeneratedList))
+                        {
+                            newParam = iff_in_map_create_parm_str(objectPath,
+                                nth(0, paramList),
+                                nth(1, paramList), 
+                                nth(2, paramList),
+                                nth(3, paramList), 
+                                nth(4, paramList), 
+                                nth(5, paramList),
+                                nth(6, paramList),
+                                nth(7, paramList),
+                                nthcdr(8, paramList));
+                            fputs(fileHandle, newParam);
+                            paramGeneratedList=append(paramGeneratedList, list(nth(0, paramList)));
+                        }
+                        plist = NULL;
+                    }
+                }
+            }
+
+            if( foundIt == FALSE )
+            {
+                msg = strcat("WARNING: Failed to find property mapping order ",
+                    "for index ", identify_value(count), ".\n",
+                    "         This may create an invalid set ",
+                    "of parameters for the\n", 
+                    "         design ", ifftolib_get_symbolname(), ".\n");
+
+                iff_log_message(list(msg));
+            }
+
+        }
+    }
+
+    //
+    // Handle all other properties in the order they existed in the IFF
+    //
+    paramList = ifftolib_pop_parameter_stack();
+
+    while( paramList != NULL )
+    {
+        if(!member(nth(0, paramList), paramGeneratedList))
+        {
+            newParam = iff_in_map_create_parm_str(objectPath,
+                nth(0, paramList),
+                nth(1, paramList), 
+                nth(2, paramList),
+                nth(3, paramList), 
+                nth(4, paramList), 
+                nth(5, paramList),
+                nth(6, paramList),
+                nth(7, paramList),
+                nthcdr(8, paramList)
+                );
+            fputs(fileHandle, newParam);
+            paramGeneratedList=append(paramGeneratedList, list(nth(0, paramList)));
+        }
+        paramList = ifftolib_pop_parameter_stack();
+    }
+
+    fputs(fileHandle, ");");
+
+    fputs(fileHandle, "set_design_type(1);");
+    libname = iff_import_get_library();
+
+    fputs(fileHandle, 
+        strcat("library_group(\"", 
+        libname, "\",\"", libname, "\",dm_get_adm_name(\"", shortName, "\"));"));
+
+    iff_import_set_library(NULL);
+
+    fclose(fileHandle);
+
+    // NOTE: With the dm_get_adm_name function in place, the load at this 
+    // point will eliminate the need for reattaching to the project after 
+    // the import is finished (maybe).
+
+    // if(!lmsFileImport)
+    load(strcat(name, ".ael"),"CmdOp");
+
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// Add to the list of equations that will be added to a single
+// VAR component after the schematic is complete.
+//////////////////////////////////////////////////////////////////////
+defun iff_import_add_equation(x,y,equation)
+{
+    if (IffMultiPageMode)
+    {
+	 /* Variable instances are merged as data is added to design */
+	 de_iff_add_component ("VAR",			/* name */
+			       "",			/* instance name */
+			       TRUE,			/* isLeaf */
+			       x,			/* x location */
+			       y,			/* y location */
+			       90,			/* rotation */
+   			       MIRROR_NONE,		/* mirrorType */
+			       0, 			/* maskNo */
+			       list (equation));	/* property */
+    }
+    else
+    {
+	if( IffEquationList == NULL )
+	  IffEquationList = list(list(x,y,equation));
+	else
+	  IffEquationList = append(IffEquationList, list(list(x,y,equation)));
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// Place a VAR component and added equations to it.
+//////////////////////////////////////////////////////////////////////
+defun iff_import_place_equations()
+{
+  decl placed = FALSE;
+  decl x;
+  decl y;
+  decl equation;
+  decl parms = NULL;
+  decl pos;
+  decl equName;
+  decl equValue;
+  decl equList;
+
+  if( IffEquationList == NULL )
+    return;  // Nothing to do....
+
+
+  set_instance("VAR");
+
+  while( IffEquationList != NULL )
+    {
+      equList = car(IffEquationList);
+      IffEquationList = cdr(IffEquationList);
+
+      equation = nth(2, equList);
+
+      pos = index(equation, "=");
+      equName  = leftstr(equation, pos);
+      equValue = rightstr(equation, strlen(equation)-(pos+1));
+
+      pos = prm("VarFormEditcompPowerVar", equName, equValue);
+
+      if( placed == FALSE )
+	{
+	  placed = TRUE;
+	  x = nth(0, equList);
+	  y = nth(1, equList);
+	  parms = list(pos);
+	}
+      else
+	{
+	  parms = append(parms, list(pos));
+	}
+    }
+
+  set_instance_parameters(parms);
+
+  rotate_image("UP");
+
+  place_instance(x,y);
+
+  IffEquationList = NULL;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_file_remove(iffFile)
+{
+  if( IffRemoveIffFile == TRUE )
+    {
+      iff_log_message(list("\nRemoving the IFF file:", iffFile, "\n"));
+      remove(iffFile);
+    }
+
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_failed(reason)
+{
+  decl str;
+
+  if( reason == "Security" )
+    {
+      str = "A licensing error has occured. Some or all of the IFF file ";
+      str = strcat(str, "could not be processed.");
+      if( IffRemoveIffFile == TRUE )
+	str = strcat(str, "\nThe IFF file has not been removed.");
+    }
+  else
+    {
+      str = "A unknown error has occured during the\nIFF transfer.";
+    }
+
+  iff_error(str);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_license_error(license_type, error_message)
+{
+  decl str;
+
+  str = "A licensing error has occured. The license for\n";
+  str = strcat(str, "IFF ", license_type, " could not be secured.\n");
+  if( error_message != NULL )
+    str = strcat(str, error_message);
+  else
+    str = strcat(str, "Security error: Unknown licensing error");
+
+  if( IffInteractive == TRUE )
+    warning("iff_warnings", 1, str, NULL);
+  else
+    iff_log_message(list(str));
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// Add a wire property. Since ADS/S4 like adding properties to instances
+// instead of the wire if a instance is located at the same point. This
+// procedure will find the wire and add the property to it via 
+// db_add_property(). 
+//
+// NOTE: This will only work under ADS since db_add_property()
+//       does not exist in SeriesIV.
+//////////////////////////////////////////////////////////////////////
+defun iff_add_wire_property(propName, propValue, x, y)
+{
+  decl tmpList;
+  decl id;
+  decl handle;
+  decl loc;
+  decl pinHandle;
+  decl repHandle;
+  decl wireHandle;
+  decl userUnits;
+  decl dgHandle;
+
+  tmpList = iff_set_edit_property(x,y);
+  if( tmpList == NULL )
+    return;   // Nothing to attach property to at this point
+
+  id       = car(tmpList);
+  handle   = car(cdr(tmpList));
+  dgHandle = NULL;
+
+  if( id == 41 )
+    {
+      repHandle = db_get_instance_attribute(handle, INST_OWNER);
+      userUnits = db_get_rep_db_factor(repHandle);
+
+      pinHandle = db_get_instance_attribute(handle, INST_PIN_HEAD);
+      while( pinHandle != NULL )
+	{
+	  loc = db_get_pin_attribute(pinHandle, PIN_LOCATION);
+	  if(( db_get_location_x(loc)/userUnits != x ) ||
+	     ( db_get_location_y(loc)/userUnits != y ))
+	    {
+	      pinHandle = db_instance_next_pin(pinHandle);
+	      continue;        // Wrong pin try the next one....
+	    }
+	     
+	  wireHandle = db_get_pin_attribute(pinHandle, PIN_WIRE_PTR);
+	  if( wireHandle == NULL )
+	    return;            // No wire found 
+
+	  dgHandle = db_get_wire_attribute(wireHandle, WIRE_OWNER);
+	  if( dgHandle == NULL )
+	    return;            // No data group to add property to.
+
+	  pinHandle = NULL;
+	}
+    }
+  else
+    {
+      dgHandle = handle;
+    }
+  
+  if( dgHandle == NULL )
+    return;
+
+  iff_db_add_property(dgHandle, propName, propValue, TRUE, NULL, x, y);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_translate_xy(x,y)
+{
+  decl coord;
+  decl mapX, mapY, mapAngle, mapMirror;
+
+  if( iff_get_import_rep_type() != REP_LAY )
+    return(list(x,y));
+
+  mapX      = db_get_map_attribute(MAP_X,     IffLayoutSaveMap);
+  mapY      = db_get_map_attribute(MAP_Y,     IffLayoutSaveMap);
+  mapAngle  = db_get_map_attribute(MAP_ANG,   IffLayoutSaveMap);
+  mapMirror = db_get_map_attribute(MAP_MIR_X, IffLayoutSaveMap);
+
+  coord = db_new_coord(cint(x*IffLayoutScaleFactor),
+		       cint(y*IffLayoutScaleFactor));
+
+  db_clear_map();
+  db_setup_map(mapX,mapY,0,1,1,0,0);
+
+  coord = db_transform_coord(coord);
+
+  db_clear_map();
+  db_setup_map(0,0,mapAngle,1,1,mapMirror,0);
+
+  coord = db_transform_coord(coord);
+
+  x = db_get_x(coord)/IffLayoutScaleFactor;
+  y = db_get_y(coord)/IffLayoutScaleFactor;
+
+  db_setup_map(IffLayoutSaveMap);
+
+  return(list(x,y));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_translate_point(x,y)
+{
+    decl plist = iff_translate_xy(x,y);
+
+    // fputs(stderr, identify_value(plist));
+
+    de_add_point(car(plist), nth(1,plist));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_objectpath_from_design(designName)
+{
+  decl designHandle;
+  decl repHandle;
+  decl propHandle;
+  decl propValue = NULL;
+
+  designHandle = db_get_design(designName);
+  if( designHandle == NULL )
+    return( propValue );
+
+  repHandle = db_get_rep(designHandle, REP_SCHEM);
+  if( repHandle == NULL )
+    return( propValue );
+
+
+  propHandle = db_get_rep_attribute(repHandle, REP_PROPERTY);
+  if( propHandle == NULL )
+    return( propValue );
+
+  propValue = iffimport_get_property_from_list(propHandle,
+					       "HPEESOF_FULL_PATH", 3);
+
+  return( propValue );
+}
+
+//////////////////////////////////////////////////////////////////////
+// See if you can determine the object path for the artcomp instance
+// specified in the design path. The design path is the hierachical
+// link between the artcomp and the schematic instance. The form 
+// of the design path is:
+//
+//          <object>.<instance>|<object>.<instance>|<object>[...]
+// 
+// If the design path is only the object name then search for a 
+// matching design that has that name and see if a object path 
+// exist for that design object.
+//////////////////////////////////////////////////////////////////////
+defun iff_get_objectpath_from_design_path(desPath)
+{
+    decl objectName;
+    decl instName;
+    decl instList;
+    decl tmpList;
+    decl designName;
+    decl instHandle;
+    decl propValue;
+    decl longName;
+    decl shortName;
+    decl badPath;
+    decl msg;
+    decl topInst;
+    // decl tmpListDelim=chr(254);
+    decl tmpListDelim=".";  
+
+    if(lmsFileImport)
+        tmpListDelim=chr(254);
+
+    if(( desPath == NULL ) || ( desPath == "" ))
+	return( NULL );
+
+    instList = iffParseString(desPath, "|");
+    tmpList  = iffParseString(car(instList), tmpListDelim);
+    
+    propValue = NULL;
+    topInst   = NULL;
+    
+    objectName = car(tmpList);
+    if( listlen(tmpList) > 1 )
+    {
+	ifftolib_build_names_from_objectpath(IffDrawPageTopObjectPath,
+					     &longName, &shortName);
+	if(( objectName != longName ) && ( objectName != shortName ))
+	{
+	    /*
+	    msg = strcat("WARNING: Design path does not match to design ",
+			 "objectPath.", "\n\n         ",
+			 "ObjectPath = ", IffDrawPageTopObjectPath,
+			 "\n         ",
+			 "DesignPath = ", desPath);
+	    iff_log_message(list(msg));
+	    */
+	    badPath = TRUE;
+	}
+	else
+	{
+	    badPath = FALSE;
+	}
+
+	designName = ifftolib_get_name(IffDrawPageTopObjectPath);
+	while( instList != NULL )
+	{
+	    tmpList    = iffParseString(car(instList), tmpListDelim);
+	    instList   = cdr(instList);
+	    objectName = car(tmpList);
+	    instName   = nth(1,tmpList);
+	    
+	    if( instName == NULL )
+		continue;
+	    else if( topInst == NULL )
+		topInst = instName;
+
+	    if( badPath == TRUE )
+		continue;
+	    
+	    instHandle = db_find_instance(designName, REP_SCHEM, instName);
+	    if( instHandle == NULL )
+	    {
+		badPath = TRUE;
+		continue;
+	    }
+
+	    designName = db_get_instance_attribute(instHandle, INST_DESIGN_NAME);
+	}
+    }
+
+    if( propValue == NULL )
+    {
+	propValue = iff_get_objectpath_from_design(objectName);
+	
+	if( propValue == NULL )
+	    propValue = strcat("/", objectName, ":art");
+    }
+
+    // Save the current top instance name....
+	   IffDrawPageTopDesignCurInst = topInst;
+    
+    return(propValue);
+}
+
+//////////////////////////////////////////////////////////////////////
+// This routine sets the objectpath to the top drawpage object for
+// a layout import. It is used to determine the objectPath from the
+// design path for other layout artcomps.
+//////////////////////////////////////////////////////////////////////
+defun iff_set_top_objectpath_for_design_path(objectPath)
+{
+  IffDrawPageTopObjectPath = objectPath;
+  IffDesignPtrList = NULL;
+  IffDrawPageTopDesignName = ifftolib_get_name(objectPath);
+  IffDrawPageTopDesignCurInst = NULL;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_init_drawpage_preferences(units, incr, major, minor, snap)
+{
+  IffDrawPageUnits     = units;
+  IffDrawPageGridMajor = major;
+  IffDrawPageGridMinor = minor;
+  IffDrawPageGridSnap  = snap;
+
+  if(incr >= 0)
+  {
+      incr = -1;
+  }
+  IffDrawPageIncr      = incr;
+
+}
+
+//////////////////////////////////////////////////////////////////////
+// This routine makes the items in schematic and layout with the same
+// instance name equivalent items. If the instance name is not the
+// same then this function will fail to set the equivalent instances.
+//////////////////////////////////////////////////////////////////////
+defun iff_make_equivalent_items(uid)
+{
+  decl desName = current_design_name();
+  decl schInst;
+  decl layInst;
+  decl instData;
+
+  return; // This is redundent since we are doing a syncronize to create
+          // this association.
+
+  schInst = db_find_instance(desName, REP_SCHEM, uid);
+  layInst = db_find_instance(desName, REP_LAY,   uid);
+
+  if(( layInst == NULL ) || ( schInst == NULL ))
+    {
+      print_value("Unable to set equivalent items because one doesn't exist");
+      return;
+    }
+
+  instData = db_get_instance_attribute(layInst, INST_STAMP);
+  db_set_instance_attribute(schInst, INST_EQUIV_STAMP, instData);
+
+  instData = db_get_instance_attribute(schInst, INST_STAMP);
+  db_set_instance_attribute(layInst, INST_EQUIV_STAMP, instData);
+
+  db_set_instance_attribute(layInst, INST_EQUIV_CREATED, TRUE);
+  db_set_instance_attribute(schInst, INST_EQUIV_CREATED, TRUE);
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//  Function:  Takes a list of "name=value" strings
+// 		and returns true if the value string
+//		represents a list (i.e. begins with "list("
+//		This signifies a list class parameter type.
+//////////////////////////////////////////////////////////////////////
+defun iff_item_has_list_class_param (paramList)
+{
+    decl nameValueStr, pos, name, value, valueStr;
+
+    while (paramList)
+    {
+	nameValueStr = car (paramList);
+	pos = index (nameValueStr, "=");
+
+	if (pos != -1)
+	{
+	    name = leftstr (nameValueStr, pos);
+	    valueStr = rightstr (nameValueStr, strlen (nameValueStr)-(pos+1));
+            /* Check if list parameter */
+	    if ((strlen (valueStr) > 6) && (leftstr (valueStr, 5) == "list("))
+	       return (TRUE);
+	}
+        paramList = cdr (paramList);
+    }
+
+    return (FALSE);
+}
+
+/********************************************************************
+ Routine:  iff_place_layout_artwork_component
+ Function: 
+ Parameters:
+	name 	Component name		    	"MLIN" 
+	type 	Type of component 	        ["leaf", "design", "layout", 
+						 "unknown"]
+	uid 	UID for this component instance	"IFF63"
+	rot 	Rotation in degrees		-90 
+	flip 	Component flipped		[TRUE,FALSE] 
+	x 	X location of component 	200 
+	y 	Y location of component		0
+	scale 	Scale factor to apply to	1
+		elements making up the
+		componeent
+	desPath Path to design			"MLIN"
+	propList User attributes/properties     list ("PATH=simple.TL1|MLIN",
+						      "type=INST_MACRO_TYPE",
+						      "Subst=\"MSub1\"",
+						      "W=25.0 mil",
+						      "L=100.0 mil",
+						      "Wall1=",
+						      "Wall2=","Temp=")
+ ********************************************************************/
+defun iff_place_layout_artwork_component (name, type, uid, 
+				      rot, flip, x, y, scale, desPath, propList)
+{
+   decl placed = TRUE;
+   decl mirrorType = MIRROR_NONE;
+   decl maskNo = 1;
+   decl localDebugMessageLevel = IffDebugMessageLevel;
+   decl isLeaf = FALSE;
+
+   api_set_working_cursor ();
+
+    /* Debug */
+    fputs (stderr, fmt_tokens (list ("iff_place_layout_artwork_component",
+		identify_value (name), identify_value (type))));
+
+   if (localDebugMessageLevel > 15)
+       fputs (stderr, fmt_tokens (list ("iff_placed_artcomp",
+				  "name", identify_value (name),
+				  //"type", identify_value (type),
+				  "uid", identify_value (uid),
+				  "rot", identify_value (rot),
+				  "flip", identify_value (flip),
+				  "x", identify_value (x),
+				  "y", identify_value (y),
+				  //"scale", identify_value (scale),
+				  //"desPath", identify_value (desPath),
+				  "propList", identify_value (propList))));
+
+   if (flip)
+   {
+      mirrorType = MIRROR_X;
+      rot = -rot;
+   }
+
+   if (strcmp (type, "leaf") == 0)
+       isLeaf = TRUE;
+
+   de_iff_add_component (name,				/* name */
+		         uid,				/* instance name */
+			 isLeaf,
+			 x,
+			 y,
+			 rot,
+			 mirrorType,
+			 maskNo,
+			 propList);
+
+   return (placed);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun old_iff_placed_artcomp(name, type, uid, 
+			     rot, flip, x, y, scale, desPath, propList)
+{
+  decl mx;
+  decl i;
+  decl placed;
+  decl objectPath;
+  decl oldErrorHandler;
+
+  // print_value(strcat("placing ", name));
+
+  objectPath = iff_get_objectpath_from_design_path(desPath);
+
+  placed = FALSE;  
+
+  if( type == "leaf" )
+    {
+      db_clear_map();
+      db_setup_map(0,0,0,1,1,0,0);
+      IffLayoutSaveMap = db_get_map();
+
+      oldErrorHandler = on_error(iff_is_defined_error_handler);
+      IffIsDefinedErrorCode = -1;
+      set_instance(name);
+      on_error(oldErrorHandler);
+
+      if( IffIsDefinedErrorCode == -1 )
+	{
+	  if( iff_set_edit_layer("") == TRUE ) 
+	    {
+	      iff_place_item(name, uid, "", x,y,rot);
+	      if( flip == TRUE )
+		{
+		  iff_select_by_name(uid,1);
+		  iff_mirror(x,y);
+		  iff_deselect_by_name(uid,1);
+		}
+	      ifftolib_set_instance_parameters(objectPath, 
+					       REP_LAY, uid, x,y, propList);
+	      placed = TRUE;
+	      iff_make_equivalent_items(uid);
+	    }
+	}
+      else
+	{
+	  if( flip == TRUE )
+	    mx = 1.0;
+	  else
+	    mx = 0.0;
+
+	  IffLayoutScaleFactor = 1.0;
+
+	  i = iff_get_preference(LAYOUT_PREC_P);
+	  while( i < 0 )
+	    {
+	      i = i + 1;
+	      IffLayoutScaleFactor = IffLayoutScaleFactor * 10.0;
+	    }
+
+	  db_clear_map();
+	  db_setup_map(int(-1.0*x*IffLayoutScaleFactor), 
+		       int(-1.0*y*IffLayoutScaleFactor), 
+		       int(-1.0*rot*1000), scale, scale, mx, 0.0);
+	  IffLayoutSaveMap = db_get_map();
+	}
+    }
+  else
+    {
+      if( flip == TRUE )
+	mx = 1.0;
+      else
+	mx = 0.0;
+
+      IffLayoutScaleFactor = 1.0;
+
+      i = iff_get_preference(LAYOUT_PREC_P);
+      while( i < 0 )
+	{
+	  i = i + 1;
+	  IffLayoutScaleFactor = IffLayoutScaleFactor * 10.0;
+	}
+
+      db_clear_map();
+      db_setup_map(int(x*IffLayoutScaleFactor), 
+		   int(y*IffLayoutScaleFactor), 
+		   int(rot*1000), scale, scale, mx, 0.0);
+      IffLayoutSaveMap = db_get_map();
+    }
+
+  return(placed);
+}
+
+defun iff_placed_artcomp (name, type, uid,
+			  rot, flip, x, y, scale, desPath, propList)
+{
+
+    decl hasListParam = FALSE;
+    decl placed;
+
+    /* Debug */
+    fputs (stderr, fmt_tokens (list ("iff_placed_artcomp",
+				identify_value (name), identify_value (type))));
+
+    if (IffImportPlacementMode)
+        hasListParam = iff_item_has_list_class_param (propList);
+
+    if (IffImportPlacementMode && !hasListParam)
+        placed = iff_place_layout_artwork_component (name, type, uid,
+				    rot, flip, x, y, scale, desPath, propList);
+    else 
+        placed = old_iff_placed_artcomp (name, type, uid,
+				    rot, flip, x, y, scale, desPath, propList);
+
+    return (placed);
+}
+
+defun iff_insert_component (objectPath, symbolPath, instanceName, x, y, rot, mirrorType, propList, repType)
+{
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+
+    de_iff_add_component (symbolPath,		/* name */
+			  instanceName,		/* instance name */
+			  TRUE,                 /* isLeaf */
+			  x,
+			  y,
+			  rot,
+			  mirrorType,
+			  0,                    /* Mask number */
+			  propList);
+
+    ifftolib_set_instance_parameters (objectPath, repType,
+				      instanceName,
+				      x, y,
+				      propList);
+}
+
+/*--------------------------------------------------------------------/
+ *              IFF_PLACE_CMP
+ * -------------------------------------------------------------------
+ * Function: Creates an instance in the schematic
+ * Returns:
+/--------------------------------------------------------------------*/
+defun iff_place_cmp (objectPath, instanceName, leafStatus, rotName, rot, flip, x, y, propList)
+{
+    decl hasListParam = FALSE;
+    decl maskNo = 1;
+    decl symbolPath;
+    decl mirrorType = MIRROR_NONE;
+    decl allFilter=PREF_ARC_SELECT_FILT | PREF_CIRCLE_SELECT_FILT |  
+                   PREF_ELEMENT_SELECT_FILT | PREF_FORMAT_SELECT_FILT |
+                   PREF_PATH_SELECT_FILT | PREF_POINT_SELECT_FILT |
+                   PREF_POLYGON_SELECT_FILT | PREF_POLYLINE_SELECT_FILT |
+                   PREF_PORT_SELECT_FILT | PREF_TEXT_SELECT_FILT |
+                   PREF_WIRE_SELECT_FILT;
+    decl tmpList, prop, propVal, propName, i, j;
+    decl msg;
+    decl isLeaf = FALSE;
+
+    if (IffImportPlacementMode)
+    {
+        symbolPath = iff_get_instance_name (objectPath);
+	if (!IffMultiPageMode)
+	    hasListParam = iff_item_has_list_class_param (propList);
+    }
+
+    if (flip)
+        mirrorType = MIRROR_X;
+
+    if (IffImportPlacementMode && !hasListParam)
+    {
+	 api_set_working_cursor ();
+
+	 // Call a user routine to preprocess data prior to placement
+
+	 if(bound("iff_user_preprocess_instance"))
+	 {
+	     iff_user_preprocess_instance(&symbolPath,
+					  &instanceName,
+					  &x,
+					  &y,
+					  &rot,
+					  &mirrorType,
+					  &maskNo,
+					  &propList);
+	 }
+
+	 // Verify that the symbol exists for the PDE...
+
+	 if (dm_find_item_definition(dm_get_adm_name(symbolPath),1))
+	 {
+	     if (strcmp (leafStatus, "Y") == 0)
+		 isLeaf = TRUE;
+	     de_iff_add_component (symbolPath,		/* name */
+				   instanceName,		/* instance name */
+				   isLeaf,
+				   x,
+				   y,
+				   rot,
+				   mirrorType,
+				   maskNo,
+				   propList);
+	 }
+	 else
+	 {
+	     msg=strcat("ERROR: Unable to place instance \"", instanceName, 
+			"\" of type \"", symbolPath, "\"!");
+	     iff_log_message(list(msg));
+	 }	
+    }
+    else
+    {
+	/* Trigger insertion of previously encountered components.
+	   Leave IFF C structures in place for further component
+	   insertion via C */
+         iff_import_non_macro_placement (FALSE);		// Partial import
+
+	 if(bound("iff_user_preprocess_instance"))
+	 {
+	     iff_user_preprocess_instance(&symbolPath,
+					  &instanceName,
+					  &x,
+					  &y,
+					  &rot,
+					  &mirrorType,
+					  &maskNo,
+					  &propList);
+	 }
+
+	 /* Insert current instance using old method */
+	 ifftolib_set_instance (objectPath, instanceName);
+	 rotate_image (rotName);
+	 set_instance_id (instanceName,0);
+	 ifftolib_place_instance (x, y);
+	 ifftolib_set_instance_parameters (objectPath,
+					   REP_SCHEM, 
+					   instanceName,
+					   x, y,
+					   propList);
+
+	 if(flip)
+	 {
+	     // Select the instance, flip it, then select all wires, delete them, 
+             // and move the instance 0.
+ 
+             de_select_by_name(instanceName);
+	     de_mirror_x(x, y);
+	     de_deselect_all();
+	     de_set_select_filter(PREF_WIRE_SELECT_FILT);
+	     select_all();
+	     de_delete();
+	     de_set_select_filter(allFilter);
+	     de_select_by_name(instanceName);
+	     de_move(0,0);
+	     de_deselect_all();
+	 }
+    }
+}
+
+defun iff_set_named_connection (nodeName, pinName, x, y)
+{
+    set_named_connection(nodeName);
+    named_connection(x, y);
+    if (pinName)
+	iff_add_wire_property ("IFF_PIN_NAME", pinName, x, y);
+
+    return (TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_push_design()
+{
+  decl dptr;
+
+  IffDesignParentName = current_design_name();
+
+  dptr = IffDesignParentName; 
+
+  if( IffDesignPtrList == NULL )
+    IffDesignPtrList = list(dptr);
+  else
+    IffDesignPtrList = append(list(dptr), IffDesignPtrList);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_pop_design()
+{
+  decl dptr;
+  decl designName;
+  decl windowH=iff_get_current_window();
+  decl winCode=SCHEM_WIN;
+  
+  designName = car(IffDesignPtrList);
+
+  dptr = db_get_design(designName);
+  ifftolib_set_designpath(designName);
+  
+  IffDesignPtrList = cdr(IffDesignPtrList);
+
+  IffDesignParentName = car(IffDesignPtrList);
+
+  winCode=api_query_window_id(iff_get_current_window());
+
+  iff_show_design_in_window(dptr, winCode);
+
+}
+
+defun ifftolib_place_instance(x, y)
+{
+    // Only place the instance if ifftolib_set_instance set up a 
+    // valid symbol for placement
+
+    if (ifftolibPlaceInstance)
+    {
+        place_instance(x, y);
+    }
+}
+
+
+

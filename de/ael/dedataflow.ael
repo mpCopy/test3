@@ -1,0 +1,311 @@
+// Copyright  2000 - 2017 Keysight Technologies, Inc  
+//@(#) $Source: /cvs/wlv/src/hptolemyaddons/src/timed/ael/dedataflow.ael,v $ $Revision: 1.17 $ $Date: 2011/08/28 20:26:46 $
+
+/* 
+
+   This file contains functions and callbacks for the Data Flow
+   Controller Dialog.  Here are some instructions for Ptolemy
+   developers on adding new parameters:
+   
+   First add them to the create_item call in ../idf/df.adf, following
+   the examples there.  The order the parameters are created is the
+   order that they will be displayed on the schematic.  It's ok to
+   change the order from release to release.  In other words you can
+   put your new parameter anywhere, but be sure to change the lists in
+   setDataFlowNetlistFmt if you cause other parameters to change their
+   index numbers.
+
+   Second, add the parameter's index number to the appropriate list in
+   the setDataFlowNetlistFmt in df.adf.  It should go into one of the
+   three lists depending on whether it should be netlisted as a VAR,
+   as a normal DF parameter, or as an enum DF parameter.
+   
+   Third, add them to the appropriate tab display below.  The tabs are
+   each tables, built up on column at a time, so add an entry to the
+   label column (the calls to deeditutil_label) with "Lparmname" and
+   the text you want to display.  Then add the entry to the input
+   column with "parmname", copying an example for a similar type.
+   Note that the callbacks depend on the name of the dialog being the
+   same as the name of the parameter.
+
+   Finally, add your parameter to one of the dedataflow_*parms
+   variables below.  Order isn't important.
+
+   Adding a new tab is pretty easy too.  Write a new function based on
+   one of the existing tabs, and then call it from the
+   dedataflow_create_dialog function.  Keep the display tab at the end
+   for consistency.
+
+*/
+
+// states which are numbers
+decl dedataflow_numberparms =
+list("DefaultNumericStart", "DefaultNumericStop", "DefaultSeed");
+
+// states which are numbers and have units
+decl dedataflow_numberunitparms =
+list("DefaultTimeStart", "DefaultTimeStop",
+     "DefaultRIn", "DefaultROut", "DefaultRLoad", "DefaultRTemp");
+
+// states which are text and need plib to mess with quotes
+decl dedataflow_textparms =
+list("OutVar", "logFile", "ProfileTimes");
+
+// states which are enums
+decl dedataflow_enumparms = 
+list("DeadlockManager", "CktCosimInputs");
+
+//create the Controls tab
+defun dedataflow_controls_tab(dlgName) {
+    return api_dlg_create_item
+	("DataFlowControlsPage", API_PAGE_GROUP,
+	 API_RN_CAPTION, "Controls",
+	 API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+	 
+	 api_dlg_create_item
+	 ("ControlsGroup", API_TABLE_GROUP, API_RN_NUM_COLUMNS, 2,
+	  deeditutil_label("LDefaultNumericStart", "DefaultNumericStart"),
+	  deeditutil_label("LDefaultNumericStop", "DefaultNumericStop"),
+	  deeditutil_label("LDefaultTimeStart", "DefaultTimeStart"),
+	  deeditutil_label("LDefaultTimeStop", "DefaultTimeStop"),
+	 
+	  api_dlg_create_item("DefaultNumericStart", API_EDIT_TEXT_ITEM),
+	  api_dlg_create_item("DefaultNumericStop", API_EDIT_TEXT_ITEM),
+	  deeditutil_text_list_combo("DefaultTimeStart", 4),
+	  deeditutil_text_list_combo("DefaultTimeStop", 4)
+	  ));
+}
+
+// create the Options tab
+defun dedataflow_options_tab(dlgName) {
+    return api_dlg_create_item
+	("DataFlowOptionsPage", API_PAGE_GROUP,
+	 API_RN_CAPTION, "Options",
+	 API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+	 
+	 api_dlg_create_item
+	 ("OptionsGroup", API_TABLE_GROUP, API_RN_NUM_COLUMNS, 2,
+	  deeditutil_label("LDefaultSeed", "DefaultSeed"),
+	  deeditutil_label("LOutVar", "OutVar"),
+	  deeditutil_label("LDeadlockManager","DeadlockManager"),
+	  deeditutil_label("LCktCosimInputs", "CktCosimInputs"),
+
+	  api_dlg_create_item("DefaultSeed", API_EDIT_TEXT_ITEM),
+	  api_dlg_create_item("OutVar", API_EDIT_TEXT_ITEM),
+	  api_dlg_create_item("DeadlockManager", 
+                              API_DROPDOWNLIST_COMBO_ITEM,
+                              API_RN_TBL_OPTIONS, API_RV_TBL_FIX_WIDTH,
+                              API_RN_VISIBLE_COLUMN_COUNT, 20),
+	  api_dlg_create_item("CktCosimInputs",
+			      API_DROPDOWNLIST_COMBO_ITEM,
+			      API_RN_TBL_OPTIONS, API_RV_TBL_FIX_WIDTH,
+			      API_RN_VISIBLE_COLUMN_COUNT, 20)));
+}
+
+// create the Resistors tab
+defun dedataflow_resistors_tab(dlgName) {
+    return api_dlg_create_item
+	("DataFlowResistorsPage", API_PAGE_GROUP,
+	 API_RN_CAPTION, "Resistors",
+	 API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+	 
+	 api_dlg_create_item
+	 ("ResistorsGroup", API_TABLE_GROUP, API_RN_NUM_COLUMNS, 2,
+	  deeditutil_label("LDefaultRIn", "DefaultRIn"),
+	  deeditutil_label("LDefaultROut", "DefaultROut"),
+	  deeditutil_label("LDefaultRLoad", "DefaultRLoad"),
+	  deeditutil_label("LDefaultRTemp", "DefaultRTemp"),
+	  
+	  deeditutil_text_list_combo("DefaultRIn", 4),
+	  deeditutil_text_list_combo("DefaultROut", 4),
+	  deeditutil_text_list_combo("DefaultRLoad", 4),
+	  deeditutil_text_list_combo("DefaultRTemp", 4),
+	  ));
+}
+
+// create the debug tab
+defun dedataflow_debug_tab(dlgName) {
+    return api_dlg_create_item
+	("DataDebugPage", API_PAGE_GROUP,
+	 API_RN_CAPTION, "Debug",
+	 API_RN_DEFAULT_OPTIONS, API_RV_TBL_FIX_SIZE,
+	 
+	 api_dlg_create_item
+	 ("DebugGroup", API_TABLE_GROUP, API_RN_NUM_COLUMNS, 2,
+	  deeditutil_label("LlogFile", "Schedule Log File"),
+	  deeditutil_label("LProfileTimes", "Profile Times File"),
+
+	  api_dlg_create_item("logFile", API_EDIT_TEXT_ITEM),
+	  api_dlg_create_item("ProfileTimes", API_EDIT_TEXT_ITEM)));
+}
+
+// set dialog values
+defun dedataflow_dlg_init(dlgH, bRenew, itemInfoP, winInstP) {
+    decl parms, p, index, parmVal, parmH;
+    for (parms = dedataflow_numberparms; parms; parms = cdr(parms)) {
+	p = car(parms);
+	desim_init_simple_value(p, p, 0, dlgH, winInstP, itemInfoP);
+    }
+    
+    for (parms = dedataflow_numberunitparms; parms; parms = cdr(parms)) {
+	p = car(parms);
+	if ((parmH = api_dlg_find_item(dlgH, p)))
+	    desim_init_combo_value(p, p, 0, parmH, winInstP, itemInfoP);
+    }
+
+    for (parms = dedataflow_textparms; parms; parms = cdr(parms)) {
+	p = car(parms);
+	if ((index = deitem_get_named_parm_ui_index(winInstP, p)) >= 0 &&
+	    (parmH = api_dlg_find_item(dlgH, p))) {
+	    parmVal = deitem_get_indexed_parm_value(winInstP, index);
+	    parmVal = plib_decompose_string_value_and_map(parmVal);
+	    if (is_type("int", parmVal))
+		report_plib_error(parmVal);
+	    else
+		api_dlg_set_resources(parmH, API_RN_VALUE, parmVal);
+	}
+    }
+    
+    for (parms = dedataflow_enumparms; parms; parms = cdr(parms)) {
+	p = car(parms);
+	if ((index = deitem_get_named_parm_ui_index(winInstP, p)) >= 0 &&
+	    (parmH = api_dlg_find_item(dlgH, p))) {
+	    decl formIndex;
+	    deitem_init_parm_form_combo(itemInfoP, index, parmH);
+	    deitem_get_indexed_parm_form_label(itemInfoP, index, &formIndex);
+	    api_dlg_list_select_index(parmH, formIndex);
+	}
+    }
+
+    deeditutil2_find_page_visit(dlgH, "DFOutputPage");
+    deoutputplan_init_parms(dlgH, winInstP);   
+
+    deeditutil_update_display_parm(api_dlg_find_item(dlgH, "DisplayPage"),
+				   winInstP);
+
+    //select the first parameter
+    deitem_set_current_parm_ui_index(itemInfoP, -1);
+}
+
+// collect dialog values
+defun dedataflow_collect_parm_value(dlgH, winInstP) {
+    decl tabGroupH, parms, p, index, parmVal, parmH, itemInfoP, pageH;
+    if (dlgH == NULL)
+	return;
+    if ((itemInfoP = deitem_get_itemInfoP(winInstP)) == NULL)
+	return;
+    tabGroupH = api_dlg_find_item(dlgH, "TabGroup");
+
+    if (parmH = api_dlg_find_item(dlgH, deitemItemIdN)) {
+	api_dlg_get_resources(parmH, API_RN_VALUE, &parmVal);
+	iteminfo_set_instance_name(itemInfoP, parmVal);
+    }
+
+    for (parms = dedataflow_numberparms; parms; parms = cdr(parms)) {
+	p = car(parms);
+	desim_collect_simple_value(p, p, 0, dlgH, winInstP, itemInfoP);
+    }
+    
+    for (parms = dedataflow_numberunitparms; parms; parms = cdr(parms)) {
+	p = car(parms);
+	desim_collect_combo_value(p, p, 0, dlgH, winInstP, itemInfoP);
+    }
+
+    for (parms = dedataflow_textparms; parms; parms = cdr(parms)) {
+	p = car(parms);
+	if ((parmH = api_dlg_find_item(dlgH, p)) &&
+	    (index = deitem_get_named_parm_ui_index(winInstP, p)) >= 0) {
+	    api_dlg_get_resources(parmH, API_RN_VALUE, &parmVal);
+	    parmVal = plib_compose_string_value(parmVal);
+	    if (is_type("int", parmVal))
+		report_plib_error(parmVal);
+	    else
+		deitem_set_indexed_parm_value(itemInfoP, index, parmVal);
+	}
+    }
+
+    for (parms = dedataflow_enumparms; parms; parms = cdr(parms)) {
+	p = car(parms);
+	if ((parmH = api_dlg_find_item(dlgH, p)) &&
+	    (index = deitem_get_named_parm_ui_index(winInstP, p)) >= 0) {
+	    parmVal = api_dlg_list_get_selected_item(parmH);
+	    deitem_set_indexed_parm_form_label(itemInfoP, index, parmVal);
+	}
+    }
+
+    if (deeditutil2_find_page_visit(tabGroupH, "DFOutputPage") &&
+	pageH = api_dlg_find_item(tabGroupH, "DFOutputPage"))
+    {
+	deoutputplan_collect_parms(pageH, winInstP);
+    }
+
+    if (deeditutil2_find_page_visit(tabGroupH, "DisplayPage"))
+	desim_apply_parm_disp_table(dlgH, winInstP);    
+}
+        
+/*--------------------------- callback functions------------------------*/
+
+defun dedataflow_ok_cb(okH, dlgName, winInstP) {
+    dedataflow_apply_cb(NULL, dlgName, winInstP);
+    deitem_ok(okH, dlgName, winInstP);
+}
+
+defun dedataflow_apply_cb(applyH, dlgName, winInstP) {
+    decl dlgH = api_find_dialog(winInstP, dlgName);
+
+    dedataflow_collect_parm_value(dlgH, winInstP);
+    deitem_apply(applyH, dlgName, winInstP);
+}
+
+/*---------------------------- CREATE DIALOG ---------------------------+/
+/+ entry point to dedataflow.ael, create Data Flow Controller Dialog    +/
+/+----------------------------------------------------------------------*/
+defun dedataflow_create_dialog(winInst, dlgName, itemInfoP) {
+    decl dlgH, cmpIdH, tabGroupH, displayH;
+    decl okH, applyH, cancelH, helpH;
+
+    dlgH = api_find_dialog (winInst, dlgName);
+
+    if (dlgH == NULL) {
+	dlgH = api_dlg_create_dialog
+	    (dlgName, winInst, 
+	     list(okH = de_dlg_create_pb(DeOkString, OKbuttonLabel,
+				     "dedataflow_ok_cb", dlgName),
+	      applyH = de_dlg_create_pb(DeApplyString, applyButtonLabel,
+					"dedataflow_apply_cb", dlgName),
+	      cancelH = de_dlg_create_pb(DeCancelString, cancelButtonLabel,
+					 NULL, NULL),
+	      helpH = de_dlg_create_pb(DeHelpString, helpButtonLabel,
+				       NULL, NULL)),
+	     API_RN_CAPTION, "Data Flow Controller",
+	     
+	     cmpIdH = api_dlg_create_item
+	     (deitemItemIdN, API_EDIT_TEXT_ITEM, API_RN_TBL_OPTIONS,
+	      API_RV_TBL_FIX_HEIGHT, API_RN_EDITABLE, FALSE),
+	     
+	     tabGroupH =
+	     api_dlg_create_item("TabGroup", API_TAB_GROUP,
+				 dedataflow_controls_tab(dlgName),
+				 dedataflow_options_tab(dlgName),
+				 deoutputplan_create_output_tab("DFOutputPage",DeOutputPlan_Selector_Equations_Basic),
+				 dedataflow_resistors_tab(dlgName),
+				 dedataflow_debug_tab(dlgName),
+				 displayH = deeditutil_display_tab()));
+	
+	// default visible rows of 8 is too big, so I set it to 2
+	decl displayPTH = api_dlg_find_item(displayH, "displayPageTable");
+	displayPTH = api_dlg_find_item(displayPTH, "DisplayParmTable");
+	api_dlg_set_resources(displayPTH, API_RN_VISIBLE_ROWS, 2);
+	deeditutil_init_display_parm(displayH, winInst);
+    }
+    
+    deitem_install_dialog_callbacks(winInst, dlgH, "dedataflow_dlg_init");
+    
+    return (dlgH);
+}
+
+
+// Local Variables:
+// mode: c++
+// c-basic-offset: 4
+// End:

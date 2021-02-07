@@ -1,0 +1,3638 @@
+// Copyright Keysight Technologies 1998 - 2015  
+// @(#) $Source: /cvs/wlv/src/iff/ael/iffads.ael,v $ $Revision: 1.129 $ $Date: 2011/08/28 20:26:34 $
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+
+decl IffFixUnits = list(
+                        "MHz", list("meghz"),
+                        "Ohm", list("oh"), "pOhm", list("poh"), "nOhm", list("noh"), "uOhm", list("uoh"),
+                        "mOhm", list("moh"), "kOhm", list("koh"), "MOhm", list("megoh"), "GOhm", list("goh"), "TOhm", list("toh"),
+                        "S", list("sie"), "pS", list("psie"), "nS", list("nsie"), "uS", list("usie"), "mS", list("msie"),
+                        "MH", list("megh"),
+			"F", list("farad"),
+                        "meter", list("meter"), "meters", list("meter"), 
+                        "Mm", list("megm"),
+                        "sec", list("s"), "asec", list("as"), "fsec", list("fs"),"psec", list("ps"), "nsec", list("ns"), "usec", list("us"), "msec", list("ms"),
+                        "Msec", list("megs"),
+                        "MV", list("megv"),
+                        "MA", list("mega"),
+                        "Celsius",list("celsius")
+                        );
+
+decl IffUnits = 
+list(
+     list("freq",   list(0,  
+			 list("Hz", "kHz", "MHz",   "GHz", "THz"),
+			 list("hz", "khz", "meghz", "ghz", "thz"))),
+     list("res",    list(1,  
+			 list("Ohm", "pOhm", "nOhm", "uOhm", "mOhm", "kOhm", "MOhm",  "GOhm", "TOhm",
+			      "Ohms","pOhms","nOhms","uOhms","mOhms","kOhms","MOhms", "GOhms","TOhms"),
+			 list("oh",  "poh",  "noh",  "uoh",  "moh",  "koh",  "megoh", "goh",  "toh",
+			      "oh",  "poh",  "noh",  "uoh",  "moh",  "koh",  "megoh", "goh",  "toh"  ))),
+     list("cond",   list(2,  
+			 list("S",   "pS",   "nS",   "uS",   "mS" ),
+			 list("sie", "psie", "nsie", "usie", "msie"))),
+     list("ind",    list(3,  
+			 list("H", "fH","pH","nH","uH","mH"),
+			 list("h", "fh","ph","nh","uh","mh"))),
+     list("cap",    list(4,  
+			 list("F", "fF","pF","nF","uF","mF"),
+			 list("f", "ff","pf","nf","uf","mf"))),
+     list("lng",    list(5,  
+			 list("meter", "um",     "mm",    "cm",     "mil",    "mils",   "in",     "ft",
+			      "meters","metre",  "metres","umeter", "umeters","umetre", "umetres",
+			      "mmeter","mmeters","mmetre","mmetres","cmeter", "cmeters","cmetre", "cmetres"),
+			 list("m",     "um",     "mm",    "cm",     "mil",    "mil",    "in",     "ft",
+			      "m",     "m",      "m",     "um",     "um",     "um",     "um",     
+			      "mm",    "mm",     "mm",    "mm",     "cm",     "cm",     "cm",     "cm"     ))),
+     list("time",   list(6,  
+			 list("sec", "fsec","psec","nsec","usec","msec"),
+			 list("sec", "fsec","psec","nsec","usec","msec"))),
+     list("ang",    list(7,  
+			 list("deg", "rad"),
+			 list("deg", "rad"))),
+     list("power",  list(8,  
+			 list("W", "pW","nW","uW","mW","kW","dBm","dBW"),
+			 list("w", "pw","nw","uw","mw","kw","dbm","dbw"))),
+     list("volt",   list(9,  
+			 list("V", "fV","pV","nV","uV","mV","kV"),
+			 list("v", "fv","pv","nv","uv","mv","kv"))),
+     list("cur",    list(10, 
+			 list("A", "fA","pA","nA","uA","mA","kA"),
+			 list("a", "fa","pa","na","ua","ma","ka"))),
+     list("dist",   list(11, 
+			 list("meter","km","ft","mi","nmi"),
+			 list("m",    "km","ft","mi","nmi"))),
+     list("temp",   list(12, 
+			 list("Celsius"),
+			 list("celsius")))
+     );
+
+
+IFF_SCHEMATIC_WINDOW  = SCHEMATIC_WINDOW;
+IFF_LAYOUT_WINDOW     = LAYOUT_WINDOW;
+IFF_DESIGN_VIEW       = DESIGN_VIEW;
+IFF_SYMBOL_VIEW       = SYMBOL_VIEW;
+
+decl IFF_DEFS_WIN     = 4;
+
+IffDirectoryDelimiter  = api_get_directory_delimiter();
+IffComponentNetlistFmt = ComponentNetlistFmt;
+
+decl IffToMgcSystemName = "ADS";
+decl IffConnNumProp     = "Num";
+decl IffConnNum         = "ADS_CONN_NUM";
+// decl IffConnId          = "ADS_CONN_ID"
+decl IffConnId          = "CON_ID";
+decl IffConnName	= "Port";
+decl IffGroundName	= "GROUND";
+
+
+decl IffDefaultFormSet  = "StdFileFormSet";
+// decl IffDefaultAttr     = "PARM_NOT_NETLISTED|PARM_NO_DISPLAY";
+decl IffDefaultAttr     = "PARM_NO_DISPLAY";
+
+decl IffPropertyMappingName = "IFF_PROPERTY_MAPPING_ADS";
+decl IffPinMappingName      = "IFF_PIN_MAPPING_ADS";
+
+decl IffParmMidStr          = "ADS";
+
+decl IffToolBarDisabled     = FALSE;	
+
+decl IffRelocatedInstList   = NULL;
+
+decl IffLayoutBindingName   = "Binding";
+decl IffLayoutPatternName   = "ads_pattern";
+decl IffLayoutColorName     = "ads_color";
+decl IffImportDesignList;
+ 
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_restore_window_attributes()
+{
+    if( IffToolBarDisabled == FALSE )
+        return;
+
+    decl winList=api_get_windows_by_id(SCHEM_WIN);
+    if (!winList)
+    {
+        // Apparently, a window was not open.  Open one now.
+        api_set_current_window(api_get_current_window());
+	close_window();
+	open_window(SCHEM_WIN);          
+	winList=api_get_windows_by_id(SCHEM_WIN);      
+	api_show_palettebar (car(winList), 2);
+    }
+    else
+    {
+        api_show_palettebar (car(winList), 2);
+    }
+
+    // Restore pin snap mode
+
+    iff_set_preference( GRID_SNAP_P, TRUE );
+
+    return;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_disable_window_attributes()
+{
+  if(( IffToolBarDisabled == TRUE ) || ( IffDirectoryDelimiter != "/"))
+    return;
+
+  decl winInstP = api_get_current_window();
+  if( winInstP != NULL )
+    api_show_palettebar (winInstP, 1);   // 1 = visibility off
+
+  return;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// create list of all params and properties on this instance
+/////////////////////////////////////////////////////////////////////////////
+defun iff_get_param_list(designCode, designName, instHandle, logFile)
+{
+    decl paramHandle, paramName, paramValue;
+    decl paramList, paramStrg, paramTmp;
+    decl paramType, paramUnit;
+    decl itemDefP=dm_find_item_definition(dm_get_adm_name(designName),1);
+    decl paramForm, formH;
+    decl paramNameList;
+
+    if(itemDefP)
+    {
+        paramList = NULL;
+	paramNameList = NULL;
+	paramHandle = db_get_instance_attribute(instHandle, INST_PARAM_HEAD);
+	
+	while( paramHandle != NULL )
+	{
+	    paramName  = db_get_parm_attribute(paramHandle, PARM_NAME);
+	    paramName  = iff_ex_map_single_prop(designName, paramName);
+	    paramValue = param_value_dm_class(paramHandle);
+	    paramUnit  = iff_get_param_type(itemDefP, paramName);
+	    paramForm = db_get_parm_attribute(paramHandle, PARM_FORM_NAME);
+	    formH = dm_find_form_definition(paramForm, 1);
+
+	    if(paramForm != paramValue)
+	    {
+	        if(paramUnit != STRING_UNIT)
+		{
+	            /* Adjust units for everything that is not a string unit.  Assume that 
+		       string units require their value to remain untouched. */
+		    paramValue=iff_fix_units(paramValue);
+		}
+	    }
+
+	    paramValue=iff_fix_escaping(paramValue);
+
+	    if(paramValue)
+	      paramStrg = strcat(strcat(paramName,"="),paramValue);
+	    else
+	      paramStrg = strcat(paramName,"=");
+
+	    if( paramList == NULL )
+	      paramList = list(paramStrg);
+	    else
+	      paramList = append(paramList,list(paramStrg));
+
+	    paramNameList=append(paramNameList, list(paramName));
+	    paramHandle = db_next_parm(paramHandle);
+	}
+
+	/* Now get any properties attached to the instance */
+
+	paramHandle = db_get_instance_attribute(instHandle, INST_PROPERTY);
+	while( paramHandle != NULL )
+	{
+	    paramName  = db_get_property_attribute(paramHandle, PROPERTY_NAME);
+	    paramName  = iff_ex_map_single_prop(designName, paramName);
+
+	    if(!member(paramName, paramNameList))
+	    {
+	        if((leftstr(paramName,8) != "HPEESOF_" ) && 
+		   (paramName != "HAS_SHEET" ) && (paramName != "IFF_PIN_NAME"))
+		{
+		    paramTmp   = db_get_property_attribute(paramHandle, PROPERTY_TYPE);
+		    paramValue = db_get_property_attribute(paramHandle, paramTmp);
+		    
+		    paramValue=iff_fix_escaping(paramValue);
+		
+		    if( paramValue != NULL )
+		      paramStrg = strcat(strcat(paramName,"="),paramValue);
+		    else
+		      paramStrg = strcat(paramName,"=");
+		
+		    if( paramList == NULL )
+		      paramList = list(paramStrg);
+		    else
+		      paramList = append(paramList,list(paramStrg));
+		}
+	    }
+	    paramHandle = db_next_property(paramHandle);
+	}
+    }
+
+    return(paramList);
+}
+
+defun get_non_repeated_inst_context_properties(instIter, context, paramNameList, propNameList)
+{
+    decl propList = list();
+    decl propIter = db_create_prop_iter(context);
+    for ( ; db_prop_iter_is_valid(propIter); propIter = db_prop_iter_get_next(propIter))
+    {
+        decl propName = db_prop_iter_get_name(propIter);
+        decl instName = db_get_instance_name(instIter);
+        propName  = iff_ex_map_single_prop(instName, propName);
+        if (!member(propName, paramNameList) && !member(propName, propNameList))
+        {
+            if ((leftstr(propName,8) != "HPEESOF_" ) && 
+                (propName != "HAS_SHEET" ) && (propName != "IFF_PIN_NAME"))
+            {
+                decl propValue = db_prop_iter_get_value(propIter);
+                propValue=iff_fix_escaping(propValue);
+                decl paramStrg;
+                if ( propValue != NULL )
+                    paramStrg = strcat(strcat(propName,"="),propValue);
+                else
+                    paramStrg = strcat(propName,"=");
+
+                if ( propList == NULL )
+                    propList = list(paramStrg);
+                else
+                    propList = append(propList,list(paramStrg));
+            }
+        }
+    }
+    return propList;
+}
+
+// If a property is overriden in the instance, then don't use its master property
+// In open access, properties are attached with the master design and not on the instance
+defun iff_get_cell_view_properties(instIter, context, paramNameList, propNameList)
+{
+    decl hierarchyContext = db_create_hierarchy_context(context, DIRECT_DESCENDANTS);
+    decl inst = db_inst_iter_get_instance( instIter );
+    decl propList = list();
+    if (db_is_primitive_instance_in_hierarchy(hierarchyContext, inst))
+    {
+        return propList;
+    }
+
+    decl subHierContext = db_get_hierarchy_context_for_instance(hierarchyContext, inst);
+    if (!subHierContext)
+    {
+        return propList;
+    }
+
+    decl subDesignContext = db_get_design_context_from_hierarchy(subHierContext);
+    decl contextProperties = get_non_repeated_inst_context_properties(instIter, subDesignContext, paramNameList, propNameList);
+    propList = append(propList, contextProperties);
+    return propList;
+}
+
+// If the context is layout then attach the symbol view properties with the layout instance
+// These properties actually belongs to the cell properties but IFF has limitations for cell properties
+
+// This is the most common PCB use case and used in Allegro link
+// If there is a same property name in layout as well as symbol view then write properties of both
+//  write the symbol properties first and then the layout properties, and just write them twice if there are duplicates.
+// If the other end cares, they can keep the one they want. They will probably default to taking the last one.
+defun iff_get_inst_master_properties(instIter, context, paramNameList, propNameList)
+{
+    decl propList = iff_get_cell_view_properties(instIter, context, paramNameList, propNameList);
+
+    if (de_is_layout_context(context))
+    {
+        // Write non-repeated symbol context properties
+        // This is a HACK for Cadence allegro link
+        decl instH = db_inst_iter_get_instance(instIter);
+        decl LCName = db_get_instance_component_name(instH);
+        decl LCVName = strcat(LCName, ":symbol");
+        decl symContext = de_find_design_context_from_name(LCVName);
+        if (symContext != NULL)
+        {
+            decl SymViewPropListForlayout = get_non_repeated_inst_context_properties(instIter, symContext, paramNameList, propNameList);
+            propList = append(propList, SymViewPropListForlayout);
+        }
+    }
+
+    return propList;
+}
+
+defun oa_iff_get_param_list(instName, instIter, context)
+{
+    decl paramNameList = NULL;
+    decl paramList = NULL;
+    decl paramIter = db_create_param_iter(instIter);
+    for ( ; db_param_iter_is_valid(paramIter);
+        paramIter = db_param_iter_get_next(paramIter) )
+    {
+        decl paramName = db_get_param_name(paramIter);
+        paramName  = iff_ex_map_single_prop(instName, paramName);
+        decl paramValue = param_value_dm_class(paramIter);
+        decl paramDef = db_param_iter_get_parm_def(paramIter);
+        decl paramUnit = dm_parm_get_unit(paramDef);
+
+        decl paramForm = db_get_param_form_name(paramIter);
+        if(paramForm != paramValue)
+        {
+            if(paramUnit != STRING_UNIT)
+            {
+                // Adjust units for everything that is not a string unit.  Assume that 
+                // string units require their value to remain untouched
+                paramValue=iff_fix_units(paramValue);
+            }
+        }
+
+        decl paramStrg;
+        paramValue=iff_fix_escaping(paramValue);
+        if(paramValue)
+            paramStrg = strcat(strcat(paramName,"="),paramValue);
+        else
+            paramStrg = strcat(paramName,"=");
+
+        if( paramList == NULL )
+            paramList = list(paramStrg);
+        else
+            paramList = append(paramList,list(paramStrg));
+
+        paramNameList=append(paramNameList, list(paramName));
+    }
+
+
+    // Get properties attached to the instance 
+    decl propNameList = NULL;
+    decl propIter = db_create_prop_iter(instIter); 
+    for ( ; db_prop_iter_is_valid(propIter); 
+        propIter = db_prop_iter_get_next(propIter) )
+    {
+        decl paramName = db_prop_iter_get_name(propIter);
+        paramName  = iff_ex_map_single_prop(instName, paramName);
+        if(!member(paramName, paramNameList))
+        {
+            if((leftstr(paramName,8) != "HPEESOF_" ) && 
+                (paramName != "HAS_SHEET" ) && (paramName != "IFF_PIN_NAME"))
+            {
+                decl paramValue = db_prop_iter_get_value(propIter);
+                paramValue=iff_fix_escaping(paramValue);
+                decl paramStrg;
+                if( paramValue != NULL )
+                    paramStrg = strcat(strcat(paramName,"="),paramValue);
+                else
+                    paramStrg = strcat(paramName,"=");
+
+                if( paramList == NULL )
+                    paramList = list(paramStrg);
+                else
+                    paramList = append(paramList,list(paramStrg));
+            }
+            propNameList=append(propNameList, list(paramName));
+        }
+    }
+
+    // Now get properties attached to the instance master
+    decl instMasterCellProperties = iff_get_inst_master_properties(instIter, context, paramNameList, propNameList);
+    paramList = append(paramList, instMasterCellProperties);
+    return paramList;
+}
+
+defun iff_get_param_type(itemDefP, paramName)
+{
+    decl parmH=dm_get_item_definition_attribute(itemDefP, ITEM_PARMS);
+    decl paramUnit=UNITLESS_UNIT;
+
+    while(parmH)
+    {
+        if(paramName == dm_get_parm_definition_attribute(parmH, DM_PARM_NAME))
+	{
+	    paramUnit=dm_get_parm_definition_attribute(parmH, DM_PARM_UNIT);
+	    break;
+	}
+        parmH=dm_next_parm_definition(parmH);
+    }
+
+    return(paramUnit);
+}
+
+defun iff_import_fix_units(paramValue)
+{
+    decl newValue=paramValue;
+    decl my_units;
+    decl cur_unit, newUnit, newValue;
+    decl scalar, i, digit;
+    decl paramList, paramType;
+
+    if(paramValue==NULL || paramValue=="")
+	return(paramValue);
+
+    // Interpret IFF units and scalars into ADS units and scalars   
+
+    paramList=parse(paramValue, " ","");
+
+    // The current spec says that a number should be a number followed by 
+    // a space, followed by the unit and scalar.  Check to see if the 
+    // paramList has two values, and that the first is a number.
+    
+    if (listlen(paramList) > 2)
+    {
+        // This is not a valid number format.  Return the original value.
+        return(paramValue);
+    }
+
+    if(!is_integer(nth(0, paramList)) && 
+       !is_real(nth(0, paramList)) &&
+       !is_string(nth(0, paramList)))
+    {
+        // This is not a number or a string, so it can not possibly have 
+        // a unit or scalar.  Return the original value.
+        return(paramValue);
+    }
+
+    if (index("+-.0123456789", leftstr(nth(0, paramList),1) ) != -1)
+    {
+        // This is a number.  Check to see if nth(1, paramList) is its 
+        // scaling factor/unit.
+        
+        if (nth(1, paramList))
+        {
+            scalar=iff_check_unit_and_scalar(nth(1, paramList));
+            newValue=strcat(nth(0, paramList), " ", scalar);
+        }
+        else
+        {
+            // This may be a case where no space was included between the 
+            // number and the scaling factor and unit.  We will attempt to 
+            // resolve this anyway, since its not a big deal.
+            
+            paramList=parse(paramValue, "", "+-.0123456789");
+            newValue="";
+            for (i=0; i<listlen(paramList); i++)
+            {
+                if (index("+-.0123456789", nth(i, paramList)) != -1)
+                {
+                    newValue=strcat(newValue, nth(i, paramList));
+                }
+                else
+                {
+                    if (i+1 != listlen(paramList))
+                    {
+                        // This is not a valid number.
+                        return(paramValue);
+                    }
+                    else
+                    {
+                        newValue=strcat(newValue, " ", iff_check_unit_and_scalar(nth(i, paramList)));
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        newValue=paramValue;
+    }
+
+    return(newValue);
+    
+}
+
+defun iff_check_unit_and_scalar(value)
+{
+    if (value)
+    {
+        decl char, tmpValue=tolower(value);
+        decl newUnit;
+        decl newValue="";
+    
+        char=leftstr(tmpValue, 1);
+
+        if (tmpValue=="dbm")
+        {
+            return("dBm");
+        }
+
+        if (tmpValue=="dbw")
+        {
+            return("dBW");
+        }
+
+        if (tmpValue == "v")
+        {
+            // This is a unit without a scalar.  Return A for Amps            
+            return("V");
+        }
+
+        if (char == "a")
+        {
+            if (tmpValue == "amp")
+            {
+                // Set the unit to amps
+                return("A");
+            }
+            else if (strlen(tmpValue) > 1)
+            {
+                newUnit=iffFixUnitString(rightstr(tmpValue, strlen(tmpValue)-1));
+                return(strcat("a", newUnit));                    
+            }
+            else
+            {
+                // Follow the Spice spec.  A single a represents atto, as a scalar.
+                return("a");
+            }
+        }
+        
+        if (char == "m")
+        {
+            if (leftstr(tmpValue, 3) == "meg")
+            {
+                newUnit=iffFixUnitString(rightstr(tmpValue, strlen(tmpValue)-3));
+                return(strcat("M", newUnit));
+            }
+	    else if (leftstr(tmpValue, 5) == "meter")
+	    {
+	        // Explicit designation of meter is meter, not milli
+	        return("meter");
+	    }
+            else
+            {
+                if (strlen(tmpValue) > 1)
+                {
+                    newUnit=iffFixUnitString(rightstr(tmpValue, strlen(tmpValue)-1));
+                    if (newUnit == "Hz")
+                    {
+                        // ADS does not understand mHz.  Assume the m was
+                        // meant to be MEG.
+                        return(strcat("M", newUnit));
+                    }
+                    else
+                        return(strcat("m", newUnit));
+                }
+                else
+                {
+                    // Follow the Spice spec.  A single m represents milli, as a scalar.
+                    return("m");
+                }
+            }
+        }
+
+        if (char == "f")
+        {
+            if (strlen(tmpValue) > 1)
+            {
+		if (tmpValue == "farad")
+                {
+                    // Set the unit to fahrads
+                    return("F");
+                }
+                else
+                {
+                    newUnit=iffFixUnitString(rightstr(tmpValue, strlen(tmpValue)-1));
+                    return(strcat("f", newUnit));                    
+                }
+
+            }
+            else
+            {
+                // Follow the Spice spec.  A single f represents femto, as a scalar.
+                return("f");
+            }
+        }
+
+        if (char == "o")
+        {
+            if (tmpValue == "o" || tmpValue == "oh" || tmpValue == "ohm" ||
+                tmpValue == "ohms")
+            {
+                return("Ohm");  // This is a unit without a scalar.
+            }
+        }
+
+        if (char == "d")
+	{
+	    if(rightstr(tmpValue, 3) == "deg")
+	    {
+	        // PDE expects no units or scalars in this case
+	        return("");
+	    }
+	}
+
+        if (char == "c")
+	{
+	    if(tmpValue == "celsius")
+	    {
+	        // PDE expects no units or scalars in this case
+	        return("");
+	    }
+	}
+
+        if (index("hkpngutayz", char) != -1)
+        {
+            if (strlen(tmpValue) > 1)
+            {
+                newUnit=iffFixUnitString(rightstr(tmpValue, strlen(tmpValue)-1));
+                if (index("gkt", char) != -1)
+                {
+                    char=toupper(char);
+                }
+                return(strcat(char, newUnit));
+            }
+            else
+            {
+                if (index("ghkt", char) != -1)
+                {
+                    // This is a single character suffix.  This makes it ambiguous.
+                    // Return g, h, k, and t as uppercase so they become valid units.
+                    return(toupper(char));  
+                }
+                else
+                {
+                    return(tolower(char));
+                }
+            }
+        }
+    }    
+    return(value);
+    
+}
+
+defun iffFixUnitString(unitString)
+{
+    // Check to see if this is a known unit string.  The unit string
+    // has been converted to lowercase already, so the case sensitive 
+    // unit must be returned.
+
+    if (unitString=="oh" || unitString=="o" || unitString == "ohm" || 
+        unitString=="ohms")
+        return("Ohm");
+
+    if (unitString=="h")
+        return("H");
+
+    if (unitString=="f")
+        return("F");
+
+    if (unitString=="hz")
+        return("Hz");
+
+    if (unitString=="sie")
+        return("S");
+
+    if (unitString=="a")
+        return("A");
+
+    if (unitString=="v")
+        return("V");
+
+    if (unitString=="a")
+        return("A");
+
+    if (unitString=="w")
+        return("W");
+
+    if (unitString=="celsius")
+        return("Celsius");
+
+    // No changes could be validated.  Return the original string.
+    
+    return(unitString);
+    
+}
+
+defun iff_fix_units(paramValue)
+{
+    decl my_units;
+    decl cur_unit, newUnit, newValue;
+    decl scalar, i, digit, digit2, digit3, threeDigits;
+    decl paramList, tmpList, paramType;
+    decl localMessageLevel = IffDebugMessageLevel;
+    decl keep=TRUE;
+
+    if( localMessageLevel > 15 )
+        print_value("Begin: iff_fix_units");
+
+    if((( is_real(paramValue) ) && (is_integer(paramValue) )) || paramValue=="")
+    {
+        if( localMessageLevel > 15 )
+            print_value("End:   iff_fix_units");
+
+        return( paramValue );
+    }
+
+    my_units = IffFixUnits;
+
+    if (paramValue == NULL)
+    {
+        return("");
+    }
+    
+    // paramList=iffParseString(paramValue, " ", "");
+    tmpList=parse(paramValue, " ", "{}");
+    paramList=NULL;
+
+    // Strip off optimization and/or yield values
+    while(tmpList)
+    {
+        if(keep)
+	{
+	    if((car(tmpList) == "opt") || (car(tmpList) == "stat"))
+	    {
+	      keep=FALSE;
+	    }
+	    else
+	    {
+	      paramList=append(paramList, list(car(tmpList)));
+	    }
+	}
+	else
+	{
+	    if(car(tmpList) == "}")
+	    {
+	      keep=TRUE;
+	    }
+	}
+	tmpList=cdr(tmpList);
+    }
+
+    if (listlen(paramList) < 2)
+    {
+        // Check to see if this is a number with a scalar appended without a space
+        // This is possible via onscreen editing.
+
+	// paramList=iffParseString(paramValue, "", "01234567890.-+");
+	paramList=parse(paramValue, "", "01234567890.-+");	
+
+        if (nth(0, paramList) != "-" && nth(0, paramList) != "+" &&
+            nth(0, paramList) != "." && !is_integer(nth(0, paramList)))
+        {
+            // This is not a valid numeric value.  Assume it is a variable, and 
+            // return the original value
+            return(paramValue);
+        }
+        else
+        {
+            i=0;
+            newValue="";
+
+            while (i<listlen(paramList))
+            {
+                digit=nth(i, paramList);
+		
+                if (is_integer(digit))
+                {
+                    newValue=strcat(newValue, identify_value(nth(i, paramList)));
+                }
+		else if (digit == ".")
+		{
+                    newValue=strcat(newValue, nth(i, paramList));
+		}
+		else if (digit == "e" || digit == "E")
+		{
+		    digit2=nth(i+1, paramList);
+		    if(is_integer(digit2) || digit2 == "-" || digit2 == "+")
+		    {
+		        newValue=strcat(newValue, digit, digit2);
+			i++;
+		    }
+		    else
+		    {
+                        // This is an expression, not a number.  Return the original value
+                        return(paramValue);
+		    }
+		}
+		else if(i==0 && (digit=="-" || digit="+"))
+		{
+		    // This is a leading value to indicate the sign of the number
+		    newValue=strcat(newValue, digit);
+		}
+                else 
+                {
+                    if (i>0 && (digit != "-" || digit != "+"))
+                    {
+                        // This is an expression, not a number.  Return the original value
+                        return(paramValue);
+                    }
+
+                    if (is_string(digit))
+                    {
+                        // This is the scalar portion of the string.
+                        paramType=digit;                            
+                        break;
+                    }
+                }
+                i++;
+            }
+            // paramList=iffParseString(strcat(newValue, " ", paramType), " ","");
+            paramList=parse(strcat(newValue, " ", paramType), " ","");
+        }
+            
+    }
+
+    if (is_real(nth(0, paramList)) || is_integer(nth(0, paramList)))
+    {
+
+        paramType=nth(1, paramList);
+
+        // Check to see if the unit extension needs fixing.  If not, leave the value alone.
+        
+        if (cur_unit=member(paramType, my_units))
+        {
+            newUnit=car(nth(1, cur_unit));      // Fixed unit is next member of the list.
+            paramValue=strcat(nth(0, paramList), IffValueSeparator, newUnit);
+        }
+	else
+	{
+	    paramValue=strcat(nth(0, paramList), IffValueSeparator, tolower(paramType));
+	}
+
+        return(paramValue);
+    }
+    else
+    {
+	decl spacer="";
+
+	paramValue="";
+	while(paramList)
+	{
+	    // Check car(paramList) to see if it is a unit.  If it is, drop it.
+
+	    cur_unit=member(car(paramList), my_units);					   
+	    if( cur_unit == NULL)
+	    {
+	        paramValue=strcat(paramValue, spacer, car(paramList));
+	    }
+	    else if(IffValueSeparator == " ")
+	    {
+	        paramValue=strcat(paramValue, spacer, car(paramList));
+	    }
+
+	    spacer=" ";
+	    paramList=cdr(paramList);
+	}
+
+        return(paramValue);  // Assume this is a variable
+    }
+
+    if( localMessageLevel > 15 )
+        print_value("End:   iff_fix_units");
+    
+}
+
+defun regression_test_all_units()
+{
+    decl scalarList=list("a","f","p","n","u","m","","k","M","G","T");
+    decl unitList=list("", "Ohm", "F", "Farad", "H", "Henry","Celsius", "Meter", "V", "A", "sec");
+    decl i, j;
+    decl outString="", curUnit, curScalar;
+
+    fprintf(stderr, "\nTesting scalars and units.\n\n");
+
+    for(i=0; i<listlen(unitList); i++)
+    {
+        curUnit=nth(i, unitList);
+
+        for(j=0; j<listlen(scalarList); j++)
+	{
+	    curScalar=nth(j, scalarList);
+	    outString=strcat("1", curScalar, curUnit);
+	    fprintf(stderr, "ADS Number=%s, IFF Number=%s\n", outString, iff_fix_units(outString));
+	    outString=strcat("1 ", curScalar, curUnit);
+	    fprintf(stderr, "ADS Number=%s, IFF Number=%s\n", outString, iff_fix_units(outString));
+	}
+    }
+
+    // Test scientific notation
+
+    fprintf(stderr, "\nTesting scientific notation.\n\n");
+
+    outString="1e12";
+    fprintf(stderr, "ADS Number=%s, IFF Number=%s\n", outString, iff_fix_units(outString));
+
+    outString="1e-12";
+    fprintf(stderr, "ADS Number=%s, IFF Number=%s\n", outString, iff_fix_units(outString));
+
+    outString="1e+12";
+    fprintf(stderr, "ADS Number=%s, IFF Number=%s\n", outString, iff_fix_units(outString));
+
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_add_units_for_none(paramValueList, paramValue, paramType)
+{
+  decl my_units;
+  decl cur_unit;
+  decl scalar;
+  decl b = car(paramValueList);
+  decl localMessageLevel = IffDebugMessageLevel;
+
+  if( localMessageLevel > 15 )
+    print_value("Begin: iff_add_units_for_none");
+
+  if(( is_real(b) == NULL ) && (is_integer(b) == NULL ))
+    {
+      if( localMessageLevel > 15 )
+	print_value("End:   iff_add_units_for_none 1");
+
+      return( paramValue );
+    }
+
+  my_units = IffUnits;
+
+  while( my_units )
+  {
+      cur_unit = car(my_units);
+      if( paramType == car(cur_unit) )
+	{
+	  cur_unit = car(cdr(cur_unit));
+
+	  if( IFILE_VER == 2 )
+	    scalar = car(nth(1, cur_unit));   // First one in list....
+	  else
+	    scalar = car(nth(2, cur_unit));   // First one in list....
+
+	  if( localMessageLevel > 15 )
+	    print_value(list("End:   iff_add_units_for_none 2", 
+			     paramValue, scalar, paramType));
+
+	  return( strcat(paramValue, " ", scalar) );
+	}
+      my_units = cdr(my_units);
+  }
+
+  if( localMessageLevel > 15 )
+    print_value("End:   iff_add_units_for_none 3");
+
+  return(paramValue);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_add_units_for_normal(paramValueList, paramValue, paramType)
+{
+  decl my_units;
+  decl cur_unit;
+  decl scalar;
+  decl s4_list;
+  decl iff_list;
+  decl param_value = car(paramValueList);
+  decl param_unit  = car(cdr(paramValueList));
+  decl localMessageLevel = IffDebugMessageLevel;
+
+  if( localMessageLevel > 15 )
+    print_value("Begin: iff_add_units_for_normal");
+  
+  if(( is_real(param_value) == NULL ) && (is_integer(param_value) == NULL ))
+    {
+      if( localMessageLevel > 15 )
+	print_value("End:   iff_add_units_for_normal");
+
+      return( paramValue );
+    }
+
+  my_units = IffUnits;
+
+  while( my_units )
+    {
+      cur_unit = car(my_units);
+      if( paramType == car(cur_unit) )
+	{
+	  cur_unit = car(cdr(cur_unit));
+	  s4_list  = nth(1, cur_unit);
+	  iff_list = nth(2, cur_unit);
+	  while( s4_list )
+	    {
+	      if( car(s4_list) == param_unit )
+		{
+		  if( localMessageLevel > 15 )
+		    print_value("End:   iff_add_units_for_normal");
+
+		  return( strcat(param_value, " ", car(iff_list)) );
+		}
+
+	      s4_list  = cdr(s4_list);
+	      iff_list = cdr(iff_list);
+	    }
+	}
+      my_units = cdr(my_units);
+    }
+
+  if( localMessageLevel > 15 )
+    print_value("End:   iff_add_units_for_normal");
+
+  return(paramValue);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// This procedure appends the units to the property value based on the
+// property type. Then returned value includes both the name and units.
+/////////////////////////////////////////////////////////////////////////////
+defun iff_add_units(paramValue, paramType)
+{
+  decl my_units;
+  decl cur_unit;
+  decl scalar;
+  decl s4_list;
+  decl iff_list;
+
+  // Check to that the value of the paramValue is a number
+  decl a = parse(paramValue);
+  if( listlen(a) == 1 )
+    return( iff_add_units_for_none(a, paramValue, paramType) );
+  else if(( listlen(a) == 2 ) && ( IFILE_VER > 2 ))
+    return( iff_add_units_for_normal(a, paramValue, paramType) );
+  else
+    return( paramValue );
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_get_unit_name_from_unit_code(unitCode)
+{
+  decl my_units;
+  decl cur_unit;
+  decl localMessageLevel = IffDebugMessageLevel;
+
+  if( localMessageLevel > 15 )
+    print_value("Begin: iff_get_unit_name_from_unit_code");
+
+  // Valid unitCode??
+  if( is_integer(unitCode) == NULL )
+    {
+      if( localMessageLevel > 15 )
+	print_value("End:   iff_get_unit_name_from_unit_code 1");
+      return( "" );
+    }
+
+  // Valid range for unitCode???
+  if(( unitCode < 0 ) || ( unitCode >= listlen(IffUnits) ))
+    {
+      if( localMessageLevel > 15 )
+	print_value("End:   iff_get_unit_name_from_unit_code 2");
+      return( "" );
+    }
+
+  my_units = IffUnits;
+
+  while( my_units )
+    {
+      cur_unit = car(my_units);
+
+      if( car(car(cdr(cur_unit))) == unitCode )
+	{
+	  if( localMessageLevel > 15 )
+	    print_value("End:   iff_get_unit_name_from_unit_code 3");
+
+	  return(car(cur_unit));
+	}
+
+      my_units = cdr(my_units);
+    }
+
+  if( localMessageLevel > 15 )
+    print_value("End:   iff_get_unit_name_from_unit_code 4");
+
+  return( "" );
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////////////////////////////////
+defun iff_add_units_to_symbol(propValue, unitCode)
+{
+  decl unit_name = iff_get_unit_name_from_unit_code(unitCode);
+  return( iff_add_units(propValue, unit_name) );
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Take the given design and see if the name is in the list of projects
+// to export. The design name may be the short or long form for that design. 
+//
+// Return Values: TRUE --> The design's project is in the projectList
+//               FALSE --> The design's project is not in the projectList
+//////////////////////////////////////////////////////////////////////////////
+defun iff_design_in_list(designPath, projectList)
+{
+  decl tmpPath;
+  decl designName;
+  decl projectPath;
+  decl returnValue;
+
+  //
+  // If the design's path is full then it is a design that resides in
+  // a project. If the path is short then it is a system library.
+  // However, sometimes a short path is returned if a project is
+  // copied to a new directory. So we need to also check to verify
+  // that the design doesn't exist in the search path before assuming
+  // that it is a system component.
+  //
+  if( iff_is_full_path(designPath) == FALSE )
+    {
+      projectPath = ifftolib_get_path_name(designPath);
+      if(( projectPath != NULL ) && ( projectPath != "" ))
+	designPath = projectPath;
+    }
+
+  if( iff_is_full_path(designPath) == TRUE )
+    {
+      decl designData = iff_get_design_name_from_path(designPath);
+      designName  = car(designData);
+      projectPath = car(cdr(designData));
+    }
+  else
+    {
+      projectPath = strcat("/",DefaultLibraryPath);
+      designName  = designPath;
+    }
+
+  //
+  // At this point we have the full path to the project and the name
+  // of the design. The next step is to examine the project paths to 
+  // see if they exist in the project list.
+  //
+
+  if(( tmpPath = member(projectPath, projectList) ) != NULL )
+    returnValue = TRUE;
+  else
+    returnValue = FALSE;
+
+  // print_value(list(returnValue,
+  //		   designPath,projectPath,designName,projectPath));
+
+  return( returnValue );
+}
+
+// Check to see if the component is ADS library component
+defun is_adsInbuilt_libCell(designName)
+{
+    decl allLibList = de_get_open_libraries(FALSE);
+    decl openLibList = de_get_open_libraries(TRUE);
+    decl libName, cellName, viewName;
+    de_parse_lib_cell_view_name(designName, &libName, &cellName, &viewName);
+    if(member(libName, allLibList) && !member(libName, openLibList))
+        return TRUE;
+    else
+        return FALSE;
+}
+
+// designPath is lib:cell:view
+defun oa_iff_design_in_list(designPath, libraryList)
+{
+    decl libCellView = parse(designPath,":",NULL,TRUE);
+    decl libName, cellName, viewName;
+    de_parse_lib_cell_view_name(designPath, &libName, &cellName, &viewName);
+
+    // Check if the part library is available in the selected library list
+    // // If * then include all included libraries
+    if( (listlen(libraryList)==1) && member("*", libraryList) )
+        return TRUE;
+    else if(member(libName, libraryList))
+        return TRUE;
+    else
+        return FALSE;
+}
+
+// designPath is lib:cell:view
+// If it's not workspace cell then it's a PDK cell/component
+defun oa_iff_is_workspace_cell(designPath)
+{
+    if(!designPath)
+        return FALSE;
+
+    decl libCellView = parse(designPath,":",NULL,TRUE);
+    decl libName, cellName, viewName;
+    de_parse_lib_cell_view_name(designPath, &libName, &cellName, &viewName);
+
+    decl found = FALSE;
+    decl i;
+    for(i=0; i< listlen(IffWorkSpaceCellList); i++)
+    {
+        decl libCell = nth(i, IffWorkSpaceCellList);
+        decl lib, cell, view;
+        de_parse_lib_cell_view_name(libCell, &lib, &cell, &view);
+        if(cellName == cell)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+
+    return found;
+}
+
+//////////////////////////////////////////////////////////////////////
+// 
+//////////////////////////////////////////////////////////////////////
+defun iff_matchup_parens(newStr, str)
+{
+  decl p;
+  decl tmpStr;
+  decl pCount;
+
+  pCount = 0;
+  tmpStr = *newStr;
+  p = index(tmpStr, "(");
+  while( p != -1 )
+    {
+      pCount++;
+      tmpStr = rightstr(tmpStr, strlen(tmpStr)-p-1);
+      p = index(tmpStr, "(");
+    }
+
+  if( pCount > 0 )
+    {
+      tmpStr = *newStr;
+      p = index(tmpStr, ")");
+      while( p != -1 )
+	{
+	  pCount--;
+	  tmpStr = leftstr(tmpStr, p);
+	  p = index(tmpStr, ")");
+	}
+
+      if( pCount > 0 )
+	{
+	  *newStr = strcat(*newStr, ",");
+	  p = index(*str, ")");
+	  while( pCount > 0 )
+	    {
+	      tmpStr = leftstr(*str,p);
+	      *str = rightstr(*str, strlen(*str)-p-1);
+	      *newStr = strcat(*newStr, tmpStr, ")");
+	      pCount--;
+	      p = index(*str, ")");
+	    }
+	  return(TRUE);
+	}
+      else
+	{
+	  return(FALSE);
+	}
+    }
+  else
+    {
+      return(FALSE);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_set_indexed_prm_parm_value(itemDataP, pos, newValue)
+{
+    decl valueList = NULL;
+    decl tmpList;
+    decl formDefP;
+    decl formName;
+    decl formLabel;
+
+    newValue = rightstr(newValue, strlen(newValue)-4);
+    newValue = leftstr(newValue, strlen(newValue)-1);
+    tmpList = iff_parse(newValue);
+
+    formName = car(parse(car(tmpList), "\\\"", ""));
+    tmpList = cdr(tmpList);
+    while( tmpList != NULL )
+    {
+        valueList = append(valueList, list(strcat(car(tmpList))));
+        tmpList = cdr(tmpList);
+    }
+
+    formDefP = dm_find_form_definition(formName, 1);
+    
+    if( formDefP != NULL )
+        formLabel = dm_get_form_definition_attribute(formDefP, DM_FORM_LABEL);
+    
+    if( formLabel == NULL )
+        formLabel = formName;
+    
+    if( listlen(valueList) == 1 ) 
+        valueList = car(valueList);
+
+    deitem_set_indexed_parm_value(itemDataP, pos, valueList);
+    deitem_set_indexed_parm_form_label(itemDataP, pos, formLabel);
+    deitem_set_indexed_parm_value(itemDataP, pos, valueList);
+
+}
+
+defun iff_set_form_value(itemDataP, pos, newValue, instName)
+{
+    decl formName;
+    decl formLabel;
+    decl formH=de_query_iteminfo_attr(itemDataP, 
+                                      ITEMINFO_CURRENT_PARM_FORM_DEFINITION);
+    decl newFormH;
+    decl newFormLabel;
+
+    if(!is_string(newValue))
+    {
+        newValue=identify_value(newValue);
+    }
+    else if(leftstr(newValue, 1) == "\"" && rightstr(newValue, 1) == "\"")
+    {
+        // Strip leading and trailing quote 
+        newValue=midstr(newValue, 1, strlen(newValue)-2);
+    }
+
+    // Try to find a form name for newValue
+    if(newFormH=dm_find_form_definition(newValue))
+    {
+        newFormLabel=dm_get_form_definition_attribute(newFormH, DM_FORM_LABEL);        
+	deitem_set_indexed_parm_form_label(itemDataP, pos, newFormLabel);
+	formH=de_query_iteminfo_attr(itemDataP, ITEMINFO_CURRENT_PARM_FORM_DEFINITION);
+	formName=dm_get_form_definition_attribute(formH, DM_FORM_NAME);
+	formLabel=dm_get_form_definition_attribute(formH, DM_FORM_LABEL);
+	if (formLabel == newFormLabel)
+	    return;
+    }
+
+    deitem_set_indexed_parm_form_label(itemDataP, pos, newValue);
+    formH=de_query_iteminfo_attr(itemDataP, ITEMINFO_CURRENT_PARM_FORM_DEFINITION);
+    formName=dm_get_form_definition_attribute(formH, DM_FORM_NAME);
+    formLabel=dm_get_form_definition_attribute(formH, DM_FORM_LABEL);
+
+    /* Check the value against form name and form label */
+
+    if (formLabel != newValue && formName != newValue)
+    {
+        // Try setting the value to all uppercase.
+        deitem_set_indexed_parm_form_label(itemDataP, pos, toupper(newValue));
+        formH=de_query_iteminfo_attr(itemDataP, ITEMINFO_CURRENT_PARM_FORM_DEFINITION);
+        formName=dm_get_form_definition_attribute(formH, DM_FORM_LABEL);
+    }
+    else
+    {
+        return;
+    }
+
+    if (formName != newValue && formLabel != newValue)
+    {
+        // Try setting the value to all lowercase.
+        deitem_set_indexed_parm_form_label(itemDataP, pos, toupper(newValue));
+        formH=de_query_iteminfo_attr(itemDataP, ITEMINFO_CURRENT_PARM_FORM_DEFINITION);
+        formName=dm_get_form_definition_attribute(formH, DM_FORM_LABEL);
+    }
+    else
+    {
+        return;
+    }
+
+    if (formName != newValue && formLabel != newValue)
+    {
+        // Output a log message indicating the form was not set properly.
+        iff_log_message(list(strcat("WARNING: Unable to set instance ", instName, 
+                                    " parameter value to ", newValue, 
+                                    " default value ", formName, 
+                                    " is being used.")));
+    }
+    
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// Given a string that is in the form "list(stuff)", strip off the
+// "list(" and ")" and return a list of resulting values.
+//////////////////////////////////////////////////////////////////////
+defun iff_make_list_from_str_list(listStr)
+{
+  decl tmpValue;
+  
+  if(( strlen(listStr) > 6 ) && ( leftstr(listStr,5) == "list("))
+    {
+      tmpValue = rightstr(listStr, strlen(listStr)-5);
+      listStr = leftstr(tmpValue,strlen(tmpValue)-1);
+    }
+
+  return( iff_parse(listStr) );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_update_instance_parameters(desObjPath, instName, valueList)
+{
+  decl itemDataP;
+  decl pos;
+  decl value;
+  decl newValue;
+  decl origValue;
+  decl deltaPos;
+  decl firstPos;
+  decl origList;
+  decl newList;
+  decl tmpList;
+  decl formH, formName;
+  decl localDebugMessageLevel = IffDebugMessageLevel;
+
+  if( localDebugMessageLevel > 15 )
+    print_value("Begin: ifftolib_update_instance_parameters()");
+
+  iff_select_by_name(instName, 1);
+
+  itemDataP = de_init_iteminfo("", EDIT_ITEM_DIALOG);
+  de_set_iteminfo_attr (itemDataP, ITEMINFO_INST, TRUE, TRUE);
+
+  deltaPos = 0;
+  while( valueList != NULL )
+  {
+      pos       = car(valueList) + deltaPos;
+      valueList = cdr(valueList);
+      value     = car(valueList);
+      valueList = cdr(valueList);
+
+      if( is_list(value) == TRUE )
+      {
+          firstPos = TRUE;
+          origList = iff_make_list_from_str_list(car(value));
+          newList  = iff_make_list_from_str_list(nth(1, value));
+          
+          //
+          // First Update any existing values
+          //
+          while(( origList != NULL ) && ( newList != NULL ))
+          {   
+              origValue = car(origList);
+              newValue  = car(newList);
+              if( firstPos == TRUE )
+              {
+                  firstPos = FALSE;
+              }
+              else
+              {
+                  pos++;
+                  deltaPos++;
+              }
+
+              if( newValue != origValue )
+              {
+                  value = strcat(newValue);
+                  tmpList = parse(newValue, ",()", "");
+                  if( car(tmpList) == "prm" )
+                      iff_set_indexed_prm_parm_value(itemDataP, pos, newValue);
+                  else
+                      deitem_set_indexed_parm_value (itemDataP, pos, value);
+              }
+
+              origList = cdr(origList);
+              newList  = cdr(newList);
+          }
+          
+          if( origList != NULL )
+          {
+              pos++;
+              origList = cdr(origList);
+          }
+          else if( newList != NULL )
+          {
+              // Now if there is anything left then the item definition needs
+	          // additional space to add the new values.
+
+              while( newList != NULL )
+              {
+                  if( firstPos == TRUE )
+                  {
+                      firstPos = FALSE;
+                  }
+                  else
+                  {
+                      de_set_iteminfo_attr (itemDataP, 
+                                            ITEMINFO_ADD_REPEAT_PARM, pos);
+                      pos++;
+                      deltaPos++;
+                  }
+
+                  newValue = strcat(car(newList));
+                  
+                  tmpList = parse(newValue, ",()", "");
+                  
+                  if( car(tmpList) == "prm" )
+                      iff_set_indexed_prm_parm_value(itemDataP, pos, newValue);
+                  else
+                      deitem_set_indexed_parm_value (itemDataP, pos, newValue);
+                  
+                  newList = cdr(newList);
+              }
+          }
+      }
+      else
+      {
+          // Check to see if the current form is Standard.  If it is not, 
+          // assume the value is the form name.
+          deitem_set_current_parm_ui_index (itemDataP, pos);
+          formH=de_query_iteminfo_attr(itemDataP, 
+                                       ITEMINFO_CURRENT_PARM_FORM_DEFINITION);
+          if (formH)
+          {
+              formName=dm_get_form_definition_attribute(formH, DM_FORM_LABEL);
+          }
+          else
+          {
+              // Form was not found.  Pretend it was the standard form.
+                     formName="Standard";
+          }
+          
+          if (formName == "Standard" || formName == "String" ||
+              formName == "String and Reference" ||
+              formName == "String and Reference Form" || formName == "Port Number")
+          {
+              value=iff_import_fix_escaping(value);
+              value=iff_import_fix_units(value);
+              deitem_set_indexed_parm_value (itemDataP, pos, value);
+          }
+          else
+          {
+              iff_set_form_value(itemDataP, pos, value, instName);
+          }
+      }
+  }
+
+
+  de_set_iteminfo_attr( itemDataP, ITEMINFO_TO_APPLY_DB_PARAMLIST);
+  de_set_iteminfo_attr( itemDataP, ITEMINFO_PARM_MODIFIED, TRUE);
+
+  de_iteminfo_edit_instance(itemDataP);
+
+  de_free_iteminfo(itemDataP);
+  de_deselect_by_name(instName, 1);
+
+  if( localDebugMessageLevel > 15 )
+    print_value("End:   ifftolib_update_instance_parameters()");
+
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// incoming new value looks like "name=value". first parse off name
+// then find matching name in paramNameList replace cooresponding value 
+// in valueList return valueList. Now create a new list that contains
+// only the values that have changed the format of this list is
+// list(pos, value [, ...])
+//////////////////////////////////////////////////////////////////////
+defun iff_set_new_value(instObjPath, newValue, paramNameList, valueList, 
+			newPropList, newValueList, exactList, exact)
+{
+    decl pos, found, paramName, paramValue;
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+
+    // first find the delimiter '='
+    pos = index(newValue, "=");
+
+    // make sure we found one
+    if(pos == -1)
+	return(valueList);      // return original list unmodified
+    
+    paramValue = rightstr(newValue,strlen(newValue)-(pos+1));
+    paramName = iff_in_map_single_prop(instObjPath, leftstr(newValue,pos));
+
+    if( localDebugMessageLevel > 15 )
+      print_value(strcat("Parameter Name is -->", paramName, 
+			 ", Value --> ", paramValue));
+
+    //
+    // If looking for non-exact matches check to see if an exact match
+    // has been previously found for this parameter name.
+    //
+    if(( exact == FALSE ) && ( member(paramName, *exactList) != NULL ))
+      return(valueList);
+
+    //
+    // Loop through paramNameList to find paramName. First pass
+    // Check for exact match. If not found the make a second pass
+    // looking for a caseless match.
+    //
+    pos=0;
+    found=FALSE;
+    while(paramNameList)
+    {
+        if( localDebugMessageLevel > 15 )
+            print_value(list("   found", car(paramNameList)));
+
+        if( exact == TRUE )
+        {
+            if( strcmp(paramName, car(paramNameList))==0 )
+            {
+                found = TRUE;
+                if( *exactList == NULL )
+                    *exactList = list(paramName);
+                else
+                    *exactList = append(*exactList, list(paramName));
+		
+                break;
+            }
+        }
+        else 
+        {
+            if(( iff_member(car(paramNameList), *exactList) == NULL ) &&
+               ( strcasecmp(paramName, car(paramNameList))==0 ))
+            {
+                found = TRUE;
+                break;
+            }
+        }
+        pos++;
+        paramNameList = cdr(paramNameList);
+    }
+
+    // add to valueTypeList or property list if not found here in params
+    if(( found == TRUE ) && (pos < listlen(valueList) ))
+    {
+        // if pos is valid, replace the old value with the new
+        if( nth(pos, valueList) != paramValue )
+        {
+            if( localDebugMessageLevel > 15 )
+            {
+                print_value("Parameter is not default, Update Value");
+                print_value(list("old value",nth(pos, valueList), 
+                                 "new value", paramValue ));
+            }
+            if( leftstr(paramValue, 5) == "list(" )
+            {
+                decl newList;
+                newList = list(nth(pos,valueList), paramValue);
+                repla(valueList, newList, pos);
+                if( *newValueList == NULL )
+                    *newValueList = list(pos, newList);
+                else
+                    *newValueList = append(*newValueList, list(pos, newList));
+            }
+            else
+            {
+                repla(valueList, paramValue, pos);
+                if( *newValueList == NULL )
+                    *newValueList = list(pos, paramValue);
+                else
+                    *newValueList = append(*newValueList, list(pos, paramValue));
+            }
+        }
+        else
+        {
+            if( localDebugMessageLevel > 15 )
+            {
+                print_value("Parameter is default, not updating");
+                print_value(list("old value",nth(pos, valueList), 
+                                 "new value", paramValue ));
+            }
+        }
+    }
+    else if( exact == FALSE )
+    {
+        if( localDebugMessageLevel > 15 )
+            print_value(list(paramName,"=",paramValue, "NOT FOUND"));
+        *newPropList = append(*newPropList,list(paramName,paramValue));
+    }
+
+    return(valueList);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_check_inst_port_synchronization(id)
+{
+    decl portNo, newPortNo, pos=0, paramCount;
+    decl paramH, paramName, paramFound;
+    decl itemDataP = de_init_iteminfo("", EDIT_ITEM_DIALOG);
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+
+    if( localDebugMessageLevel > 15 )
+      print_value("Begin: ifftolib_check_inst_port_synchronization()");
+
+    if( localDebugMessageLevel > 15 )
+      print_value(strcat("id=", id));
+
+    iff_select_by_name(id, 1);
+
+    de_set_iteminfo_attr (itemDataP, ITEMINFO_INST, TRUE, TRUE);
+
+    /* Find the Num parameter */
+
+            
+    deitem_set_current_parm_ui_index(itemDataP, 0);
+    paramCount=de_query_iteminfo_attr(itemDataP, ITEMINFO_TOTAL_NUM_PARMS);
+    paramH=de_query_iteminfo_attr(itemDataP, ITEMINFO_DB_PARAMLIST);
+    paramH=db_first_parm(paramH);
+    paramFound=FALSE;
+    
+    while(paramH && (pos < paramCount))
+    {
+        paramName=db_get_parm_attribute(paramH, PARM_NAME);
+
+        if( localDebugMessageLevel > 15 )
+            print_value(strcat("paramName=", paramName));
+
+        if(paramName=="Num")
+        {
+            paramFound=TRUE;
+            break;
+        }
+        paramH=db_next_parm(paramH);
+        pos++;
+    }
+
+    if(paramFound)
+    {
+        if( localDebugMessageLevel > 15 )
+            print_value("paramFound=TRUE");
+
+        portNo=deitem_get_indexed_parm_value (itemDataP, pos);
+        newPortNo=syncPinWithPortByName(id, portNo);
+
+        if( localDebugMessageLevel > 15 )
+            print_value(strcat("newPortNo=", newPortNo));
+
+        if (!is_string(newPortNo))
+        {
+            newPortNo=identify_value(newPortNo);
+        }
+        if(newPortNo != portNo)
+        {
+            deitem_set_indexed_parm_value (itemDataP, pos, newPortNo);
+            de_set_iteminfo_attr( itemDataP, ITEMINFO_TO_APPLY_DB_PARAMLIST);
+            de_set_iteminfo_attr( itemDataP, ITEMINFO_PARM_MODIFIED, TRUE);
+        }
+
+        de_iteminfo_edit_instance(itemDataP);
+    }
+    
+    de_free_iteminfo(itemDataP);
+
+    if( localDebugMessageLevel > 15 )
+      print_value("End: ifftolib_check_inst_port_synchronization()");
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_synchronize_connector_numbers(designH)
+{
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+    decl repH=db_get_rep(designH, REP_SCHEM);
+    decl connectorList=list();
+    decl i;
+
+    if( localDebugMessageLevel > 15 )
+      print_value("Begin: iff_import_synchronize_connector_numbers()");
+
+    if (repH)
+    {
+        decl instH=db_first_instance(repH);
+        decl portNo, newPortNo, pos=0, paramCount;
+        decl paramH, paramName, paramFound;
+        decl itemDataP = de_init_iteminfo("", EDIT_ITEM_DIALOG);
+        decl flag, id, nodeId, pinH, nodeH;
+        decl portNum, portNumberList, portReassign=1001;
+
+        connectorList=getPortInstances(repH);
+        
+        // Reassign all port numbers to ensure there are no conflicts
+        for (i=0;i<listlen(connectorList);i=i+5)
+        {
+            reassignPortNumbers(nth(i, connectorList), nth(i+1, connectorList), 
+                                nth(i+2, connectorList), nth(i+3, connectorList),
+                                nth(i+4, connectorList));
+        }
+
+        connectorList=getPortInstances(repH);
+        
+        // Assign port numbers from the symbol
+        for (i=0;i<listlen(connectorList);i=i+5)
+        {
+            getNewConnectorNumber(nth(i, connectorList), nth(i+1, connectorList), 
+                                  nth(i+2, connectorList), nth(i+3, connectorList),
+                                  nth(i+4, connectorList));
+        }
+
+    }
+
+    if( localDebugMessageLevel > 15 )
+      print_value("End: iff_import_synchronize_connector_numbers()");
+
+}
+
+defun getPortInstances(repH)
+{
+    decl instH=db_first_instance(repH);
+    decl portNo, newPortNo, pos=0, paramCount;
+    decl paramH, paramName, paramFound;
+    decl itemDataP = de_init_iteminfo("", EDIT_ITEM_DIALOG);
+    decl flag, id, nodeId, pinH, nodeH;
+    decl portNum, portNumberList, portReassign=1001, portList;
+    decl connectorList;
+    
+    while (instH)
+    {    
+        id = db_get_instance_attribute(instH, INST_NAME);    
+        flag = db_get_instance_attribute(instH, INST_SPECIAL);
+        
+        if( ( flag & INST_PORT ) == INST_PORT )
+        {
+            portList=getPortNumber(id);
+            connectorList=append(connectorList, list(id, instH, nth(0, portList), nth(1, portList), portReassign));
+            portReassign++;
+        }
+        
+        instH=db_next_instance(instH);
+        
+    }  // while(instH)
+
+    return(connectorList);
+        
+}
+
+defun getPortNumber(id)
+{
+    decl paramH, paramFound, paramCount, paramName;
+    decl pos=0, portNo;
+    decl itemDataP = de_init_iteminfo("", EDIT_ITEM_DIALOG);
+
+    iff_select_by_name(id, 1);
+
+    de_set_iteminfo_attr (itemDataP, ITEMINFO_INST, TRUE, TRUE);
+
+    /* Find the Num parameter */
+
+    deitem_set_current_parm_ui_index(itemDataP, 0);
+    paramCount=de_query_iteminfo_attr(itemDataP, ITEMINFO_TOTAL_NUM_PARMS);
+    paramH=de_query_iteminfo_attr(itemDataP, ITEMINFO_DB_PARAMLIST);
+    paramH=db_first_parm(paramH);
+    paramFound=FALSE;
+
+    while(paramH && (pos < paramCount))
+    {
+        paramName=db_get_parm_attribute(paramH, PARM_NAME);
+        
+        if(paramName=="Num")
+        {
+            paramFound=TRUE;
+            portNo=deitem_get_indexed_parm_value (itemDataP, pos);
+            break;
+        }
+        paramH=db_next_parm(paramH);
+        pos++;
+    }
+
+    deselect_all();
+    
+    if (paramFound)
+    {
+        return(list(pos, portNo));
+    }
+    else
+    {
+        return(list(-1, -1));
+    }
+    
+}
+
+defun reassignPortNumbers(id, instH, pos, portNo, reassignPortNum)
+{
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+    decl portNo, newPortNo, pos=0, paramCount;
+    decl paramH, paramName, paramFound;
+    decl itemDataP = de_init_iteminfo("", EDIT_ITEM_DIALOG);
+    decl nodeId, pinH, nodeH;
+
+    if( localDebugMessageLevel > 15 )
+        print_value(strcat("id=", id));
+
+    iff_select_by_name(id, 1);
+    de_set_iteminfo_attr (itemDataP, ITEMINFO_INST, TRUE, TRUE);
+
+    if(pos != -1)
+    {
+        if (!is_string(reassignPortNum))
+        {
+            reassignPortNum=identify_value(reassignPortNum);
+        }
+
+        deitem_set_indexed_parm_value (itemDataP, pos, reassignPortNum);
+        de_set_iteminfo_attr( itemDataP, ITEMINFO_TO_APPLY_DB_PARAMLIST);
+        de_set_iteminfo_attr( itemDataP, ITEMINFO_PARM_MODIFIED, TRUE);
+
+        de_iteminfo_edit_instance(itemDataP);
+    }   
+
+    de_free_iteminfo(itemDataP);
+
+}
+
+defun getNewConnectorNumber(id, instH, pos, portNo, reassignPortNum)
+{
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+    decl portNo, newPortNo, pos=0, paramCount;
+    decl paramH, paramName, paramFound;
+    decl itemDataP = de_init_iteminfo("", EDIT_ITEM_DIALOG);
+    decl nodeId, pinH, nodeH;
+
+    if( localDebugMessageLevel > 15 )
+        print_value(strcat("id=", id));
+
+    iff_select_by_name(id, 1);
+
+    de_set_iteminfo_attr (itemDataP, ITEMINFO_INST, TRUE, TRUE);
+
+    if(portNo != 0)
+    {
+        if( localDebugMessageLevel > 15 )
+            print_value("paramFound=TRUE");
+
+        // Get the net name the port is on.  In this case, 
+        // the user has designated to use that for number 
+        // synchronization.
+                    
+        pinH=db_get_instance_attribute(instH, INST_PIN_HEAD);
+        nodeH=db_get_pin_attribute(pinH, PIN_NODE_PTR);
+        if (nodeH)
+        {
+            nodeId=db_get_node_attribute(nodeH, NODE_NAME);
+        }
+        else
+        {
+            // For some reason, there is no node handle.  Use the instance name instead.
+            nodeId=db_get_instance_attribute(instH, INST_NAME);            
+        }
+        if (nodeId=="")
+        {
+            nodeId=db_get_node_attribute(nodeH, NODE_NUMBER);
+        }
+
+        if( localDebugMessageLevel > 15 )
+            print_value(strcat("nodeId=", identify_value(nodeId)));
+
+        newPortNo=syncPinWithPortByName(nodeId, portNo);
+        
+        if( localDebugMessageLevel > 15 )
+            print_value(strcat("newPortNo=", newPortNo));
+
+        if (!is_string(newPortNo))
+        {
+            newPortNo=identify_value(newPortNo);
+        }
+        if(newPortNo != portNo)
+        {
+            deitem_set_indexed_parm_value (itemDataP, pos, newPortNo);
+            de_set_iteminfo_attr( itemDataP, ITEMINFO_TO_APPLY_DB_PARAMLIST);
+            de_set_iteminfo_attr( itemDataP, ITEMINFO_PARM_MODIFIED, TRUE);
+        }
+
+        de_iteminfo_edit_instance(itemDataP);
+    }   
+
+    de_free_iteminfo(itemDataP);
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_set_instance_parameters(instObjPath, 
+				       repType, instName, x, y, paramList)
+{
+    decl instHandle, designCode, paramHandle, paramNameList;
+    decl i, paramName, paramType, valueList, value, formatStrg;
+    decl newPropList, paramTypeList, len;
+    decl displayFlag, displayFlagList;
+    decl designName;
+    decl newValueList;
+    decl desObjPath;
+    decl exactList;
+    decl tmpList;
+    decl id, portNo, flag;
+    decl localDebugMessageLevel = IffDebugMessageLevel;
+    decl newInstObjPath=iffMapObjectPath(instObjPath, NULL);
+
+    if( localDebugMessageLevel > 15 )
+        print_value("Begin: ifftolib_set_instance_parameters()");
+
+    valueList = NULL;
+    displayFlagList = NULL;
+    desObjPath = ifftolib_get_objectpath();
+    designName = ifftolib_get_designpath();
+
+    if( localDebugMessageLevel > 15 )
+        print_value(strcat(designName, " ", instName));
+
+    instHandle = db_find_instance(designName, repType, instName);
+    if(instHandle == NULL)
+    {
+        if( localDebugMessageLevel > 15 )
+        {
+            print_value("Failed to get instance handle.");
+            print_value("End:   ifftolib_set_instance_parameters()");
+        }
+        return;
+    }
+
+    /* now get list of paramNames and default values */
+    designCode = db_get_design_code(db_get_design(designName,TRUE));
+
+    paramNameList = NULL;
+
+    /* build the list of default param values */
+    i=0;
+    paramHandle = db_get_instance_attribute(instHandle, INST_PARAM_HEAD);
+    while(paramHandle)
+    {
+        paramName  = db_get_parm_attribute(paramHandle, PARM_NAME);
+        if( paramNameList == NULL )
+            paramNameList = list(paramName);
+        else
+            paramNameList = append(paramNameList, list(paramName));
+
+        value = param_value_dm_class(paramHandle);
+
+        /* add new value to valueList */
+        if( valueList == NULL )
+            valueList = list(value);
+        else 
+            valueList = append(valueList,list(value));
+
+        i++;
+        paramHandle = db_next_parm(paramHandle);
+    }
+
+    // initialize new property list and value type list
+    newPropList = NULL;
+
+    //
+    // now loop through the input list of params and values
+    // if we find a match, replace the default value in valueList
+    // with the input one, which overrides the default
+    //
+    newValueList = NULL;
+    exactList = NULL;
+    tmpList = paramList;
+
+    //
+    // First pass get only exact case matches
+    //
+    while(paramList)
+    {
+        valueList = iff_set_new_value(instObjPath, car(paramList), 
+                                      paramNameList, valueList, 
+                                      &newPropList,  &newValueList, 
+                                      &exactList, TRUE); 
+        paramList = cdr(paramList);
+    }
+    
+    //
+    // Second pass get case insenstive matches for ones that did not have
+    // exact matches.
+    //
+    paramList = tmpList;
+    while(paramList)
+    {
+        valueList = iff_set_new_value(instObjPath, car(paramList), 
+                                      paramNameList, valueList, 
+                                      &newPropList,  &newValueList, 
+                                      &exactList, FALSE); 
+        paramList = cdr(paramList);
+    }
+
+    /* Finally update the values on the instance */
+
+    designName = db_get_instance_attribute(instHandle, INST_DESIGN_NAME);
+    ifftolib_update_instance_parameters(desObjPath, instName, newValueList);
+
+    /* done with parameters, now check properties */
+
+    if( localDebugMessageLevel > 15 )
+    {
+        print_value("New Property List");
+        print_value(newPropList);
+    }
+
+    if(newPropList)
+    {
+        if( repType == REP_LAY )
+        {
+            decl pList;
+
+            pList = iff_translate_xy(x,y);
+            x = car(pList);
+            y = nth(1,pList);
+        }
+        ifftolib_set_instance_properties(instHandle,instName,x,y,newPropList);
+    }
+
+    /* Check to see if this instance is a port.  If it is, 
+     * attempt to synchronize the port number with the symbol pin.    */
+
+    flag = db_get_instance_attribute(instHandle, INST_SPECIAL);
+    id = db_get_instance_attribute(instHandle, INST_NAME);
+    if( ( flag & INST_PORT ) == INST_PORT )
+    {
+        ifftolib_check_inst_port_synchronization(id);        
+    }
+
+    if( localDebugMessageLevel > 15 )
+        print_value("End:   ifftolib_set_instance_parameters()");
+
+    return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_instance_name (mapObjectPath)
+{
+    decl symbolPath;
+    
+    symbolPath = ifftolib_get_instance_name (mapObjectPath, TRUE);
+
+    if (mapObjectPath == "Port" || mapObjectPath == "GROUND")
+    {
+        // These are special instance cases, that can not use the 
+        // ifftolib_check_for_system_design function.
+
+        symbolPath=mapObjectPath;
+    }
+    else
+    {
+        if( ifftolib_check_for_system_design(symbolPath) == TRUE )
+        {
+            decl dirSep = iff_get_directory_delimiter();
+            decl desList = iffParseString(symbolPath, dirSep, "");
+            symbolPath = nth(listlen(desList)-1, desList);
+        }
+
+        // Remove trailing .dsn
+
+	if(rightstr(symbolPath, 4) == ".dsn")    
+	    symbolPath = leftstr(symbolPath, strlen(symbolPath)-4);
+
+	// If the symbol name is not the same as the device name, 
+        // symbolPath must be changed to represent what the actual 
+	// device name is.
+
+    }
+    
+    return (symbolPath);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_set_instance(objectPath, instName)
+{
+    decl mapObjectPath=iffMapObjectPath(objectPath, NULL);
+    decl symbolPath; //  = ifftolib_get_instance_name(mapObjectPath, TRUE);
+    decl msg;
+    decl itemDef;
+
+    symbolPath = iff_get_instance_name (mapObjectPath);
+
+    // See if symbolPath is a valid design, by trying to get its 
+    // item definition
+
+    if (dm_find_item_definition(dm_get_adm_name(symbolPath),1))
+    {
+        ifftolibPlaceInstance=TRUE;
+        set_instance(symbolPath);
+    }
+    else
+    {
+        ifftolibPlaceInstance=FALSE;        
+        msg=strcat("ERROR: Unable to place instance \"", instName, 
+                   "\" of type \"", symbolPath, "\"!");
+        iff_log_message(list(msg));
+    }
+
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Given a design path return a list that contains the designName and the 
+// path to the project directory.
+//////////////////////////////////////////////////////////////////////////////
+defun iff_get_design_name_from_path(designPath)
+{
+    decl dirSep;
+    decl tmpPath;
+    decl designName;
+    decl projectPath;
+    decl networksDir;
+    decl networksDirLen;
+    decl pos;
+    decl i;
+
+    dirSep = iff_get_directory_delimiter();
+
+    if( iff_is_full_path(designPath) == FALSE )
+    {
+        projectPath = ifftolib_get_path_name(designPath);
+        if(( projectPath != NULL ) && ( projectPath != "" ))
+            designPath = projectPath;
+    }
+
+    networksDir    = strcat(strcat(dirSep , "networks"), dirSep);
+    networksDirLen = strlen(networksDir);
+    tmpPath = designPath;
+    pos = 0;
+
+    while(( i = index(tmpPath, networksDir)) != -1 )
+    {
+        pos = pos + i + networksDirLen;
+        tmpPath = rightstr(tmpPath, strlen(tmpPath)-i-networksDirLen);
+        // print_value(list(i, pos, tmpPath));
+    }
+
+    // Check to see if design is from non-project directory....
+    if( pos == 0 )
+    {
+        // print_value(list(0, tmpPath));      
+        while(( i = index(tmpPath, dirSep)) != -1 )
+        {
+            pos = pos + i + 1;
+            tmpPath = rightstr(tmpPath, strlen(tmpPath)-i-1);
+            // print_value(list(i, pos, tmpPath));
+        }
+        
+        designName = tmpPath;
+
+        // Check to see if there are any directory seperators...;
+        if( pos == 0 )
+        {
+            // No path.. use the default...;
+            projectPath = iff_get_project_path();
+            
+            decl errList = list("\n",
+                                "WARNING: Unable to determine project name from design path.\n",
+                                "         Using current project for this design instead.\n\n",
+                                strcat("            Design Path --> ", designPath, "\n"),
+                                strcat("   Current Project Path --> ", projectPath, "\n"));
+
+            iff_log_message(errList);
+        }
+        else
+        {
+            i = strlen(designPath) - strlen(designName) - 1;
+            projectPath = leftstr(designPath, i);
+        }
+    }
+    else
+    {
+        projectPath =leftstr(designPath, pos-networksDirLen);
+        designName = tmpPath;
+    }
+
+    return( list(designName, projectPath) );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_db_add_property(dgHandle, propName, propValue, flag)
+{
+    if( dgHandle == NULL )
+    {
+        print_value("ERROR: Did not get datagroup handle from end().");
+        print_value(strcat("       Unable to add property ", identify_value(propName),
+                           " with value ", identify_value(propValue),"."));
+        return;
+    }
+    
+    if( val(propValue) != NULL )
+        propValue = car(parse(propValue));  // Can not use val(), core dumps PDE.
+
+    db_add_property(dgHandle, propName, propValue, flag);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Set the thickness of the current data group defined by the dgHandle.
+//////////////////////////////////////////////////////////////////////
+defun iff_set_thickness(dgHandle)
+{
+  iff_db_add_property(dgHandle, LINE_THICKNESS_PROP, ifftolibLineWidth, TRUE);
+  return;
+
+  decl itemData;
+
+  if( dgHandle != NULL ) 
+    de_add_prop(DG_CODE, dgHandle, 
+		LINE_THICKNESS_PROP, ifftolibLineWidth, FALSE, &itemData);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Terminate the current data group insert and set line thickness
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_dg_end()
+{
+  decl dgHandle;
+
+  dgHandle = end();
+
+  iff_set_thickness(dgHandle);
+
+  return( dgHandle );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_update_item_args()
+{
+  return( arg_list() );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_check_prm_scale(prmList,unitcode)
+{
+  decl tempValue;
+  decl formName;
+
+  if(( unitcode == 12 ) || // Temperature
+     ( unitcode == 7 ))    // Angle
+    {
+      formName = car(prmList);
+      tempValue = car(parse(car(cdr(prmList))," \t",""));
+      prmList = list(formName, tempValue);
+    }
+  return(prmList);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_invoke_text_editor(logFileName)
+{
+    de_invoke_text_editor(NULL, NULL, NULL,logFileName);
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_valid_short_name(designName)
+{
+    decl dirDelim=api_get_directory_delimiter();
+    decl pathList=iffParseString(designName, dirDelim, "");
+
+    if(listlen(pathList) == 0)
+        return("");
+    else
+        return(nth(listlen(pathList)-1, pathList));
+
+    // return( defile_valid_short_name(designName, FALSE) );
+
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_directory_delimiter()
+{
+  return( IffDirectoryDelimiter );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_library_path()
+{
+  return( strcat(getenv("USER_DEF_PDE_DSN_PATH"), ":",
+	         getenv("SYSTEM_DEF_PDE_DSN_PATH")));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_item_prefix(symName)
+{
+  return( "ADS" );
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_prj_ext()
+{
+  if( getenv("ADD_PRJ_EXTENSION") == "TRUE" )
+    return( getenv("PROJECT_EXTENSION") );
+  else
+    return("");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_save_design(designPtr)
+{
+    decl currentWin;
+    decl designList, designH, dirDelim=api_get_directory_delimiter();
+    decl dsnName, winList;
+
+    if( IffDebugMessageLevel > 15 )
+	  print_value(list("Saving", ifftolib_get_designpath()));
+
+    if (ImportSynchronizeConnectorByNodeName && IffCurrentWindowType == IFF_SCHEMATIC)
+    {
+        if( IffDebugMessageLevel > 15 )
+            print_value("Aligning port numbers to symbol using node names.");
+
+        iff_import_synchronize_connector_numbers(designPtr);
+
+    }
+
+    if(IffCurrentWindowType == IFF_SCHEMATIC)
+    {
+        // Reset the select box size.  Currently, it is set to .001 after an import.
+
+	de_set_select_box_size(0.1);
+    }
+
+    // Allow the user to have a special design post process 
+    // function.
+
+    if(bound("iff_user_design_save"))
+        iff_user_design_save(designPtr, IffCurrentWindowType);
+
+    // Workaround for ATM issue Framewrk_Lks.1068.
+    // This command will cause all pending X commands to be processed 
+    // before continuing.
+
+    // Store the current active window, process all the events, then 
+    // Set the active window back to the previous window.
+
+    currentWin=api_get_current_window();
+    api_process_all_events();
+    api_set_current_window(currentWin);
+
+    dsnName = db_get_design_attribute (designPtr, DESIGN_NAME);
+
+    if(!member(dsnName, IffImportDesignList))
+        IffImportDesignList=append(IffImportDesignList, list(dsnName));
+
+    de_save_design(NULL, designPtr);
+
+    // Clear the design to free up memory.
+
+    if(IffCurrentWindowType == IFF_SCHEMATIC)
+    {
+        designH=db_first_design();
+
+	while(designH)
+	{
+	    dsnName = db_get_design_attribute (designH, DESIGN_NAME);
+	    if(leftstr(dsnName, 1) == dirDelim)
+	        designList=append(designList, list(designH));
+	    designH=db_next_design(designH);
+	}
+
+	while(designList)
+	{
+	    winList=api_get_windows_by_id(SCHEM_WIN);
+	    if (!winList)
+	    {
+	        // Apparently, a window was not open.  Open one now.
+		api_set_current_window(api_get_current_window());
+		close_window();
+		open_window(SCHEM_WIN);          
+		winList=api_get_windows_by_id(SCHEM_WIN);      
+		api_show_palettebar (car(winList), 1);
+	    }
+	    else
+	    {
+	        api_show_palettebar (car(winList), 1);
+	    }
+	    de_show_design_in_window(car(designList), car(winList));
+	    clear_design();
+	    designList=cdr(designList);
+	}
+    }
+    else
+    {
+        // Layouts push in, and cannot support clearing all the 
+	// designs at once.  Only clear the current design.
+        clear_design();
+    }
+
+    return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_relocate_equiv_instance(designName,layer, name, id, x,y,rot)
+{
+  decl instHandle;
+  decl transform;
+  decl curRot;
+  decl curX;
+  decl curY;
+  decl dx;
+  decl dy;
+  decl drot;
+  decl designHandle;
+  decl repHandle;
+  decl userUnits;
+
+  instHandle = db_find_instance(designName, REP_LAY, id);
+  if( instHandle == NULL )
+    return(FALSE);
+
+  if( iff_set_edit_layer(layer) == FALSE ) 
+    return(FALSE);
+
+  designHandle = db_get_design(designName);
+  repHandle = db_get_rep(designHandle, REP_LAY);
+  userUnits = db_get_rep_db_factor(repHandle);
+  transform = db_get_instance_attribute(instHandle, INST_TRANSFORM);
+  if( transform != NULL )
+    {
+      curRot = iff_artcomp_rot(TRUE, transform, FALSE, TRUE);
+      // print_value(rot);
+      curX = db_get_transform_x(transform)/userUnits;
+      curY = db_get_transform_y(transform)/userUnits;
+    }
+  else
+    {
+      curRot = list(0,"F");
+      curX = 0.0;
+      curY = 0.0;
+    }
+  
+  if(( curX != x ) || ( curY != y ))
+    {
+      de_select_by_name(id,1);
+      de_break_connection();
+      dx = x-curX;
+      dy = y-curY;
+      de_move(dx,dy);
+      de_deselect_by_name(id,1);
+    }
+
+  rot = rot-car(curRot);
+  while(rot < 0 )
+    rot = rot + 360;
+  while(rot > 360 )
+    rot = rot - 360;
+
+  if( rot != 0 )
+    {
+      de_select_by_name(id,1);
+      de_rotate(x,y,rot);
+      de_deselect_by_name(id,1);
+    }
+
+  return(TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_import_non_macro_placement (finalImport)
+{
+    if (!IffImportPlacementMode)
+       return;
+
+    de_iff_process_rep ();
+
+    if (finalImport)
+       api_set_normal_cursor ();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_place_delayed_relocated_inst()
+{
+    decl myDesign = current_design_name();
+    decl saveList = NULL;
+    decl instData;
+    decl routeMode;
+
+    iff_import_non_macro_placement (TRUE);		// Final import
+
+    routeMode = de_get_preference(REROUTE_WIRES_P);
+    de_set_reroute_wires(1);
+
+    while(IffRelocatedInstList != NULL )
+    {
+        instData = car(IffRelocatedInstList);
+        if( car(instData) == myDesign )
+            call(iff_relocate_equiv_instance, instData);
+        else
+            saveList = append(saveList, list(instData));
+
+        IffRelocatedInstList = cdr( IffRelocatedInstList );
+    }
+
+    de_set_reroute_wires(routeMode);
+
+    if( saveList != NULL )
+    {
+        // print_value(saveList);
+        IffRelocatedInstList = saveList;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_delay_place_relocated_inst(designName, layer, name, id, x, y, rot)
+{
+    decl newList = list(designName, layer, name, id, x, y, rot);
+
+    if( IffRelocatedInstList == NULL )
+        IffRelocatedInstList = list(newList);
+    else
+        IffRelocatedInstList = append(IffRelocatedInstList, list(newList));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_place_item(name, id, layer, x,y,rot)
+{
+    /*
+    if (lmsFileImport)
+    {
+        // This crashes ADS in short order, and the instances are not needed in
+        // LMS anyway.
+        return;
+    }
+    */
+
+    decl pList;
+    decl instHandle;
+    decl transform;
+    decl designName;
+    decl px;
+    decl py;
+    decl fixedName=iff_fix_design_name(name);
+    decl designDef;
+    decl msg;
+
+    if(fixedName == "Port")
+    {
+        if(index("0123456789", leftstr(id, 1)) != -1)
+	{
+	    // Port id begins with a number.  Prefix it with P, which is 
+	    // what ADS will do.
+	    id=strcat("P", id);
+	}
+    }
+
+    designName = current_design_name();
+    instHandle = db_find_instance(designName, REP_LAY, id);
+
+    if ( instHandle == NULL )
+    {
+
+        if (dm_find_item_definition(dm_get_adm_name(fixedName),1))
+	{
+	    set_instance(fixedName);
+	    set_instance_id(id,0);
+
+	    pList = iff_translate_xy(x,y);
+	    x = car(pList);
+	    y = nth(1,pList);
+
+	    px = x + 1000;
+	    py = y + 1000;
+	    
+	    rot = db_transform_angle(rot*1000.0)/1000.0;
+	    de_set_instance_angle(rot);
+	    instHandle = place_instance(px, py);
+
+	    // Force artwork macros to be redrawn?
+	    // de_update_instance(instHandle,TRUE);
+
+	    de_end_command();
+	}
+	else
+	{
+	    msg=strcat("ERROR: Unable to place instance \"", id, 
+		       "\" of type \"", fixedName, "\"!");
+	    iff_log_message(list(msg));
+	}
+
+    }
+
+    iff_delay_place_relocated_inst(designName, layer, fixedName, id, x, y, rot);
+
+}
+
+//////////////////////////////////////////////////////////////////////
+// We do not use defaults designs in ADS...
+//////////////////////////////////////////////////////////////////////
+defun iff_export_defaults_design(skipDefaults, parentPath, fileHandle, 
+				 logFile, topDesignName, level, exportIt)
+{
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_design_handle(designName, designPath, designCode)
+{
+    decl designHandle = db_get_design(designName);
+    if( designHandle == NULL )
+    {
+        designHandle = de_new_design(designPath, designCode,"");
+        // print_value(list(designHandle, designPath, designCode));
+    }
+    return(designHandle);
+}
+
+//////////////////////////////////////////////////////////////////////
+// This call back will launch libtrans and display a dialog to tell
+// them to reimport the IFF file when finished.
+//////////////////////////////////////////////////////////////////////
+defun iff_map_yes_cb(yesH, dlgH, winInst)
+{
+  if( dlgH != NULL )
+    api_dlg_unmanage(dlgH);
+
+  if( iff_get_directory_delimiter() == "/" )
+    system(strcat("hplt -input ", IffImportFileName));
+  else
+    system(strcat("libtrans -input ", IffImportFileName));
+
+  if( IffInteractive == TRUE )
+    info("Starting HP Library Translator. Re-import IFF File when finished.");
+}
+
+//////////////////////////////////////////////////////////////////////
+// This callback will load the IFF data and not launch libtrans.
+//////////////////////////////////////////////////////////////////////
+defun iff_map_no_cb(noH, dlgH, winInst)
+{
+  if( dlgH != NULL )
+    api_dlg_unmanage(dlgH);
+
+  iff_build_design_data();
+}
+
+//////////////////////////////////////////////////////////////////////
+// Build a dialog that will prompt the user to rather or not to start
+// the library translator.
+//////////////////////////////////////////////////////////////////////
+defun iff_map_launch_libtrans_dlg(cmpLst)
+{
+    decl dialogResource = "IffLaunchLibTrans";
+    decl dlgH           = NULL;
+    decl lstH           = NULL;
+    decl yesH           = NULL;
+    decl noH            = NULL;
+    decl qBitH          = NULL;
+    decl questH         = NULL;
+    decl panH           = NULL;
+    decl helpH          = NULL;
+    decl unMappedComps  = "Unmapped Components";
+    decl qstr;
+
+    yesH    = api_dlg_create_item(deYesLabel,
+				  API_PUSH_BUTTON_ITEM,
+				  API_RN_CAPTION, deYesLabel);
+
+    noH     = api_dlg_create_item(deNoLabel,
+				  API_PUSH_BUTTON_ITEM,
+				  API_RN_CAPTION, deNoLabel);
+
+    helpH   = api_dlg_create_item(helpButtonLabel,
+				  API_PUSH_BUTTON_ITEM,
+				  API_RN_CAPTION, DeHelpString);
+
+    lstH    = api_dlg_create_item(unMappedComps,
+				  API_LIST_ITEM,
+				  API_RN_CAPTION, unMappedComps,
+				  API_RN_ITEMS, cmpLst);
+
+    qBitH   = api_dlg_create_item("BitmapLabel", API_LABEL_ITEM,
+				   API_RN_USE_BITMAP, TRUE,
+				   API_RN_UP_BUTTON_BITMAP,"API_QUESTION_BMP");
+
+    qstr = "Start the HP Library Translator to create property and\n";
+    qstr = strcat(qstr,"pin mappings for the following components?");
+
+    questH  = api_dlg_create_item("QuestionString", API_LABEL_ITEM,
+				  API_RN_CAPTION, qstr);
+
+    panH    = api_dlg_create_item("panel", API_TABLE_GROUP,
+				  API_RN_ORIENTATION, API_RV_HORIZONTAL,
+				  API_RN_TBL_OPTIONS, API_RV_TBL_FIX_HEIGHT,
+				  qBitH, questH);
+
+    dlgH  = api_dlg_create_dialog(dialogResource,
+				  api_get_current_window(),
+				  list(yesH, noH),         //, helpH),
+				  panH,
+				  lstH);
+
+    // set defaults
+    api_dlg_set_resources(dlgH, API_RN_CAPTION, "Launch Library Translator");
+    api_dlg_set_resources(dlgH, API_RN_DEFAULT_BUTTON, yesH);
+
+
+    // add callbacks
+    api_dlg_add_callback(yesH, "iff_map_yes_cb", API_ACTIVATE_CALLBACK, dlgH);
+
+    api_dlg_add_callback(noH, "iff_map_no_cb", API_ACTIVATE_CALLBACK, dlgH);
+
+//    api_dlg_add_callback(helpH, "de_post_help_cb", 
+//			 API_ACTIVATE_CALLBACK, DE_EXPORT_DLG);
+
+    if (dlgH != NULL)
+        api_dlg_manage( dlgH );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_layer_get_next_layer_number()
+{
+  decl layerNames; 
+  if( IffLastLayerNumber == 0 )
+    {
+      // Never checked before so get a starting point.
+      layerNames = de_get_layer_names();
+      IffLastLayerNumber = listlen(layerNames);
+    }
+
+  // Find a unused layer number...
+  while( ly_find_layer_name_by_num(IffLastLayerNumber) != NULL )
+    IffLastLayerNumber++;
+
+  return(IffLastLayerNumber);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_form_name()
+{
+  return("StdForm");
+}
+
+//////////////////////////////////////////////////////////////////////
+//  Determine if a design name is valid or not...
+//////////////////////////////////////////////////////////////////////
+defun iff_valid_design_name( desName )
+{
+  decl validName;
+
+  if( ifftolib_valid_name(desName) == FALSE )
+    validName = FALSE;
+  else if( val(leftstr(desName,1)) != NULL )
+    validName = FALSE;
+  else
+    validName = TRUE;
+
+  return( validName );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Given a design name with invalid characters in it. Take
+// that name and replace the invalid characters with a "_".
+//////////////////////////////////////////////////////////////////////
+defun iff_fix_design_name( name )
+{
+    decl newName = ifftolib_fix_name(name);
+
+    if(IffAdsVersion < 130.403)
+    {
+        if(( newName != FALSE ) && ( ifftolib_isdigit(leftstr(newName,1))))
+	    newName = strcat("D_", $newName);
+    }
+
+    return( newName );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_open_layerfile(repHandle, fileName)
+{
+  decl layerFileName = db_get_rep_attribute(repHandle, REP_LAY_FILE);
+  if( layerFileName == NULL )
+    return( NULL );
+  
+  *fileName = layerFileName;
+
+  return( fopen(layerFileName, "R") );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_close_layerfile(fileHandle, fileName)
+{
+  fclose(fileHandle);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_create_parm_str_normal(symbolName, propName, 
+					propLabel, attrib, formSet, unitCode, 
+					defaultCallback,
+                                        changedCallback, 
+                                        changedCallbackArg,
+                                        propValueList)
+{
+    decl newParam;
+    decl value;
+    decl formNameValue;
+    decl doublePrmFormSetList=list("StdForm", "StringAndReference", "ds");
+    decl doubleFormSetList=list(IffDefaultFormSet, "StdFormSet", "StringForm",
+				"StringAndReferenceFormSet", "ckt_source_read_dataset");
+
+    if( IffMapDebugFlag == TRUE )
+        print_value("Begin: iff_in_map_create_parm_str()");
+
+    propValueList = iff_check_prm_scale(propValueList,unitCode);
+    
+    newParam = strcat(",create_parm(\"",
+                      propName, "\",\"", 
+                      propLabel, "\",",
+                      identify_value(attrib), ",\"", 
+                      formSet, "\",", 
+                      identify_value(unitCode), ",");
+
+    formNameValue = car(propValueList);
+
+    if ((member(formNameValue, doublePrmFormSetList)) && 
+        (member(formSet, doubleFormSetList)))
+    {
+        newParam=strcat(newParam, "prm(\"", car(propValueList), "\"");
+
+        propValueList = cdr(propValueList);
+
+        while( propValueList != NULL )
+        {
+            value=iff_import_fix_units(car(propValueList));
+            if (formSet == "StringAndReferenceFormSet")
+            {
+                newParam = strcat(newParam, ",\"\\\"", value, "\\\"\"");
+            }
+            else
+            {
+                newParam = strcat(newParam, ",\"", value, "\"");
+            }
+            propValueList = cdr(propValueList);
+        }
+        newParam = strcat(newParam, ")");
+    }
+    else
+    {
+        // This is a dropdown list form.  Handle it differently.
+        newParam=strcat(newParam, "prm(\"", nth(1,propValueList), "\")");
+    }
+
+    if( defaultCallback != NULL && callback != "" )
+    {
+        // Set up the default value callback
+    }
+
+    if ( changedCallback != NULL && changedCallback != "")
+    {
+        // Set up the parameter change callback
+
+        newParam=strcat(newParam,",list(dm_create_cb(PARM_MODIFIED_CB,");
+        newParam=strcat(newParam,identify_value(changedCallback),",");
+      
+        if ( changedCallbackArg != NULL && changedCallbackArg != "")
+        {
+            // Set up the parameter change callback arg
+            newParam=strcat(newParam,identify_value(changedCallbackArg),",");
+        }
+        else
+        {
+            newParam=strcat(newParam,"NULL",",");          
+        }
+        newParam=strcat(newParam,"TRUE))",);          
+    }
+
+    newParam = strcat(newParam, ")");
+
+    if( IffMapDebugFlag == TRUE )
+        print_value("End:   iff_in_map_create_parm_str()");
+
+    return( newParam );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_create_parm_str_list(symbolName, propName, 
+				      propLabel, attrib, formSet, unitCode, 
+				      defaultCallback, changedCallback,
+                                      changedCallbackArg, propValueList)
+{
+  decl newParam;
+  decl propValue;
+  decl tmp;
+  decl formName;
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("Begin: iff_in_map_create_parm_str_list()");
+
+  newParam = strcat(",create_parm(\"",
+		    propName, "\",\"", 
+		    propLabel, "\",",
+		    identify_value(attrib), ",\"", 
+		    formSet, "\",", 
+		    identify_value(unitCode), ",");
+
+  propValue = car(cdr(propValueList));
+  propValue = rightstr(propValue, strlen(propValue)-5);
+  propValue = leftstr(propValue, strlen(propValue)-1);
+
+  propValue = iff_parse(propValue);
+
+  newParam = strcat(newParam, "list(");
+
+  if( propValue == NULL )
+    {
+      newParam = strcat(newParam, ''prm("StdForm","")'');
+    }
+  else
+    {
+      decl tmpList = parse(car(propValue), ",()", "");
+      if( car(tmpList) == "prm" )
+	{
+	  propValue = car(propValue);
+	  propValue = rightstr(propValue, strlen(propValue)-4);
+	  propValue = leftstr(propValue, strlen(propValue)-1);
+	  tmpList = iff_parse(propValue);
+
+	  formName = car(parse(car(tmpList), "\\\"", ""));
+	  newParam = strcat(newParam, "prm(\"", formName, "\"");
+	  tmpList = cdr(tmpList);
+	  while( tmpList != NULL )
+	    {
+	      newParam = strcat(newParam, ",\"", car(tmpList), "\"");
+	      tmpList = cdr(tmpList);
+	    }
+	  newParam = strcat(newParam, ")");
+	}
+      else
+	{
+	  while( propValue != NULL )
+	    {
+	      tmp = car(propValue);
+	      if( tmp == "" )
+		newParam = strcat(newParam, ''""'');
+	      else
+		newParam = strcat(newParam, "\"",car(propValue), "\"");
+	      propValue = cdr(propValue);
+	      if( propValue != NULL )
+		newParam = strcat(newParam, ",");
+	    }
+	}
+    }
+  newParam = strcat(newParam, ")");
+
+  if( defaultCallback != NULL && callback != "" )
+  {
+      // Set up the default value callback
+  }
+
+  if ( changedCallback != NULL && changedCallback != "")
+  {
+      // Set up the parameter change callback
+
+      newParam=strcat(newParam,",list(dm_create_cb(PARM_MODIFIED_CB,");
+      newParam=strcat(newParam,identify_value(changedCallback),",");
+      
+      if ( changedCallbackArg != NULL && changedCallbackArg != "")
+      {
+          // Set up the parameter change callback arg
+          newParam=strcat(newParam,identify_value(changedCallbackArg),",");
+      }
+      else
+      {
+          newParam=strcat(newParam,"NULL",",");          
+      }
+      newParam=strcat(newParam,"TRUE))",);          
+  }
+
+  if( IffMapDebugFlag == TRUE )
+    print_value("End:   iff_in_map_create_parm_str_list()");
+
+  return( newParam );
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_create_parm_str(symbolName, propName, 
+				 propLabel, attrib, formSet, unitCode, 
+				 callback, changedCallback,
+                                 changedCallbackArg, propValueList)
+{
+  decl retValue;
+
+  if( car(propValueList) == "list" )
+    retValue = iff_in_map_create_parm_str_list(symbolName, propName, 
+					       propLabel, attrib, formSet, 
+					       unitCode, callback, 
+                                               changedCallback, 
+                                               changedCallbackArg, propValueList);
+  else
+    retValue = iff_in_map_create_parm_str_normal(symbolName, propName, 
+						 propLabel, attrib, formSet, 
+						 unitCode, callback, 
+                                                 changedCallback, 
+                                                 changedCallbackArg, propValueList);
+
+  return( retValue );
+    
+}
+
+//////////////////////////////////////////////////////////////////////
+// Perform any tool specific initialization here.....
+//////////////////////////////////////////////////////////////////////
+defun iff_tool_initialize()
+{
+    // Initialize the IFF flag to TRUE
+    if( iff_is_defined("de_set_iff_state") == TRUE )
+        de_set_iff_state(TRUE);
+
+    IffRelocatedInstList = NULL;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Perform any tool specific actions just before returning to user...
+//////////////////////////////////////////////////////////////////////
+defun iff_tool_complete()
+{
+  // Restore IFF flag back to normal operation..
+  if( iff_is_defined("de_set_iff_state") == TRUE )
+    de_set_iff_state(FALSE);
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_validate_property_value(objectPath, propName, propValue)
+{
+    return(propValue);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Take the property handle and return a list in the form of 
+//      [name,[orig value],name,[orig value],...]
+// If none found then return NULL
+//////////////////////////////////////////////////////////////////////
+defun iff_get_bad_value_list(propHandle)
+{
+  return(NULL);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Given a property name and value pair find the unitcode for that 
+// value. First check to see if the researved UNIT property exists.
+// If not then try to guess the unitcode from any extension on the 
+// property value.
+//////////////////////////////////////////////////////////////////////
+defun iff_in_map_find_or_guess_unitcode(objectPath, 
+					propName, propValue, propExt, def)
+{
+  decl attrStr;
+  decl value_list;
+  decl num;
+  decl str;
+  decl unitData;
+  decl symbolData;
+  decl resParamList;
+
+  attrStr = iff_in_map_find_res_parm(objectPath, propName, propExt, NULL);
+  if( attrStr != NULL )
+    return(attrStr);
+
+  if( is_string(*propValue) == NULL )
+    return(def);
+
+  value_list = parse(*propValue);
+  if( listlen(value_list) != 2 )
+    {
+      //print_value(list("Can't guess at unit code, list incorrect length", 
+      //                       listlen(value_list), value_list, *propValue));
+      return(def); // Incorrect number of args 
+    }
+
+  num = car(value_list);
+  str = nth(1,value_list);
+
+  if(( is_real(num) == NULL ) && ( is_integer(num) == NULL ))
+    {
+      // print_value(list("Can't guess at unit code, number not a number", 
+      //	              num, *propValue));
+      return(def); // Incorrect number of args 
+    }
+
+  if( is_string(str) == NULL )
+    {
+      // print_value(list("Can't guess at unit code, unit not a string", 
+      //	       str, *propValue));
+      return(def); // Incorrect number of args 
+    }
+
+  unitData = iff_get_unit_data_from_unit(str);
+  if( unitData == NULL )
+    {
+      // print_value(list("Can't guess at unit code, unit not found in list", 
+      // 	          str, *propValue));
+      return(def); // Incorrect number of args 
+    }
+
+  // print_value(list("Guessing a unit data...", unitData, *propValue));
+
+  //
+  // Rebuild property string with correct scalar/unit (correct case)
+  //
+  *propValue = strcat(num, " ", nth(2, unitData));
+
+  return(car(unitData));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_get_system_config_dir()
+{
+  decl rootDir;
+  decl dirSep = iff_get_directory_delimiter();
+
+  rootDir = expandenv("$HPEESOF_DIR");
+  if( rootDir == NULL )
+    return( NULL );
+  else
+    return(strcat(rootDir, dirSep, "config"));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_add_construction_line(x1,y1,x2,y2)
+{
+  decl pList;
+
+  pList = iff_translate_xy(x1,y1);
+  x1 = car(pList);
+  y1 = nth(1,pList);
+  pList = iff_translate_xy(x2,y2);
+  x2 = car(pList);
+  y2 = nth(1,pList);
+
+  return(de_add_construction_line(x1,y1,x2,y2));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_add_rectangle(x1,y1,x2,y2)
+{
+  decl pList;
+
+  pList = iff_translate_xy(x1,y1);
+  x1 = car(pList);
+  y1 = nth(1,pList);
+  pList = iff_translate_xy(x2,y2);
+  x2 = car(pList);
+  y2 = nth(1,pList);
+
+  return(de_add_rectangle(x1,y1,x2,y2));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_add_arc1(x1,y1,x2,y2,x3,y3)
+{                      
+  decl pList;
+
+  pList = iff_translate_xy(x1,y1);
+  x1 = car(pList);
+  y1 = nth(1,pList);
+  pList = iff_translate_xy(x2,y2);
+  x2 = car(pList);
+  y2 = nth(1,pList);
+  pList = iff_translate_xy(x3,y3);
+  x3 = car(pList);
+  y3 = nth(1,pList);
+
+  return(de_add_arc1(x1,y1,x2,y2,x3,y3));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_add_circle(x1,y1,r)
+{
+  decl pList;
+
+  pList = iff_translate_xy(x1,y1);
+  x1 = car(pList);
+  y1 = nth(1,pList);
+  return(de_add_circle(x1,y1,r));
+}
+
+//////////////////////////////////////////////////////////////////////
+// Add a symbol pin..
+//////////////////////////////////////////////////////////////////////
+defun ifftolib_add_symbol_pin(pinName, pinNum, rot, x, y, propList)
+{
+    decl propData;
+    decl objectPath;
+    decl pinDirection=2, userPropList;
+    decl i;
+    
+    if(pinName == "")
+    {
+        pinName=strcat("P", identify_value(pinNum));
+    }
+
+    objectPath = ifftolib_get_objectpath();
+
+    propList = iff_in_map_get_symbol_pin_props(objectPath, pinNum);
+
+    // Check for a user property called IFF_SYMPIN_DIRECTION
+    
+    if( propList != NULL )
+    {
+        for (i=0; i<listlen(propList); i=i+2)
+        {
+            userPropList=nth(i, propList);
+            if (nth(0, userPropList) == "IFF_SYMPIN_DIRECTION")
+            {
+                pinDirection=nth(1, userPropList);
+                if(pinDirection == "input")
+                {
+                    pinDirection=0;
+                }
+                else if(pinDirection == "output")
+                {
+                    pinDirection=1;
+                }
+                else
+                {
+                    pinDirection=2;
+                }
+            }
+        }
+    }
+  
+    iff_in_map_symbol_pin(objectPath, &pinName, &pinNum, propList);
+
+    de_set_port(pinName, pinNum, rot, pinDirection);
+    place_port(x, y);
+    if( propList != NULL )
+    {
+        set_edit_property(x, y);
+        propData = car(propList);
+        while( propData != NULL )
+        {
+            // Add all user properties except for IFF_SYMPIN_DIRECTION
+            if (car(propData) != "IFF_SYMPIN_DIRECTION")
+            {
+                add_property(car(propData), car(cdr(propData)), FALSE);
+            }
+            propList = cdr(propList);
+            propData = car(propList);
+        }
+    }
+
+    end_command();
+}
+
+//////////////////////////////////////////////////////////////////////
+// Get the I/O direction of a symbol pin.  
+//////////////////////////////////////////////////////////////////////
+
+defun iff_get_pin_direction(portHandle)
+{
+    return(db_get_pin_attribute(portHandle, PIN_DIRECTION));
+}
+
+defun iff_clear_symbol()
+{
+    // Clear all drawing information from the current representation.
+    de_clear_rep();
+    view_all();
+}
+
+//////////////////////////////////////////////////////////////////////
+// Function:  iff_map_incr
+// Method:    Map ADS resolution to IFF resolution
+//////////////////////////////////////////////////////////////////////
+defun iff_map_incr (increment)
+{
+    decl resolution;
+
+    /* Quick conversion constraining to valid values */
+
+    if (increment <= -5)
+	resolution = 100000;
+    else if (increment == -4)
+	resolution = 10000;
+    else if (increment == -3)
+	resolution = 1000;
+    else 
+	resolution = 100;
+
+    return (resolution);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Function:  iff_map_units
+// Method:    Map ADS units to IFF units
+//////////////////////////////////////////////////////////////////////
+defun iff_map_units (unit)
+{
+    decl unitStr;
+
+    /* Quick conversion constraining to valid values */
+
+    if (unit == 1)
+	unitStr = "MIL";
+    else if (unit == 2)
+	unitStr = "INCH";
+    else if (unit == 3)
+	unitStr = "UM";
+    else if (unit == 4)
+	unitStr = "MM";
+    else if (unit == 5)
+	unitStr = "CM";
+    else if (unit == 6)
+	unitStr = "METER";
+    else if (unit == 7)
+	unitStr = "FOOT";
+    else
+	unitStr = "MIL";
+
+    return (unitStr);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+	
+defun iff_set_drawpage_preferences()
+{
+    decl winInst, winList;
+    decl dprec, incr, prec;
+    decl unitString, resolution;
+
+    iff_set_preference(LAYOUT_UNITS_P,         IffDrawPageUnits);
+    iff_set_preference(LAYOUT_PREC_P,          IffDrawPageIncr);
+    iff_set_preference(MAJOR_GRID_DISPLAY_X_P, IffDrawPageGridMajor);
+    iff_set_preference(MAJOR_GRID_DISPLAY_Y_P, IffDrawPageGridMajor);
+    iff_set_preference(GRID_DISPLAY_X_P,       IffDrawPageGridMinor);
+    iff_set_preference(GRID_DISPLAY_Y_P,       IffDrawPageGridMinor);
+    iff_set_preference(GRID_SNAP_X_P,          IffDrawPageGridSnap);
+    iff_set_preference(GRID_SNAP_Y_P,          IffDrawPageGridSnap);
+
+    /* This function is called to create and also restore a layout context
+       for insertion, so the system has been programmed to only allow one drawpage.
+       System will inherit settings from last draw page. */
+
+    unitString = iff_map_units (IffDrawPageUnits);
+    resolution = iff_map_incr (IffDrawPageIncr);
+
+
+    de_iff_add_drawpage (NULL,			/* object path */
+			 NULL, 			/* layer icon path */
+			 IffDrawPageGridMajor,
+			 IffDrawPageGridMinor,
+			 IffDrawPageGridSnap,
+			 "ON",			/* grid display */
+			 unitString,
+			 resolution);
+
+    /* 
+     * The write preferences does not make sense here, especially given
+     * that the preferences are always written out to the same file.
+     * Since the values are already stored in variables, there is no
+     * need to store them into layout.prf as a temporary file.  Either a
+     * new prf should be created each time, or the file shouldn't be
+     * saved.  There appears to be an added problem that the file handle
+     * is not being closed properly, which eventually results in ADS crashing. 
+     */
+    
+    decl winList=api_get_windows_by_id(LAYOUT_WIN);
+    if (!winList)
+    {
+        // Apparently, a window was not open.  Open one now.
+        api_set_current_window(iff_get_current_window());
+        close_window();
+        open_window(windowCode);          
+        ifftolibLayoutWindowOpen = TRUE;
+        winList=api_get_windows_by_id(LAYOUT_WIN);      
+    }
+    winInst = car(winList);
+    /*
+    dprec=val(IffDrawPageIncr);
+    prec=pow(10, dprec);
+    incr = prec/pow(10, dprec);
+    if (!is_integer(IffDrawPageIncr))
+    {
+        dprec=cint(dprec);
+    }
+    */
+
+    incr=IffDrawPageIncr;
+    if (!is_integer(incr))
+    {
+        incr=cint(incr);
+    }
+
+    if(!is_pdeoa_mode())
+    {
+        de_change_units(IffDrawPageUnits, -incr, 1, winInst);
+    }
+    de_refresh_view();
+    de_update_panels(winInst);
+    write_preference("layout.prf");
+}
+
+defun iff_load_design(desPath, overwrite)
+{
+    return(de_load_design(desPath, overwrite));
+}
+
+defun iff_show_design_in_window(designHandle, windowCode)
+{
+    decl winList=api_get_windows_by_id(windowCode);
+    if (!winList)
+    {
+        // Apparently, a window was not open.  Open one now.
+        api_set_current_window(iff_get_current_window());
+        close_window();
+        open_window(windowCode);          
+        ifftolibSchematicWindowOpen = TRUE;
+        winList=api_get_windows_by_id(windowCode);      
+    }
+
+    de_show_design_in_window(designHandle, car(winList));
+}
+
+defun iff_switch_view(winCode)
+{
+    de_switch_view(winCode, NULL);
+}
+
+// defun iff_parse_blank(s)
+// {
+//    if(is_string(s))
+//	return(parse(s," \t",""));
+//    else
+//        return(NULL);
+// }
+
+//////////////////////////////////////////////////////////////////////
+// Equivalent calls....
+//////////////////////////////////////////////////////////////////////
+decl iff_is_dir                        = is_dir;
+decl iff_system                        = system;
+decl iff_add_prop                      = de_add_prop;
+decl iff_add_property                  = de_add_property;
+decl iff_select_all                    = de_select_all;
+decl iff_deselect_all                  = de_deselect_all;
+decl iff_deselect_by_name              = de_deselect_by_name;
+decl iff_get_env                       = de_get_env;
+decl iff_get_path_name                 = de_get_path_name;
+decl iff_get_preference                = de_get_preference;
+decl iff_init_iteminfo                 = de_init_iteminfo;
+decl iff_move                          = de_move;
+decl iff_select_item                   = de_select_item;
+decl iff_select_by_name                = de_select_by_name;
+decl iff_selected                      = de_selected;
+decl iff_set_edit_property             = de_set_edit_property;
+decl iff_set_preference                = de_set_preference;
+decl iff_clear_all_no_to_all           = de_clear_all_no_to_all;
+decl iff_save_all_designs              = de_save_all_designs;
+decl iff_get_current_window            = api_get_current_window;
+decl iff_set_current_window            = api_set_current_window;
+decl iff_get_window_seq_num            = api_get_window_seq_num;
+decl iff_set_current_window_by_seq_num = api_set_current_window_by_seq_num;
+decl iff_set_tee_size                  = de_set_tee_size;
+decl iff_is_reserved_name              = de_is_reserved_name;
+
+decl iff_set_layer                     = de_set_layer;
+decl iff_dse_s2l                       = de_dse_s2l;
+decl iff_move                          = de_move;
+decl iff_mirror                        = de_mirror_x;
+
+
+

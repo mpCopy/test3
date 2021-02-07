@@ -1,0 +1,345 @@
+// Copyright Keysight Technologies 1997 - 2011  
+// @(#) $Source: /cvs/wlv/src/iff/ael/iffboot.ael,v $ $Revision: 100.68 $ $Date: 2011/08/28 20:26:35 $  
+//
+//////////////////////////////////////////////////////////////////////
+// Global Variables accessed by multiple parts of the IFF Engine
+//////////////////////////////////////////////////////////////////////
+
+decl IffDebugMessageLevel = 1;
+
+decl IffR200Release = FALSE;
+decl IffAelLoaded   = FALSE;
+// decl IffInteractive = TRUE;
+decl IffInteractive = FALSE;
+decl IffExportType  = NULL;
+
+decl IffExportLogFile = "writeiff.log";
+decl IffImportLogFile = "ifftolib.log";
+
+decl IffImportFileName = NULL;
+
+//
+// What tool are we running....
+//
+decl IffRunningAds      = TRUE;
+decl IffRunningSeriesIV = FALSE;
+
+decl IFF_SCHEMATIC_WINDOW;
+decl IFF_LAYOUT_WINDOW;
+decl IFF_DESIGN_VIEW;
+decl IFF_SYMBOL_VIEW;
+
+decl IffDirectoryDelimiter = NULL;
+
+decl IffComponentNetlistFmt = NULL;
+
+decl IffIsDefinedErrorCode;
+
+decl ImportSynchronizeConnectorByNodeName = FALSE;
+
+decl IffObjectPathMainDelim="/";
+decl IffObjectPathSubDelim=":";
+decl iffImportPrefixLibrary = TRUE;
+decl lmsFileImport=FALSE;
+
+// This is to support the possibility of separating units/scalars and values
+// by having a space.  MGC Board is apparently set up to expect this.
+
+decl IffValueSeparator      = "";
+
+//////////////////////////////////////////////////////////////////////
+// Simple print routine accessed by a number of files
+//////////////////////////////////////////////////////////////////////
+defun print_value(value)
+{
+  fputs(stderr,identify_value(value));
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+defun iff_is_defined_error_handler(code, class, op, line, col)
+{
+    IffIsDefinedErrorCode = code;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Check to see if a variable name is defined in the system. This is
+// done be installing a error handler that sets a global variable
+// when called. This global is initialized before testing the variable
+// and then checked after. If a error occured during the test of the
+// variable it is assumed that it is not defined.
+//////////////////////////////////////////////////////////////////////
+defun iff_is_defined(varName)
+{
+    decl oldErrorHandler;
+    decl a;
+    
+    oldErrorHandler = on_error(iff_is_defined_error_handler);
+    
+    IffIsDefinedErrorCode = -1;
+    a = evaluate(varName);
+    
+    on_error(oldErrorHandler);
+    
+    if( IffIsDefinedErrorCode == -1 )
+        return( TRUE );
+    else
+        return( FALSE );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Initialize the IFF import engine world to a known state...
+//////////////////////////////////////////////////////////////////////
+defun iff_main_import_initialize(iffFile)
+{
+    iff_tool_initialize();
+
+    //  IffInteractive = TRUE;
+    IffInteractive = FALSE;
+
+    IffExportType = "import";
+
+    IffImportFileName = iffFile;
+
+    iff_clear_all_no_to_all();
+
+    ifftolib_initialize();
+
+    // Initialize mapping data
+    iff_in_map_initialize();
+    iff_clear_objectpath_maps();
+  
+    iff_load_objectpath_maps();
+
+    iff_check_permissions();
+
+    // Reset global variables as appropriate
+
+    if(bound("iff_user_import_initialize"))
+        iff_user_import_initialize();
+
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// Finish the IFF Import
+//////////////////////////////////////////////////////////////////////
+defun iff_import_complete()
+{
+    decl msg;
+
+    // Do not clear everything, it is cleared as we go
+    // iff_clear_all_no_to_all();
+
+    iff_clear_iff_path();
+    iff_clear_objectpath_maps();
+    /* 
+       de_attach_project(getcwd());
+       iff_clear_all_no_to_all();
+    */
+
+    iff_open_last_object();
+    iff_restore_window_attributes();
+
+    iff_tool_complete();    
+
+    // Restore backup
+    iff_import_restore_backup_count();
+
+    msg = list("IFF import completed");
+    /*
+    iff_log_message(msg);
+    */
+
+    // Execute a user defined import completion routine
+
+    if(bound("iff_user_import_complete"))
+        iff_user_import_complete();
+
+    iff_log_message(msg);
+    detransdlg_update_status( NULL ); // Force an update of the status dialog.
+    set_window(IffCurrentWindowType); // Set the window back to original
+
+    // Force scale factors to be recalculate for the next import
+
+    IffLayoutImportInitialized=FALSE;
+
+    iff_set_preference( GRID_SNAP_P, TRUE );
+
+    de_iff_cleanup_import ();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////////////
+defun iff_main_export_initialize()
+{
+    iff_tool_initialize();
+    
+    iff_in_map_initialize();
+    iff_clear_objectpath_maps();
+    iff_load_objectpath_maps();
+    
+    IffExportType = "export";
+    
+    ifftolib_initialize();
+    
+    IffInteractive = TRUE;
+
+    iff_check_permissions();
+
+    if(bound("iff_user_export_initialize"))
+      iff_user_export_initialize();
+  
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////////////
+defun iff_export_complete()
+{	
+    if(bound("iff_user_export_complete"))
+        iff_user_export_complete();
+    iff_clear_iff_path();
+    iff_clear_objectpath_maps();
+    iff_tool_complete();    
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Main Generic IFF entry point....
+//////////////////////////////////////////////////////////////////////////////
+defun iff_main_write(fileName, winInst, skipDefaults, interactive)
+{
+  if( winInst != NULL )
+    api_set_current_window(winInst);
+  else
+      winInst = api_get_current_window();
+
+  if( interactive != NULL )
+     IffInteractive = interactive;
+
+  if (de_is_schematic_context(winInst))
+      iff_write_schematic(fileName, skipDefaults);
+  else if (de_is_layout_context(winInst))
+      iff_write_layout(fileName);
+  else
+      print_value("Warning: Incorrect window type, can't export design.");
+
+  iff_export_complete();
+
+}
+
+// Clear object path mapping files
+
+defun iff_clear_objectpath_maps()
+{
+    // Set all of the object path maps to NULL
+
+    IffDesignObjectPathMap=NULL;
+    IffFileObjectPathMap=NULL;
+    IffFullObjectPathMap=NULL;
+    IffIndexObjectPathMap=NULL;
+    IffPartitionObjectPathMap=NULL;
+    IffSymbolObjectPathMap=NULL;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Layout iff export entry point for SeriesIV
+//////////////////////////////////////////////////////////////////////////////
+defun write_layout_iff(fileName)
+{
+  write_iff(fileName);
+}
+
+defun unbound_error()
+{
+
+    /* Use this function as follows to check for unbound variables.
+     * Call on_error(unbound_error);
+     * Check with the command decl check=<value>;
+     * Call on_error(NULL)
+     * if(!check) ....                                                */
+
+    return NULL;
+
+}
+
+defun bound(var)
+{
+    on_error(unbound_error);
+    decl check=evaluate(var);
+    on_error(NULL);
+    return(check);
+}
+
+defun iffParseString(string, delim1, delim2)
+{
+    decl returnList;
+    decl i=0;
+    decl sourceString=string;
+    decl elementString="";
+    decl ch;
+    decl removeDelim=delim1;
+    decl elementDelim=delim2;
+    decl firstElem=TRUE;
+
+    if(!removeDelim)
+        removeDelim="";
+
+    if(!elementDelim)
+        elementDelim="";
+
+    while(i<strlen(sourceString))
+    {
+        ch=midstr(sourceString, i, i);
+	if(index(removeDelim, ch) != -1)
+	{
+	    if(!firstElem && elementString)
+	        returnList=append(returnList, list(elementString));
+
+	    elementString=NULL;
+	}
+	else if(index(elementDelim, ch) != -1)
+	{
+	    if(firstElem)
+	    {
+	        returnList=append(returnList, list(ch));
+	    }
+	    else
+	    {
+	        if(elementString)
+		{
+		    returnList=append(returnList, list(elementString, ch));
+		}
+		else
+		{
+		    returnList=append(returnList, list(ch));
+		}
+	    }
+	    elementString=NULL;
+	}
+	else
+	{
+	    if(elementString)
+	    {
+	        elementString=strcat(elementString, ch);
+	    }
+	    else
+	    {
+	        elementString=ch;
+	    }
+	    firstElem=FALSE;
+	}
+	i++;
+    }
+
+    // Add the remaining characters
+
+    if(elementString)
+        returnList=append(returnList, list(elementString));
+
+    return(returnList);
+
+}

@@ -1,0 +1,151 @@
+// Copyright Keysight Technologies 2004 - 2012  
+//////////////////////////////////////////////////////////////////////
+//  $Author: gb9 $
+//  $Date: 2011/04/11 22:15:51 $
+//  $Source: /cvs/sr/src/dds/ael/ddsquery.ael,v $
+//  $Revision: 1.5 $
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// This AEL file contains query dialogs for different types of data.
+// The idea here is to create an interface that allows passing in
+// prompt strings and AEL pre and post strings that can be applied
+// to variable data.
+//
+// The user supplied button data list contains three peices of 
+// information for each selection.
+//
+//    Button Prompt:     The text to display next to the radio button
+//    Pre AEL Fragment:  The AEL fragment to be placed before the
+//                       variable name.
+//    Post AEL Fragment: The AEL fragment to be placed after the
+//                       variable name.
+//
+// The format of the list is a list of lists. The base list contians
+// the button prompt, pre and post fragments.
+//
+//      buttonList ::= list(<Button Prompt>,
+//                          <Pre AEL>,
+//                          <Post AEL>)
+//
+//      buttonDataList ::= list(buttonList[,buttonList,...])
+//
+// An example:
+//
+//      buttonDataList = list(list("Spectrum in dB",        "dB(",  ")"),
+//                            list("Spectrum in dBm",       "dBm(", ")"),
+//                            list("Magnitude of spectrum", "mag(", ")"),
+//                            list("Phase of spectrum",     "mag(", ")")
+//                           );
+//
+// The dialog data list is a list that contains the dialog caption,
+// dialog text and finally the button data list.
+//
+//      dataList ::= list(<dialog caption>,
+//                        <dialog text>,
+//                        <default index>, 
+//                        <buttonDataList>)
+//
+//      dialog caption ::= Single line string to display at top of dialog
+//      dialog text    ::= Message to describe what being done. This can include newline (\n)
+//                         characters. A guildline for line width is about 40 characters before
+//                         a newline is included.
+//      default index  ::= The default selections (zero based). Index into the buttonDataList.
+//
+// Here's the complete example.
+//
+//      dataList = list("Harmonic Balance Simulation Data",
+//                      "You are adding data from a harmonic balance simulation to a plot\nthat only supports scalar data.",
+//                      1,
+//                      list(list("Spectrum in dB",        "dB(",  ")"),
+//                           list("Spectrum in dBm",       "dBm(", ")"),
+//                           list("Magnitude of spectrum", "mag(", ")"),
+//                           list("Phase of spectrum",     "mag(", ")")
+//                          )
+//                      );
+//
+//////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////
+//            "Swept Harmonic Balance Simulation Data"              //
+//////////////////////////////////////////////////////////////////////
+decl SweptHBdataList =
+    list("Swept Harmonic Balance Simulation Data",
+         "You are adding data from a swept harmonic balance simulation\nto a plot that only supports scalar data.",
+         1,
+         list(list("Fundamental tone in dB over all sweep values",         "dB(", "[::,1])"),
+              list("Fundamental tone in dBm over all sweep values",       "dBm(", "[::,1])"),
+              list("Magnitude of fundamental tone over all sweep values", "mag(", "[::,1])"),
+              list("Phase of fundamental tone over all sweep values",   "phase(", "[::,1])"),
+              list("DC component over all swept values",                 "real(", "[::,0])"),
+              list("Second harmonic in dB over all swept values",          "dB(", "[::,2])"),
+              list("Third harmonic in dB over all swept values",           "dB(", "[::,3])"),
+              list("Time domain signal (one trace for each sweep)",        "ts(", ")")
+              )
+         );
+
+//////////////////////////////////////////////////////////////////////
+//               "Signal Processing Simulation Data"                //
+//////////////////////////////////////////////////////////////////////
+decl SigProcdataList =
+    list("Signal Processing Simulation Data",
+         "You are adding data from a signal processing simulation\nto a plot that only supports scalar data.",
+         4,
+         list(list("dB",               "dB(", ")"),
+              list("dBm",             "dBm(", ")"),
+              list("Magnitude",       "mag(", ")"),
+              list("Phase",         "phase(", ")"),
+              list("Real part",      "real(", ")"),
+              list("Imaginary part", "imag(", ")")
+              )
+         );
+
+//////////////////////////////////////////////////////////////////////
+//               "Harmonic Balance Simulation Data"                 //
+//////////////////////////////////////////////////////////////////////
+decl HBdataList =
+    list("Harmonic Balance Simulation Data",
+         "You are adding data from a harmonic balance simulation\nto a plot that only supports scalar data.",
+         1,
+         list(list("Spectrum in dB",          "dB(", ")"),
+              list("Spectrum in dBm",        "dBm(", ")"),
+              list("Magnitude of spectrum",  "mag(", ")"),
+              list("Phase of spectrum",    "phase(", ")"),
+              list("Time domain signal",      "ts(", ")")
+              )
+         );
+
+
+//////////////////////////////////////////////////////////////////////
+//               "Circuit Envelope Simulation Data"                 //
+//////////////////////////////////////////////////////////////////////
+decl CEdataList =
+    list("Circuit Envelope Simulation Data",
+         "You are adding data from a Circuit Envelope simulation\nto a rectangular plot.",
+         0,
+         list(list("Spectrum of the carrier in dB (Kaiser windowing)",       "dB(fs(", "[1],,,,,\"Kaiser\"))"),
+              list("Spectrum of the carrier in dBm (Kaiser windowing)",     "dBm(fs(", "[1],,,,,\"Kaiser\"))"),
+              list("Magnitude of carrier in the time domain",                  "mag(", "[1])"),
+              list("Phase of the carrier in the time domain",                "phase(", "[1])"),
+              list("Baseband signal in the time domain",                      "real(", "[0])"),
+              list("Spectrum of baseband signal in dB (Kaiser windowing)",   "dB(fs(real(", "[0]),,,,,\"Kaiser\"))"),
+              list("Spectrum of baseband signal in dBm (Kaiser windowing)", "dBm(fs(real(", "[0]),,,,,\"Kaiser\"))")			  
+              )
+         );
+                  
+//////////////////////////////////////////////////////////////////////
+//                Circuit Envelope Simulation Data                  //
+//                               for                                //
+//                  Polar, Antenna and Smith Plots                  //
+//////////////////////////////////////////////////////////////////////
+decl CEdataPolarList =
+    list("Circuit Envelope Simulation Data",
+         "You are adding data from a Circuit Envelope simulation\nto a polar plot.",
+         0,
+         list(list("Fundamental tone for all time points",     "", "[1]"),
+              list("Second harmonic tone for all time points", "", "[2]"),
+              list("Third harmonic tone for all time points",  "", "[3]")
+              )
+         );
+

@@ -1,0 +1,39 @@
+// Copyright Keysight Technologies 2013 - 2017  
+// "" first termTypeName parameter means every termType will be add to the pinConfig set.
+defun setup_symbol_pin_master_attributes(pinSymbolLib)
+{
+    add_pin_config_symbol_attribute("square", "", pinSymbolLib, "sympin", "symbolNN");
+    add_pin_config_symbol_attribute("round", "", pinSymbolLib, "circle", "symbol");
+    add_pin_config_symbol_attribute("actHi", "", pinSymbolLib, "actHiInOut", "symbol");
+    add_pin_config_symbol_attribute("actHi", "input", pinSymbolLib, "actHiInp", "symbol");
+    add_pin_config_symbol_attribute("actHi", "output", pinSymbolLib, "actHiOut", "symbol");
+    add_pin_config_symbol_attribute("commActLo", "", pinSymbolLib, "commActLoInOut", "symbol");
+    add_pin_config_symbol_attribute("commActLo", "input", pinSymbolLib, "commActLoInp", "symbol");
+    add_pin_config_symbol_attribute("commActLo","output",  pinSymbolLib, "commActLoOut", "symbol");
+    add_pin_config_symbol_attribute("block", "", pinSymbolLib, "blockiopin", "symbol");
+    add_pin_config_symbol_attribute("block", "input", pinSymbolLib, "blockipin", "symbol");
+    add_pin_config_symbol_attribute("block", "output", pinSymbolLib, "blockopin", "symbol");
+    add_pin_config_symbol_attribute("ieeeActLo", "", pinSymbolLib, "ieeeActLoInOut", "symbol");
+    add_pin_config_symbol_attribute("ieeeActLo", "input", pinSymbolLib, "ieeeActLoInp", "symbol");
+    add_pin_config_symbol_attribute("ieeeActLo", "output", pinSymbolLib, "ieeeActLoOut", "symbol");
+}
+
+defun setup_schematic_pin_master_attributes(pinSymbolLib)
+{
+    add_pin_config_schematic_attribute("input", pinSymbolLib, "ipin", "symbol");
+    add_pin_config_schematic_attribute("output", pinSymbolLib, "opin", "symbol");
+    add_pin_config_schematic_attribute("inputOutput", pinSymbolLib, "iopin", "symbol");
+    add_pin_config_schematic_attribute("switch", pinSymbolLib, "iopin", "symbol");
+    add_pin_config_schematic_attribute("jumper", pinSymbolLib, "iopin", "symbol");
+    add_pin_config_schematic_attribute("unused", pinSymbolLib, "iopin", "symbol");
+    add_pin_config_schematic_attribute("tristate", pinSymbolLib, "iopin", "symbol");
+}
+
+defun setup_pin_master_attributes()
+{
+    decl pinSymbolLib = get_pin_symbols_library_name();
+    setup_symbol_pin_master_attributes(pinSymbolLib);
+    setup_schematic_pin_master_attributes(pinSymbolLib);
+}
+
+setup_pin_master_attributes();
