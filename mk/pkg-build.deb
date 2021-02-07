@@ -1,0 +1,67 @@
+ifndef PKGNAME
+PKGNAME=$(TARGET)
+endif
+PLAT=$(shell hped-arch -u)
+DEBNAME=$(PKGNAME)_$(VER).$(REV).deb
+PKGNAME:=$(shell echo $(PKGNAME) | tr "[:upper:]" "[:lower:]"  | tr "-" "_" )
+UPPKGNAME:=$(shell echo $(PKGNAME) | tr "[:lower:]" "[:upper:]")
+
+ifeq (win32,$(findstring win32,$(ARCH)))
+CEDA_CDROM=$(dir $(HPEESOF_DIR))/DISK5
+else
+CEDA_CDROM=$(dir $(HPEESOF_DIR))/cdrom/DISK5
+endif
+ifndef MYCDROM_DIR
+MYCDROM_DIR=$(CEDA_CDROM)/$(PKGNAME)/$(PLAT)
+endif
+
+build_debian:: install_addon
+
+install_addon::
+	$(RM) -rf $(LOCAL_ROOT)/pkgbuild/root
+	eemkdir $(LOCAL_ROOT)/pkgbuild/root/DEBIAN
+#	$(MAKE) OUTDIR=$(LOCAL_ROOT)/pkgbuild/root install
+        $(cedamk_packagebuildhook)
+	$(MAKE) make_addon
+ifeq (win32,$(findstring win32,$(ARCH))) 
+	hpeesofmake.ksh build_deb 
+else
+	$(MAKE) build_deb 
+endif
+ifdef BUILD_USER
+	hpeesofpkg -i  $(DEBNAME)
+ifeq ($(BUILDTYPE),opt)
+ifeq ($(CEDA_SITE),wlv)
+	eemkdir  $(MYCDROM_DIR)
+	cp -f  $(DEBNAME) $(MYCDROM_DIR)/$(UPPKGNAME).DEB
+#ifeq ($(CEDA_SITE),wlv)
+#	if cd $(MYCDROM_DIR) ; then   rrsyc.ksh  .  \
+#	$(RSYNCMACHINE)::builds/dev$(BLDVER)/r$(BLDREV)/$(BUILDTYPE)/cdrom/DISK4/$(PKGNAME)/WIN32 ; fi
+#endif
+
+endif
+endif
+	eecopy $(DEBNAME) $(LOCAL_ROOT)/pkgbuild/goodpackages 
+endif
+
+
+make_addon::
+	find root -type d -print | xargs chmod 755
+	find root -type d -print | xargs chmod -s
+	@echo "Creating control file"
+	if [ -f  control  ] ; then  \
+	cp -f control   $(LOCAL_ROOT)/pkgbuild/root/DEBIAN/control ; \
+	else \
+	echo "package: $(PKGNAME)" >  control  ; \
+	echo "Version:  $(BLDVER).$(BLDREV) " >>  control ; \
+	echo  "Architecture: $(ARCH) " >>  control ; \
+	echo "Maintainer: Keygith EEsof " >>  control ; \
+	echo "Depends: " >>  control ; \
+	echo "Installed-Size: $(shell du -sk root | awk '{ print $$1 }') " >>  control ; \
+	echo "Description: $(PKGNAME) files" >>  control ; \
+	mv  -f   control   $(LOCAL_ROOT)/pkgbuild/root/DEBIAN/control ; fi 
+
+build_deb::
+	hpeesofpkg --build $(LOCAL_ROOT)/pkgbuild/root $(LOCAL_ROOT)/$(DEBNAME)
+
+

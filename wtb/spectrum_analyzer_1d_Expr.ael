@@ -1,0 +1,46 @@
+// Copyright 2004 - 2014 Keysight Technologies, Inc  
+defun spectrum_analyzer_1d(
+  RFSRF,
+  FCarrier,
+  Start,
+  Stop,
+  Window,
+  ResBW,
+  SignalType,
+  spectrum_analyzer_1dInstName ) {
+
+  decl var="spectrum_analyzer";
+  decl func_name="spectrum_analyzer";
+
+  if(sweep_dim(RFSRF)!=1)
+    print_function_error(func_name, "Input data for 'RF' (argument #1) must be single dimensional");
+
+  decl indepData=indep(RFSRF);
+  decl indepSize=sweep_size(indepData);
+  decl defStart=indepData[0];
+  decl defStop=indepData[indepSize-1];
+  if(Start!=NULL && (Start>defStop || Start<defStart))
+    print_function_error(func_name, sprintf("Start must be in the range [%.15e,%.15e]", defStart, defStop));
+  if(Stop!=NULL && (Stop>defStop || Stop<defStart))
+    print_function_error(func_name, sprintf("Stop must be in the range [%.15e,%.15e]", defStart, defStop));
+  if(Stop!=NULL && Start!=NULL && Stop<Start)
+    print_function_error(func_name, "Stop must be >= Start");
+  if(Window!=NULL)
+    Window=ptExprConvertStringEnumToInt("Window", func_name, Window, list("none","Hamming 0.54","Hanning 0.50","Gaussian 0.75","Kaiser 7.865","_8510 6.0","Blackman","Blackman-Harris","Enter option index"));
+  if(SignalType!=NULL)
+    SignalType=ptExprConvertStringEnumToInt("SignalType", func_name, SignalType, list("Baseband","RF","Enter option index"));
+  decl sink = embedded_ptolemy_exec(
+      "spectrum_analyzer"
+      , ((spectrum_analyzer_1dInstName!=NULL)?spectrum_analyzer_1dInstName:tmpnam())
+      , var
+      , indepData
+    , ((FCarrier!=NULL)?FCarrier:0.0 Hz)
+    , ((Start!=NULL)?Start:defStart)
+    , ((Stop!=NULL)?Stop:defStop)
+    , ((Window!=NULL)?Window:0)
+    , ((ResBW!=NULL)?ResBW:0.0)
+    , ((SignalType!=NULL)?SignalType:1)
+        , real(RFSRF), imag(RFSRF)
+  );
+  return(sink);
+}

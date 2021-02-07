@@ -1,0 +1,80 @@
+defun evm_wlan_dsss_cck_pbcc_1d(
+  RFVRF,
+  MirrorSpectrum,
+  Start,
+  AverageType,
+  BurstsToAverage,
+  ModulationFormat,
+  SearchTime,
+  ResultLengthType,
+  ResultLength,
+  MeasurementOffset,
+  MeasurementInterval,
+  ChipRate,
+  ClockAdjust,
+  EqualizationFilter,
+  FilterLength,
+  DescrambleMode,
+  ReferenceFilter,
+  ReferenceFilterBT,
+  Output,
+  FMeasurement,
+  evm_wlan_dsss_cck_pbcc_1dInstName ) {
+
+  decl var="evm_wlan_dsss_cck_pbcc";
+  decl func_name="evm_wlan_dsss_cck_pbcc";
+
+  if(sweep_dim(RFVRF)!=1)
+    print_function_error(func_name, "Input data for 'RF' (argument #1) must be single dimensional");
+
+  decl indepData=indep(RFVRF);
+  decl indepSize=sweep_size(indepData);
+  decl defStart=indepData[0];
+  decl defStop=indepData[indepSize-1];
+  if(MirrorSpectrum!=NULL)
+    MirrorSpectrum=ptExprConvertStringEnumToInt("MirrorSpectrum", func_name, MirrorSpectrum, list("NO","YES","Enter option index"));
+  if(Start!=NULL && (Start>defStop || Start<defStart))
+    print_function_error(func_name, sprintf("Start must be in the range [%.15e,%.15e]", defStart, defStop));
+  if(AverageType!=NULL)
+    AverageType=ptExprConvertStringEnumToInt("AverageType", func_name, AverageType, list("OFF","RMS (Video)","Enter option index"));
+  if(ModulationFormat!=NULL)
+    ModulationFormat=ptExprConvertStringEnumToInt("ModulationFormat", func_name, ModulationFormat, list("Auto Detect","Barker 1","Barker 2","CCK 5.5","CCK 11","PBCC 5.5","PBCC 11","PBCC 22","PBCC 33","Enter option index"));
+  if(ResultLengthType!=NULL)
+    ResultLengthType=ptExprConvertStringEnumToInt("ResultLengthType", func_name, ResultLengthType, list("Auto Select","Manual Override","Enter option index"));
+  if(EqualizationFilter!=NULL)
+    EqualizationFilter=ptExprConvertStringEnumToInt("EqualizationFilter", func_name, EqualizationFilter, list("OFF","ON","Enter option index"));
+  if(DescrambleMode!=NULL)
+    DescrambleMode=ptExprConvertStringEnumToInt("DescrambleMode", func_name, DescrambleMode, list("Off","Preamble Only","Preamble & Header Only","On","Enter option index"));
+  if(ReferenceFilter!=NULL)
+    ReferenceFilter=ptExprConvertStringEnumToInt("ReferenceFilter", func_name, ReferenceFilter, list("Rectangular","Gaussian","Enter option index"));
+  if(Output!=NULL)
+    Output=ptExprConvertStringEnumToInt("Output", func_name, Output, list("Avg_WLAN_80211b_1000_chip_Pk_EVM_pct","WLAN_80211b_1000_chip_Pk_EVM_pct","Avg_EVMrms_pct","EVMrms_pct","EVM_Pk_pct","EVM_Pk_chip_idx","Avg_MagErr_rms_pct","MagErr_rms_pct","MagErr_Pk_pct","MagErr_Pk_chip_idx","Avg_PhaseErr_deg","PhaseErr_deg","PhaseErr_Pk_deg","PhaseErr_Pk_chip_idx","Avg_FreqError_Hz","FreqError_Hz","Avg_IQ_Offset_dB","IQ_Offset_dB","Avg_SyncCorrelation","SyncCorrelation","Enter option index"));
+  var=strcat(var,".",nth(((Output!=NULL)?Output:2), list("Avg_WLAN_80211b_1000_chip_Pk_EVM_pct","WLAN_80211b_1000_chip_Pk_EVM_pct","Avg_EVMrms_pct","EVMrms_pct","EVM_Pk_pct","EVM_Pk_chip_idx","Avg_MagErr_rms_pct","MagErr_rms_pct","MagErr_Pk_pct","MagErr_Pk_chip_idx","Avg_PhaseErr_deg","PhaseErr_deg","PhaseErr_Pk_deg","PhaseErr_Pk_chip_idx","Avg_FreqError_Hz","FreqError_Hz","Avg_IQ_Offset_dB","IQ_Offset_dB","Avg_SyncCorrelation","SyncCorrelation","Enter option index")));
+  decl sink = embedded_ptolemy_exec(
+      "evm_wlan_dsss_cck_pbcc"
+      , ((evm_wlan_dsss_cck_pbcc_1dInstName!=NULL)?evm_wlan_dsss_cck_pbcc_1dInstName:tmpnam())
+      , var
+      , indepData
+    , ((MirrorSpectrum!=NULL)?MirrorSpectrum:0)
+    , ((Start!=NULL)?Start:defStart)
+    , ((AverageType!=NULL)?AverageType:0)
+    , ((BurstsToAverage!=NULL)?BurstsToAverage:20)
+    , ((ModulationFormat!=NULL)?ModulationFormat:0)
+    , ((SearchTime!=NULL)?SearchTime:550e-6)
+    , ((ResultLengthType!=NULL)?ResultLengthType:0)
+    , ((ResultLength!=NULL)?ResultLength:2816)
+    , ((MeasurementOffset!=NULL)?MeasurementOffset:22)
+    , ((MeasurementInterval!=NULL)?MeasurementInterval:2794)
+    , ((ChipRate!=NULL)?ChipRate:11e6)
+    , ((ClockAdjust!=NULL)?ClockAdjust:0.0)
+    , ((EqualizationFilter!=NULL)?EqualizationFilter:0)
+    , ((FilterLength!=NULL)?FilterLength:21)
+    , ((DescrambleMode!=NULL)?DescrambleMode:3)
+    , ((ReferenceFilter!=NULL)?ReferenceFilter:1)
+    , ((ReferenceFilterBT!=NULL)?ReferenceFilterBT:0.3)
+    , ((Output!=NULL)?Output:2)
+    , ((FMeasurement!=NULL)?FMeasurement:2.4e9)
+        , real(RFVRF), imag(RFVRF)
+  );
+  return(sink);
+}

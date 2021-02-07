@@ -1,0 +1,63 @@
+
+#ifndef block_net_3GPPFDD_DnLink
+#define block_net_3GPPFDD_DnLink
+define RF_ModulatorRC ( _net30  _net34  _net32 ) 
+parameters  ROut=DefaultROut  RTemp=DefaultRTemp  FCarrier=1900 MHz  Power=0.01 W  VRef=1 V  SymbolRate=25e3  SampPerSym=8  FilterLength=16  ExcessBW=0.35  SquareRoot=1  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0 
+
+TStep=if ( SymbolRate>0 && SampPerSym>0 ) then (1 / SymbolRate / SampPerSym) else ( 0 ) endif
+I_Gain=if ( Length == 1 ) then ( if ( SquareRoot == 1 ) then ( 1 / ( 4*ExcessBW/pi + 1 - ExcessBW ) ) else ( 1 ) endif ) else ( if ( SquareRoot == 1 ) then sqrt(SampPerSym) else sqrt( 1 + 0.3 * ExcessBW ) endif ) endif
+Q_Gain=if ( MirrorSpectrum == 0 ) then I_Gain else ( -I_Gain ) endif
+Length=2 * int( FilterLength * SampPerSym / 2 ) + 1
+Offset=( I_OriginOffset + j * Q_OriginOffset ) * sqrt( 2 * ROut * Power ) / 100
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G6  _net14 _net23 Gain=I_Gain 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G5  _net36 _net21 Gain=Q_Gain 
+_vAgilentEEsof_dTSDF_nFloatToTimed_ltsdfstars:F1  _net23 _net31 TStep=TStep 
+_vAgilentEEsof_dTSDF_nFloatToTimed_ltsdfstars:F2  _net21 _net33 TStep=TStep 
+_vAgilentEEsof_dTSDF_nConstTimed_ltsdfstars:C3  _net29 TStep=TStep FCarrier=FCarrier Hz Value=Offset 
+_vAgilentEEsof_dSDF_nRaisedCosine_lsdfdspstars:R5  _net34 _net36 Decimation=1 DecimationPhase=0 Interpolation=SampPerSym Length=Length SymbolInterval=SampPerSym ExcessBW=ExcessBW SquareRoot=SquareRoot 
+_vAgilentEEsof_dSDF_nRaisedCosine_lsdfdspstars:R6  _net30 _net14 Decimation=1 DecimationPhase=0 Interpolation=SampPerSym Length=Length SymbolInterval=SampPerSym ExcessBW=ExcessBW SquareRoot=SquareRoot 
+_vAgilentEEsof_dTSDF_n_x5fQAM_x5fMod_ltsdfstars:Q1  _net31 _net33 _net8 RIn=50.0 Ohm ROut=ROut Ohm RTemp=-273.15 FCarrier=FCarrier Hz Power=Power W VRef=4*VRef Phase=0 GainImbalance=GainImbalance PhaseImbalance=PhaseImbalance 
+_vAgilentEEsof_dTSDF_n_x5fPhaseShiftRF_ltsdfstars:P1  _net8 _net6 RIn=ROut Ohm ROut=ROut Ohm RTemp=-273.15 PhaseShift=IQ_Rotation 
+_vAgilentEEsof_dTSDF_n_x5fSummerRF_ltsdfstars:S1  _net29 _net6 _net4 RIn=ROut Ohm ROut=ROut Ohm RTemp=-273.15 FcOut=2 
+R:R2  _net4 _net32 R=ROut Temp=RTemp 
+end RF_ModulatorRC
+define "3GPPFDD_DnLinkRF" ( _net61  _net11  _net13 ) 
+parameters  ROut=DefaultROut  RTemp=DefaultRTemp    FCarrier=2140 MHz  Power=dbmtow(43.0)  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0  SamplesPerChip=8  RRC_FilterLength=16  SpecVersion=1  SourceType=0 
+_vAgilentEEsof_dTSDF_n3GPPFDD_x5fDnLinkRF_x5fRangeCheck_lsdfwcdma3gfddstars:"3GPPFDD_DnLinkRF_RangeCheck"  
+RF_ModulatorRC:R2  _net59 _net60 _net61 ROut=ROut RTemp=RTemp FCarrier=FCarrier Power=Power VRef=1 V SymbolRate=3.84 MHz SampPerSym=SamplesPerChip FilterLength=RRC_FilterLength ExcessBW=0.22 SquareRoot=1 MirrorSpectrum=MirrorSpectrum GainImbalance=GainImbalance dB PhaseImbalance=PhaseImbalance I_OriginOffset=I_OriginOffset Q_OriginOffset=Q_OriginOffset IQ_Rotation=IQ_Rotation 
+_vAgilentEEsof_dHOF_nIfElse_lhofstars:I11  _net39 _net53 _net38 _net42 _net47 _net40 Condition=int( TestModel1Type ) 
+_vAgilentEEsof_dHOF_nBus_lhofstars:B13  _net36 _net38 BusWidth=1 
+_vAgilentEEsof_dHOF_nIfElse_lhofstars:I10  _net31 _net51 _net29 _net34 _net36 _net32 Condition=int( TestModel2Type ) 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fTestModel2_lsdfwcdma3gfddstars:TestModel2  _net51 SpecVersion=SpecVersion ScrambleCode=ScrambleCode ScrambleOffset=ScrambleOffset ScrambleType=ScrambleType SCCPCH_SltFmt=0 OutputMode=1 Seed=0 
+_vAgilentEEsof_dHOF_nBus_lhofstars:B14  _net27 _net29 BusWidth=1 
+_vAgilentEEsof_dHOF_nIfElse_lhofstars:I9  _net22 _net50 _net45 _net25 _net27 _net23 Condition=int( TestModel3Type ) 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fTestModel3_lsdfwcdma3gfddstars:TestModel3  _net50 SpecVersion=SpecVersion ScrambleCode=ScrambleCode ScrambleOffset=ScrambleOffset ScrambleType=ScrambleType SCCPCH_SltFmt=0 OutputMode=1 Seed=0 DPCHSet=TM3_DPCHSet 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fTestModel4_lsdfwcdma3gfddstars:TestModel4  _net45 SpecVersion=SpecVersion ScrambleCode=ScrambleCode ScrambleOffset=ScrambleOffset ScrambleType=ScrambleType EnableP_CPICH=1 PCCPCH_SCH_Gain=-6 P_CPICH_Gain=-6 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fTestModel1_lsdfwcdma3gfddstars:TestModel1  _net53 SpecVersion=SpecVersion ScrambleCode=ScrambleCode ScrambleOffset=ScrambleOffset ScrambleType=ScrambleType SCCPCH_SltFmt=0 OutputMode=1 Seed=0 DPCHSet=TM1_DPCHSet 
+
+ScrambleCode=0
+ScrambleOffset=0
+ScrambleType=0
+
+TestModel1Type=if((SourceType=0)||(SourceType=1)||(SourceType=2)) then 1 else 0 endif
+TestModel2Type=if(SourceType=3) then 1 else 0 endif
+TestModel3Type=if((SourceType=4)||(SourceType=5)) then 1 else 0 endif
+
+TM1_DPCHSet=if(SourceType=0) then 0 else (if(SourceType=1) then 1else 2 endif) endif
+TM3_DPCHSet=if(SourceType=4) then 0 else 1 endif
+
+I_Gain=sqrt(SamplesPerChip)
+Q_Gain=if ( MirrorSpectrum == 0 ) then I_Gain else ( -I_Gain ) endif
+_vAgilentEEsof_dSDF_nCxToRect_lsdfstars:C1  _net47 _net59 _net60 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G2  _net49 _net13 Gain=Q_Gain 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G1  _net46 _net11 Gain=I_Gain 
+_vAgilentEEsof_dSDF_nCxToRect_lsdfstars:C2  _net48 _net46 _net49 
+_vAgilentEEsof_dSDF_nRepeat_lsdfstars:R1  _net47 _net48 NumTimes=SamplesPerChip BlockSize=1 
+end "3GPPFDD_DnLinkRF"
+define "3GPPFDD_DnLink" ( _net117  _net11  _net118  _net119 ) 
+parameters  Num=1  R=50 Ohm  Temp=  Noise=1    FCarrier=2140 MHz  Power=dbmtow(43.0)  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0  SamplesPerChip=8  RRC_FilterLength=16  SpecVersion=1  SourceType=0 
+"3GPPFDD_DnLinkRF":DSP  _net117 _net118 _net119 ROut=50 RTemp=-273.15 FCarrier=FCarrier Power=Power MirrorSpectrum=MirrorSpectrum GainImbalance=GainImbalance dB PhaseImbalance=PhaseImbalance I_OriginOffset=I_OriginOffset Q_OriginOffset=Q_OriginOffset IQ_Rotation=IQ_Rotation SamplesPerChip=SamplesPerChip RRC_FilterLength=RRC_FilterLength SpecVersion=SpecVersion SourceType=SourceType 
+Component:"3GPPFDD_DnLink"  Module="DSPSource" Type="ModelExtractor" P[1]=Power Z[1]=R CarrierFrequency[1]=FCarrier Noise[1]=Noise Temp[1]=Temp Num[1]=Num NodeMapping[1]="RF 1 2 RF" NodeMapping[2]="BB 3 2 I" NodeMapping[3]="BB 4 2 Q" 
+end "3GPPFDD_DnLink"
+
+#endif

@@ -1,0 +1,174 @@
+
+#ifndef block_net_3GPPFDD_UpLink
+#define block_net_3GPPFDD_UpLink
+define Add2 ( _net13  _net12  _net14 ) 
+;parameters 
+_vAgilentEEsof_dSDF_nAdd_lsdfstars:A1  _net1 _net14 
+_vAgilentEEsof_dHOF_nNop_lhofstars_pinput_x3d2_aBusMerge2:B1  _net13 _net12 _net1 
+end Add2
+define RF_ModulatorRC ( _net30  _net34  _net32 ) 
+parameters  ROut=DefaultROut  RTemp=DefaultRTemp  FCarrier=1900 MHz  Power=0.01 W  VRef=1 V  SymbolRate=25e3  SampPerSym=8  FilterLength=16  ExcessBW=0.35  SquareRoot=1  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0 
+
+TStep=if ( SymbolRate>0 && SampPerSym>0 ) then (1 / SymbolRate / SampPerSym) else ( 0 ) endif
+I_Gain=if ( Length == 1 ) then ( if ( SquareRoot == 1 ) then ( 1 / ( 4*ExcessBW/pi + 1 - ExcessBW ) ) else ( 1 ) endif ) else ( if ( SquareRoot == 1 ) then sqrt(SampPerSym) else sqrt( 1 + 0.3 * ExcessBW ) endif ) endif
+Q_Gain=if ( MirrorSpectrum == 0 ) then I_Gain else ( -I_Gain ) endif
+Length=2 * int( FilterLength * SampPerSym / 2 ) + 1
+Offset=( I_OriginOffset + j * Q_OriginOffset ) * sqrt( 2 * ROut * Power ) / 100
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G6  _net14 _net23 Gain=I_Gain 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G5  _net36 _net21 Gain=Q_Gain 
+_vAgilentEEsof_dTSDF_nFloatToTimed_ltsdfstars:F1  _net23 _net31 TStep=TStep 
+_vAgilentEEsof_dTSDF_nFloatToTimed_ltsdfstars:F2  _net21 _net33 TStep=TStep 
+_vAgilentEEsof_dTSDF_nConstTimed_ltsdfstars:C3  _net29 TStep=TStep FCarrier=FCarrier Hz Value=Offset 
+_vAgilentEEsof_dSDF_nRaisedCosine_lsdfdspstars:R5  _net34 _net36 Decimation=1 DecimationPhase=0 Interpolation=SampPerSym Length=Length SymbolInterval=SampPerSym ExcessBW=ExcessBW SquareRoot=SquareRoot 
+_vAgilentEEsof_dSDF_nRaisedCosine_lsdfdspstars:R6  _net30 _net14 Decimation=1 DecimationPhase=0 Interpolation=SampPerSym Length=Length SymbolInterval=SampPerSym ExcessBW=ExcessBW SquareRoot=SquareRoot 
+_vAgilentEEsof_dTSDF_n_x5fQAM_x5fMod_ltsdfstars:Q1  _net31 _net33 _net8 RIn=50.0 Ohm ROut=ROut Ohm RTemp=-273.15 FCarrier=FCarrier Hz Power=Power W VRef=4*VRef Phase=0 GainImbalance=GainImbalance PhaseImbalance=PhaseImbalance 
+_vAgilentEEsof_dTSDF_n_x5fPhaseShiftRF_ltsdfstars:P1  _net8 _net6 RIn=ROut Ohm ROut=ROut Ohm RTemp=-273.15 PhaseShift=IQ_Rotation 
+_vAgilentEEsof_dTSDF_n_x5fSummerRF_ltsdfstars:S1  _net29 _net6 _net4 RIn=ROut Ohm ROut=ROut Ohm RTemp=-273.15 FcOut=2 
+R:R2  _net4 _net32 R=ROut Temp=RTemp 
+end RF_ModulatorRC
+define "3GPPFDD_UL_Source" ( _net982  _net863  _net877  _net881  _net878  _net1121 ) 
+parameters  SpecVersion=1  DTCHDataPattern=0  DTCHRepBitValue=0xff  DTCHUserFileName="datafile.txt"  DCCHDataPattern=0  DCCHRepBitValue=0xff  DCCHUserFileName="datafile.txt"  TPCDataPattern=0  TPCRepBitValue=0xff  TPCUserFileName="datafile.txt"  FBIDataPattern=0  FBIRepBitValue=0xff  FBIUserFileName="datafile.txt"  ScrambleCode=0  ScrambleType=0  DPCCH_SltFmt=0  RefCh=0  GainUnit=0  GainIndex=15  DPDCHGainFactor=1.0  DPCCHGainFactor=1.0 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fDPCCHMux_lsdfwcdma3gfddstars:DPCCHMux  _net1225 _net1232 _net1231 _net1221 SpecVersion=SpecVersion SlotFormat=SLOT_FORMAT 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fTFCIEncoder_lsdfwcdma3gfddstars:TFCIEncoder  _net1201 _net1232 SpecVersion=SpecVersion CodingMode=0 CodeLength=CODELENGTH 
+
+RPT1=if (RefCh=3) then 4 else RPT11 endif
+RPT11=if (RefCh=5) then 4 else RPT12 endif
+RPT12=if (RefCh=6) then 1 else 2 endif
+
+RPT3=if (RefCh=6) then 2 else RPT31 endif
+RPT31=1
+
+CODELENGTH=0
+
+DTCH_TRCHINDEX=1
+DCCH_TRCHINDEX=2
+_vAgilentEEsof_dSDF_nRepeat_lsdfstars:R5  _net1164 _net1165 NumTimes=RPT3 BlockSize=1 
+_vAgilentEEsof_dHOF_nNop_lhofstars_pinput_x3d2_aBusMerge2:TFSetSizeMerge  _net1165 _net1162 _net1163 
+_vAgilentEEsof_dSDF_nRepeat_lsdfstars:R2  _net1151 _net1152 NumTimes=RPT1 BlockSize=1 
+_vAgilentEEsof_dSDF_nRepeat_lsdfstars:R4  _net1147 _net1148 NumTimes=RPT3 BlockSize=1 
+_vAgilentEEsof_dSDF_nRepeat_lsdfstars:R3  _net1141 _net1162 NumTimes=RPT1 BlockSize=1 
+
+PUNCLIMIT=if ( RefCh <=2) then 1 else PL1 endif
+PL1=if ( RefCh =6) then 0.93 else PL2 endif
+PL2=0.81
+IndexType=if (GainUnit=0) then 1 else 0 endif
+GainType=if (GainUnit=1) then 1 else 0 endif
+
+DYNTFSET_ARRAY=if (RefCh=0) then "244 244 100 100" else DA1 endif
+DA1=if (RefCh=1) then "1280 1280 100 100" else DA2 endif
+DA2=if (RefCh=2) then "2880 2880 100 100" else DA3 endif
+DA3=if (RefCh=3) then "3840 3840 100 100" else DA4 endif
+DA4=if (RefCh=4) then "3840 7680 100 100" else DA5 endif
+DA5=if (RefCh=5) then "3840 7680 100 100" else DA6 endif
+DA6=if (RefCh=6) then "4096 163840 100 100" else 0 endif
+
+TRCH_TYPE=1
+SLOT_FORMAT=DPCCH_SltFmt
+FBI_NUM=if( int(SLOT_FORMAT/2)=0) then 0 else (if (int(SLOT_FORMAT/2)=1) then 1 else 2 endif) endif
+TPC_NUM=if( SLOT_FORMAT<5) then 2 else 1 endif
+DPDCHNum=MaxDPDCHNum
+
+DTCH_DYNTFSET=if (RefCh=0) then "244 244" else DD1 endif
+DD1=if (RefCh=1) then "1280 1280" else DD2 endif
+DD2=if (RefCh=2) then "2880 2880" else DD3 endif
+DD3=if (RefCh=3) then "3840 3840" else DD4 endif
+DD4=if (RefCh=4) then "3840 7680" else DD5 endif
+DD5=if (RefCh=5) then "3840 7680" else DD6 endif
+DD6=if (RefCh=6) then "4096 163840" else 0 endif
+DTCH_CRC=3
+DTCH_CHCODING=if (RefCh=0) then 2 else 3 endif
+DTCH_TTI=if (RefCh=3) then 0 else DT1 endif
+DT1=if (RefCh=5) then 0 else DT2 endif
+DT2=if (RefCh=6) then 3 else 1 endif
+
+RM_ARRAY=if(SpecVersion=0) then "1.0 1.0" else "256 256" endif
+TRCH_NUM=2
+TFSETSIZE_ARRAY="1 1"
+TTI_ARRAY=if(RefCh=3) then "0 2" else TA1 endif
+TA1=if(RefCh=5) then "0 2" else TA2 endif
+TA2=if(RefCh=6) then "3 2" else "1 2" endif
+CRC_ARRAY="3 2"
+
+RPT2=if (RefCh=3) then 1 else RPT21 endif
+RPT21=if (RefCh=5) then 1 else RPT22 endif
+RPT22=if (RefCh=6) then 4 else 2 endif
+_vAgilentEEsof_dHOF_nNop_lhofstars_poutput_x3d6_aBusSplit6:B8  _net1122 Data1 Data2 Data3 Data4 Data5 Data6 
+_vAgilentEEsof_dHOF_nBus_lhofstars:B7  _net1120 _net1121 BusWidth=DPDCHNum 
+_vAgilentEEsof_dHOF_nNop_lhofstars_pinput_x3d6_aBusMerge6:B9  Data1 Data2 Data3 Data4 Data5 Data6 _net1120 
+_vAgilentEEsof_dHOF_nNop_lhofstars_pinput_x3d6_aBusMerge6:B10  Data1 Data2 Data3 Data4 Data5 Data6 _net1109 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULSpread_lsdfwcdma3gfddstars:Spread_Scramble  _net1221 _net903 _net900 _net896 _net894 _net980 _net982 SpecVersion=SpecVersion ScrambleCode=ScrambleCode Scramble=ScrambleType 
+_vAgilentEEsof_dHOF_nBus_lhofstars:B6  _net1109 _net980 BusWidth=DPDCHNum 
+
+MaxDPDCHNum=6
+
+DCCH_DYNTFSET="100 100"
+DCCH_CRC=2
+DCCH_CHCODING=2
+DCCH_TTI=2
+
+CHCODING_ARRAY=if (RefCh=0) then "2 2" else "3 2" endif
+_vAgilentEEsof_dSDF_nConst_lsdfstars:GainFactorD  _net855 Level=DPDCHGainFactor 
+_vAgilentEEsof_dSDF_nConst_lsdfstars:GainFactorC  _net854 Level=DPCCHGainFactor 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULGainFactor_lsdfwcdma3gfddstars:GainFactor  _net1201 _net852 _net1223 SpecVersion=SpecVersion TrCHNum=TRCH_NUM RMArray=RM_ARRAY DynTFSetArray=DYNTFSET_ARRAY TFSetSizeArray=TFSETSIZE_ARRAY TTIArray=TTI_ARRAY CRCArray=CRC_ARRAY CHCodingTypeArray=CHCODING_ARRAY PuncLimit=PUNCLIMIT MinSF=6 RefTFCI=0 SigValue=GainIndex 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G2  _net855 _net840 Gain=GainType 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G4  _net852 _net838 Gain=IndexType 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G1  _net854 _net832 Gain=GainType 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G3  _net1223 _net830 Gain=IndexType 
+Add2:A2  _net840 _net838 _net903 
+Add2:A1  _net832 _net830 _net900 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fTFCIComb_lsdfwcdma3gfddstars:TFCI_Combine  _net741 _net1163 _net745 _net746 SpecVersion=SpecVersion TrCHNum=TRCH_NUM 
+_vAgilentEEsof_dHOF_nNop_lhofstars_pinput_x3d2_aBusMerge2:TFIMerge  _net1148 _net1152 _net741 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULTrCHMulti_lsdfwcdma3gfddstars:TrCHMultiplex  _net1255 _net1251 _net1245 Data PCN SF SpecVersion=SpecVersion TrCHNum=TRCH_NUM RMArray=RM_ARRAY DynTFSetArray=DYNTFSET_ARRAY TFSetSizeArray=TFSETSIZE_ARRAY TTIArray=TTI_ARRAY CRCArray=CRC_ARRAY CHCodingTypeArray=CHCODING_ARRAY TrCHType=TRCH_TYPE PuncLimit=PUNCLIMIT MinSF=6 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULRateMatch_lsdfwcdma3gfddstars:DTCH_RateMatch  _net706 _net707 _net1201 _net1255 _net1251 _net1245 SpecVersion=SpecVersion TrCHNum=TRCH_NUM TrCHIndex=DTCH_TRCHINDEX RMArray=RM_ARRAY DynTFSetArray=DYNTFSET_ARRAY TFSetSizeArray=TFSETSIZE_ARRAY TTIArray=TTI_ARRAY CRCArray=CRC_ARRAY CHCodingTypeArray=CHCODING_ARRAY TrCHType=TRCH_TYPE PuncLimit=PUNCLIMIT MinSF=6 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULRateMatch_lsdfwcdma3gfddstars:DCCH_RateMatch  _net702 _net703 _net1201 _net1255 _net1251 _net1245 SpecVersion=SpecVersion TrCHNum=TRCH_NUM TrCHIndex=DCCH_TRCHINDEX RMArray=RM_ARRAY DynTFSetArray=DYNTFSET_ARRAY TFSetSizeArray=TFSETSIZE_ARRAY TTIArray=TTI_ARRAY CRCArray=CRC_ARRAY CHCodingTypeArray=CHCODING_ARRAY TrCHType=TRCH_TYPE PuncLimit=PUNCLIMIT MinSF=6 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULRadioSeg_lsdfwcdma3gfddstars:DTCH_RadioSeg  _net661 _net662 _net706 _net707 SpecVersion=SpecVersion DynTFSet=DTCH_DYNTFSET TTI=DTCH_TTI CRC=DTCH_CRC CHCodingType=DTCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULRadioSeg_lsdfwcdma3gfddstars:DCCH_RadioSeg  _net657 _net658 _net702 _net703 SpecVersion=SpecVersion DynTFSet=DCCH_DYNTFSET TTI=DCCH_TTI CRC=DCCH_CRC CHCodingType=DCCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULFirInterLv_lsdfwcdma3gfddstars:DTCH_FirInterLv  _net645 _net646 _net661 _net662 SpecVersion=SpecVersion DynTFSet=DTCH_DYNTFSET TTI=DTCH_TTI CRC=DTCH_CRC CHCodingType=DTCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULFirInterLv_lsdfwcdma3gfddstars:DCCH_FirInterLv  _net641 _net642 _net657 _net658 SpecVersion=SpecVersion DynTFSet=DCCH_DYNTFSET TTI=DCCH_TTI CRC=DCCH_CRC CHCodingType=DCCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULRadioEqual_lsdfwcdma3gfddstars:DTCH_RadioEqual  _net629 _net881 _net645 _net646 SpecVersion=SpecVersion DynTFSet=DTCH_DYNTFSET TTI=DTCH_TTI CRC=DTCH_CRC CHCodingType=DTCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULRadioEqual_lsdfwcdma3gfddstars:DCCH_RadioEqual  _net624 _net878 _net641 _net642 SpecVersion=SpecVersion DynTFSet=DCCH_DYNTFSET TTI=DCCH_TTI CRC=DCCH_CRC CHCodingType=DCCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fChannelCoding_lsdfwcdma3gfddstars:DTCH_ChannelCoding  _net598 _net599 _net600 _net629 _net881 SpecVersion=SpecVersion DynTFSet=DTCH_DYNTFSET CRC=DTCH_CRC CHCodingType=DTCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fChannelCoding_lsdfwcdma3gfddstars:DCCH_ChannelCoding  _net593 _net594 _net595 _net624 _net878 SpecVersion=SpecVersion DynTFSet=DCCH_DYNTFSET CRC=DCCH_CRC CHCodingType=DCCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fCodeBlkSeg_lsdfwcdma3gfddstars:DTCH_CodeBlkSeg  _net577 _net578 _net598 _net599 _net600 SpecVersion=SpecVersion DynTFSet=DTCH_DYNTFSET CRC=DTCH_CRC CHCodingType=DTCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fCodeBlkSeg_lsdfwcdma3gfddstars:DCCH_CodeBlkSeg  _net568 _net569 _net593 _net594 _net595 SpecVersion=SpecVersion DynTFSet=DCCH_DYNTFSET CRC=DCCH_CRC CHCodingType=DCCH_CHCODING 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fCRCEncoder_lsdfwcdma3gfddstars:DTCH_CRCEncoder  _net1147 _net863 _net577 _net578 SpecVersion=SpecVersion DynTFSet=DTCH_DYNTFSET CRC=DTCH_CRC 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fCRCEncoder_lsdfwcdma3gfddstars:DCCH_CRCEncoder  _net1151 _net877 _net568 _net569 SpecVersion=SpecVersion DynTFSet=DCCH_DYNTFSET CRC=DCCH_CRC 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fTrCHSrc_lsdfwcdma3gfddstars:DTCHSrc  _net1164 _net1147 _net863 SpecVersion=SpecVersion DataPattern=DTCHDataPattern RepBitValue=DTCHRepBitValue UserFileName=DTCHUserFileName DynTFSet=DTCH_DYNTFSET 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fTrCHSrc_lsdfwcdma3gfddstars:DCCHSrc  _net1141 _net1151 _net877 SpecVersion=SpecVersion DataPattern=DCCHDataPattern RepBitValue=DCCHRepBitValue UserFileName=DCCHUserFileName DynTFSet=DCCH_DYNTFSET 
+_vAgilentEEsof_dSDF_nRepeat_lsdfstars:R1  _net746 _net1201 NumTimes=RPT2 BlockSize=1 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fDataPattern_lsdfwcdma3gfddstars:TPC  _net1225 DataPattern=TPCDataPattern RepBitValue=TPCRepBitValue UserFileName=TPCUserFileName 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fDataPattern_lsdfwcdma3gfddstars:FBI  _net1231 DataPattern=FBIDataPattern RepBitValue=FBIRepBitValue UserFileName=FBIUserFileName 
+_vAgilentEEsof_dHOF_nBus_lhofstars:B1  _net419 _net420 BusWidth=DPDCHNum 
+_vAgilentEEsof_dHOF_nBus_lhofstars:B2  _net415 _net416 BusWidth=DPDCHNum 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULPhyCHSeg_lsdfwcdma3gfddstars:PhyCHSeg  Data PCN SF _net375 _net376 _net419 SpecVersion=SpecVersion TrCHNum=TRCH_NUM RMArray=RM_ARRAY DynTFSetArray=DYNTFSET_ARRAY TFSetSizeArray=TFSETSIZE_ARRAY TTIArray=TTI_ARRAY CRCArray=CRC_ARRAY CHCodingTypeArray=CHCODING_ARRAY TrCHType=TRCH_TYPE PuncLimit=PUNCLIMIT MinSF=6 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULPhyCHMap_lsdfwcdma3gfddstars:PhyCHMap  _net302 _net303 _net416 _net896 _net894 _net1122 SpecVersion=SpecVersion TrCHType=TRCH_TYPE 
+_vAgilentEEsof_dSDF_n3GPPFDD_x5fULSecInterLv_lsdfwcdma3gfddstars:SecInterLv  _net375 _net376 _net420 _net302 _net303 _net415 SpecVersion=SpecVersion TrCHType=TRCH_TYPE 
+end "3GPPFDD_UL_Source"
+define "3GPPFDD_UpLinkRF" ( _net34  _net11  _net12 ) 
+parameters  ROut=DefaultROut  RTemp=DefaultRTemp    FCarrier=1950 MHz  Power=dbmtow(24.0)  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0  SamplesPerChip=8  RRC_FilterLength=16  SpecVersion=1  SourceType=0 
+_vAgilentEEsof_dTSDF_n3GPPFDD_x5fUpLinkRF_x5fRangeCheck_lsdfwcdma3gfddstars:"3GPPFDD_UpLinkRF_RangeCheck"  
+RF_ModulatorRC:R2  _net35 _net36 _net34 ROut=ROut RTemp=RTemp FCarrier=FCarrier Power=Power VRef=1 V SymbolRate=3.84 MHz SampPerSym=SamplesPerChip FilterLength=RRC_FilterLength ExcessBW=0.22 SquareRoot=1 MirrorSpectrum=MirrorSpectrum GainImbalance=GainImbalance dB PhaseImbalance=PhaseImbalance I_OriginOffset=I_OriginOffset Q_OriginOffset=Q_OriginOffset IQ_Rotation=IQ_Rotation 
+"3GPPFDD_UL_Source":Source  _net30 _net22 _net23 _net24 _net25 _net26 SpecVersion=SpecVersion DTCHDataPattern=0 DTCHRepBitValue=0xff DTCHUserFileName="datafile.txt" DCCHDataPattern=0 DCCHRepBitValue=0xff DCCHUserFileName="datafile.txt" TPCDataPattern=0 TPCRepBitValue=0xff TPCUserFileName="datafile.txt" FBIDataPattern=0 FBIRepBitValue=0xff FBIUserFileName="datafile.txt" ScrambleCode=0 ScrambleType=0 DPCCH_SltFmt=0 RefCh=RefCh GainUnit=0 GainIndex=GainIndex DPDCHGainFactor=1.0 DPCCHGainFactor=1.0 
+
+I_Gain=sqrt(SamplesPerChip)
+Q_Gain=if ( MirrorSpectrum == 0 ) then I_Gain else ( -I_Gain ) endif
+
+Cali_Gain=if (RefCh<5) then 1.0/sqrt(1.0+(GainIndex/15.0)^2) else Cali_Gain2 endif
+Cali_Gain2=if (RefCh=5) then 1.0/sqrt(2.0+(GainIndex/15.0)^2) else 1.0/sqrt(6.0+(GainIndex/15.0)^2) endif
+
+RefCh=if (SourceType=1) then 5 else 0 endif
+GainIndex=if (SourceType=1) then 4 else 8 endif
+_vAgilentEEsof_dSDF_nGainCx_lsdfstars:G1  _net30 _net27 Gain=Cali_Gain 
+_vAgilentEEsof_dSDF_nRepeat_lsdfstars:R1  _net27 _net28 NumTimes=SamplesPerChip BlockSize=1 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G2  _net29 _net12 Gain=Q_Gain 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G8  _net6 _net11 Gain=I_Gain 
+_vAgilentEEsof_dSDF_nCxToRect_lsdfstars:C1  _net27 _net35 _net36 
+_vAgilentEEsof_dSDF_nCxToRect_lsdfstars:C2  _net28 _net6 _net29 
+end "3GPPFDD_UpLinkRF"
+define "3GPPFDD_UpLink" ( _net93  _net11  _net94  _net95 ) 
+parameters  Num=1  R=50 Ohm  Temp=  Noise=1    FCarrier=1950 MHz  Power=dbmtow(24.0)  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0  SamplesPerChip=8  RRC_FilterLength=16  SpecVersion=1  SourceType=0 
+"3GPPFDD_UpLinkRF":DSP  _net93 _net94 _net95 ROut=50 RTemp=-273.15 FCarrier=FCarrier Power=Power MirrorSpectrum=MirrorSpectrum GainImbalance=GainImbalance dB PhaseImbalance=PhaseImbalance I_OriginOffset=I_OriginOffset Q_OriginOffset=Q_OriginOffset IQ_Rotation=IQ_Rotation SamplesPerChip=SamplesPerChip RRC_FilterLength=RRC_FilterLength SpecVersion=SpecVersion SourceType=SourceType 
+Component:"3GPPFDD_UpLink"  Module="DSPSource" Type="ModelExtractor" P[1]=Power Z[1]=R CarrierFrequency[1]=FCarrier Noise[1]=Noise Temp[1]=Temp Num[1]=Num NodeMapping[1]="RF 1 2 RF" NodeMapping[2]="BB 3 2 I" NodeMapping[3]="BB 4 2 Q" 
+end "3GPPFDD_UpLink"
+
+#endif

@@ -1,0 +1,309 @@
+/*BEGIN_DOC
+FUN_NAME: evm_wlan_dsss_cck_pbcc()
+FUN_DESCRIPTION: Returns EVM (error vector magnitude) analysis results for WLAN DSSS/CCK/PBCC (IEEE 802.11b and IEEE 802.11g non-OFDM) voltage signals. 
+RETURNED_VALUE: Int or Real depending on value of output argument
+CATEGORY: Envelope, Signal Processing
+EXAMPLE:
+
+
+evmRMS = evm_wlan_dsss_cck_pbcc(Vout[1]) 
+
+where Vout is a named node in a Circuit Envelope simulation, will return the EVM rms value in percent for the voltage envelope at the fundamental frequency. The voltage data Vout[1] must contain at least one complete burst. The EVM result will be from the analysis of the first burst in the input signal. 
+
+evmPk = evm_wlan_dsss_cck_pbcc(Vout[1], , , "RMS (Video)", 10, , 300e-6, , , , , , , , , , "Gaussian", 0.5, "EVM_Pk_pct") 
+
+where Vout is a named node in a Circuit Envelope simulation, will return a vector with 10 values each representing the peak EVM in percent for the first 10 bursts in the voltage envelope at the fundamental frequency. Since searchTime is set to 300 usec, the first 300 usec of Vout[1] must contain at least one complete burst. In addition, since 10 bursts need to be processed, Vout[1] must contain at least 10 complete bursts. A Gaussian filter with BT=0.5 will be used as a reference filter. 
+
+AvgMagErr = evm_wlan_dsss_cck_pbcc(Vout[1], , , "RMS (Video)", 3, , 400e-6, , , 100, 500, , , , , , , , "Avg_MagErr_rms_pct") 
+
+where Vout is a named node in a Circuit Envelope simulation, will return the average (over 3 bursts) magnitude error in percent for the voltage envelope at the fundamental frequency.  Since searchTime is set to 400 usec, the first 400 usec of Vout[1] must contain at least one complete burst. In addition, since 3 bursts need to be averaged, Vout[1] must contain at least 3 complete bursts. Only the chips 101 to 600 (measurementOffset = 100 and measurementInterval = 500) will be considered for the EVM analysis. 
+
+SYNTAX: evm = evm_wlan_dsss_cck_pbcc(voltage{, mirrorSpectrum, start, averageType, burstsToAverage, modulationFormat, searchTime, resultLengthType, resultLength, measurementOffset, measurementInterval, chipRate, clockAdjust, equalizationFilter, filterLength, descrambleMode, referenceFilter, referenceFilterBT, output}) 
+ARGUMENT
+  ARG_NAME: voltage
+  ARG_DESCRIPTION: complex envelope WLAN DSSS/CCK/PBCC voltage signal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: mirrorSpectrum
+  ARG_DESCRIPTION: specifies whether the input signal should be mirrored or not
+  ARG_DEFAULT: NO
+  ARG_RANGE: See Notes
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: start 
+  ARG_DESCRIPTION: specifies the start time for the EVM analysis
+  ARG_DEFAULT: first point of the input data
+  ARG_RANGE: [0:max(indep(voltage))]
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: averageType 
+  ARG_DESCRIPTION: specifies what type of averaging is done
+  ARG_DEFAULT: OFF
+  ARG_RANGE: See Notes
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: burstsToAverage 
+  ARG_DESCRIPTION: number of bursts over which the results will be averaged 
+  ARG_DEFAULT: 20
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: modulationFormat 
+  ARG_DESCRIPTION: modulation format
+  ARG_DEFAULT: "Auto Detect"
+  ARG_RANGE: See Notes
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: searchTime  
+  ARG_DESCRIPTION: search time 
+  ARG_DEFAULT: 550 usec
+  ARG_RANGE: [0:max(indep(voltage))]
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: resultLengthType  
+  ARG_DESCRIPTION: specifies how the result length is determined
+  ARG_DEFAULT: "Auto Select"
+  ARG_RANGE: See Notes
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: resultLength  
+  ARG_DESCRIPTION: result length in chips
+  ARG_DEFAULT: 2816
+  ARG_RANGE: [1:108344]
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: measurementOffset  
+  ARG_DESCRIPTION: measurement offset in chips
+  ARG_DEFAULT: 22
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: measurementInterval  
+  ARG_DESCRIPTION: measurement interval in chips
+  ARG_DEFAULT: 2794
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: chipRate
+  ARG_DESCRIPTION: chip rate in Hz
+  ARG_DEFAULT: 11e6 Hz
+  ARG_RANGE: (0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: clockAdjust
+  ARG_DESCRIPTION: clock adjustment as a fraction of a chip
+  ARG_DEFAULT: 0
+  ARG_RANGE: [-0.5, 0.5]
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: equalizationFilter
+  ARG_DESCRIPTION: specifies whether an equalization filter is used or not
+  ARG_DEFAULT: OFF
+  ARG_RANGE: See Notes
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: filterLength 
+  ARG_DESCRIPTION: equalization filter length in chips
+  ARG_DEFAULT: 21
+  ARG_RANGE: [3:inf) must be odd
+  ARG_TYPE: Integer
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: descrambleMode 
+  ARG_DESCRIPTION: specifies how descrambling is done
+  ARG_DEFAULT: On
+  ARG_RANGE: See Notes
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: referenceFilter 
+  ARG_DESCRIPTION: specifies the reference filter to be used
+  ARG_DEFAULT: Gaussian
+  ARG_RANGE: See Notes
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: referenceFilterBT 
+  ARG_DESCRIPTION: BT value for the reference filter if a Gaussian reference filter is selected
+  ARG_DEFAULT: 0.3
+  ARG_RANGE: [0.05:100]
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: output 
+  ARG_DESCRIPTION: EVM analysis result to be returned
+  ARG_DEFAULT: Avg_EVMrms_pct
+  ARG_RANGE: See Notes
+  ARG_TYPE: String
+  ARG_REQUIRED: NO
+DEFINED_IN: In built
+SEE ALSO: evm_wlan_ofdm() 
+NOTES: See ADS Documentation
+EXTERNAL: yes
+AUTHOR: Agilent Technologies
+DATE: Unkown
+VERSION_CREATED: ADS 2003C
+END_DOC*/
+
+
+defun evm_wlan_dsss_cck_pbcc(
+  Voltage,
+  MirrorSpectrum,
+  Start,
+  AverageType,
+  BurstsToAverage,
+  ModulationFormat,
+  SearchTime,
+  ResultLengthType,
+  ResultLength,
+  MeasurementOffset,
+  MeasurementInterval,
+  ChipRate,
+  ClockAdjust,
+  EqualizationFilter,
+  FilterLength,
+  DescrambleMode,
+  ReferenceFilter,
+  ReferenceFilterBT,
+  Output,
+  evm_wlan_dsss_cck_pbccInstName ) {
+
+  if ( Voltage == NULL ) {
+    print_function_error( "evm_wlan_dsss_cck_pbcc", " first argument (voltage) is a required argument." );
+    return;
+  }
+
+  if ( strcmp( indep_name( Voltage ), "time" ) ) {
+    print_function_error( "evm_wlan_dsss_cck_pbcc", " the inner independent variable must be time." );
+    return;
+  }
+
+  decl dataType = type( Voltage );
+
+  if ( strcmp( dataType, "Complex" ) ) {
+    print_function_error( "evm_wlan_dsss_cck_pbcc", " first argument (voltage) can only be of type Complex." );
+    return;
+  }
+
+  decl result;
+  decl sweepDim = sweep_dim( Voltage );
+
+  switch ( sweepDim ) {
+    case 0:  print_function_error( "evm_wlan_dsss_cck_pbcc", " does not support single number data.");
+             return;
+             break;
+    case 1:  result = evm_wlan_dsss_cck_pbcc_1d( Voltage, MirrorSpectrum, Start, AverageType, BurstsToAverage, ModulationFormat, SearchTime, ResultLengthType, ResultLength, MeasurementOffset, MeasurementInterval, ChipRate, ClockAdjust, EqualizationFilter, FilterLength, DescrambleMode, ReferenceFilter, ReferenceFilterBT, Output, , evm_wlan_dsss_cck_pbccInstName );
+             break;
+    case 2:  result = evm_wlan_dsss_cck_pbcc_2d( Voltage, MirrorSpectrum, Start, AverageType, BurstsToAverage, ModulationFormat, SearchTime, ResultLengthType, ResultLength, MeasurementOffset, MeasurementInterval, ChipRate, ClockAdjust, EqualizationFilter, FilterLength, DescrambleMode, ReferenceFilter, ReferenceFilterBT, Output, evm_wlan_dsss_cck_pbccInstName );
+             break;
+    default: print_function_error( "evm_wlan_dsss_cck_pbcc", " does not support data with dimensions greater than two.");
+             return;
+             break;
+  }
+
+  return result;
+}
+
+
+
+defun evm_wlan_dsss_cck_pbcc_2d(
+  Voltage,
+  MirrorSpectrum,
+  Start,
+  AverageType,
+  BurstsToAverage,
+  ModulationFormat,
+  SearchTime,
+  ResultLengthType,
+  ResultLength,
+  MeasurementOffset,
+  MeasurementInterval,
+  ChipRate,
+  ClockAdjust,
+  EqualizationFilter,
+  FilterLength,
+  DescrambleMode,
+  ReferenceFilter,
+  ReferenceFilterBT,
+  Output,
+  evm_wlan_dsss_cck_pbccInstName ) {
+
+// No need to do error checking here.
+// The wrapper function evm_wlan_dsss_cck_pbcc() as well as the base 
+// evm_wlan_dsss_cck_pbcc_1d() do all the error checking.
+
+  decl result;
+
+  decl output = ( Output == NULL ) ? ( "Avg_EVMrms_pct" ) : ( Output );
+  decl left_str = leftstr( output, 4 );
+  decl right_str = rightstr( output, 12 );
+  decl avg = ( AverageType == NULL ) ? ( "OFF" ) : ( AverageType );
+  decl bursts = ( BurstsToAverage == NULL ) ? ( 20 ) : ( BurstsToAverage );
+
+  if ( !strcmp( left_str, "Avg_" ) || !strcmp( avg, "OFF" ) || ( bursts == 1 ) ) {
+
+// make sure result has the correct data type 
+// (Real except for peak chip index results)
+
+    if ( !strcmp( right_str, "_Pk_chip_idx" ) ) {
+      result = int( Voltage[::,0] );
+    }
+    else {
+      result = real( Voltage[::,0] );
+    }
+
+    decl numPts = sweep_size( result );
+    decl i;
+
+    for ( i = 0; i < numPts; i++ ) {
+      result[i] = evm_wlan_dsss_cck_pbcc_1d( Voltage[i,::], MirrorSpectrum, Start, AverageType, BurstsToAverage, ModulationFormat, SearchTime, ResultLengthType, ResultLength, MeasurementOffset, MeasurementInterval, ChipRate, ClockAdjust, EqualizationFilter, FilterLength, DescrambleMode, ReferenceFilter, ReferenceFilterBT, Output, , evm_wlan_dsss_cck_pbccInstName );
+    }
+
+    return result;
+  }
+
+  else {
+    decl numOuterPts = sweep_size( Voltage[::,0] );
+
+// make sure result has the correct data type 
+// (Real except for peak chip index results)
+
+    decl resultType = ( strcmp( right_str, "_Pk_chip_idx" ) ) ? "Real" : "Integer";
+
+    decl outerIndepName = indep_name( Voltage, 1 );
+    decl innerIndepName = "Burst";
+
+    result = create( 2, resultType, { outerIndepName, innerIndepName }, { "Real", "Integer" }, 1, 1 );
+
+    decl outerIndep = indep( result, outerIndepName );
+    decl innerIndep = indep( result, innerIndepName );
+
+    decl Voltage_OuterIndep = indep( Voltage, 2 );
+
+    decl i;
+    for ( i = 0; i < numOuterPts; i++ ) {
+      decl result_1d = evm_wlan_dsss_cck_pbcc_1d( Voltage[i,::], MirrorSpectrum, Start, AverageType, BurstsToAverage, ModulationFormat, SearchTime, ResultLengthType, ResultLength, MeasurementOffset, MeasurementInterval, ChipRate, ClockAdjust, EqualizationFilter, FilterLength, DescrambleMode, ReferenceFilter, ReferenceFilterBT, Output, , evm_wlan_dsss_cck_pbccInstName );
+      result[i,::] = result_1d;
+      innerIndep[i,::] = indep( result_1d );
+      outerIndep[i] = Voltage_OuterIndep[i];
+    }
+
+    return result;
+  }
+}

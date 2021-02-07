@@ -1,0 +1,170 @@
+// Copyright 2004 - 2014 Keysight Technologies, Inc  
+/*BEGIN_DOC
+FUN_NAME: spectrum_analyzer()
+FUN_DESCRIPTION: Performs a spectrum analysis for the input voltage/current data
+RETURNED_VALUE: Complex
+CATEGORY: Signal Processing, Envelope
+SYNTAX:  spectrum = spectrum_analyzer(data, fCarrier, start, stop, window, resBW) 
+EXAMPLE:
+spectrum = spectrum_analyzer(Vout[1])
+
+where Vout is a named node in a Circuit Envelope simulation, will return the voltage spectrum at the fundamental frequency. The spectrum will be centered around 0 Hz. All the input data will be processed in one block resulting in the highest resolution bandwidth possible. No windowing will be done.
+
+spectrum = spectrum_analyzer(Vout[1], 3.5e9, , , "Kaiser 7.865", 30e3)
+
+where Vout is a named node in a Circuit Envelope simulation, will return the voltage spectrum at the fundamental frequency. The spectrum will be centered around 3.5 GHz. The input signal will be broken down in smaller segments in order to achieve 30 kHz of resolution bandwidth. All segments will be windowed with a Kaiser 7.865 window. The spectra of all segments will be averaged.
+
+spectrum = spectrum_analyzer(T1, , 1.0e-3, 2.0e-3, "Hanning 0.5")
+
+where T1 is the name of a TimedSink component (in a DSP schematic), will return the voltage spectrum for the segment between 1 msec and 2 msec of the signal recorded in the TimedSink. Of course, the TimedSink component must have recorded a signal that starts before 1 msec and ends after 2 msec. The spectrum will be centered around 0 Hz. A Hanning 0.5 window will be used.
+ARGUMENT
+  ARG_NAME: data
+  ARG_DESCRIPTION: baseband or complex envelope voltage/current signal
+  ARG_DEFAULT: None
+  ARG_RANGE: (-inf:inf)
+  ARG_TYPE: Real, Complex
+  ARG_REQUIRED: YES
+ARGUMENT
+  ARG_NAME: fCarrier
+  ARG_DESCRIPTION: frequency around which the spectrum will be centered
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: start
+  ARG_DESCRIPTION: start time for the spectrum analysis
+  ARG_DEFAULT: first point of input data
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: stop
+  ARG_DESCRIPTION: stop time for the spectrum analysis
+  ARG_DEFAULT: last point of input data
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: window
+  ARG_DESCRIPTION: type of window to be used
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:7] dagger.gif
+  ARG_TYPE: Integer, string
+  ARG_REQUIRED: NO
+ARGUMENT
+  ARG_NAME: resBW
+  ARG_DESCRIPTION: resolution bandwidth
+  ARG_DEFAULT: 0
+  ARG_RANGE: [0:inf)
+  ARG_TYPE: Integer, Real
+  ARG_REQUIRED: NO
+FOOTNOTES:
+dagger.gif See Notes for the window type.
+DEFINED_IN: Built In
+SEE ALSO: fs()
+NOTES: See ADS Documentation
+EXTERNAL: yes
+AUTHOR: Keysight Technologies
+DATE: Unknown
+VERSION_CREATED: ADS 1.0
+END_DOC*/
+
+defun spectrum_analyzer(
+  Data,
+  FCarrier,
+  Start,
+  Stop,
+  Window,
+  ResBW,
+  spectrum_analyzerInstName ) {
+
+  if ( Data == NULL ) {
+    print_function_error( "spectrum_analyzer", " first argument (data) is a required argument." );
+    return;
+  }
+
+  if ( strcmp( indep_name( Data ), "time" ) ) {
+    print_function_error( "spectrum_analyzer", " the inner independent variable must be time." );
+    return;
+  }
+
+  decl dataType = type( Data );
+
+  if ( strcmp( dataType, "Integer" ) && strcmp( dataType, "Real" ) && strcmp( dataType, "Complex" ) ) {
+    print_function_error( "spectrum_analyzer", " first argument (data) can only be of type Integer, Real, or Complex." );
+    return;
+  }
+
+  decl signalType;
+
+  if ( !strcmp( dataType, "Complex" ) ) {
+    signalType = "RF";
+  }
+  else {
+    signalType = "Baseband";
+    if ( FCarrier != NULL )
+      FCarrier = 0.0;
+  }
+
+  if ( Window != NULL && ( !strcmp( Window, "HP8510 6.0" ) || !strcmp( Window, "8510 6.0") ) ) {
+    Window = "_8510 6.0";
+  }
+
+  decl result;
+  decl sweepDim = sweep_dim( Data );
+
+  switch ( sweepDim ) {
+    case 0:  print_function_error( "spectrum_analyzer", " does not support single number data.");
+             return;
+             break;
+    case 1:  result = spectrum_analyzer_1d( Data, FCarrier, Start, Stop, Window, ResBW, signalType, spectrum_analyzerInstName );
+             break;
+    case 2:  result = spectrum_analyzer_2d( Data, FCarrier, Start, Stop, Window, ResBW, signalType, spectrum_analyzerInstName );
+             break;
+    default: print_function_error( "spectrum_analyzer", " does not support data with dimensions greater than two.");
+             return;
+             break;
+  }
+
+  return result;
+}
+
+
+
+defun spectrum_analyzer_2d(
+  Data,
+  FCarrier,
+  Start,
+  Stop,
+  Window,
+  ResBW,
+  SignalType,
+  spectrum_analyzerInstName ) {
+
+// No need to do error checking here.
+// The wrapper function spectrum_analyzer() as well as the base 
+// spectrum_analyzer_1d() do all the error checking.
+
+  decl result;
+
+  decl numOuterPts = sweep_size( Data[::,0] );
+  decl outerIndepName = indep_name( Data, 1 );
+
+  result = create( 2, "Complex", { outerIndepName, "freq" }, { "Real", "Real" }, 1, 1 );
+
+  decl outerIndep = indep( result, outerIndepName );
+  decl innerIndep = indep( result, "freq" );
+
+  decl Data_OuterIndep = indep( Data, 2 );
+
+  decl i;
+  for ( i = 0; i < numOuterPts; i++ ) {
+    decl result_1d = spectrum_analyzer_1d( Data[i,::], FCarrier, Start, Stop, Window, ResBW, SignalType, spectrum_analyzerInstName);
+    result[i,::] = result_1d;
+    innerIndep[i,::] = indep( result_1d );
+    outerIndep[i] = Data_OuterIndep[i];
+  }
+
+  return result;
+}

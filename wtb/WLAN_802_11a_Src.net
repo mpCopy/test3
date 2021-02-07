@@ -1,0 +1,105 @@
+
+#ifndef block_net_WLAN_802_11a
+#define block_net_WLAN_802_11a
+define WLAN_PuncConvCoder ( _net168  _net177 ) 
+parameters  Rate=0  Length=100 
+_vAgilentEEsof_dSDF_nWLAN_x5fPuncCoder_lsdfwlanstars:W2  _net178 _net177 Rate=Rate 
+
+N=int ((16+8*Length+6)/NDBPS)
+LL=16+8*Length+6-NDBPS*N
+KK=if (LL==0) then 0 else 1 endif
+NSYM=N+KK
+NDATA=NSYM*NDBPS
+
+NDBPS=if (Rate==0) then 24 elseif (Rate==1) then 36 elseif (Rate==2) then 48 elseif (Rate==3) then 72 else NDBPS1 endif
+NDBPS1=if (Rate==4) then 96 elseif (Rate==5) then 108 elseif (Rate==6) then 144 elseif (Rate==7) then 192 else 216 endif
+_vAgilentEEsof_dSDF_nWLAN_x5fDistCtrl2_lsdfwlanstars:W5  _net172 _net178 _net174 NumOutput1=NDATA*2 NumOutput2=16 
+_vAgilentEEsof_dSDF_nWLAN_x5fCommCtrl2_lsdfwlanstars:W4  _net168 _net171 _net170 NumInput1=NDATA NumInput2=8 
+_vAgilentEEsof_dSDF_nConstInt_lsdfstars:C1  _net171 Level=0 
+_vAgilentEEsof_dSDF_nWLAN_x5fConvCoder_lsdfwlanstars:W3  _net170 _net172 
+end WLAN_PuncConvCoder
+define LogicXOR2 ( _net10  _net9  _net12 ) 
+;parameters 
+_vAgilentEEsof_dHOF_nNop_lhofstars_pinput_x3d2_aBusMerge2:B1  _net10 _net9 _net2 
+_vAgilentEEsof_dSDF_nLogic_lsdfstars:L1  _net2 _net12 Logic=5 
+end LogicXOR2
+define RF_Modulator ( _net216  _net213  _net383 ) 
+parameters  ROut=DefaultROut  RTemp=DefaultRTemp  FCarrier=1900 MHz  Power=0.01 W  VRef=1 V  SamplingRate=25e3  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0 
+
+I_Gain=1
+Q_Gain=if ( MirrorSpectrum == 0 ) then I_Gain else ( -I_Gain ) endif
+Offset=( I_OriginOffset + j * Q_OriginOffset ) * sqrt( 2 * ROut * Power ) / 100
+TStep=1 / SamplingRate
+R:R2  _net384 _net383 R=ROut Temp=RTemp 
+_vAgilentEEsof_dTSDF_nConstTimed_ltsdfstars:C3  _net369 TStep=TStep FCarrier=FCarrier Hz Value=Offset 
+_vAgilentEEsof_dTSDF_n_x5fSummerRF_ltsdfstars:S1  _net369 _net365 _net384 RIn=ROut Ohm ROut=ROut Ohm RTemp=-273.15 FcOut=2 
+_vAgilentEEsof_dTSDF_n_x5fPhaseShiftRF_ltsdfstars:P1  _net363 _net365 RIn=ROut Ohm ROut=ROut Ohm RTemp=-273.15 PhaseShift=IQ_Rotation 
+_vAgilentEEsof_dTSDF_n_x5fQAM_x5fMod_ltsdfstars:Q1  _net357 _net358 _net363 RIn=50.0 Ohm ROut=ROut Ohm RTemp=-273.15 FCarrier=FCarrier Hz Power=Power W VRef=4*VRef Phase=0 GainImbalance=GainImbalance PhaseImbalance=PhaseImbalance 
+_vAgilentEEsof_dTSDF_nFloatToTimed_ltsdfstars:F1  _net174 _net357 TStep=TStep 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G6  _net216 _net174 Gain=I_Gain 
+_vAgilentEEsof_dTSDF_nFloatToTimed_ltsdfstars:F2  _net175 _net358 TStep=TStep 
+_vAgilentEEsof_dSDF_nGain_lsdfstars:G5  _net213 _net175 Gain=Q_Gain 
+end RF_Modulator
+define WLAN_80211aSignalSrc1 ( _net5  _net275  _net306  _net270  _net304 ) 
+parameters  Length=256  Rate=0  Order=6  ScramblerInit="1 0 1 1 1 0 1"  Idle=0  WindowType=0  TransitionTime=100nsec  GuardType=1  GuardInterval=16 
+_vAgilentEEsof_dSDF_nWLAN_x5fConvCoder_lsdfwlanstars:Coding  _net304 _net303 
+_vAgilentEEsof_dSDF_nWLAN_x5fSPreambleGen_lsdfwlanstars:Short_Preamble  _net302 ShortType=1 
+_vAgilentEEsof_dSDF_nWLAN_x5fLoadIFFTBuff_lsdfwlanstars:W2  _net302 _net301 Carriers=52 Order=Order 
+_vAgilentEEsof_dSDF_nFFT_x5fCx_lsdfdspstars:F1  _net301 _net299 Order=Order Size=2^Order Direction=0 
+_vAgilentEEsof_dSDF_nWLAN_x5fLPreambleGen_lsdfwlanstars:Long_Preamble  _net297 
+_vAgilentEEsof_dSDF_nWLAN_x5fLoadIFFTBuff_lsdfwlanstars:W5  _net297 _net296 Carriers=52 Order=Order 
+_vAgilentEEsof_dSDF_nFFT_x5fCx_lsdfdspstars:F2  _net296 _net294 Order=Order Size=2^Order Direction=0 
+_vAgilentEEsof_dSDF_nFFT_x5fCx_lsdfdspstars:F3  _net291 _net292 Order=Order Size=2^Order Direction=0 
+_vAgilentEEsof_dSDF_nWLAN_x5fLoadIFFTBuff_lsdfwlanstars:IFFTBuff  _net306 _net291 Carriers=52 Order=Order 
+_vAgilentEEsof_dSDF_nWLAN_x5fMuxOFDMSym_lsdfwlanstars:MuxOFDMSym  _net287 _net306 Length=Length Rate=Rate Carriers=52 Data=48 Phase=0 
+_vAgilentEEsof_dSDF_nWLAN_x5fMuxSigData_lsdfwlanstars:MuxSIGNAL_and_DATA  _net284 _net285 _net287 Length=Length Rate=Rate 
+_vAgilentEEsof_dSDF_nWLAN_x5fInterleaver_lsdfwlanstars:Interleaving  _net303 _net283 Rate=0 
+_vAgilentEEsof_dSDF_nWLAN_x5fBPSKCoder_lsdfwlanstars:W9  _net283 _net284 
+_vAgilentEEsof_dSDF_nWLAN_x5fMuxBurstNW_lsdfwlanstars:Framing  _net299 _net294 _net292 _net279 Length=Length Rate=Rate Order=Order GuardType=GuardType GuardInterval=GuardInterval 
+_vAgilentEEsof_dSDF_nWLAN_x5fInsertZero_lsdfwlanstars:W10  _net274 _net275 NumInsert=Idle NumInput=4*(2^Order+2^(Order-2))+(NSYM+1)*(2^Order+GI) 
+_vAgilentEEsof_dSDF_nWLAN_x5fCosRollWin_lsdfwlanstars:Windowfunction  _net279 _net274 Length=Length Rate=Rate Order=Order WindowType=WindowType TransitionTime=TransitionTime GuardType=GuardType GuardInterval=GuardInterval 
+_vAgilentEEsof_dSDF_nWLAN_x5fSIGNAL_lsdfwlanstars:SIGNAL1  _net304 Length=Length Rate=Rate 
+WLAN_PuncConvCoder:DataCoding  _net267 _net270 Rate=Rate Length=Length 
+_vAgilentEEsof_dSDF_nWLAN_x5fScrambler_lsdfwlanstars:Scrambling  _net263 InitState=ScramblerInit Length=Length Rate=Rate 
+
+NDBPS=if (Rate==0) then 24 elseif (Rate==1) then 36 elseif (Rate==2) then 48 elseif (Rate==3) then 72 elseif (Rate==4) then 96 elseif (Rate==5) then 108 elseif (Rate==6) then 144 elseif (Rate==7) then 192 else 216 endif
+GI=if (GuardType==0) then 2^Order/2 elseif (GuardType==1) then 2^Order/4 elseif (GuardType==2) then 2^Order/8 elseif (GuardType==3) then 2^Order/16 elseif (GuardType==4) then 2^Order/32 else GuardInterval endif
+
+N=int ((16+8*Length+6)/NDBPS)
+LL=16+8*Length+6-NDBPS*N
+KK=if (LL==0) then 0 else 1 endif
+NSYM=N+KK
+_vAgilentEEsof_dSDF_nWLAN_x5fMapper_lsdfwlanstars:W6  _net237 _net285 Rate=Rate 
+LogicXOR2:L1  _net263 _net3 _net4 
+_vAgilentEEsof_dSDF_nWLAN_x5fTail_lsdfwlanstars:Tailing  _net4 _net267 Length=Length Rate=Rate 
+_vAgilentEEsof_dSDF_nWLAN_x5fInterleaver_lsdfwlanstars:DataInterleaving  _net270 _net237 Rate=Rate 
+_vAgilentEEsof_dSDF_nWLAN_x5fDATA_lsdfwlanstars:DATA  _net5 _net3 Length=Length Rate=Rate 
+end WLAN_80211aSignalSrc1
+define WLAN_802_11a_RF ( _net817  _net764 ) 
+parameters  R=50  Temp=-273.15  Noise=0  FCarrier=5200MHz  Power=0.04  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0  OversamplingRatio=2  DataRate=8  Bandwidth=20MHz  IdleInterval=4.0usec  DataType=0  DataLength=100  GuardInterval=0.25 
+RF_Modulator:R2  _net815 _net816 _net817 ROut=R RTemp=if (Noise==0) then -273.15 else (Temp) endif FCarrier=FCarrier Power=Power VRef=1 V SamplingRate=SymbolRate MirrorSpectrum=MirrorSpectrum GainImbalance=GainImbalance PhaseImbalance=PhaseImbalance I_OriginOffset=I_OriginOffset Q_OriginOffset=Q_OriginOffset IQ_Rotation=IQ_Rotation 
+
+Order=if(OversamplingRatio==0) then 6 elseif(OversamplingRatio==1) then 7 elseif(OversamplingRatio==2) then 8 else Order1 endif
+Order1=if(OversamplingRatio==3) then 9 elseif(OversamplingRatio==4) then 10 else 11 endif
+VRef=0.1122/2^(Order-6)
+SymbolRate=Bandwidth*2^(Order-6)
+Idle=IdleInterval*SymbolRate
+GI=int (GuardInterval*2^Order)
+Ratio = 2^OversamplingRatio
+_vAgilentEEsof_dSDF_nCxToRect_lsdfstars:C1  _net772 _net815 _net816 
+_vAgilentEEsof_dSDF_nGainCx_lsdfstars:G1  _net778 _net772 Gain=1/VRef 
+WLAN_80211aSignalSrc1:W2  _net764 _net778 _net683 _net684 _net685 Length=DataLength Rate=DataRate Order=Order ScramblerInit="1 0 1 1 1 0 1" Idle=Idle WindowType=0 TransitionTime=100 nsec GuardType=5 GuardInterval=GI 
+_vAgilentEEsof_dSDF_nDataPattern_lsdfdspstars:D1  _net764 DataPattern=DataType 
+end WLAN_802_11a_RF
+define WLAN_802_11aRF ( _net15 ) 
+parameters  ROut=DefaultROut  RTemp=DefaultRTemp    FCarrier=5200.0 MHz  Power=0.04  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0  OversamplingOption=2  DataRate=8  Bandwidth=20 MHz  IdleInterval=4.0 usec  DataType=0  DataLength=100  GuardInterval=0.25 
+WLAN_802_11a_RF:W1  _net15 _net16 R=ROut Temp=RTemp Noise=1 FCarrier=FCarrier Power=Power MirrorSpectrum=MirrorSpectrum GainImbalance=GainImbalance PhaseImbalance=PhaseImbalance I_OriginOffset=I_OriginOffset Q_OriginOffset=Q_OriginOffset IQ_Rotation=IQ_Rotation OversamplingRatio=OversamplingOption DataRate=DataRate Bandwidth=Bandwidth IdleInterval=IdleInterval DataType=DataType DataLength=DataLength GuardInterval=GuardInterval 
+_vAgilentEEsof_dTSDF_nWLAN_x5f802_x5f11aRF_x5fRangeCheck_lsdfwlanhstars:WLAN_802_11aRF_RangeCheck  
+end WLAN_802_11aRF
+define WLAN_802_11a ( _net17  _net11 ) 
+parameters  Num=1  R=50 Ohm  Temp=  Noise=1    FCarrier=5200.0 MHz  Power=0.04  MirrorSpectrum=0  GainImbalance=0.0  PhaseImbalance=0.0  I_OriginOffset=0.0  Q_OriginOffset=0.0  IQ_Rotation=0.0  OversamplingOption=2  DataRate=8  Bandwidth=20 MHz  IdleInterval=4.0 usec  DataType=0  DataLength=100  GuardInterval=0.25 
+WLAN_802_11aRF:DSP  _net17 ROut=50 RTemp=-273.15 FCarrier=FCarrier Power=Power MirrorSpectrum=MirrorSpectrum GainImbalance=GainImbalance PhaseImbalance=PhaseImbalance I_OriginOffset=I_OriginOffset Q_OriginOffset=Q_OriginOffset IQ_Rotation=IQ_Rotation OversamplingOption=OversamplingOption DataRate=DataRate Bandwidth=Bandwidth IdleInterval=IdleInterval DataType=DataType DataLength=DataLength GuardInterval=GuardInterval 
+Component:WLAN_802_11a  Module="DSPSource" Type="ModelExtractor" P[1]=Power Z[1]=R CarrierFrequency[1]=FCarrier Noise[1]=Noise Temp[1]=Temp Num[1]=Num NodeMapping[1]="RF 1 2 RF" 
+end WLAN_802_11a
+
+#endif

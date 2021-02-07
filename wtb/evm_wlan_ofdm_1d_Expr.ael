@@ -1,0 +1,70 @@
+defun evm_wlan_ofdm_1d(
+  RFVRF,
+  MirrorSpectrum,
+  Start,
+  AverageType,
+  BurstsToAverage,
+  SubcarrierModulation,
+  GuardInterval,
+  SearchTime,
+  ResultLengthType,
+  ResultLength,
+  MeasurementOffset,
+  MeasurementInterval,
+  SubcarrierSpacing,
+  SymbolTimingAdjust,
+  Sync,
+  Output,
+  FMeasurement,
+  evm_wlan_ofdm_1dInstName ) {
+
+  decl var="evm_wlan_ofdm";
+  decl func_name="evm_wlan_ofdm";
+
+  if(sweep_dim(RFVRF)!=1)
+    print_function_error(func_name, "Input data for 'RF' (argument #1) must be single dimensional");
+
+  decl indepData=indep(RFVRF);
+  decl indepSize=sweep_size(indepData);
+  decl defStart=indepData[0];
+  decl defStop=indepData[indepSize-1];
+  if(MirrorSpectrum!=NULL)
+    MirrorSpectrum=ptExprConvertStringEnumToInt("MirrorSpectrum", func_name, MirrorSpectrum, list("NO","YES","Enter option index"));
+  if(Start!=NULL && (Start>defStop || Start<defStart))
+    print_function_error(func_name, sprintf("Start must be in the range [%.15e,%.15e]", defStart, defStop));
+  if(AverageType!=NULL)
+    AverageType=ptExprConvertStringEnumToInt("AverageType", func_name, AverageType, list("OFF","RMS (Video)","Enter option index"));
+  if(SubcarrierModulation!=NULL)
+    SubcarrierModulation=ptExprConvertStringEnumToInt("SubcarrierModulation", func_name, SubcarrierModulation, list("Auto Detect","BPSK","QPSK","QAM 16","QAM 64","Enter option index"));
+  if(ResultLengthType!=NULL)
+    ResultLengthType=ptExprConvertStringEnumToInt("ResultLengthType", func_name, ResultLengthType, list("Auto Select","Manual Override","Enter option index"));
+  if(Sync!=NULL)
+    Sync=ptExprConvertStringEnumToInt("Sync", func_name, Sync, list("Short Training Seq","Channel Estimation Seq","Enter option index"));
+  if(Output!=NULL)
+    Output=ptExprConvertStringEnumToInt("Output", func_name, Output, list("EVMrms_percent","EVM_dB","PilotEVM_dB","CPErms_percent","IQ_Offset_dB","SyncCorrelation","Enter option index"));
+  var=strcat(var,".",nth(((Output!=NULL)?Output:0), list("EVMrms_percent","EVM_dB","PilotEVM_dB","CPErms_percent","IQ_Offset_dB","SyncCorrelation","Enter option index")));
+  decl sink = embedded_ptolemy_exec(
+      "evm_wlan_ofdm"
+      , ((evm_wlan_ofdm_1dInstName!=NULL)?evm_wlan_ofdm_1dInstName:tmpnam())
+      , var
+      , indepData
+    , ((MirrorSpectrum!=NULL)?MirrorSpectrum:0)
+    , ((Start!=NULL)?Start:defStart)
+    , ((AverageType!=NULL)?AverageType:0)
+    , ((BurstsToAverage!=NULL)?BurstsToAverage:20)
+    , ((SubcarrierModulation!=NULL)?SubcarrierModulation:0)
+    , ((GuardInterval!=NULL)?GuardInterval:0.25)
+    , ((SearchTime!=NULL)?SearchTime:80e-6)
+    , ((ResultLengthType!=NULL)?ResultLengthType:0)
+    , ((ResultLength!=NULL)?ResultLength:60)
+    , ((MeasurementOffset!=NULL)?MeasurementOffset:0)
+    , ((MeasurementInterval!=NULL)?MeasurementInterval:11)
+    , ((SubcarrierSpacing!=NULL)?SubcarrierSpacing:312.5e3)
+    , ((SymbolTimingAdjust!=NULL)?SymbolTimingAdjust:-3.125)
+    , ((Sync!=NULL)?Sync:0)
+    , ((Output!=NULL)?Output:0)
+    , ((FMeasurement!=NULL)?FMeasurement:5.2e9)
+        , real(RFVRF), imag(RFVRF)
+  );
+  return(sink);
+}
