@@ -1,0 +1,33 @@
+#! /bin/sh
+# Print out a .bat file that will set up .NET compiler
+
+if [ "X$SIMARCH" = "Xwin32_64" ]
+then
+    vcpath_arg=x64
+else
+    vcpath_arg=x86
+fi
+
+if [ \( "X$VS150COMNTOOLS" = "X" \) -o \
+     \( ! -d "$VS150COMNTOOLS" \) ]
+then
+    (
+        echo
+        echo '==============================================================================='
+        echo '***********************'
+        echo '***** FATAL ERROR *****'
+        echo '***********************'
+        echo
+        echo "The ADS2020 Model Builder requires Microsoft Visual Studio 2017."
+        echo "Unable to find Microsoft Visual Studio 2017 installation."
+        echo
+    ) >&2
+else
+    (
+        echo
+        echo '==============================================================================='
+        echo "Using Visual Studio 2017 $vcpath_arg (below $VS150COMNTOOLS)"
+        echo
+    ) >&2
+    echo "call \"${VS150COMNTOOLS}..\..\vc\Auxiliary\Build\vcvarsall.bat\" $vcpath_arg"
+fi

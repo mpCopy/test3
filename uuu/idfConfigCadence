@@ -1,0 +1,201 @@
+#!/bin/sh
+# Configure Cadence for ADS RFIC Dynamic Link 2002.C/2003.C.
+# Adding, removing, or listing the following files:
+#   <CadenceInstDir>/tools/dfII/etc/tools/ads/.cdsenv
+#   <CadenceInstDir>/tools/dfII/etc/tools/adsBse/.cdsenv
+#   <CadenceInstDir>/tools/dfII/etc/tools/ADSsim/.cdsenv
+#   <CadenceInstDir>/tools/dfII/etc/tools/adsDL/.cdsenv
+#   <CadenceInstDir>/tools/dfII/etc/tools/adsMom/.cdsenv
+#   <CadenceInstDir>/share/cdssetup/hierEditor/<templates>/ads
+#   <CadenceInstDir>/tools/dfII/etc/skill/hnl/ads.ile
+#   <CadenceInstDir>/tools/dfII/etc/skill/si/caplib/ads.ile
+# Also add/remove ads among toolFilter in
+#   <CadenceInstDir>/tools/dfII/etc/tools/auCore/.cdsenv
+#
+# Usage:
+#   makecds [ rm | ls ]
+# where rm option indicates removing files, 
+#       ls option indicates listing files, 
+#       w/o option means adding files.
+#
+# Note: commands to copy/remove tools/dfII/etc/tools/menus/ADSsim.menus 
+#       are commented out because this menu file is used by RFDE, but not DL.
+#
+#       2003.C added adsMom tool
+
+set_variables() {
+   if [ -f "$idf_cds_inst_dir/tools/dfII/bin/virtuoso" ] ; then
+       CDS_VERSION=`$idf_cds_inst_dir/tools/dfII/bin/virtuoso -version 2>&1 | cut -f4 -d' '`
+   else
+       CDS_VERSION=`$idf_cds_inst_dir/tools/dfII/bin/icms -version 2>&1 | cut -f4 -d' '`
+   fi
+   TOOLS_ads_DIR="${idf_cds_inst_dir}/tools/dfII/etc/tools/ads"
+   TOOLS_adsBase_DIR="${idf_cds_inst_dir}/tools/dfII/etc/tools/adsBase"
+   TOOLS_ADSsim_DIR="${idf_cds_inst_dir}/tools/dfII/etc/tools/ADSsim"
+   TOOLS_adsDL_DIR="${idf_cds_inst_dir}/tools/dfII/etc/tools/adsDL"
+   TOOLS_adsMom_DIR="${idf_cds_inst_dir}/tools/dfII/etc/tools/adsMom"
+
+   ads_ENV_FILE="${idf_cds_inst_dir}/tools/dfII/etc/tools/ads/.cdsenv"
+   adsBase_ENV_FILE="${idf_cds_inst_dir}/tools/dfII/etc/tools/adsBase/.cdsenv"
+   ADSsim_menus_FILE="${idf_cds_inst_dir}/tools/dfII/etc/tools/menus/ADSsim.menus"
+   ADSsim_ENV_FILE="${idf_cds_inst_dir}/tools/dfII/etc/tools/ADSsim/.cdsenv"
+   adsDL_ENV_FILE="${idf_cds_inst_dir}/tools/dfII/etc/tools/adsDL/.cdsenv"
+   adsMom_ENV_FILE="${idf_cds_inst_dir}/tools/dfII/etc/tools/adsMom/.cdsenv"
+
+   HNL_ILE_FILE="${idf_cds_inst_dir}/tools/dfII/etc/skill/hnl/ads.ile"
+   SIM_ILE_FILE="${idf_cds_inst_dir}/tools/dfII/etc/skill/si/caplib/ads.ile"
+   MOM_ILE_FILE="${idf_cds_inst_dir}/tools/dfII/etc/skill/si/caplib/momentum.il"
+   AUC_ENV_FILE="$idf_cds_inst_dir/tools/dfII/etc/tools/auCore/.cdsenv"
+   HIER_ED_TEMP="${idf_cds_inst_dir}/share/cdssetup/hierEditor/templates/ads"
+   HE_TMP_DIR="${idf_cds_inst_dir}/share/cdssetup/hierEditor/templates"
+}
+
+list_files() {
+
+    ls -l ${TOOLS_ads_DIR}/.cdsenv                                    ; rc1=$?
+    ls -l ${TOOLS_adsBase_DIR}/.cdsenv                                ; rc2=$?
+    ls -l ${TOOLS_ADSsim_DIR}/.cdsenv                                 ; rc3=$?
+    ls -l ${TOOLS_adsDL_DIR}/.cdsenv                                  ; rc4=$?
+    ls -l ${TOOLS_adsMom_DIR}/.cdsenv 
+    ls -l ${HNL_ILE_FILE}                                             ; rc5=$?
+    ls -l ${SIM_ILE_FILE}                                             ; rc6=$?
+    ls -l ${HIER_ED_TEMP}                                             ; rc7=$?
+    ls -l ${MOM_ILE_FILE}
+    ls -l ${AUC_ENV_FILE}
+## for RFDE
+    ls -l ${ADSsim_menus_FILE}  2>/dev/null
+    egrep '([^a-zA-Z0-9]ads[^a-zA-Z0-9])' ${AUC_ENV_FILE} 2>/dev/null ; rc8=$?
+
+    if [ $rc1 -ne 0 -o $rc2 -ne 0 -o $rc3 -ne 0 -o $rc4 -ne 0 -o $rc5 -ne 0 \
+         -o $rc6 -ne 0 -o $rc7 -ne 0 -o $rc8 -ne 0 ] 
+    then
+        echo "Cadence installation is not configured for ADS RFIC Dynamic Link, 
+but you can use the \"CDS_LOAD_ENV=CSF\" approach as an alternative. 
+See $HPEESOF_DIR/bin/setCSF.ksh for more details."
+    else
+        echo "*** Cadence is ready for ADS RFIC Dynamic Link ***"
+    fi
+}
+
+thisScript=`echo $0 | sed -e 's/.*\///'`
+DISCLAIMER="NOTE: This is an obsolete script. It was created for obsolete RFDE and ADS 2003 and no longer supported!!!"
+USAGE="${DISCLAIMER}
+Usage:\n    $thisScript : configure Cadence for ADS RFIC Dynamic Link
+    $thisScript rm : undo the above configuration in Cadence
+    $thisScript ls : list Cadence configuration files for ADS RFIC 
+        Dynamic Link and indicate if Cadence is ready for ADS
+
+NOTE: Make sure Cadence cds_root and virtuoso (or icms) are in your PATH and
+set HPEESOF_DIR to ADS installation directory before running this script!
+"
+
+if [ $# -gt 1 ]
+then
+    echo "${USAGE}"
+    exit
+fi
+
+case "$1" in
+    "h"|"-h"|"help"|"-help"|"?")
+        echo "${USAGE}"
+        exit
+        ;;
+     *)  # simply continue
+        ;;
+esac
+
+echo ${DISCLAIMER}
+echo -e "Would you like to continue at your own risk? (y/n) n\b\c"
+read ans
+if [ "${ans}" != "y" ]; then
+    exit
+fi
+
+if [ -x "`which virtuoso 2>/dev/null`" ] ; then
+    idf_cds_inst_dir=`cds_root virtuoso`
+else
+    idf_cds_inst_dir=`cds_root icms`
+fi
+
+if [ ! -d "${idf_cds_inst_dir}" ]
+then 
+    echo "ERROR: Unable to find Cadence installation root for virtuoso (or icms)!"
+    echo "    Please make sure Cadence cds_root and virtuoso (or icms) are in your PATH."
+    echo
+    exit
+fi
+echo "Cadence installation root=${idf_cds_inst_dir}"
+
+if [ "${HPEESOF_DIR}" = "" ]
+then
+    echo "HPEESOF_DIR is not set. Please set HPEESOF_DIR and try again."
+    exit
+fi
+
+echo "HPEESOF_DIR=${HPEESOF_DIR}"
+if [ ! -d "${HPEESOF_DIR}" ]
+then
+    echo "${HPEESOF_DIR} is not a directory!"
+    exit 
+fi
+
+set_variables
+
+case "$1" in
+    "r"|"-r"|"rm"|"-rm"|"remove"|"-remove"|"undo"|"-undo")
+        echo "Removing Cadence configuration for ADS RFIC Dynamic Link ..."
+        rm -rf ${TOOLS_ads_DIR}
+        rm -rf ${TOOLS_adsBase_DIR}
+        rm -rf ${TOOLS_adsDL_DIR}
+        rm -f ${HNL_ILE_FILE}
+        rm -f ${SIM_ILE_FILE}
+        rm -f ${MOM_ILE_FILE}
+        rm -f ${HIER_ED_TEMP}
+## for RFDE
+        rm -f ${ADSsim_menus_FILE} 2>/dev/null
+        rm -rf ${TOOLS_ADSsim_DIR}
+        rm -rf ${TOOLS_adsMom_DIR}
+        # Remove ads from toolList in auCore/.cdsenv
+        sed -e 's/ads //g' -e 's/ ads//g' ${AUC_ENV_FILE} > ${AUC_ENV_FILE}.tmp$$
+        mv -f ${AUC_ENV_FILE} ${AUC_ENV_FILE}.bak
+        mv ${AUC_ENV_FILE}.tmp$$ ${AUC_ENV_FILE}
+        chmod 444 $AUC_ENV_FILE
+        echo "Cadence configuration for ADS RFIC Dynamic Link removed!"
+        ;;
+    "l"|"-l"|"ls"|"-ls"|"list"|"-list"|"-n")
+        # do nothing simply list files
+        echo "The ADS RFIC Dynamic Link configuration files under Cadence:"
+        list_files
+        ;;
+     *)  # assuming intent to add Dynamic Link configuration files
+        echo "Configuring Cadence for ADS RFIC Dynamic Link ..."
+        mkdir ${TOOLS_ads_DIR} 2>/dev/null
+        mkdir ${TOOLS_adsBase_DIR} 2>/dev/null
+        mkdir ${TOOLS_ADSsim_DIR} 2>/dev/null
+        mkdir ${TOOLS_adsDL_DIR} 2>/dev/null
+        mkdir ${TOOLS_adsMom_DIR} 2>/dev/null
+# DL 2002.A
+#        cp ${HPEESOF_DIR}/idf/skill/$CDS_VERSION/adsCdsenvFile ${ads_ENV_FILE}
+# DL 2002.C/2003.C
+        cp ${HPEESOF_DIR}/idf/config/adsCdsenvFile ${ads_ENV_FILE}
+        cp ${HPEESOF_DIR}/idf/config/adsBaseCdsenvFile ${adsBase_ENV_FILE}
+        cp ${HPEESOF_DIR}/idf/config/adsDLCdsenvFile ${adsDL_ENV_FILE}
+        cp -f ${HPEESOF_DIR}/idf/config/ads.hierEd ${HIER_ED_TEMP}
+## for RFDE
+        cp ${HPEESOF_DIR}/idf/config/ADSsim.menus ${ADSsim_menus_FILE} 2>/dev/null
+        cp ${HPEESOF_DIR}/idf/config/ADSsimCdsenvFile ${ADSsim_ENV_FILE}
+        cp ${HPEESOF_DIR}/idf/config/adsMomCdsenvFile ${adsMom_ENV_FILE}
+        touch ${HNL_ILE_FILE}
+        touch ${SIM_ILE_FILE}
+        touch ${MOM_ILE_FILE}
+        # Add ads to toolList in auCore/.cdsenv
+        sed -e 's/ads //g' -e 's/ ads//g' \
+-e 's/\(auCore.toolFilter .*ool.* string\)[ \t]*"/\1 "ads /' \
+ ${AUC_ENV_FILE} > ${AUC_ENV_FILE}.tmp$$
+        mv -f ${AUC_ENV_FILE} ${AUC_ENV_FILE}.bak
+        mv ${AUC_ENV_FILE}.tmp$$ ${AUC_ENV_FILE}
+        chmod 444 ${AUC_ENV_FILE}
+        list_files
+        ;;
+esac
+

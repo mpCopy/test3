@@ -1,0 +1,5 @@
+#!/bin/sh
+SVE_DIR="`menv getRefvalue --name SystemVue --location --product_root "$HPEESOF_DIR"`"
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HPEESOF_DIR/lib/linux_x86:$SVE_DIR/linux_x86_64/sveclient
+export LD_LIBRARY_PATH
+CEDA_64_BIT=1 hpeesofmake $*

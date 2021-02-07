@@ -1,0 +1,87 @@
+#!/bin/sh
+########################################################################
+#
+# Usage: mergeAdsLib <path to the final adsLib>
+#
+# This script will be used by the projects that add content
+# to adsLib as part of postinst and postrm. This script will
+# merge the different adsLib that are under the directory
+# from where the  script is run
+#
+# The adsLib will be installed by each different debian
+# packages that has adsLib content as follows 
+#     $HPEESOF_DIR/cdslibs/.adsLib/cdslibs/adsLib
+#                                 /<package>_adsLib/adsLib
+#                                 /<package>_adsLib/adsLib
+#
+# where cdslibs/adsLib will be treated as the master adsLib
+#
+# During postinst and postrm of any of the above packages we do merge
+# and recreate the final adsLib under $HPEESOF_DIR/cdslibs/adsLib
+# as follows
+#
+# #!/bin/sh
+# $HPEESOF_DIR/bin/mergeAdsLib
+#
+########################################################################
+
+ARCH=`hpeesofarch`
+if [ "$ARCH" = "win32" -o "$ARCH" = "win32_64" ]
+then
+  echo "mergeAdsLib: Not supported on $ARCH platform"
+  exit 0
+fi
+dotAdsLib=$HPEESOF_DIR/cdslibs/.adsLib
+openAccessDir22=$HPEESOF_DIR/cdslibs
+adsLibOA22=$HPEESOF_DIR/cdslibs/adsLib
+
+if [ ! -d $dotAdsLib ]
+then
+  mkdir -p $dotAdsLib
+fi
+cd $dotAdsLib
+
+# Create the Open Access 2.2 adsLib
+rm -rf $adsLibOA22
+if [ -d cdslibs/adsLib ]
+then
+  echo "mergeAdsLib: Main adsLib with analog components being copied to $adsLibOA22"
+  if [ ! -d $openAccessDir22 ]
+  then
+    mkdir -p $openAccessDir22
+  fi
+  cp -rf cdslibs/adsLib $adsLibOA22
+else
+  echo "mergeAdsLib: Main adsLib with analog components is not yet installed"
+fi
+
+# Merge the Open Access 2.2 libraries
+for lib in */adsLib
+do
+  if [ "$lib" = "cdslibs/adsLib" ]
+  then
+    echo "mergeAdsLib: Main adsLib analog components installed"
+  else
+    if [ -d $lib ]
+    then
+      if [ -d $adsLibOA22 ]
+      then
+        echo "mergeAdsLib: Merging $lib into $adsLibOA22"
+        for cell in $lib/*
+        do
+          if [ -d $cell ]
+          then
+            echo Copy $cell into $adsLibOA22
+            cp -rf $cell $adsLibOA22
+          else
+            true
+          fi
+        done
+      else
+        echo "mergeAdsLib: making $lib as the main $adsLibOA22"
+        cp -rf $lib $adsLibOA22
+      fi
+    fi
+  fi
+done
+

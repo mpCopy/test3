@@ -1,0 +1,60 @@
+#!/bin/ksh
+# @(#) $Source: /cvs/wlv/src/deinvoke/source/hpeesofarch.cmake,v $ $Revision: 1.1 $ $Date: 2009/02/08 06:34:41 $
+
+while [ $# -gt 0 ]; do
+	case $1 in
+		-u ) UPPER_ECHO=TRUE; shift;;
+		-b ) CEDA_64_BIT=; shift;;
+		-B ) CEDA_64_BIT=TRUE; shift;;
+	esac
+done
+
+if [ "X$ARCH_OVERRIDE" != "X" ]
+then
+    echo $ARCH_OVERRIDE
+    exit 0
+fi
+
+OSNAME=`uname`
+case $OSNAME in
+  Windows* | CYGWIN*)
+   if [ "$UPPER_ECHO" = "TRUE" ]  
+    then
+     if [ $CEDA_64_BIT ]
+      then
+       echo "WIN32_64" 
+      else
+       echo "WIN32" 
+     fi
+    else
+     if [ $CEDA_64_BIT ]
+      then
+       echo "win32_64" 
+      else
+       echo "win32" 
+     fi
+   fi
+  ;;
+  Linux)
+    arch=`uname -m`
+      if [ "$UPPER_ECHO" = "TRUE" ]  
+       then
+        if [ $CEDA_32_BIT ]
+         then
+           echo "LINUX_X86" 
+          else
+           echo "LINUX_X86_64" 
+        fi
+       else
+        if [ $CEDA_32_BIT ]
+         then
+          echo "linux_x86" 
+         else
+          echo "linux_x86_64" 
+        fi
+      fi
+    ;;
+  *)
+    echo Unknown architecture $OSNAME 1>&2
+    exit 1
+esac

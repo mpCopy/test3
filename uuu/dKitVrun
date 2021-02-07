@@ -1,0 +1,77 @@
+#! /usr/bin/ksh
+
+# shell wrapper to launch designkit verification scripts
+# ensures all the correct variables are set...
+
+if [ -z "$HPEESOF_DIR" ] ; then
+    HPEESOF_DIR=/hpeesof
+fi
+export HPEESOF_DIR
+
+DKITVERIFICATION=$HPEESOF_DIR/design_kit/verification
+export DKITVERIFICATION
+
+PATH=$HPEESOF_DIR/bin:$HPEESOF_DIR/tools/perl/bin:$HPEESOF_DIR/tools/bin:$PATH:$DKITVERIFICATION/bin
+export PATH
+
+arch=`hpeesofarch`
+uname=`uname`
+
+if [ ${uname#CYGWIN} != ${uname} ] ; then
+## we are on PC running cygnus...
+    ARG1=$1
+    shift
+    case $ARG1 in
+	dKitSetupWork.pl | dKitTemplateCreate.pl | dKitParameterCreate.pl | dKitTemplateList.pl | dKitParameterList.pl )
+	   TMPARG1=`cygpath -w $HPEESOF_DIR/design_kit/verification/bin/$ARG1` ;
+	   NEWARG1="perl $TMPARG1";;
+        *)
+	   NEWARG1=$ARG1;;
+    esac
+
+#    echo $NEWARG1 $*
+    $NEWARG1 $*
+
+elif [ "$uname" = "HP-UX" ] ; then
+
+    SHLIB_PATH="$HPEESOF_DIR/lib/$arch:$SHLIB_PATH"
+    if [ "$hparch" = "hpux10" ] ; then
+        SVER=`uname -r | cut -d"." -f2`
+        HP10SUB=`uname -r | cut -d. -f3`
+        if [ "$HP10SUB" = "01" ] ; then
+            SHLIB_PATH="$HPEESOF_DIR/lib/hpux10.01:$SHLIB_PATH"
+        elif [ "$HP10SUB" = "20" ] ; then
+            SHLIB_PATH="$HPEESOF_DIR/lib/hpux10.2:$SHLIB_PATH"
+        fi
+        if [ "$SVER" = "11" ] ; then
+            SHLIB_PATH="$HPEESOF_DIR/lib/hpux11:$SHLIB_PATH"
+        fi
+    fi
+
+# :: in SHLIB_PATH can cause odd problems
+    SHLIB_PATH="$(echo $SHLIB_PATH | sed -e 's/::*/:/g')"
+
+    $*
+
+elif [ "$uname" = "SunOS" ] ; then
+
+    LD_LIBRARY_PATH="$HPEESOF_DIR/lib/$arch:$LD_LIBRARY_PATH"
+
+    $*
+
+elif [ "$uname" = "AIX" ] ; then
+
+    MALLOCTYPE=3.1
+    LIBPATH="/usr/lib:/usr/lpp/X11/lib/R5:$HPEESOF_DIR/lib/$arch:$LIBPATH"
+
+    $*
+
+else
+
+    $*
+fi
+
+
+
+
+

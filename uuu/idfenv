@@ -1,0 +1,350 @@
+#!/bin/sh 
+# Output DL-related UNIX environment variables
+#
+# Run this script at UNIX system prompt then type the following command 
+# in Cadence CIW to compare environment outside and inside Cadence:
+#   system("$HPEESOF_DIR/bin/idfenv")
+#
+# Alternatively, you can get these environment information in Cadence by 
+# executing the $HPEESOF_DIR/bin/idfenv script from a Shell Window opened 
+# through the Cadence Library Manager's "File > Open Shell Window" menu item.
+#
+
+set_vars() {
+    CSH=`echo $SHELL | sed -n 's/.*csh$/csh/p'`
+    path_list=`echo $PATH | sed 's/:/ /g'` 
+    if [ "$CSH" = "csh" ] ; then
+        pname=path
+        dlm=" "
+    else
+        pname=PATH
+        dlm=":"
+    fi
+}
+
+get_exec() {
+# This function works like whence or which. 
+# This is written because not everyone has whence or which in path
+#
+    prog=$1
+
+    res=`alias | sed -n '/^'"${prog}"'=/p'`
+    if [ "$res" != "" ] ; then
+        echo "$res"
+        return
+    fi
+
+    for dir in $path_list
+    do
+        if [ -f "${dir}/${prog}" -a -x "${dir}/${prog}" ] ; then
+            echo ${dir}/${prog}
+            return 
+        fi
+    done
+    echo "not found"
+}
+
+
+get_min_path() {
+# 
+# Truncate $PATH to cover only up to idfmp, virtuoso, icms, or cds_root
+#
+    idfmpFound=FALSE
+    cdsExecFound=FALSE
+    cds_rootFound=FALSE
+    minPath=""
+
+    for dir in $path_list
+    do
+        minPath="${minPath}${dlm}${dir}"
+
+        if [ -f "${dir}/idfmp" ] ; then
+            idfmpFound=TRUE
+        fi
+
+        if [ -f "${dir}/virtuoso" ] ; then
+            cdsExecFound=TRUE
+        elif [ -f "${dir}/icms" ] ; then
+            cdsExecFound=TRUE
+        fi
+
+        if [ -f "${dir}/cds_root" ] ; then
+            cds_rootFound=TRUE
+        fi
+
+        if [ $idfmpFound = TRUE -a $cdsExecFound = TRUE -a $cds_rootFound = TRUE ] ; then
+            echo ${minPath} ...
+            return 
+        fi
+    done
+    echo "$path_list"
+}
+
+set_vars
+
+############################################################################
+# print name and version of current system
+#
+uname -a
+
+############################################################################
+# print shared library paths
+#
+case `uname -s` in
+    SunOS|Linux)
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"; echo
+        ;;
+    HP-UX)
+        echo "SHLIB_PATH=$SHLIB_PATH"; echo
+        ;;
+    *)
+        echo
+        ;;
+esac
+
+############################################################################
+# print HPEESOF_DIR environment variable
+#
+if [ "$HPEESOF_DIR" != "" ] ; then
+    echo "HPEESOF_DIR=$HPEESOF_DIR"
+else
+    echo "HPEESOF_DIR not set, Dynamic Link will not run!"; echo
+    foundPde=FALSE
+fi
+
+############################################################################
+# find pdeoa in alias or path
+#
+pdePath=`get_exec pdeoa`
+echo "pdeoa->${pdePath}"
+if [ "${pdePath}" != "" -a "${pdePath}" != "not found" ] ; then
+    ls -l $pdePath
+    foundPde=TRUE
+    . $HPEESOF_DIR/bin/eesofboot.sh
+    (pdeoa -version 2>&1 | sed -e '/fatal/d' -e '/colors/d') 2>/dev/null 
+fi
+echo
+
+############################################################################
+# find hpeesofde in alias or path
+#
+pdePath=`get_exec hpeesofde`
+echo "hpeesofde->${pdePath}"
+if [ "${pdePath}" != "" -a "${pdePath}" != "not found" ] ; then
+    ls -l $pdePath
+    foundPde=TRUE
+    . $HPEESOF_DIR/bin/eesofboot.sh
+    (hpeesofde -version 2>&1 | sed -e '/fatal/d' -e '/colors/d') 2>/dev/null 
+fi
+echo
+
+############################################################################
+# find idfmp in alias or path
+#
+idfmpPath=`get_exec idfmp`
+echo "idfmp->${idfmpPath}"
+if [ "$idfmpPath" != "" -a "$idfmpPath" != "not found" ] ; then
+    ls -l $idfmpPath
+    if [ "${foundPde}" = "TRUE" ] ; then
+        (idfmp -version 2>&1 | sed -e '/fatal/d') 2>/dev/null 
+    fi
+else
+    echo                              # just print a blank line 
+fi
+echo
+
+############################################################################
+# find virtuoso in alias or path
+#
+virtuosoPath=`get_exec virtuoso`
+echo "virtuoso->${virtuosoPath}"
+if [ "${virtuosoPath}" != "" -a "${virtuosoPath}" != "not found" ] ; then
+    virtuoso -version 2>&1
+
+    ########################################################################
+    # List Cadence simulation directory to show owner and group
+    #
+    tmpInf=/tmp/log$$
+    echo "\\i pdir=envGetVal(\"asimenv.startup\" \"projectDir\")" > ${tmpInf}
+    echo "\\i when(pdir system(sprintf(nil \"echo projectDir:%s;ls -ld %s\" \
+         pdir simplifyFilename(pdir))))" >> ${tmpInf}
+    virtuoso -nograph -replay ${tmpInf} -log ${tmpInf}.out
+    rm -f ${tmpInf} ${tmpInf}.out 2>/dev/null
+fi
+
+############################################################################
+# find icms in alias or path
+#
+icmsPath=`get_exec icms.exe`
+echo "icms.exe->${icmsPath}"
+if [ "${icmsPath}" != "" -a "${icmsPath}" != "not found" ] ; then
+    icms -version 2>&1
+
+    ########################################################################
+    # List Cadence simulation directory to show owner and group
+    #
+    tmpInf=/tmp/log$$
+    echo "\\i pdir=envGetVal(\"asimenv.startup\" \"projectDir\")" > ${tmpInf}
+    echo "\\i when(pdir system(sprintf(nil \"echo projectDir:%s;ls -ld %s\" \
+         pdir simplifyFilename(pdir))))" >> ${tmpInf}
+    icms -nograph -replay ${tmpInf} -log ${tmpInf}.out
+    rm -f ${tmpInf} ${tmpInf}.out 2>/dev/null
+fi
+
+############################################################################
+# find cdsMsgServer in alias or path
+#
+cdsMsgSvrPath=`get_exec cdsMsgServer`
+echo "cdsMsgServer->${cdsMsgSvrPath}"
+if [ "${cdsMsgSvrPath}" != "" -a "${cdsMsgSvrPath}" != "not found" ] ; then
+    ${cdsMsgSvrPath} -version 2>&1
+fi
+
+############################################################################
+# Display user name, group name, and $HOME
+#
+echo "         " user `logname`, group `groups`, HOME $HOME 
+echo
+
+############################################################################
+# find the effective .cdsinit associated with the above virtuoso or icms.exe
+#
+# As of IC 4.4.6, Cadence looks for and loads the first .cdsinit 
+# in the following order: 
+#     <Cadence_install_dir>/tools/dfII/local/.cdsinit
+#     ./.cdsinit
+#     $HOME/.cdsinit
+# Other SKILL files maybe loaded in the .cdsinit with load() or loadi()
+#
+cdsRootProg=`get_exec cds_root`
+cdsExec="not found"
+if [ "${virtuosoPath}" != "not found" ]; then
+    cdsExec=${virtuosoPath}
+elif [ "${icmsPath}" != "not found" ]; then
+    cdsExec=${icmsPath}
+fi
+
+if [ "${cdsRootProg}" != "not found" -a "${cdsExec}" != "not found" ] ; then
+    cdsRootDir=`cds_root ${cdsExec}`
+    if [ -f ${cdsRootDir}/tools/dfII/local/.cdsinit ] ; then
+        cdsInitFile=${cdsRootDir}/tools/dfII/local/.cdsinit
+    elif [ -f ./.cdsinit ] ; then
+        cdsInitFile=`pwd`/.cdsinit
+    elif [ -f $HOME/.cdsinit ] ; then
+        cdsInitFile=$HOME/.cdsinit
+    else
+        cdsInitFile=""
+        echo "Failed to find .cdsinit file under the following directories:"
+        echo "    ${cdsRootDir}/tools/dfII/local"
+        echo "    `pwd`"
+        echo "    ${HOME}"
+    fi
+    if [ "${cdsInitFile}" != "" ] ; then
+        echo "Found ${cdsInitFile}:"
+        grep -n "^[ 	]*load[i]*(" ${cdsInitFile}
+        grep -n "CDS_Netlisting_Mode" ${cdsInitFile}
+    fi
+else
+    echo "cds_root->${cdsRootProg}" ; echo 
+fi
+echo
+
+############################################################################
+# list <cds_inst_dir>/tools/dfII/local/.cdsenv and $HOME/.cdsenv, if exist.
+#
+ls -l ${cdsRootDir}/tools/dfII/local/.cdsenv $HOME/.cdsenv 2>/dev/null 
+
+############################################################################
+# print some Cadence variables
+#
+for cdsVar in CDS_LOAD_ENV CDS_LIC_FILE CDS_Netlisting_Mode CDS_INST_DIR \
+    CDS_WORKAREA CDS_SEARCHDIR CDS_PROJECT CDS_SITE CDSHOME ossSimUser \
+    CLS_CDSD_COMPATIBILITY_LOCKING DD_DONT_DO_OS_LOCKS CDS_AUTO_64BIT
+do
+    env | grep -v "cdsVar=" | grep $cdsVar
+    rstat=$?
+    if [ $rstat -eq 0 ]; then
+        echo
+    fi
+done
+
+############################################################################
+# print Keysight AGILEESOF_LICENSE_FILE environment variable
+#
+if [ "$AGILEESOF_LICENSE_FILE" != "" ] ; then
+    echo "AGILEESOF_LICENSE_FILE=$AGILEESOF_LICENSE_FILE"
+fi
+
+############################################################################
+# print Keysight AGILEESOFD_LICENSE_FILE environment variable
+#
+if [ "$AGILEESOFD_LICENSE_FILE" != "" ] ; then
+    echo "AGILEESOFD_LICENSE_FILE=$AGILEESOFD_LICENSE_FILE"
+fi
+echo
+
+############################################################################
+# print LM_LICENSE_FILE (not used by DL) environment variable
+#
+if [ "$LM_LICENSE_FILE" != "" ] ; then
+    echo "LM_LICENSE_FILE=$LM_LICENSE_FILE"; echo
+else
+    echo "LM_LICENSE_FILE not set - may not be a problem."; echo
+fi
+
+############################################################################
+# print first part of the path, truncate what's irrelevant to DL 
+#
+echo "$pname=`get_min_path`"; echo
+
+############################################################################
+# print other DL environment variables
+#
+env | egrep "^IDF_ADS|^IDF_CON|^IDF_DEB|^IDF_LOG|^IDF_SYS|^IDF_MAI"
+echo
+
+############################################################################
+# print GG/RFDE environment variables
+#
+env | egrep "^RFDE|XPEDION"
+echo
+
+############################################################################
+# Check if spectrei.cxt, spectreSi.cxt and asimenv.cxt exist. Issue a 
+# warning if any of these context files is missing.
+#
+for fil in spectrei asimenv  # spectreSi only exists in 5.1.* and not 6.1.*
+do
+    cxtFile=${cdsRootDir}/tools/dfII/etc/context/${fil}.cxt
+    if [ ! -f ${cxtFile} ] ; then
+        echo "WARNING: ${cxtFile} does not exist."
+        echo "    Dynamic Link may not work properly."
+        echo
+    fi
+done
+
+############################################################################
+# If DL idfConfigCadence script is present, check whether Cadence is 
+# configured for DL by running idfConfigCadence -ls
+#
+PATH=${PATH}:$HPEESOF_DIR/bin
+idfChkProg=`get_exec idfConfigCadence`
+if [ "${idfChkProg}" != "not found" ] ; then
+    ${idfChkProg} -ls
+else
+    echo "idfConfigCadence not found!"
+fi
+echo
+
+############################################################################
+# print CSF environment variables
+#
+env | egrep "^ossSimUser|CDS_LOAD_ENV" | sort
+cdswhich -all setup.loc 2>/dev/null
+echo
+
+############################################################################
+# look for possible DL/GG entry in setup.loc file(s)
+#
+grep -niE "idf|ads|EESOF|XPEDION" $HOME/setup.loc setup.loc  2>/dev/null
+
