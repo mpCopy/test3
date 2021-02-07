@@ -1,0 +1,126 @@
+  parameters File="" Type="touchstone" Lib="" Block="" \
+    InterpDom="" InterpMode="linear" ExtrapMode="interpMode" \
+    DeEmbed=no Temp=temp ImpNoncausalLength= ImpMode= \
+    CheckPassivity=no \
+    ImpMaxFreq= ImpDeltaFreq= \
+    ImpMaxOrder= ImpWindow= \
+    ImpRelTol= ImpAbsTol= EnforcePassivity= \
+    PortMappingType= PortMapping= ImpCache=
+
+  inPlace = no
+
+  ; deembed components never generate noise
+  mytemp = if (DeEmbed == yes) then -273.15 else Temp endif
+
+  f_Data = if (Type == "dataset") then \
+             read_data(Type, File) \
+          elseif (Lib != "") then \
+             read_lib(Lib, File, Type) \
+          else \
+             read_data("file", File, Type) \
+          endif
+  DEF_RREF = 50.0
+  NPORTS=3
+
+  fData_vs = hpvar_to_vs( f_Data )
+  fData = if( fData_vs == nil ) then \
+            f_Data \
+          else \
+            fData_vs \
+          endif
+
+  acBlock = get_SParam_data( fData, Block, NPORTS )
+  acNames = names(acBlock, no)
+
+  startIndex = if (index(acNames, "PortZ[1]", no) == 1) then (NPORTS+1) \
+               else 1 \
+               endif
+  stopIndex = startIndex + (NPORTS*NPORTS - 1)
+
+; Y:0, Z:1, S:4, error:5
+
+  nk_Type = if (index(acNames, "Y[1,1]", no) == startIndex) then 0 \
+            elseif (index(acNames, "Z[1,1]", no) == startIndex) then 1 \
+            elseif (index(acNames, "S[1,1]", no) == startIndex) then 4 \
+            else 5 endif
+
+  nwkType = if (nk_Type == 5) then issue_message_set_value("Simulation results may be incorrect.\
+    Errors encountered when looking for S11 (or Y11/Z11) in the file", File, 4) else nk_Type endif
+
+; default interpolation domain is MA for S, RI for others
+  Dom = if (InterpDom != "") then \
+           InterpDom \
+        elseif (nwkType == 4) then \
+           "ma" \
+        else "ri" endif
+
+; this is an in-place transform, or a pointer copy
+  acData = if ( Dom != "ri" ) then \
+              transform(acBlock, Dom, "ri", yes, inPlace) \
+           else acBlock endif
+
+; freq interpolation, then transform to RI
+; extrapolation mode for SnP component is ExtrapMode which can be either
+; "interpMode" or "constant"
+; report warningFlag is yes
+  depData = cxform(access_data_new(InterpMode, ExtrapMode, yes, acData, "freq", freq), "ri", Dom)
+
+; get PortZ[1] first, assume contiguous upto PortZ[NPORTS]
+; If found, make subarray of PortZ[]s, else a scalar DEF_RREF
+
+; we don't want to transform PortZ
+; extrapolation mode for SnP component is ExtrapMode which can be either
+; "interpMode" or "constant"
+; report warningFlag is yes
+  zData = access_data_new(InterpMode, ExtrapMode, yes, acBlock, "freq", freq)
+
+   kRef = index(acNames, "PortZ[1]", no)
+   zRef = if (kRef > 0) then \
+             makearray(zData, kRef, kRef+NPORTS-1) \
+          elseif (nwkType != 4) then \
+             DEF_RREF \
+          else _default endif
+
+; transform to S, if needed, with reference impedance(s) based in order on:
+; i) "PortZ[]" in acBlock  (ii) a DEF_RREF real constant
+  acParams = makearray(depData, int(startIndex), int(stopIndex))
+  sRI = if (nwkType == 4 ) then \
+            acParams \
+        else \
+            stypexform(acParams, NPORTS, nwkType, zRef) \
+        endif
+
+   freqRange=get_indep_range(fData_vs,0)
+
+if (Type == "touchstone" && Lib == "")
+
+   S_Port:CMP1 p1 p0 p2 p0 p3 p0 \
+   TSfile=File TSfreq=freq \
+   Temp=mytemp CheckPassivity=CheckPassivity  \
+   ImpNoncausalLength=ImpNoncausalLength ImpMode=ImpMode \
+   ImpMaxFreq=ImpMaxFreq ImpDeltaFreq=ImpDeltaFreq \
+   ImpMaxOrder=ImpMaxOrder ImpWindow=ImpWindow \
+   ImpRelTol=ImpRelTol ImpAbsTol=ImpAbsTol \
+   MinFileFreq=0 MaxFileFreq=1e12 \
+   EnforcePassivity=EnforcePassivity \
+   PortMappingType=PortMappingType PortMapping=PortMapping \
+   Lib=Lib Block=Block DeEmbed=DeEmbed InterpDom=InterpDom InterpMode=InterpMode ExtrapMode=ExtrapMode ImpCache=ImpCache
+
+else
+
+   S_Port:CMP1 p1 p0 p2 p0 p3 p0 \
+   All = if (DeEmbed==yes)  then \
+             deembed(sRI, NPORTS) \
+         else sRI endif \
+   Z_All = if (DeEmbed==yes) then conj(zRef) else zRef endif \
+   Temp=mytemp CheckPassivity=CheckPassivity \
+   ImpNoncausalLength=ImpNoncausalLength ImpMode=ImpMode \
+   ImpMaxFreq=ImpMaxFreq ImpDeltaFreq=ImpDeltaFreq \
+   ImpMaxOrder=ImpMaxOrder ImpWindow=ImpWindow \
+   ImpRelTol=ImpRelTol ImpAbsTol=ImpAbsTol \
+   MinFileFreq=freqRange[1] MaxFileFreq=freqRange[2] \
+   EnforcePassivity=EnforcePassivity \
+   PortMappingType=PortMappingType PortMapping=PortMapping \
+   FileName=File Lib=Lib Block=Block DeEmbed=DeEmbed InterpDom=InterpDom InterpMode=InterpMode ExtrapMode=ExtrapMode ImpCache=ImpCache
+
+endif

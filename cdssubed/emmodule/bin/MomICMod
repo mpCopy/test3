@@ -1,0 +1,9 @@
+#!/bin/sh -u
+rootdir=`dirname $0`
+if [ $rootdir == "/usr/local/bin" ]; then
+ rootprogramdir=/usr/local/share/MomICMod-__VERSION__
+else
+ rootprogramdir=$rootdir/..
+fi
+exec "$rootprogramdir/perl/MomICMod.pl" ${1+"$@"} $rootprogramdir
+

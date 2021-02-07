@@ -1,0 +1,75 @@
+// Copyright Keysight Technologies 2004 - 2011  
+
+decl SNPComponentNetlistFmt = "#include \"%d\"\n%d:%t %# %44?0%:%31?%C%:_net%c%;%;%e %r%b%8?%29?%:%30?%p %:%k%?[%1i]%;=%p %;%;%;%e%e";
+
+decl _File_ = "File";
+decl _FileL_ = "Data file name";
+decl _SNPF_ = "Network parameter filename";
+decl _DF2_ = "dfiles";
+decl _DFFS2_ = "datafileformset";
+decl _DF_ = _DF2_;
+decl _DFFS_ = _DFFS2_;
+decl _Temp_ = "Temperature";
+decl _CheckPassivity_ = "Check passivity or not. Yes=check; No=do not check";
+decl _StdTemp_ = prm("StdForm", "27.0");
+decl _Type_ = "Type";
+decl _TypeL_ = "File Type";
+decl _TForm_ = "TForm";
+decl _IMode_ = "InterpMode";
+decl _IModeL_ = "Interpolation Mode";
+decl _IMForm_ = "IModeForm";
+decl _IDom_ = "InterpDom";
+decl _IDomL_ = "Interpolation Domain";
+decl _IDForm_ = "IDomForm";
+decl _DFLIST_ = list("DATA_FILES", "*");
+decl _Block_ = "Block";
+decl _BlockL_ = "(for Dataset file type only) Name of S-param data block";
+decl _ExtrapMode_ = "ExtrapMode";
+decl _ExtrapModeL_ = "Extrapolation Mode";
+decl _ExtrapForm_ = "ExtrapForm";
+decl SRformSet = "StringAndReferenceFormSet";
+decl SRprm = "StringAndReference";
+
+set_simulator_type(1);
+create_item ("S_N_PORT_P",                             // name
+             "_N_PORT_-Port S-parameter File",        // label
+             "SNP",                            // prefix
+             ITEM_NOT_ALL_PARM,                // attribute
+       	     -1,                               // priority
+	     NULL,                            // iconName,
+	     standard_dialog,                  // dialogName
+	     "*",                             // dialogData
+             SNPComponentNetlistFmt,			// netlistFormat
+	     "S_N_PORT_P",                            // netlistData
+	     standard_symbol,                  // displayFormat
+	     "SYM_S_N_PORT_P",                        // symbolName
+	     no_artwork,                       // artWorkType
+	     NULL,                             // artworkData
+	     ITEM_PRIMITIVE_EX,
+	     create_parm(_File_,  _FileL_, 0, _DFFS2_, UNITLESS_UNIT, prm(_DF2_, "")),
+             create_parm(_Type_, _TypeL_, PARM_NO_DISPLAY, _TForm_, UNITLESS_UNIT,  prm("Type1","") ),
+             create_parm(_Block_, _BlockL_, PARM_NO_DISPLAY, SRformSet, UNITLESS_UNIT,  prm(SRprm,"") ),
+             create_parm(_IMode_, _IModeL_, PARM_NO_DISPLAY, _IMForm_, UNITLESS_UNIT, prm("Mode0","") ),
+             create_parm(_IDom_, _IDomL_, PARM_NO_DISPLAY, _IDForm_, UNITLESS_UNIT, prm("ID0", "\"\"")),
+  	     create_parm(_ExtrapMode_, _ExtrapModeL_, PARM_STRING | PARM_NO_DISPLAY, _ExtrapForm_, UNITLESS_UNIT, prm("EMode1") ),
+	     create_parm("Temp",   _Temp_, PARM_OPTIMIZABLE | PARM_STATISTICAL| PARM_NO_DISPLAY, "StdFileFormSet", TEMPERATURE_UNIT, _StdTemp_),
+             create_parm("CheckPassivity",   _CheckPassivity_, PARM_NO_DISPLAY, "no0_yes1", UNITLESS_UNIT, prm("y_n0", "NO") ),
+	     create_parm ("ImpNoncausalLength", "Non-causal function impulse response order", PARM_INT | PARM_NO_DISPLAY, "StdFileFormSet",
+	       UNITLESS_UNIT, prm("StdForm","")),
+	     create_parm ("ImpMode", "Convolution mode", PARM_INT | PARM_NO_DISPLAY, "StdFileFormSet",
+	       UNITLESS_UNIT, prm("StdForm","")),
+	     create_parm ("ImpMaxFreq", "Maximum Frequency to which device is evaluated",
+	       PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL, "StdFileFormSet", FREQUENCY_UNIT, prm("StdForm","")),
+	     create_parm ("ImpDeltaFreq", "Sample spacing in frequency", PARM_NO_DISPLAY | PARM_OPTIMIZABLE | PARM_STATISTICAL,
+	       "StdFileFormSet", FREQUENCY_UNIT, prm("StdForm","")),
+	     create_parm ("ImpMaxOrder", "Maximum allowed impulse response order", PARM_INT | PARM_NO_DISPLAY, "StdFileFormSet",
+	       UNITLESS_UNIT, prm("StdForm","")),
+	     create_parm ("ImpWindow", "Smoothing window", PARM_INT | PARM_NO_DISPLAY, "StdFileFormSet",
+	       UNITLESS_UNIT, prm("StdForm","")),
+	     create_parm ("ImpRelTol", "Relative impulse response truncation factor", PARM_NO_DISPLAY, "StdFileFormSet",
+	       UNITLESS_UNIT, prm("StdForm","")),
+	     create_parm ("ImpAbsTol", "Absolute impulse response truncation factor", PARM_NO_DISPLAY, "StdFileFormSet", UNITLESS_UNIT,
+	       prm("StdForm","")),
+	     create_parm("EnforcePassivity","Enforce passivity in s-parameters", PARM_NO_DISPLAY, "Auto_Yes_No",
+               UNITLESS_UNIT, prm("Auto","")));
+set_design_type(analogRFnet);

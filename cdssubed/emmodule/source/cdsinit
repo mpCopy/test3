@@ -1,0 +1,56 @@
+;*************************************************************************
+; Check if $MOM_MODULE_PATH variable is defined properly
+;*************************************************************************
+(if getShellEnvVar("MOM_MODULE_PATH") == nil then
+    printf(".cdsinit: Environment variable MOM_MODULE_PATH is not set!\n")
+else
+    let( (preProcFile preProcFileList siteGFdatabasefile)
+
+;*************************************************************************
+; Load Momentum Module skill functions
+;*************************************************************************
+
+    printf("Loading skill: ")
+    preProcFile = strcat( getShellEnvVar("MOM_MODULE_PATH") "/skill/init.il" )
+    preProcFileList = list(preProcFile)
+
+    foreach(preProcFile preProcFileList
+        (if isFile(preProcFile) then
+            printf(strcat(car(reverse(parseString(preProcFile "/"))) " "))
+            load(preProcFile) 
+        else 
+            printf(strcat("\nError: Cannot open file " car(reverse(parseString(preProcFile "/"))) "\n"))
+            (if preProcFile!=car(reverse(preProcFileList)) then 
+                printf("Loading skill: ")
+            );if
+        );if
+    );foreach
+    printf("\n")
+
+;*************************************************************************
+; Define path to substrate Green Field Database
+;*************************************************************************
+    siteGFdatabasefile = strcat( getShellEnvVar("MOM_MODULE_PATH") "/MomentumSDB" )
+    if(isDir(siteGFdatabasefile) then
+        envSetVal("adsMom.envOpts" "siteGFdatabase" 'string siteGFdatabasefile)
+    );if
+    envSetVal("adsMom.envOpts" "disallowEditOf3DMetalExpansion" 'boolean t )
+
+;*************************************************************************
+; Register the function called when Momentum View is created
+;*************************************************************************
+    (if fboundp('rfdeMomLay_momViewCreated) then rfdeMom_registerViewWindowCreatedCB('rfdeMomLay_momViewCreated))
+
+;*************************************************************************
+; Register the function called when Momentum Application Window is created
+;*************************************************************************
+    (if fboundp('rfdeMomLay_loadDefaultMOMSettings) then rfdeMom_registerApplDialogCreatedCB('rfdeMomLay_loadDefaultMOMSettings))
+
+;*************************************************************************
+; Register the function called before the momentum simulation files will be written
+;*************************************************************************
+    (if fboundp('rfdeMomLay_beforeNetlistCreated) then rfdeMom_registerBeforeWriteSimDataFilesCB('rfdeMomLay_beforeNetlistCreated))
+
+    );let
+);if
+
